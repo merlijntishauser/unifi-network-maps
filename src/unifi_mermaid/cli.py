@@ -15,6 +15,15 @@ from .unifi import fetch_devices
 logger = logging.getLogger(__name__)
 
 
+def _load_dotenv() -> None:
+    try:
+        from dotenv import load_dotenv
+    except ImportError:
+        logger.info("python-dotenv not installed; skipping .env loading")
+        return
+    load_dotenv()
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Generate Mermaid network maps from UniFi LLDP data"
@@ -58,6 +67,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
+        _load_dotenv()
         config = Config.from_env()
     except ValueError as exc:
         logging.error(str(exc))

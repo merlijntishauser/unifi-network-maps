@@ -8,4 +8,5 @@ __pycache__/
 .DS_Store
 .idea/
 src/*.egg-info/
+*.egg-info/
 network.md

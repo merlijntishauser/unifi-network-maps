@@ -60,7 +60,9 @@ def coerce_device(device: object) -> Device:
     mac = _get_attr(device, "mac")
     ip = _get_attr(device, "ip") or _get_attr(device, "ip_address")
     dev_type = _get_attr(device, "type") or _get_attr(device, "device_type")
-    lldp_info = _get_attr(device, "lldp_info") or _get_attr(device, "lldp")
+    lldp_info = _get_attr(device, "lldp_info")
+    if lldp_info is None:
+        lldp_info = _get_attr(device, "lldp")
 
     if not name or not mac:
         raise ValueError("Device missing name or mac")
@@ -77,6 +79,82 @@ def coerce_device(device: object) -> Device:
         type=str(dev_type or ""),
         lldp_info=coerced_lldp,
     )
+
+
+def classify_device_type(device: Device) -> str:
+    value = device.type.strip().lower()
+    if value in {"gateway", "ugw", "usg", "ux", "udm", "udr"}:
+        return "gateway"
+    if value in {"switch", "usw"}:
+        return "switch"
+    if value in {"uap", "ap"} or "ap" in value:
+        return "ap"
+    return "other"
+
+
+def group_devices_by_type(devices: Iterable[object]) -> dict[str, list[str]]:
+    groups: dict[str, list[str]] = {"gateway": [], "switch": [], "ap": [], "other": []}
+    for raw_device in devices:
+        device = coerce_device(raw_device)
+        group = classify_device_type(device)
+        groups[group].append(device.name)
+    return groups
+
+
+def build_rank_edges_by_type(
+    groups: dict[str, list[str]], group_order: list[str]
+) -> list[tuple[str, str]]:
+    rank_edges: list[tuple[str, str]] = []
+    ordered_groups = [groups.get(group, []) for group in group_order]
+    for upper, lower in zip(ordered_groups, ordered_groups[1:], strict=False):
+        if not upper or not lower:
+            continue
+        for upper_node in upper:
+            for lower_node in lower:
+                rank_edges.append((upper_node, lower_node))
+    return rank_edges
+
+
+def build_rank_edges_by_topology(
+    edges: Iterable[Edge], gateways: list[str]
+) -> list[tuple[str, str]]:
+    adjacency: dict[str, set[str]] = {}
+    for edge in edges:
+        adjacency.setdefault(edge.left, set()).add(edge.right)
+        adjacency.setdefault(edge.right, set()).add(edge.left)
+
+    if not gateways:
+        return []
+
+    distances: dict[str, int] = {}
+    queue: list[str] = []
+    for gateway in gateways:
+        if gateway in adjacency:
+            distances[gateway] = 0
+            queue.append(gateway)
+
+    while queue:
+        current = queue.pop(0)
+        for neighbor in adjacency.get(current, set()):
+            if neighbor in distances:
+                continue
+            distances[neighbor] = distances[current] + 1
+            queue.append(neighbor)
+
+    levels: dict[int, list[str]] = {}
+    for node, distance in distances.items():
+        levels.setdefault(distance, []).append(node)
+
+    rank_edges: list[tuple[str, str]] = []
+    for level in sorted(levels.keys()):
+        next_level = level + 1
+        if next_level not in levels:
+            continue
+        for upper_node in levels[level]:
+            for lower_node in levels[next_level]:
+                rank_edges.append((upper_node, lower_node))
+
+    return rank_edges
 
 
 def build_device_index(devices: Iterable[object]) -> dict[str, str]:

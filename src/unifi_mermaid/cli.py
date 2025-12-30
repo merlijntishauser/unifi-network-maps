@@ -8,7 +8,12 @@ import logging
 from .config import Config
 from .export import write_output
 from .mermaid import render_mermaid
-from .topology import build_edges
+from .topology import (
+    build_edges,
+    build_rank_edges_by_topology,
+    build_rank_edges_by_type,
+    group_devices_by_type,
+)
 from .unifi import fetch_devices
 
 
@@ -29,6 +34,22 @@ def _build_parser() -> argparse.ArgumentParser:
         "--only-unifi", action="store_true", help="Only include neighbors that are UniFi devices"
     )
     parser.add_argument("--direction", default="LR", choices=["LR", "TB"], help="Mermaid direction")
+    parser.add_argument(
+        "--group-by-type",
+        action="store_true",
+        help="Group nodes by gateway/switch/ap in Mermaid subgraphs",
+    )
+    parser.add_argument(
+        "--hierarchy",
+        action="store_true",
+        help="Force gateway -> switches -> APs ordering (implies --group-by-type, uses TB layout)",
+    )
+    parser.add_argument(
+        "--rank-mode",
+        default="none",
+        choices=["none", "type", "topology"],
+        help="Optional ranking: type for gateway/switch/ap, topology for LLDP hop distance",
+    )
     parser.add_argument("--stdout", action="store_true", help="Write output to stdout")
     return parser
 
@@ -54,7 +75,34 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     if args.format == "mermaid":
-        content = render_mermaid(edges, direction=args.direction)
+        groups = None
+        group_order = None
+        direction = args.direction
+        rank_mode = args.rank_mode
+        if args.hierarchy:
+            rank_mode = "type"
+        if args.group_by_type or args.hierarchy or rank_mode == "type":
+            groups = group_devices_by_type(devices)
+            group_order = ["gateway", "switch", "ap", "other"]
+        if args.hierarchy:
+            direction = "TB"
+        rank_edges = None
+        if rank_mode == "type" and groups:
+            rank_edges = build_rank_edges_by_type(groups, group_order or [])
+            direction = "TB"
+        elif rank_mode == "topology":
+            if groups is None:
+                groups = group_devices_by_type(devices)
+            gateways = groups.get("gateway", [])
+            rank_edges = build_rank_edges_by_topology(edges, gateways)
+            direction = "TB"
+        content = render_mermaid(
+            edges,
+            direction=direction,
+            groups=groups,
+            group_order=group_order,
+            rank_edges=rank_edges,
+        )
     else:
         logging.error("Unsupported format: %s", args.format)
         return 2

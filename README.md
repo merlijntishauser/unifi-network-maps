@@ -37,6 +37,15 @@ Options:
 - --direction LR|TB
 - --stdout
 - --markdown
+- --group-by-type
+- --hierarchy
+- --rank-mode none|type|topology
+
+Notes:
+- `--group-by-type` creates Mermaid subgraphs for gateway/switch/AP nodes.
+- `--hierarchy` implies grouping and switches to a top-to-bottom layout.
+- `--rank-mode type` forces gateway -> switch -> AP ordering.
+- `--rank-mode topology` uses LLDP hop distance from gateway(s).
 
 ## Notes
 

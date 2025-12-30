@@ -2,7 +2,7 @@ from unifi_mermaid.mermaid import render_mermaid
 from unifi_mermaid.topology import (
     Device,
     Edge,
-    build_rank_edges_by_topology,
+    build_tree_edges_by_topology,
     classify_device_type,
     group_devices_by_type,
 )
@@ -28,5 +28,5 @@ def test_render_mermaid_with_groups_uses_subgraph():
 
 def test_rank_edges_by_topology_uses_hops():
     edges = [Edge("GW", "SW"), Edge("SW", "AP")]
-    ranks = build_rank_edges_by_topology(edges, ["GW"])
-    assert ("GW", "SW") in ranks
+    tree_edges = build_tree_edges_by_topology(edges, ["GW"])
+    assert tree_edges[0].left == "GW"

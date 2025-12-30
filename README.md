@@ -40,7 +40,7 @@ Options:
 - --group-by-type
 
 Notes:
-- Default output is top-to-bottom (TB) and ranked by LLDP hop distance from the gateway(s).
+- Default output is top-to-bottom (TB) and rendered as a hop-based tree from the gateway(s).
 - `--group-by-type` creates Mermaid subgraphs for gateway/switch/AP nodes.
 
 ## Notes

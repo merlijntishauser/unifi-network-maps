@@ -101,9 +101,7 @@ def group_devices_by_type(devices: Iterable[object]) -> dict[str, list[str]]:
     return groups
 
 
-def build_rank_edges_by_topology(
-    edges: Iterable[Edge], gateways: list[str]
-) -> list[tuple[str, str]]:
+def build_tree_edges_by_topology(edges: Iterable[Edge], gateways: list[str]) -> list[Edge]:
     adjacency: dict[str, set[str]] = {}
     for edge in edges:
         adjacency.setdefault(edge.left, set()).add(edge.right)
@@ -112,35 +110,34 @@ def build_rank_edges_by_topology(
     if not gateways:
         return []
 
-    distances: dict[str, int] = {}
+    label_map: dict[frozenset[str], str | None] = {}
+    for edge in edges:
+        label_map[frozenset({edge.left, edge.right})] = edge.label
+
+    visited: set[str] = set()
+    parent: dict[str, str] = {}
     queue: list[str] = []
+
     for gateway in gateways:
         if gateway in adjacency:
-            distances[gateway] = 0
+            visited.add(gateway)
             queue.append(gateway)
 
     while queue:
         current = queue.pop(0)
         for neighbor in adjacency.get(current, set()):
-            if neighbor in distances:
+            if neighbor in visited:
                 continue
-            distances[neighbor] = distances[current] + 1
+            visited.add(neighbor)
+            parent[neighbor] = current
             queue.append(neighbor)
 
-    levels: dict[int, list[str]] = {}
-    for node, distance in distances.items():
-        levels.setdefault(distance, []).append(node)
+    tree_edges: list[Edge] = []
+    for child, parent_name in parent.items():
+        label = label_map.get(frozenset({child, parent_name}))
+        tree_edges.append(Edge(left=parent_name, right=child, label=label))
 
-    rank_edges: list[tuple[str, str]] = []
-    for level in sorted(levels.keys()):
-        next_level = level + 1
-        if next_level not in levels:
-            continue
-        for upper_node in levels[level]:
-            for lower_node in levels[next_level]:
-                rank_edges.append((upper_node, lower_node))
-
-    return rank_edges
+    return tree_edges
 
 
 def build_device_index(devices: Iterable[object]) -> dict[str, str]:

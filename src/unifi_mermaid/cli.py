@@ -8,7 +8,7 @@ import logging
 from .config import Config
 from .export import write_output
 from .mermaid import render_mermaid
-from .topology import build_edges, build_rank_edges_by_topology, group_devices_by_type
+from .topology import build_edges, build_tree_edges_by_topology, group_devices_by_type
 from .unifi import fetch_devices
 
 
@@ -61,11 +61,14 @@ def main(argv: list[str] | None = None) -> int:
     if args.format == "mermaid":
         groups = None
         group_order = None
-        rank_edges = None
         direction = args.direction
         groups_for_rank = group_devices_by_type(devices)
         gateways = groups_for_rank.get("gateway", [])
-        rank_edges = build_rank_edges_by_topology(edges, gateways)
+        tree_edges = build_tree_edges_by_topology(edges, gateways)
+        if tree_edges:
+            edges = tree_edges
+        else:
+            logging.warning("No gateway found for hierarchy; rendering raw edges.")
         if args.group_by_type:
             groups = groups_for_rank
             group_order = ["gateway", "switch", "ap", "other"]
@@ -74,7 +77,6 @@ def main(argv: list[str] | None = None) -> int:
             direction=direction,
             groups=groups,
             group_order=group_order,
-            rank_edges=rank_edges,
         )
     else:
         logging.error("Unsupported format: %s", args.format)

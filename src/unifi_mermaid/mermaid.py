@@ -59,7 +59,6 @@ def render_mermaid(
     *,
     groups: dict[str, list[str]] | None = None,
     group_order: list[str] | None = None,
-    rank_edges: list[tuple[str, str]] | None = None,
 ) -> str:
     edge_list = list(edges)
     group_nodes: list[str] = []
@@ -81,8 +80,6 @@ def render_mermaid(
                 lines.append(f"    {_node_ref(member, id_map[member])}")
             lines.append("  end")
     use_node_labels = not groups
-    link_styles: list[int] = []
-    link_index = 0
     for edge in edge_list:
         if use_node_labels:
             left = _node_ref(edge.left, id_map[edge.left])
@@ -95,18 +92,4 @@ def render_mermaid(
             lines.append(f'  {left} ---|"{label}"| {right}')
         else:
             lines.append(f"  {left} --- {right}")
-        link_index += 1
-
-    if rank_edges:
-        for left_name, right_name in rank_edges:
-            left_id = id_map.get(left_name)
-            right_id = id_map.get(right_name)
-            if not left_id or not right_id:
-                continue
-            lines.append(f"  {left_id} --- {right_id}")
-            link_styles.append(link_index)
-            link_index += 1
-
-    for index in link_styles:
-        lines.append(f"  linkStyle {index} stroke:transparent,stroke-width:0px")
     return "\n".join(lines) + "\n"

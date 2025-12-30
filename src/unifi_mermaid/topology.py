@@ -3,21 +3,13 @@
 from __future__ import annotations
 
 import logging
-import re
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import Protocol
 
+from .lldp import LLDPEntry, coerce_lldp, local_port_label
+
 logger = logging.getLogger(__name__)
-
-
-@dataclass(frozen=True)
-class LLDPEntry:
-    chassis_id: str
-    port_id: str
-    port_desc: str | None = None
-    local_port_name: str | None = None
-    local_port_idx: int | None = None
 
 
 @dataclass(frozen=True)
@@ -59,71 +51,6 @@ def _get_attr(obj: object, name: str) -> object | None:
 
 def _normalize_mac(value: str) -> str:
     return value.strip().lower()
-
-
-def _coerce_lldp(entry: object) -> LLDPEntry:
-    chassis_id = _get_attr(entry, "chassis_id") or _get_attr(entry, "chassisId")
-    port_id = _get_attr(entry, "port_id") or _get_attr(entry, "portId")
-    port_desc = (
-        _get_attr(entry, "port_desc")
-        or _get_attr(entry, "portDesc")
-        or _get_attr(entry, "port_descr")
-        or _get_attr(entry, "portDescr")
-    )
-    local_port_name = _get_attr(entry, "local_port_name") or _get_attr(entry, "localPortName")
-    local_port_idx = _get_attr(entry, "local_port_idx") or _get_attr(entry, "localPortIdx")
-    if not chassis_id or not port_id:
-        raise ValueError("LLDP entry missing chassis_id or port_id")
-    return LLDPEntry(
-        chassis_id=str(chassis_id),
-        port_id=str(port_id),
-        port_desc=str(port_desc) if port_desc else None,
-        local_port_name=str(local_port_name) if local_port_name else None,
-        local_port_idx=int(local_port_idx) if local_port_idx is not None else None,
-    )
-
-
-def _looks_like_mac(value: str | None) -> bool:
-    if not value:
-        return False
-    cleaned = value.strip().lower()
-    if cleaned.count(":") == 5:
-        return all(
-            len(part) == 2 and all(ch in "0123456789abcdef" for ch in part)
-            for part in cleaned.split(":")
-        )
-    return False
-
-
-def _local_port_label(entry: LLDPEntry) -> str | None:
-    number = None
-    name = None
-    desc = None
-
-    if entry.local_port_idx is not None:
-        number = entry.local_port_idx
-    if entry.local_port_name:
-        name = _normalize_port_label(entry.local_port_name)
-    if entry.port_desc and not _looks_like_mac(entry.port_desc):
-        desc = entry.port_desc.strip()
-    if entry.port_id and not _looks_like_mac(entry.port_id):
-        if name is None:
-            name = _normalize_port_label(entry.port_id)
-
-    if number is None:
-        number = _extract_port_number(name)
-    if number is None:
-        number = _extract_port_number(desc)
-
-    if number is not None and desc:
-        return f"Port {number} ({desc})"
-    if number is not None:
-        return f"Port {number}"
-    if name:
-        return name
-    if desc:
-        return desc
-    return None
 
 
 def _as_bool(value: object | None) -> bool:
@@ -181,23 +108,6 @@ def _poe_ports_from_device(device: DeviceLike) -> dict[int, bool]:
     return poe_ports
 
 
-def _extract_port_number(label: str | None) -> int | None:
-    if not label:
-        return None
-    match = re.search(r"(?:^|[^0-9])(?:port|eth)\s*([0-9]+)", label.strip(), re.IGNORECASE)
-    if match:
-        return int(match.group(1))
-    return None
-
-
-def _normalize_port_label(label: str) -> str:
-    trimmed = label.strip()
-    number = _extract_port_number(trimmed)
-    if number is not None:
-        return f"Port {number}"
-    return trimmed
-
-
 def _compose_edge_label(left: str, right: str, port_map: dict[tuple[str, str], str]) -> str | None:
     left_label = port_map.get((left, right))
     right_label = port_map.get((right, left))
@@ -225,7 +135,7 @@ def coerce_device(device: DeviceLike) -> Device:
     if lldp_info is None:
         raise ValueError(f"Device {name} missing LLDP info")
 
-    coerced_lldp = [_coerce_lldp(entry) for entry in lldp_info]
+    coerced_lldp = [coerce_lldp(entry) for entry in lldp_info]
     poe_ports = _poe_ports_from_device(device)
 
     return Device(
@@ -335,7 +245,7 @@ def build_edges(
                     continue
                 neighbor_name = entry.chassis_id
 
-            label = _local_port_label(entry)
+            label = local_port_label(entry)
             if label:
                 port_map[(device.name, neighbor_name)] = label
             if entry.local_port_idx is not None and entry.local_port_idx in poe_ports:

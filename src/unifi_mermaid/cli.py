@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 
 from .config import Config
@@ -10,6 +11,8 @@ from .export import write_output
 from .mermaid import render_mermaid
 from .topology import build_edges, build_tree_edges_by_topology, group_devices_by_type
 from .unifi import fetch_devices
+
+logger = logging.getLogger(__name__)
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -35,6 +38,17 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Group nodes by gateway/switch/ap in Mermaid subgraphs",
     )
     parser.add_argument("--stdout", action="store_true", help="Write output to stdout")
+    parser.add_argument(
+        "--debug-dump",
+        action="store_true",
+        help="Dump gateway and sample device data to stderr for debugging",
+    )
+    parser.add_argument(
+        "--debug-sample",
+        type=int,
+        default=2,
+        help="Number of non-gateway devices to include in debug dump (default: 2)",
+    )
     return parser
 
 
@@ -53,6 +67,8 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         devices = list(fetch_devices(config, site=site, detailed=True))
+        if args.debug_dump:
+            _debug_dump_devices(devices, sample_count=max(0, args.debug_sample))
         edges = build_edges(devices, include_ports=args.include_ports, only_unifi=args.only_unifi)
     except Exception as exc:
         logging.error("Failed to build topology: %s", exc)
@@ -89,6 +105,44 @@ def main(argv: list[str] | None = None) -> int:
 
     write_output(content, output_path=args.output, stdout=args.stdout)
     return 0
+
+
+def _device_to_dict(device: object) -> dict:
+    if hasattr(device, "to_dict"):
+        return device.to_dict()
+    if hasattr(device, "__dict__"):
+        return dict(device.__dict__)
+    return {"repr": repr(device)}
+
+
+def _debug_dump_devices(devices: list[object], *, sample_count: int) -> None:
+    name_to_device = {}
+    for device in devices:
+        name = getattr(device, "name", None)
+        if name:
+            name_to_device[name] = device
+
+    groups = group_devices_by_type(devices)
+    gateways = groups.get("gateway", [])
+    samples = []
+    for group in ("switch", "ap", "other"):
+        for name in groups.get(group, []):
+            if name not in gateways:
+                samples.append(name)
+            if len(samples) >= sample_count:
+                break
+        if len(samples) >= sample_count:
+            break
+
+    selected_names = gateways[:1] + samples
+    payload = []
+    for name in selected_names:
+        device = name_to_device.get(name)
+        if device is None:
+            continue
+        payload.append({"name": name, "data": _device_to_dict(device)})
+
+    logger.info("Debug dump devices: %s", json.dumps(payload, indent=2, sort_keys=True))
 
 
 if __name__ == "__main__":

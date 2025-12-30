@@ -38,10 +38,13 @@ Options:
 - --stdout
 - --markdown
 - --group-by-type
+- --debug-dump
+- --debug-sample N
 
 Notes:
 - Default output is top-to-bottom (TB) and rendered as a hop-based tree from the gateway(s).
 - `--group-by-type` creates Mermaid subgraphs for gateway/switch/AP nodes.
+- `--debug-dump` writes a JSON payload of the gateway and sample devices to stderr.
 - `--include-ports` shows both ends when LLDP is available (e.g. `A: Port 1 <-> B: Port 7`).
 
 ## Notes

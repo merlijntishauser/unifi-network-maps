@@ -241,10 +241,16 @@ def _client_uplink_mac(client: object) -> str | None:
     return None
 
 
+def _client_is_wired(client: object) -> bool:
+    return bool(_client_field(client, "is_wired"))
+
+
 def build_client_edges(clients: Iterable[object], device_index: dict[str, str]) -> list[Edge]:
     edges: list[Edge] = []
     seen: set[tuple[str, str]] = set()
     for client in clients:
+        if not _client_is_wired(client):
+            continue
         name = _client_display_name(client)
         uplink_mac = _client_uplink_mac(client)
         if not name or not uplink_mac:

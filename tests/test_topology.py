@@ -1,4 +1,4 @@
-from unifi_mermaid.topology import LLDPEntry, build_edges
+from unifi_mermaid.topology import LLDPEntry, build_edges, normalize_devices
 
 
 class DummyDevice:
@@ -15,20 +15,20 @@ class DummyDevice:
 def test_build_edges_deduplicates_links():
     dev_a = DummyDevice("Switch A", "aa:bb:cc:dd:ee:01", [LLDPEntry("aa:bb:cc:dd:ee:02", "1")])
     dev_b = DummyDevice("Switch B", "aa:bb:cc:dd:ee:02", [LLDPEntry("aa:bb:cc:dd:ee:01", "2")])
-    edges = build_edges([dev_a, dev_b])
+    edges = build_edges(normalize_devices([dev_a, dev_b]))
     assert len(edges) == 1
 
 
 def test_build_edges_includes_ports():
     dev_a = DummyDevice("Switch A", "aa:bb:cc:dd:ee:01", [LLDPEntry("aa:bb:cc:dd:ee:02", "1")])
     dev_b = DummyDevice("Switch B", "aa:bb:cc:dd:ee:02", [LLDPEntry("aa:bb:cc:dd:ee:01", "2")])
-    edges = build_edges([dev_a, dev_b], include_ports=True)
+    edges = build_edges(normalize_devices([dev_a, dev_b]), include_ports=True)
     assert edges[0].label == "Switch A: 1 <-> Switch B: 2"
 
 
 def test_build_edges_only_unifi_filters_unknown_neighbors():
     dev_a = DummyDevice("Switch A", "aa:bb:cc:dd:ee:01", [LLDPEntry("aa:bb:cc:dd:ee:ff", "1")])
-    edges = build_edges([dev_a], only_unifi=True)
+    edges = build_edges(normalize_devices([dev_a]), only_unifi=True)
     assert edges == []
 
 
@@ -43,7 +43,7 @@ def test_build_edges_hides_mac_port_id():
         "aa:bb:cc:dd:ee:02",
         [LLDPEntry("aa:bb:cc:dd:ee:01", "78:45:58:9F:18:38")],
     )
-    edges = build_edges([dev_switch, dev_ap], include_ports=True)
+    edges = build_edges(normalize_devices([dev_switch, dev_ap]), include_ports=True)
     assert edges[0].label == "Switch A: Port 2 <-> AP One: ?"
 
 
@@ -66,7 +66,7 @@ def test_build_edges_port_desc_includes_number_and_name():
         "aa:bb:cc:dd:ee:02",
         [LLDPEntry("aa:bb:cc:dd:ee:01", "eth0")],
     )
-    edges = build_edges([dev_switch, dev_ap], include_ports=True)
+    edges = build_edges(normalize_devices([dev_switch, dev_ap]), include_ports=True)
     assert edges[0].label == "Switch A: Port 1 (uplink fiberdream) <-> AP One: Port 0"
 
 
@@ -82,5 +82,5 @@ def test_build_edges_sets_poe_when_active():
         "aa:bb:cc:dd:ee:02",
         [LLDPEntry("aa:bb:cc:dd:ee:01", "eth0")],
     )
-    edges = build_edges([dev_switch, dev_ap])
+    edges = build_edges(normalize_devices([dev_switch, dev_ap]))
     assert edges[0].poe is True

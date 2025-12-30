@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import re
 from collections.abc import Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +27,7 @@ class Device:
     ip: str
     type: str
     lldp_info: list[LLDPEntry]
+    poe_ports: dict[int, bool] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -210,6 +211,7 @@ def coerce_device(device: object) -> Device:
         raise ValueError(f"Device {name} missing LLDP info")
 
     coerced_lldp = [_coerce_lldp(entry) for entry in lldp_info]
+    poe_ports = _poe_ports_from_device(device)
 
     return Device(
         name=str(name),
@@ -218,7 +220,12 @@ def coerce_device(device: object) -> Device:
         ip=str(ip or ""),
         type=str(dev_type or ""),
         lldp_info=coerced_lldp,
+        poe_ports=poe_ports,
     )
+
+
+def normalize_devices(devices: Iterable[object]) -> list[Device]:
+    return [coerce_device(device) for device in devices]
 
 
 def classify_device_type(device: Device) -> str:
@@ -232,10 +239,9 @@ def classify_device_type(device: Device) -> str:
     return "other"
 
 
-def group_devices_by_type(devices: Iterable[object]) -> dict[str, list[str]]:
+def group_devices_by_type(devices: Iterable[Device]) -> dict[str, list[str]]:
     groups: dict[str, list[str]] = {"gateway": [], "switch": [], "ap": [], "other": []}
-    for raw_device in devices:
-        device = coerce_device(raw_device)
+    for device in devices:
         group = classify_device_type(device)
         groups[group].append(device.name)
     return groups
@@ -285,16 +291,15 @@ def build_tree_edges_by_topology(edges: Iterable[Edge], gateways: list[str]) -> 
     return tree_edges
 
 
-def build_device_index(devices: Iterable[object]) -> dict[str, str]:
+def build_device_index(devices: Iterable[Device]) -> dict[str, str]:
     index: dict[str, str] = {}
     for device in devices:
-        normalized = coerce_device(device)
-        index[_normalize_mac(normalized.mac)] = normalized.name
+        index[_normalize_mac(device.mac)] = device.name
     return index
 
 
 def build_edges(
-    devices: Iterable[object],
+    devices: Iterable[Device],
     *,
     include_ports: bool = False,
     only_unifi: bool = True,
@@ -305,9 +310,8 @@ def build_edges(
     port_map: dict[tuple[str, str], str] = {}
     poe_map: dict[tuple[str, str], bool] = {}
 
-    for raw_device in devices:
-        device = coerce_device(raw_device)
-        poe_ports = _poe_ports_from_device(raw_device)
+    for device in devices:
+        poe_ports = device.poe_ports
         for entry in device.lldp_info:
             neighbor_mac = _normalize_mac(entry.chassis_id)
             neighbor_name = index.get(neighbor_mac)
@@ -337,3 +341,21 @@ def build_edges(
 
     logger.info("Built %d unique edges", len(edges))
     return edges
+
+
+@dataclass(frozen=True)
+class TopologyResult:
+    raw_edges: list[Edge]
+    tree_edges: list[Edge]
+
+
+def build_topology(
+    devices: Iterable[Device],
+    *,
+    include_ports: bool,
+    only_unifi: bool,
+    gateways: list[str],
+) -> TopologyResult:
+    raw_edges = build_edges(devices, include_ports=include_ports, only_unifi=only_unifi)
+    tree_edges = build_tree_edges_by_topology(raw_edges, gateways)
+    return TopologyResult(raw_edges=raw_edges, tree_edges=tree_edges)

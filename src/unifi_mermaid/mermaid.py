@@ -72,6 +72,21 @@ def render_mermaid(
         '%%{init: {"flowchart": {"curve": "linear", "defaultRenderer": "dagre"}}}%%',
         f"graph {direction}",
     ]
+    poe_links: list[int] = []
+    link_index = 0
+    if include_legend:
+        lines.append('  subgraph legend["Legend"]')
+        lines.append('    legend_gateway["Gateway"]')
+        lines.append('    legend_switch["Switch"]')
+        lines.append('    legend_ap["AP"]')
+        lines.append('    legend_client["Client"]')
+        lines.append('    legend_other["Other"]')
+        lines.append('    legend_poe_a["PoE Link A"]')
+        lines.append('    legend_poe_b["PoE Link B"]')
+        lines.append("  end")
+        lines.append("  legend_poe_a --- legend_poe_b")
+        poe_links.append(link_index)
+        link_index += 1
     if groups:
         ordered = group_order or list(groups.keys())
         for group_name in ordered:
@@ -85,8 +100,6 @@ def render_mermaid(
                 lines.append(f"    {_node_ref(member, id_map[member])}")
             lines.append("  end")
     use_node_labels = not groups
-    poe_links: list[int] = []
-    link_index = 0
     for edge in edge_list:
         if use_node_labels:
             left = _node_ref(edge.left, id_map[edge.left])
@@ -101,19 +114,6 @@ def render_mermaid(
             lines.append(f"  {left} --- {right}")
         if edge.poe:
             poe_links.append(link_index)
-        link_index += 1
-    if include_legend:
-        lines.append('  subgraph legend["Legend"]')
-        lines.append('    legend_gateway["Gateway"]')
-        lines.append('    legend_switch["Switch"]')
-        lines.append('    legend_ap["AP"]')
-        lines.append('    legend_client["Client"]')
-        lines.append('    legend_other["Other"]')
-        lines.append('    legend_poe_a["PoE Link A"]')
-        lines.append('    legend_poe_b["PoE Link B"]')
-        lines.append("  end")
-        lines.append("  legend_poe_a --- legend_poe_b")
-        poe_links.append(link_index)
         link_index += 1
     if node_types or include_legend:
         class_map = {
@@ -135,11 +135,14 @@ def render_mermaid(
             lines.append("  class legend_ap node_ap")
             lines.append("  class legend_client node_client")
             lines.append("  class legend_other node_other")
+            lines.append("  class legend_poe_a node_legend")
+            lines.append("  class legend_poe_b node_legend")
         lines.append("  classDef node_gateway fill:#ffe3b3,stroke:#d98300,stroke-width:1px")
         lines.append("  classDef node_switch fill:#d6ecff,stroke:#3a7bd5,stroke-width:1px")
         lines.append("  classDef node_ap fill:#d7f5e7,stroke:#27ae60,stroke-width:1px")
         lines.append("  classDef node_client fill:#f2e5ff,stroke:#7f3fbf,stroke-width:1px")
         lines.append("  classDef node_other fill:#eeeeee,stroke:#8f8f8f,stroke-width:1px")
+        lines.append("  classDef node_legend font-size:10px")
     for index in poe_links:
         lines.append(f"  linkStyle {index} stroke:#2ecc71,stroke-width:2px")
     return "\n".join(lines) + "\n"

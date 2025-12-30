@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import argparse
-import json
 import logging
 
 from .config import Config
+from .debug import debug_dump_devices
 from .export import write_output
 from .mermaid import render_mermaid
 from .topology import build_topology, group_devices_by_type, normalize_devices
@@ -69,7 +69,7 @@ def main(argv: list[str] | None = None) -> int:
         raw_devices = list(fetch_devices(config, site=site, detailed=True))
         devices = normalize_devices(raw_devices)
         if args.debug_dump:
-            _debug_dump_devices(raw_devices, devices, sample_count=max(0, args.debug_sample))
+            debug_dump_devices(raw_devices, devices, sample_count=max(0, args.debug_sample))
         groups_for_rank = group_devices_by_type(devices)
         gateways = groups_for_rank.get("gateway", [])
         topology = build_topology(
@@ -111,46 +111,6 @@ def main(argv: list[str] | None = None) -> int:
 
     write_output(content, output_path=args.output, stdout=args.stdout)
     return 0
-
-
-def _device_to_dict(device: object) -> dict:
-    if hasattr(device, "to_dict"):
-        return device.to_dict()
-    if hasattr(device, "__dict__"):
-        return dict(device.__dict__)
-    return {"repr": repr(device)}
-
-
-def _debug_dump_devices(
-    raw_devices: list[object], normalized: list[object], *, sample_count: int
-) -> None:
-    name_to_device = {}
-    for device in raw_devices:
-        name = getattr(device, "name", None)
-        if name:
-            name_to_device[name] = device
-
-    groups = group_devices_by_type(normalized)
-    gateways = groups.get("gateway", [])
-    samples = []
-    for group in ("switch", "ap", "other"):
-        for name in groups.get(group, []):
-            if name not in gateways:
-                samples.append(name)
-            if len(samples) >= sample_count:
-                break
-        if len(samples) >= sample_count:
-            break
-
-    selected_names = gateways[:1] + samples
-    payload = []
-    for name in selected_names:
-        device = name_to_device.get(name)
-        if device is None:
-            continue
-        payload.append({"name": name, "data": _device_to_dict(device)})
-
-    logger.info("Debug dump devices: %s", json.dumps(payload, indent=2, sort_keys=True))
 
 
 if __name__ == "__main__":

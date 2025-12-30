@@ -84,3 +84,51 @@ def test_build_edges_sets_poe_when_active():
     )
     edges = build_edges(normalize_devices([dev_switch, dev_ap]))
     assert edges[0].poe is True
+
+
+def test_build_edges_sets_poe_with_power():
+    dev_switch = DummyDevice(
+        "Switch A",
+        "aa:bb:cc:dd:ee:01",
+        [LLDPEntry("aa:bb:cc:dd:ee:02", "eth1", local_port_idx=1)],
+        port_table=[{"port_idx": 1, "poe_power": "7.01"}],
+    )
+    dev_ap = DummyDevice(
+        "AP One",
+        "aa:bb:cc:dd:ee:02",
+        [LLDPEntry("aa:bb:cc:dd:ee:01", "eth0")],
+    )
+    edges = build_edges(normalize_devices([dev_switch, dev_ap]))
+    assert edges[0].poe is True
+
+
+def test_build_edges_sets_poe_with_poe_good():
+    dev_switch = DummyDevice(
+        "Switch A",
+        "aa:bb:cc:dd:ee:01",
+        [LLDPEntry("aa:bb:cc:dd:ee:02", "eth1", local_port_idx=1)],
+        port_table=[{"port_idx": 1, "poe_good": True}],
+    )
+    dev_ap = DummyDevice(
+        "AP One",
+        "aa:bb:cc:dd:ee:02",
+        [LLDPEntry("aa:bb:cc:dd:ee:01", "eth0")],
+    )
+    edges = build_edges(normalize_devices([dev_switch, dev_ap]))
+    assert edges[0].poe is True
+
+
+def test_build_edges_sets_poe_with_port_poe():
+    dev_switch = DummyDevice(
+        "Switch A",
+        "aa:bb:cc:dd:ee:01",
+        [LLDPEntry("aa:bb:cc:dd:ee:02", "eth1", local_port_idx=1)],
+        port_table=[{"port_idx": 1, "port_poe": True}],
+    )
+    dev_ap = DummyDevice(
+        "AP One",
+        "aa:bb:cc:dd:ee:02",
+        [LLDPEntry("aa:bb:cc:dd:ee:01", "eth0")],
+    )
+    edges = build_edges(normalize_devices([dev_switch, dev_ap]))
+    assert edges[0].poe is True

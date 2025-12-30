@@ -27,3 +27,17 @@ def test_build_client_edges_skips_wireless_clients():
     clients = [{"name": "Laptop", "ap_mac": "aa:bb:cc:dd:ee:ff", "is_wired": False}]
     edges = build_client_edges(clients, device_index)
     assert edges == []
+
+
+def test_build_client_edges_includes_uplink_port_label():
+    device_index = {"aa:bb:cc:dd:ee:ff": "Switch A"}
+    clients = [
+        {
+            "name": "Laptop",
+            "sw_mac": "aa:bb:cc:dd:ee:ff",
+            "is_wired": True,
+            "last_uplink": {"uplink_remote_port": 3},
+        }
+    ]
+    edges = build_client_edges(clients, device_index, include_ports=True)
+    assert edges[0].label == "Switch A: Port 3 <-> Laptop: ?"

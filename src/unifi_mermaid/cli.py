@@ -115,7 +115,9 @@ def main(argv: list[str] | None = None) -> int:
         if args.include_clients:
             clients = list(fetch_clients(config, site=site))
             device_index = build_device_index(devices)
-            edges = edges + build_client_edges(clients, device_index)
+            edges = edges + build_client_edges(
+                clients, device_index, include_ports=args.include_ports
+            )
         if args.group_by_type:
             groups = groups_for_rank
             group_order = ["gateway", "switch", "ap", "other"]

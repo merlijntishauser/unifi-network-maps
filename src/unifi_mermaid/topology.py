@@ -241,11 +241,34 @@ def _client_uplink_mac(client: object) -> str | None:
     return None
 
 
+def _client_uplink_port(client: object) -> int | None:
+    for key in ("uplink_remote_port", "sw_port", "ap_port"):
+        value = _client_field(client, key)
+        if isinstance(value, int):
+            return value
+        if isinstance(value, str) and value.isdigit():
+            return int(value)
+    for key in ("uplink", "last_uplink"):
+        nested = _client_field(client, key)
+        if isinstance(nested, dict):
+            value = nested.get("uplink_remote_port")
+            if isinstance(value, int):
+                return value
+            if isinstance(value, str) and value.isdigit():
+                return int(value)
+    return None
+
+
 def _client_is_wired(client: object) -> bool:
     return bool(_client_field(client, "is_wired"))
 
 
-def build_client_edges(clients: Iterable[object], device_index: dict[str, str]) -> list[Edge]:
+def build_client_edges(
+    clients: Iterable[object],
+    device_index: dict[str, str],
+    *,
+    include_ports: bool = False,
+) -> list[Edge]:
     edges: list[Edge] = []
     seen: set[tuple[str, str]] = set()
     for client in clients:
@@ -258,10 +281,15 @@ def build_client_edges(clients: Iterable[object], device_index: dict[str, str]) 
         device_name = device_index.get(_normalize_mac(uplink_mac))
         if not device_name:
             continue
+        label = None
+        if include_ports:
+            uplink_port = _client_uplink_port(client)
+            if uplink_port is not None:
+                label = f"{device_name}: Port {uplink_port} <-> {name}: ?"
         key = (device_name, name)
         if key in seen:
             continue
-        edges.append(Edge(left=device_name, right=name))
+        edges.append(Edge(left=device_name, right=name, label=label))
         seen.add(key)
     return edges
 

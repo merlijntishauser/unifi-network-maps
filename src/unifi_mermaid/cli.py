@@ -12,6 +12,7 @@ from .mermaid import render_mermaid
 from .topology import (
     build_client_edges,
     build_device_index,
+    build_node_type_map,
     build_topology,
     group_devices_by_type,
     normalize_devices,
@@ -112,6 +113,7 @@ def main(argv: list[str] | None = None) -> int:
         else:
             edges = topology.raw_edges
             logging.warning("No gateway found for hierarchy; rendering raw edges.")
+        clients = None
         if args.include_clients:
             clients = list(fetch_clients(config, site=site))
             device_index = build_device_index(devices)
@@ -126,6 +128,7 @@ def main(argv: list[str] | None = None) -> int:
             direction=direction,
             groups=groups,
             group_order=group_order,
+            node_types=build_node_type_map(devices, clients),
         )
     else:
         logging.error("Unsupported format: %s", args.format)

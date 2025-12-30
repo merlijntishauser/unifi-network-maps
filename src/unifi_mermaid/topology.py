@@ -294,6 +294,20 @@ def build_client_edges(
     return edges
 
 
+def build_node_type_map(
+    devices: Iterable[Device], clients: Iterable[object] | None = None
+) -> dict[str, str]:
+    node_types: dict[str, str] = {}
+    for device in devices:
+        node_types[device.name] = classify_device_type(device)
+    if clients:
+        for client in clients:
+            name = _client_display_name(client)
+            if name:
+                node_types[name] = "client"
+    return node_types
+
+
 def build_edges(
     devices: Iterable[Device],
     *,

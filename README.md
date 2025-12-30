@@ -48,6 +48,7 @@ Notes:
 - `--debug-dump` writes a JSON payload of the gateway and sample devices to stderr.
 - `--include-ports` shows both ends when LLDP is available (e.g. `A: Port 1 <-> B: Port 7`).
 - `--include-clients` adds active clients as leaf nodes (may clutter large networks).
+- Nodes are color-coded by type (gateway/switch/AP/client) with a sensible default palette.
 
 ## Notes
 

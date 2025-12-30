@@ -59,6 +59,7 @@ def render_mermaid(
     *,
     groups: dict[str, list[str]] | None = None,
     group_order: list[str] | None = None,
+    node_types: dict[str, str] | None = None,
 ) -> str:
     edge_list = list(edges)
     group_nodes: list[str] = []
@@ -99,4 +100,22 @@ def render_mermaid(
         link_index += 1
     for index in poe_links:
         lines.append(f"  linkStyle {index} stroke:#2ecc71,stroke-width:2px")
+    if node_types:
+        class_map = {
+            "gateway": "node_gateway",
+            "switch": "node_switch",
+            "ap": "node_ap",
+            "client": "node_client",
+            "other": "node_other",
+        }
+        for name, node_type in node_types.items():
+            class_name = class_map.get(node_type, "node_other")
+            node_id = id_map.get(name)
+            if node_id:
+                lines.append(f"  class {node_id} {class_name}")
+        lines.append("  classDef node_gateway fill:#ffe3b3,stroke:#d98300,stroke-width:1px")
+        lines.append("  classDef node_switch fill:#d6ecff,stroke:#3a7bd5,stroke-width:1px")
+        lines.append("  classDef node_ap fill:#d7f5e7,stroke:#27ae60,stroke-width:1px")
+        lines.append("  classDef node_client fill:#f2e5ff,stroke:#7f3fbf,stroke-width:1px")
+        lines.append("  classDef node_other fill:#eeeeee,stroke:#8f8f8f,stroke-width:1px")
     return "\n".join(lines) + "\n"

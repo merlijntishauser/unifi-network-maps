@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from collections.abc import Iterable
 from dataclasses import dataclass
 
@@ -78,23 +79,50 @@ def _looks_like_mac(value: str | None) -> bool:
 
 
 def _local_port_label(entry: LLDPEntry) -> str | None:
-    if entry.local_port_name:
-        return _normalize_port_label(entry.local_port_name)
+    number = None
+    name = None
+    desc = None
+
     if entry.local_port_idx is not None:
-        return f"Port {entry.local_port_idx}"
+        number = entry.local_port_idx
+    if entry.local_port_name:
+        name = _normalize_port_label(entry.local_port_name)
     if entry.port_desc and not _looks_like_mac(entry.port_desc):
-        return _normalize_port_label(entry.port_desc)
+        desc = entry.port_desc.strip()
     if entry.port_id and not _looks_like_mac(entry.port_id):
-        return _normalize_port_label(entry.port_id)
+        if name is None:
+            name = _normalize_port_label(entry.port_id)
+
+    if number is None:
+        number = _extract_port_number(name)
+    if number is None:
+        number = _extract_port_number(desc)
+
+    if number is not None and desc:
+        return f"Port {number} ({desc})"
+    if number is not None:
+        return f"Port {number}"
+    if name:
+        return name
+    if desc:
+        return desc
+    return None
+
+
+def _extract_port_number(label: str | None) -> int | None:
+    if not label:
+        return None
+    match = re.search(r"(?:^|[^0-9])(?:port|eth)\s*([0-9]+)", label.strip(), re.IGNORECASE)
+    if match:
+        return int(match.group(1))
     return None
 
 
 def _normalize_port_label(label: str) -> str:
     trimmed = label.strip()
-    if trimmed.lower().startswith("eth"):
-        suffix = trimmed[3:]
-        if suffix.isdigit():
-            return f"Port {suffix}"
+    number = _extract_port_number(trimmed)
+    if number is not None:
+        return f"Port {number}"
     return trimmed
 
 

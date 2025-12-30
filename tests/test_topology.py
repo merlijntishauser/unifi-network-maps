@@ -44,3 +44,25 @@ def test_build_edges_hides_mac_port_id():
     )
     edges = build_edges([dev_switch, dev_ap], include_ports=True)
     assert edges[0].label == "Switch A: Port 2 <-> AP One: ?"
+
+
+def test_build_edges_port_desc_includes_number_and_name():
+    dev_switch = DummyDevice(
+        "Switch A",
+        "aa:bb:cc:dd:ee:01",
+        [
+            LLDPEntry(
+                "aa:bb:cc:dd:ee:02",
+                "eth1",
+                port_desc="uplink fiberdream",
+                local_port_idx=1,
+            )
+        ],
+    )
+    dev_ap = DummyDevice(
+        "AP One",
+        "aa:bb:cc:dd:ee:02",
+        [LLDPEntry("aa:bb:cc:dd:ee:01", "eth0")],
+    )
+    edges = build_edges([dev_switch, dev_ap], include_ports=True)
+    assert edges[0].label == "Switch A: Port 1 (uplink fiberdream) <-> AP One: Port 0"

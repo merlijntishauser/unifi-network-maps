@@ -34,6 +34,7 @@ class Edge:
     left: str
     right: str
     label: str | None = None
+    poe: bool = False
 
 
 def _get_attr(obj: object, name: str) -> object | None:
@@ -109,6 +110,61 @@ def _local_port_label(entry: LLDPEntry) -> str | None:
     return None
 
 
+def _as_bool(value: object | None) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, int | float):
+        return value != 0
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "y", "on"}
+    return False
+
+
+def _as_float(value: object | None) -> float:
+    if value is None:
+        return 0.0
+    if isinstance(value, int | float):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value)
+        except ValueError:
+            return 0.0
+    return 0.0
+
+
+def _poe_ports_from_device(device: object) -> dict[int, bool]:
+    port_table = _get_attr(device, "port_table") or []
+    poe_ports: dict[int, bool] = {}
+    for entry in port_table:
+        port_idx = _get_attr(entry, "port_idx") or _get_attr(entry, "portIdx")
+        if port_idx is None and isinstance(entry, dict):
+            port_idx = entry.get("port_idx") or entry.get("portIdx")
+        if port_idx is None:
+            continue
+        poe_enable = _get_attr(entry, "poe_enable") or (
+            entry.get("poe_enable") if isinstance(entry, dict) else None
+        )
+        port_poe = _get_attr(entry, "port_poe") or (
+            entry.get("port_poe") if isinstance(entry, dict) else None
+        )
+        poe_good = _get_attr(entry, "poe_good") or (
+            entry.get("poe_good") if isinstance(entry, dict) else None
+        )
+        poe_power = _get_attr(entry, "poe_power") or (
+            entry.get("poe_power") if isinstance(entry, dict) else None
+        )
+
+        active = (
+            _as_bool(poe_enable)
+            or _as_bool(port_poe)
+            or _as_bool(poe_good)
+            or _as_float(poe_power) > 0.0
+        )
+        poe_ports[int(port_idx)] = active
+    return poe_ports
+
+
 def _extract_port_number(label: str | None) -> int | None:
     if not label:
         return None
@@ -182,9 +238,9 @@ def build_tree_edges_by_topology(edges: Iterable[Edge], gateways: list[str]) -> 
     if not gateways:
         return []
 
-    label_map: dict[frozenset[str], str | None] = {}
+    edge_map: dict[frozenset[str], Edge] = {}
     for edge in edges:
-        label_map[frozenset({edge.left, edge.right})] = edge.label
+        edge_map[frozenset({edge.left, edge.right})] = edge
 
     visited: set[str] = set()
     parent: dict[str, str] = {}
@@ -206,8 +262,13 @@ def build_tree_edges_by_topology(edges: Iterable[Edge], gateways: list[str]) -> 
 
     tree_edges: list[Edge] = []
     for child, parent_name in parent.items():
-        label = label_map.get(frozenset({child, parent_name}))
-        tree_edges.append(Edge(left=parent_name, right=child, label=label))
+        original = edge_map.get(frozenset({child, parent_name}))
+        if original is None:
+            tree_edges.append(Edge(left=parent_name, right=child))
+        else:
+            tree_edges.append(
+                Edge(left=parent_name, right=child, label=original.label, poe=original.poe)
+            )
 
     return tree_edges
 
@@ -230,9 +291,11 @@ def build_edges(
     pairs: list[tuple[str, str]] = []
     seen: set[frozenset[str]] = set()
     port_map: dict[tuple[str, str], str] = {}
+    poe_map: dict[tuple[str, str], bool] = {}
 
     for raw_device in devices:
         device = coerce_device(raw_device)
+        poe_ports = _poe_ports_from_device(raw_device)
         for entry in device.lldp_info:
             neighbor_mac = _normalize_mac(entry.chassis_id)
             neighbor_name = index.get(neighbor_mac)
@@ -244,6 +307,8 @@ def build_edges(
             label = _local_port_label(entry)
             if label:
                 port_map[(device.name, neighbor_name)] = label
+            if entry.local_port_idx is not None and entry.local_port_idx in poe_ports:
+                poe_map[(device.name, neighbor_name)] = poe_ports[entry.local_port_idx]
 
             key = frozenset({device.name, neighbor_name})
             if key in seen:
@@ -255,6 +320,7 @@ def build_edges(
     edges: list[Edge] = []
     for left, right in pairs:
         label = None
+        poe = poe_map.get((left, right), False) or poe_map.get((right, left), False)
         if include_ports:
             left_label = port_map.get((left, right))
             right_label = port_map.get((right, left))
@@ -264,7 +330,7 @@ def build_edges(
                 label = f"{left}: {left_label} <-> {right}: ?"
             elif right_label:
                 label = f"{left}: ? <-> {right}: {right_label}"
-        edges.append(Edge(left=left, right=right, label=label))
+        edges.append(Edge(left=left, right=right, label=label, poe=poe))
 
     logger.info("Built %d unique edges", len(edges))
     return edges

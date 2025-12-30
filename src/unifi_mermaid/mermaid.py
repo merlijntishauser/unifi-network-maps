@@ -80,6 +80,8 @@ def render_mermaid(
                 lines.append(f"    {_node_ref(member, id_map[member])}")
             lines.append("  end")
     use_node_labels = not groups
+    poe_links: list[int] = []
+    link_index = 0
     for edge in edge_list:
         if use_node_labels:
             left = _node_ref(edge.left, id_map[edge.left])
@@ -92,4 +94,9 @@ def render_mermaid(
             lines.append(f'  {left} ---|"{label}"| {right}')
         else:
             lines.append(f"  {left} --- {right}")
+        if edge.poe:
+            poe_links.append(link_index)
+        link_index += 1
+    for index in poe_links:
+        lines.append(f"  linkStyle {index} stroke:#2ecc71,stroke-width:2px")
     return "\n".join(lines) + "\n"

@@ -1,6 +1,6 @@
 # AGENTS.md
 
-## Top priority (XP values)
+##Top priority (XP values)
 - Naming is critical; choose clear, intention-revealing names.
 - Optimize for human readability and understandability over cleverness.
 - Prefer small, safe refactors and commit often.
@@ -108,6 +108,16 @@ UNIFI_VERIFY_SSL=false
    - Deduplicate (A—B == B—A)
    - Voeg optioneel poortlabels toe
 6. Render Mermaid
+
+---
+
+## Debug findings (device data)
+
+From recent `--debug-dump` samples:
+- `port_table` entries include `port_idx`, `name` (e.g., "Port 2"), `ifname` (e.g., "eth1"), `is_uplink`, and `last_connection.mac`.
+- PoE is detectable per port: `poe_enable`, `poe_power`, `port_poe`, `poe_class`, `poe_good`, `poe_voltage`, `poe_current`.
+- LLDP entries include `local_port_idx`, `local_port_name`, and `port_id` (often remote port label).
+- Devices also expose `uplink` / `last_uplink` with `uplink_device_name` and `uplink_remote_port`.
 
 ---
 

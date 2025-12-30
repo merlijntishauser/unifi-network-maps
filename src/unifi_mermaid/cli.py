@@ -8,7 +8,7 @@ import logging
 from .config import Config
 from .debug import debug_dump_devices
 from .export import write_output
-from .mermaid import render_mermaid
+from .mermaid import render_legend, render_mermaid
 from .topology import (
     build_client_edges,
     build_device_index,
@@ -54,9 +54,9 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Group nodes by gateway/switch/ap in Mermaid subgraphs",
     )
     parser.add_argument(
-        "--legend",
+        "--legend-only",
         action="store_true",
-        help="Include a legend for node types and PoE links",
+        help="Render only the legend as a separate Mermaid graph",
     )
     parser.add_argument(
         "--include-clients",
@@ -91,6 +91,15 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     site = args.site or config.site
+
+    if args.legend_only:
+        content = render_legend()
+        if args.markdown:
+            content = f"""```mermaid
+{content}```
+"""
+        write_output(content, output_path=args.output, stdout=args.stdout)
+        return 0
 
     try:
         raw_devices = list(fetch_devices(config, site=site, detailed=True))
@@ -134,7 +143,6 @@ def main(argv: list[str] | None = None) -> int:
             groups=groups,
             group_order=group_order,
             node_types=build_node_type_map(devices, clients),
-            include_legend=args.legend,
         )
     else:
         logging.error("Unsupported format: %s", args.format)

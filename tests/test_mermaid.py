@@ -1,4 +1,4 @@
-from unifi_mermaid.mermaid import render_mermaid
+from unifi_mermaid.mermaid import render_legend, render_mermaid
 from unifi_mermaid.topology import Edge
 
 
@@ -17,6 +17,6 @@ def test_render_mermaid_styles_poe_links():
     assert "linkStyle 0" in output
 
 
-def test_render_mermaid_includes_legend():
-    output = render_mermaid([Edge("A", "B")], include_legend=True)
+def test_render_legend_outputs_subgraph():
+    output = render_legend()
     assert "subgraph legend" in output

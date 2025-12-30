@@ -4,8 +4,7 @@ venv:
 	python -m venv .venv
 
 install:
-	.venv/bin/pip install -e .
-	.venv/bin/pip install pre-commit
+	.venv/bin/pip install -e ".[dev]"
 
 lint:
 	.venv/bin/ruff check .

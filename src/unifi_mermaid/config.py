@@ -1,0 +1,43 @@
+"""Configuration loading from environment variables."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+import os
+
+
+def _parse_bool(value: str | None, default: bool = True) -> bool:
+    if value is None:
+        return default
+    normalized = value.strip().lower()
+    if normalized in {"1", "true", "yes", "y", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "n", "off"}:
+        return False
+    return default
+
+
+@dataclass(frozen=True)
+class Config:
+    url: str
+    site: str
+    user: str
+    password: str
+    verify_ssl: bool
+
+    @classmethod
+    def from_env(cls) -> "Config":
+        url = os.environ.get("UNIFI_URL", "").strip()
+        site = os.environ.get("UNIFI_SITE", "default").strip()
+        user = os.environ.get("UNIFI_USER", "").strip()
+        password = os.environ.get("UNIFI_PASS", "").strip()
+        verify_ssl = _parse_bool(os.environ.get("UNIFI_VERIFY_SSL"), default=True)
+
+        if not url:
+            raise ValueError("UNIFI_URL is required")
+        if not user:
+            raise ValueError("UNIFI_USER is required")
+        if not password:
+            raise ValueError("UNIFI_PASS is required")
+
+        return cls(url=url, site=site, user=user, password=password, verify_ssl=verify_ssl)

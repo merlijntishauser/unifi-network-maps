@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "unifi-mermaid-map"
+version = "0.1.0"
+description = "Dynamic UniFi -> Mermaid network maps"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Merlijn" }]
+dependencies = [
+  "unifi-controller-api",
+]
+
+[project.scripts]
+unifi-mermaid = "unifi_mermaid.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

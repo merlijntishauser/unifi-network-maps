@@ -1,0 +1,2 @@
+[console_scripts]
+unifi-mermaid = unifi_mermaid.cli:main

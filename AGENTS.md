@@ -1,5 +1,11 @@
 # AGENTS.md
 
+## Top priority (XP values)
+- Naming is critical; choose clear, intention-revealing names.
+- Optimize for human readability and understandability over cleverness.
+- Prefer small, safe refactors and commit often.
+
+
 ## Project
 Dynamic UniFi → Mermaid Network Maps
 

@@ -10,53 +10,53 @@
 ## Project
 Dynamic UniFi → Mermaid Network Maps
 
-Dit project genereert automatisch netwerkdiagrammen (Mermaid) op basis van UniFi Network data (LLDP/topologie).
-De output is bedoeld voor:
+This project automatically generates network diagrams (Mermaid) from UniFi Network data (LLDP/topology).
+The output is intended for:
 - Home Assistant (Markdown / Lovelace / filesensor)
 - Notes / documentation (Markdown, Obsidian, GitHub, etc.)
 
-Doel: één bron van waarheid, altijd actuele netwerkkaart, zonder handmatig tekenen.
+Goal: a single source of truth, always up-to-date network maps, without manual drawing.
 
 ---
 
-## Architectuur-overzicht
+## Architecture overview
 
-Bron → Model → Diagram → Export
+Source → Model → Diagram → Export
 
-1. **Bron**
+1. **Source**
    - UniFi Network Controller (UniFi OS)
    - API via Python wrapper
-   - LLDP als primaire topologiebron
+   - LLDP as primary topology source
 
 2. **Model**
-   - Devices (gateway, switches, AP’s)
-   - Interfaces / poorten
+   - Devices (gateway, switches, APs)
+   - Interfaces / ports
    - LLDP neighbors (device ↔ device)
-   - (Later uitbreidbaar met clients, VLANs, locaties)
+   - (Extensible later with clients, VLANs, locations)
 
 3. **Diagram**
    - Mermaid `graph LR`
-   - Unidirectionele of gededupliceerde edges
-   - Optioneel poortlabels
+   - Unidirectional or deduplicated edges
+   - Optional port labels
 
 4. **Export**
-   - `.md` bestand (notes project)
-   - `.mermaid` of `.md` voor Home Assistant
-   - STDOUT (voor piping / automation)
+   - `.md` file (notes project)
+   - `.mermaid` or `.md` for Home Assistant
+   - STDOUT (for piping / automation)
 
 ---
 
-## Technologiekeuze
+## Technology choices
 
 ### Python
 - Python ≥ 3.10
-- Virtualenv verplicht
+- Virtualenv required
 
 ### UniFi API
-Gebruik **unifi-controller-api** (tnware):
-- Abstraheert UniFi OS login
-- Mapt responses naar typed objecten
-- Bevat `LLDPEntry` objecten (geen raw JSON parsing)
+Use **unifi-controller-api** (tnware):
+- Abstracts UniFi OS login
+- Maps responses to typed objects
+- Includes `LLDPEntry` objects (no raw JSON parsing)
 
 Install:
 ```bash
@@ -65,9 +65,9 @@ pip install unifi-controller-api
 
 ---
 
-## Configuratie
+## Configuration
 
-Gebruik environment variables (geen secrets in code):
+Use environment variables (no secrets in code):
 
 ```bash
 UNIFI_URL=https://192.168.1.1
@@ -79,7 +79,7 @@ UNIFI_VERIFY_SSL=false
 
 ---
 
-## Minimale datastructuren
+## Minimal data structures
 
 ### Device
 - name
@@ -90,24 +90,24 @@ UNIFI_VERIFY_SSL=false
 - lldp_info: list[LLDPEntry]
 
 ### LLDPEntry
-- chassis_id (meestal MAC)
+- chassis_id (usually MAC)
 - port_id
 - port_desc (optioneel)
 
 ---
 
-## Kernlogica (conceptueel)
+## Core logic (conceptual)
 
-1. Login op UniFi Controller
-2. Haal alle site devices op (`detailed=True`)
-3. Bouw index:
+1. Login to UniFi Controller
+2. Fetch all site devices (`detailed=True`)
+3. Build index:
    - `mac → device_name`
 4. Loop devices:
-   - Voor elke `LLDPEntry`
-   - Match neighbor `chassis_id` tegen bekende MAC’s
-5. Bouw edges:
+   - For each `LLDPEntry`
+   - Match neighbor `chassis_id` against known MACs
+5. Build edges:
    - Deduplicate (A—B == B—A)
-   - Voeg optioneel poortlabels toe
+   - Optionally add port labels
 6. Render Mermaid
 
 ---
@@ -122,7 +122,7 @@ From recent `--debug-dump` samples:
 
 ---
 
-## Mermaid output (voorbeeld)
+## Mermaid output (example)
 
 ```mermaid
 graph LR
@@ -131,14 +131,14 @@ graph LR
   "Core Switch" ---|"Port 7"| "AP Zolder"
 ```
 
-Richtlijnen:
-- Gebruik **namen**, niet MAC’s, in diagrammen
-- Houd diagram leesbaar (geen clients standaard)
-- Eén edge per fysieke link
+Guidelines:
+- Use **names**, not MACs, in diagrams
+- Keep diagrams readable (no clients by default)
+- One edge per physical link
 
 ---
 
-## Bestandsstructuur (voorgesteld)
+## File structure (proposed)
 
 ```text
 unifi-mermaid-map/
@@ -158,9 +158,9 @@ unifi-mermaid-map/
 
 ---
 
-## CLI-gedrag
+## CLI behavior
 
-Voorbeeld:
+Example:
 
 ```bash
 python -m unifi_mermaid.cli \
@@ -169,7 +169,7 @@ python -m unifi_mermaid.cli \
   --output ./network.md
 ```
 
-Opties:
+Options:
 - `--include-ports`
 - `--only-unifi`
 - `--direction LR|TB`
@@ -177,32 +177,32 @@ Opties:
 
 ---
 
-## Home Assistant integratie
+## Home Assistant integration
 
-Ondersteun één of meer van:
-- Bestand schrijven in `/config/www/`
-- Markdown card met `!include`
-- Command-line sensor die Mermaid Markdown ophaalt
-- Git pull vanuit notes repo
+Support one or more of:
+- Write file to `/config/www/`
+- Markdown card with `!include`
+- Command-line sensor that fetches Mermaid Markdown
+- Git pull from notes repo
 
-Geen HA-specifieke logica in core code; exportlaag abstraheert dit.
-
----
-
-## Niet-doelen (bewust)
-
-- Geen SNMP discovery
-- Geen realtime updates
-- Geen visuele styling buiten Mermaid
+No HA-specific logic in core code; the export layer abstracts this.
 
 ---
 
-## Uitbreidingen (later)
+## Non-goals (intentional)
 
-- Groeperen per ruimte / verdieping
+- No SNMP discovery
+- No realtime updates
+- No visual styling beyond Mermaid
+
+---
+
+## Future extensions
+
+- Grouping by room / floor
 - VLAN overlays
-- Clients als subgraphs
-- Export naar Graphviz / draw.io
+- Clients as subgraphs
+- Export to Graphviz / draw.io
 - NetBox sync
 
 ---
@@ -210,13 +210,13 @@ Geen HA-specifieke logica in core code; exportlaag abstraheert dit.
 ## Code quality
 
 - Typing (mypy-ready)
-- Geen prints in core modules
-- Pure functies waar mogelijk
+- No prints in core modules
+- Pure functions where possible
 - Logging via `logging`
-- Fail fast bij ontbrekende LLDP
+- Fail fast on missing LLDP
 
 ---
 
-## Ontwerpregel
+## Design rule
 
-De netwerkkaart moet automatisch correct blijven, ook als niemand eraan denkt.
+The network map must stay correct automatically, even if nobody thinks about it.

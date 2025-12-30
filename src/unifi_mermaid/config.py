@@ -27,6 +27,13 @@ class Config:
 
     @classmethod
     def from_env(cls) -> Config:
+        try:
+            from dotenv import load_dotenv
+        except ImportError as exc:
+            raise RuntimeError("Missing dependency: python-dotenv") from exc
+
+        load_dotenv()
+
         url = os.environ.get("UNIFI_URL", "").strip()
         site = os.environ.get("UNIFI_SITE", "default").strip()
         user = os.environ.get("UNIFI_USER", "").strip()

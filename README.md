@@ -15,7 +15,7 @@ pip install -e .
 
 ## Configuration
 
-Set environment variables (no secrets in code):
+Set environment variables (no secrets in code). The CLI loads `.env` automatically if present:
 
 ```bash
 export UNIFI_URL=https://192.168.1.1

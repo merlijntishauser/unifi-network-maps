@@ -12,6 +12,7 @@ license = { text = "MIT" }
 authors = [{ name = "Merlijn" }]
 dependencies = [
   "unifi-controller-api",
+  "python-dotenv",
 ]
 
 [project.optional-dependencies]

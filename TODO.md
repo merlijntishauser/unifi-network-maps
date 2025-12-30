@@ -4,10 +4,7 @@
 - (done)
 
 ## P1 - Maintainability
-- **Extract debug dump into its own module:** Move `_debug_dump_devices` and `_device_to_dict` into `debug.py` and keep CLI thin.
-- **Centralize LLDP/port parsing:** Consolidate LLDP parsing and port label logic into a dedicated helper class or module to keep `topology.py` smaller.
-- **Replace BFS list queue with `deque`:** Use `collections.deque` in `build_tree_edges_by_topology` for clarity and efficiency.
-- **Unify label composition:** Provide a single utility for edge label rendering (ports, PoE) to avoid drifting logic between topology and mermaid.
+- (done)
 
 ## P2 - Cleanup/Quality
 - **Drop generated `*.egg-info` from `src/`:** Ensure they are not tracked and update `.gitignore` if needed.

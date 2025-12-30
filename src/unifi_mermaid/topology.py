@@ -101,20 +101,6 @@ def group_devices_by_type(devices: Iterable[object]) -> dict[str, list[str]]:
     return groups
 
 
-def build_rank_edges_by_type(
-    groups: dict[str, list[str]], group_order: list[str]
-) -> list[tuple[str, str]]:
-    rank_edges: list[tuple[str, str]] = []
-    ordered_groups = [groups.get(group, []) for group in group_order]
-    for upper, lower in zip(ordered_groups, ordered_groups[1:], strict=False):
-        if not upper or not lower:
-            continue
-        for upper_node in upper:
-            for lower_node in lower:
-                rank_edges.append((upper_node, lower_node))
-    return rank_edges
-
-
 def build_rank_edges_by_topology(
     edges: Iterable[Edge], gateways: list[str]
 ) -> list[tuple[str, str]]:

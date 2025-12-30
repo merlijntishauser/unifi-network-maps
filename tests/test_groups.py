@@ -1,5 +1,11 @@
 from unifi_mermaid.mermaid import render_mermaid
-from unifi_mermaid.topology import Device, Edge, classify_device_type, group_devices_by_type
+from unifi_mermaid.topology import (
+    Device,
+    Edge,
+    build_rank_edges_by_topology,
+    classify_device_type,
+    group_devices_by_type,
+)
 
 
 def test_classify_gateway_type():
@@ -18,3 +24,9 @@ def test_render_mermaid_with_groups_uses_subgraph():
     groups = {"gateway": ["Gateway"], "switch": ["Switch"], "ap": [], "other": []}
     output = render_mermaid(edges, groups=groups, group_order=["gateway", "switch", "ap", "other"])
     assert 'subgraph group_gateway["Gateway"]' in output
+
+
+def test_rank_edges_by_topology_uses_hops():
+    edges = [Edge("GW", "SW"), Edge("SW", "AP")]
+    ranks = build_rank_edges_by_topology(edges, ["GW"])
+    assert ("GW", "SW") in ranks

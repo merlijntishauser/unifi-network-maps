@@ -1,4 +1,4 @@
-.PHONY: venv install lint format ci
+.PHONY: venv install lint format test ci
 
 venv:
 	python -m venv .venv
@@ -12,6 +12,9 @@ lint:
 format:
 	.venv/bin/ruff format .
 
-ci: lint format
+test:
+	.venv/bin/pytest
+
+ci: lint format test
 	.venv/bin/pre-commit run --all-files
 	.venv/bin/python -m unifi_mermaid.cli --help

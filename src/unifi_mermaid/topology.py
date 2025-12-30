@@ -79,14 +79,23 @@ def _looks_like_mac(value: str | None) -> bool:
 
 def _local_port_label(entry: LLDPEntry) -> str | None:
     if entry.local_port_name:
-        return entry.local_port_name
+        return _normalize_port_label(entry.local_port_name)
     if entry.local_port_idx is not None:
         return f"Port {entry.local_port_idx}"
     if entry.port_desc and not _looks_like_mac(entry.port_desc):
-        return entry.port_desc
+        return _normalize_port_label(entry.port_desc)
     if entry.port_id and not _looks_like_mac(entry.port_id):
-        return entry.port_id
+        return _normalize_port_label(entry.port_id)
     return None
+
+
+def _normalize_port_label(label: str) -> str:
+    trimmed = label.strip()
+    if trimmed.lower().startswith("eth"):
+        suffix = trimmed[3:]
+        if suffix.isdigit():
+            return f"Port {suffix}"
+    return trimmed
 
 
 def coerce_device(device: object) -> Device:

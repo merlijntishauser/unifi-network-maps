@@ -182,6 +182,18 @@ def _normalize_port_label(label: str) -> str:
     return trimmed
 
 
+def _compose_edge_label(left: str, right: str, port_map: dict[tuple[str, str], str]) -> str | None:
+    left_label = port_map.get((left, right))
+    right_label = port_map.get((right, left))
+    if left_label and right_label:
+        return f"{left}: {left_label} <-> {right}: {right_label}"
+    if left_label:
+        return f"{left}: {left_label} <-> {right}: ?"
+    if right_label:
+        return f"{left}: ? <-> {right}: {right_label}"
+    return None
+
+
 def coerce_device(device: object) -> Device:
     name = _get_attr(device, "name")
     model_name = _get_attr(device, "model_name") or _get_attr(device, "model")
@@ -319,17 +331,8 @@ def build_edges(
 
     edges: list[Edge] = []
     for left, right in pairs:
-        label = None
         poe = poe_map.get((left, right), False) or poe_map.get((right, left), False)
-        if include_ports:
-            left_label = port_map.get((left, right))
-            right_label = port_map.get((right, left))
-            if left_label and right_label:
-                label = f"{left}: {left_label} <-> {right}: {right_label}"
-            elif left_label:
-                label = f"{left}: {left_label} <-> {right}: ?"
-            elif right_label:
-                label = f"{left}: ? <-> {right}: {right_label}"
+        label = _compose_edge_label(left, right, port_map) if include_ports else None
         edges.append(Edge(left=left, right=right, label=label, poe=poe))
 
     logger.info("Built %d unique edges", len(edges))

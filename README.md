@@ -42,6 +42,7 @@ Options:
 Notes:
 - Default output is top-to-bottom (TB) and rendered as a hop-based tree from the gateway(s).
 - `--group-by-type` creates Mermaid subgraphs for gateway/switch/AP nodes.
+- `--include-ports` shows both ends when LLDP is available (e.g. `A: Port 1 <-> B: Port 7`).
 
 ## Notes
 

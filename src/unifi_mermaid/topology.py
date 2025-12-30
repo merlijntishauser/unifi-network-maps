@@ -155,8 +155,9 @@ def build_edges(
     only_unifi: bool = True,
 ) -> list[Edge]:
     index = build_device_index(devices)
-    edges: list[Edge] = []
+    pairs: list[tuple[str, str]] = []
     seen: set[frozenset[str]] = set()
+    port_map: dict[tuple[str, str], str] = {}
 
     for raw_device in devices:
         device = coerce_device(raw_device)
@@ -168,16 +169,30 @@ def build_edges(
                     continue
                 neighbor_name = entry.chassis_id
 
+            label = entry.port_desc or entry.port_id
+            if label:
+                port_map[(device.name, neighbor_name)] = label
+
             key = frozenset({device.name, neighbor_name})
             if key in seen:
                 continue
 
-            label = None
-            if include_ports:
-                label = entry.port_desc or entry.port_id
-
-            edges.append(Edge(left=device.name, right=neighbor_name, label=label))
+            pairs.append((device.name, neighbor_name))
             seen.add(key)
+
+    edges: list[Edge] = []
+    for left, right in pairs:
+        label = None
+        if include_ports:
+            left_label = port_map.get((left, right))
+            right_label = port_map.get((right, left))
+            if left_label and right_label:
+                label = f"{left}: {left_label} <-> {right}: {right_label}"
+            elif left_label:
+                label = f"{left}: {left_label} <-> {right}: ?"
+            elif right_label:
+                label = f"{left}: ? <-> {right}: {right_label}"
+        edges.append(Edge(left=left, right=right, label=label))
 
     logger.info("Built %d unique edges", len(edges))
     return edges

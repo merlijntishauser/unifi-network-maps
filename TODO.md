@@ -1,9 +1,7 @@
 # TODO (Refactor Proposals)
 
 ## P0 - Correctness/Clarity
-- **Normalize device ingestion:** Build a single normalized device list once (with LLDP/PoE extracted) and pass it through topology/mermaid, avoiding repeated `coerce_device` and duplicated attribute access.
 - **Define a typed device adapter:** Introduce a lightweight Protocol/dataclass for the UniFi device fields we use (name/mac/type/lldp/port_table) to make expectations explicit and reduce defensive `getattr` usage.
-- **Separate tree-building from edge-building:** Make a `TopologyBuilder` that outputs a tree and raw edges, so CLI doesn’t modify edge lists in-place and the flow is easier to reason about.
 
 ## P1 - Maintainability
 - **Extract debug dump into its own module:** Move `_debug_dump_devices` and `_device_to_dict` into `debug.py` and keep CLI thin.

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import os
+from dataclasses import dataclass
 
 
 def _parse_bool(value: str | None, default: bool = True) -> bool:
@@ -26,7 +26,7 @@ class Config:
     verify_ssl: bool
 
     @classmethod
-    def from_env(cls) -> "Config":
+    def from_env(cls) -> Config:
         url = os.environ.get("UNIFI_URL", "").strip()
         site = os.environ.get("UNIFI_SITE", "default").strip()
         user = os.environ.get("UNIFI_USER", "").strip()

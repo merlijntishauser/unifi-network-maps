@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Iterable
+from collections.abc import Iterable
 
 from .topology import Edge
 
@@ -18,7 +18,7 @@ def render_mermaid(edges: Iterable[Edge], direction: str = "LR") -> str:
         right = _escape(edge.right)
         if edge.label:
             label = _escape(edge.label)
-            lines.append(f"  \"{left}\" ---|\"{label}\"| \"{right}\"")
+            lines.append(f'  "{left}" ---|"{label}"| "{right}"')
         else:
-            lines.append(f"  \"{left}\" --- \"{right}\"")
+            lines.append(f'  "{left}" --- "{right}"')
     return "\n".join(lines) + "\n"

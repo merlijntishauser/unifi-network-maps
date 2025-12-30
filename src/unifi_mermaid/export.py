@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import sys
-from typing import Optional
+from pathlib import Path
 
 
-def write_output(content: str, *, output_path: Optional[str], stdout: bool) -> None:
+def write_output(content: str, *, output_path: str | None, stdout: bool) -> None:
     if output_path:
         Path(output_path).write_text(content, encoding="utf-8")
     if stdout or not output_path:

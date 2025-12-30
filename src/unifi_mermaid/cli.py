@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import logging
-import sys
 
 from .config import Config
 from .export import write_output
@@ -14,12 +13,16 @@ from .unifi import fetch_devices
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Generate Mermaid network maps from UniFi LLDP data")
+    parser = argparse.ArgumentParser(
+        description="Generate Mermaid network maps from UniFi LLDP data"
+    )
     parser.add_argument("--site", default=None, help="UniFi site name (overrides UNIFI_SITE)")
     parser.add_argument("--format", default="mermaid", choices=["mermaid"], help="Output format")
     parser.add_argument("--output", default=None, help="Output file path")
     parser.add_argument("--include-ports", action="store_true", help="Include port labels in edges")
-    parser.add_argument("--only-unifi", action="store_true", help="Only include neighbors that are UniFi devices")
+    parser.add_argument(
+        "--only-unifi", action="store_true", help="Only include neighbors that are UniFi devices"
+    )
     parser.add_argument("--direction", default="LR", choices=["LR", "TB"], help="Mermaid direction")
     parser.add_argument("--stdout", action="store_true", help="Write output to stdout")
     return parser

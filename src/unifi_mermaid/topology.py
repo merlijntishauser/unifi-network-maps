@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import logging
-from typing import Iterable, Optional
+from collections.abc import Iterable
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ class Edge:
     label: str | None = None
 
 
-def _get_attr(obj: object, name: str) -> Optional[object]:
+def _get_attr(obj: object, name: str) -> object | None:
     return getattr(obj, name, None)
 
 
@@ -47,7 +47,11 @@ def _coerce_lldp(entry: object) -> LLDPEntry:
     port_desc = _get_attr(entry, "port_desc") or _get_attr(entry, "portDesc")
     if not chassis_id or not port_id:
         raise ValueError("LLDP entry missing chassis_id or port_id")
-    return LLDPEntry(chassis_id=str(chassis_id), port_id=str(port_id), port_desc=str(port_desc) if port_desc else None)
+    return LLDPEntry(
+        chassis_id=str(chassis_id),
+        port_id=str(port_id),
+        port_desc=str(port_desc) if port_desc else None,
+    )
 
 
 def coerce_device(device: object) -> Device:

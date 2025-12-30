@@ -3,14 +3,18 @@
 from __future__ import annotations
 
 import logging
-from typing import Iterable
+from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 from .config import Config
+
+if TYPE_CHECKING:
+    from unifi_controller_api import UnifiController
 
 logger = logging.getLogger(__name__)
 
 
-def _init_controller(config: Config, *, is_udm_pro: bool) -> "UnifiController":
+def _init_controller(config: Config, *, is_udm_pro: bool) -> UnifiController:
     from unifi_controller_api import UnifiController
 
     return UnifiController(
@@ -22,7 +26,9 @@ def _init_controller(config: Config, *, is_udm_pro: bool) -> "UnifiController":
     )
 
 
-def fetch_devices(config: Config, *, site: str | None = None, detailed: bool = True) -> Iterable[object]:
+def fetch_devices(
+    config: Config, *, site: str | None = None, detailed: bool = True
+) -> Iterable[object]:
     """Fetch devices from UniFi Controller.
 
     Uses `unifi-controller-api` to authenticate and return device objects.
@@ -36,7 +42,7 @@ def fetch_devices(config: Config, *, site: str | None = None, detailed: bool = T
 
     try:
         controller = _init_controller(config, is_udm_pro=True)
-    except UnifiAuthenticationError as exc:
+    except UnifiAuthenticationError:
         logger.info("UDM Pro authentication failed, retrying legacy auth")
         controller = _init_controller(config, is_udm_pro=False)
 

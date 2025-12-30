@@ -14,8 +14,25 @@ dependencies = [
   "unifi-controller-api",
 ]
 
+[project.optional-dependencies]
+dev = [
+  "pre-commit",
+  "ruff",
+]
+
 [project.scripts]
 unifi-mermaid = "unifi_mermaid.cli:main"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+line-ending = "lf"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

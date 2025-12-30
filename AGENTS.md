@@ -4,6 +4,7 @@
 - Naming is critical; choose clear, intention-revealing names.
 - Optimize for human readability and understandability over cleverness.
 - Prefer small, safe refactors and commit often.
+- Long functions/methods (>15 lines) are a code smell; split into smaller parts.
 
 
 ## Project

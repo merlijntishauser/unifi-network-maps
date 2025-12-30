@@ -213,6 +213,53 @@ def build_device_index(devices: Iterable[Device]) -> dict[str, str]:
     return index
 
 
+def _client_field(client: object, name: str) -> object | None:
+    if isinstance(client, dict):
+        return client.get(name)
+    return getattr(client, name, None)
+
+
+def _client_display_name(client: object) -> str | None:
+    for key in ("name", "hostname", "mac"):
+        value = _client_field(client, key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return None
+
+
+def _client_uplink_mac(client: object) -> str | None:
+    for key in ("ap_mac", "sw_mac", "uplink_mac", "uplink_device_mac", "last_uplink_mac"):
+        value = _client_field(client, key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    for key in ("uplink", "last_uplink"):
+        nested = _client_field(client, key)
+        if isinstance(nested, dict):
+            value = nested.get("uplink_mac") or nested.get("uplink_device_mac")
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+    return None
+
+
+def build_client_edges(clients: Iterable[object], device_index: dict[str, str]) -> list[Edge]:
+    edges: list[Edge] = []
+    seen: set[tuple[str, str]] = set()
+    for client in clients:
+        name = _client_display_name(client)
+        uplink_mac = _client_uplink_mac(client)
+        if not name or not uplink_mac:
+            continue
+        device_name = device_index.get(_normalize_mac(uplink_mac))
+        if not device_name:
+            continue
+        key = (device_name, name)
+        if key in seen:
+            continue
+        edges.append(Edge(left=device_name, right=name))
+        seen.add(key)
+    return edges
+
+
 def build_edges(
     devices: Iterable[Device],
     *,

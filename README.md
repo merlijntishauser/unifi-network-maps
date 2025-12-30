@@ -38,6 +38,7 @@ Options:
 - --stdout
 - --markdown
 - --group-by-type
+- --include-clients
 - --debug-dump
 - --debug-sample N
 
@@ -46,6 +47,7 @@ Notes:
 - `--group-by-type` creates Mermaid subgraphs for gateway/switch/AP nodes.
 - `--debug-dump` writes a JSON payload of the gateway and sample devices to stderr.
 - `--include-ports` shows both ends when LLDP is available (e.g. `A: Port 1 <-> B: Port 7`).
+- `--include-clients` adds active clients as leaf nodes (may clutter large networks).
 
 ## Notes
 

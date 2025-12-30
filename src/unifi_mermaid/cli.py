@@ -9,8 +9,14 @@ from .config import Config
 from .debug import debug_dump_devices
 from .export import write_output
 from .mermaid import render_mermaid
-from .topology import build_topology, group_devices_by_type, normalize_devices
-from .unifi import fetch_devices
+from .topology import (
+    build_client_edges,
+    build_device_index,
+    build_topology,
+    group_devices_by_type,
+    normalize_devices,
+)
+from .unifi import fetch_clients, fetch_devices
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +51,11 @@ def _build_parser() -> argparse.ArgumentParser:
         "--group-by-type",
         action="store_true",
         help="Group nodes by gateway/switch/ap in Mermaid subgraphs",
+    )
+    parser.add_argument(
+        "--include-clients",
+        action="store_true",
+        help="Include active clients as leaf nodes",
     )
     parser.add_argument("--stdout", action="store_true", help="Write output to stdout")
     parser.add_argument(
@@ -101,6 +112,10 @@ def main(argv: list[str] | None = None) -> int:
         else:
             edges = topology.raw_edges
             logging.warning("No gateway found for hierarchy; rendering raw edges.")
+        if args.include_clients:
+            clients = list(fetch_clients(config, site=site))
+            device_index = build_device_index(devices)
+            edges = edges + build_client_edges(clients, device_index)
         if args.group_by_type:
             groups = groups_for_rank
             group_order = ["gateway", "switch", "ap", "other"]

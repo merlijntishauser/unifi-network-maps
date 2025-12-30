@@ -49,3 +49,23 @@ def fetch_devices(
     devices = controller.get_unifi_site_device(site_name=site_name, detailed=detailed, raw=False)
     logger.info("Fetched %d devices", len(devices))
     return devices
+
+
+def fetch_clients(config: Config, *, site: str | None = None) -> Iterable[object]:
+    """Fetch active clients from UniFi Controller."""
+    try:
+        from unifi_controller_api import UnifiAuthenticationError
+    except ImportError as exc:
+        raise RuntimeError("Missing dependency: unifi-controller-api") from exc
+
+    site_name = site or config.site
+
+    try:
+        controller = _init_controller(config, is_udm_pro=True)
+    except UnifiAuthenticationError:
+        logger.info("UDM Pro authentication failed, retrying legacy auth")
+        controller = _init_controller(config, is_udm_pro=False)
+
+    clients = controller.get_unifi_site_client(site_name=site_name, raw=True)
+    logger.info("Fetched %d clients", len(clients))
+    return clients

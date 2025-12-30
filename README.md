@@ -27,32 +27,45 @@ export UNIFI_VERIFY_SSL=false
 
 ## Usage
 
+Basic map (tree layout by LLDP hops):
+
 ```bash
-python -m unifi_mermaid.cli --site default --format mermaid --markdown --output ./network.md
+python -m unifi_mermaid.cli --stdout
 ```
 
-Options:
-- --include-ports
-- --only-unifi
-- --direction LR|TB
-- --stdout
-- --markdown
-- --group-by-type
-- --include-clients
-- --legend-only
-- --debug-dump
-- --debug-sample N
+Write Markdown for notes tools:
 
-Notes:
-- Default output is top-to-bottom (TB) and rendered as a hop-based tree from the gateway(s).
-- `--group-by-type` creates Mermaid subgraphs for gateway/switch/AP nodes.
-- `--debug-dump` writes a JSON payload of the gateway and sample devices to stderr.
-- `--include-ports` shows both ends when LLDP is available (e.g. `A: Port 1 <-> B: Port 7`).
-- `--include-clients` adds active clients as leaf nodes (may clutter large networks).
-- Nodes are color-coded by type (gateway/switch/AP/client) with a sensible default palette.
-- `--legend-only` renders just the legend as its own Mermaid graph.
+```bash
+python -m unifi_mermaid.cli --markdown --output ./network.md
+```
+
+Show ports + clients:
+
+```bash
+python -m unifi_mermaid.cli --include-ports --include-clients --stdout
+```
+
+Legend only:
+
+```bash
+python -m unifi_mermaid.cli --legend-only --stdout
+```
+
+## Options
+
+- `--include-ports`: show both ends when LLDP is available (e.g. `A: Port 1 <-> B: Port 7`).
+- `--only-unifi`: only include neighbors that are UniFi devices.
+- `--direction LR|TB`: diagram direction (default TB).
+- `--stdout`: write output to stdout.
+- `--markdown`: wrap output in a Mermaid code fence.
+- `--group-by-type`: group nodes by gateway/switch/AP in Mermaid subgraphs.
+- `--include-clients`: add active wired clients as leaf nodes.
+- `--legend-only`: render just the legend as a separate Mermaid graph.
+- `--debug-dump`: dump gateway + sample devices to stderr for debugging.
+- `--debug-sample N`: number of non-gateway devices in debug dump (default 2).
 
 ## Notes
 
-- The UniFi API integration is stubbed in `src/unifi_mermaid/unifi.py` and should be implemented against `unifi-controller-api`.
-- Core modules avoid prints; use logging and the export layer for output.
+- Default output is top-to-bottom (TB) and rendered as a hop-based tree from the gateway(s).
+- Nodes are color-coded by type (gateway/switch/AP/client) with a sensible default palette.
+- PoE links are highlighted in green when detected from `port_table`.

@@ -6,6 +6,7 @@ import logging
 import re
 from collections.abc import Iterable
 from dataclasses import dataclass, field
+from typing import Protocol
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,20 @@ class Edge:
     right: str
     label: str | None = None
     poe: bool = False
+
+
+class DeviceLike(Protocol):
+    name: str | None
+    model_name: str | None
+    model: str | None
+    mac: str | None
+    ip: str | None
+    ip_address: str | None
+    type: str | None
+    device_type: str | None
+    lldp_info: object | None
+    lldp: object | None
+    port_table: object | None
 
 
 def _get_attr(obj: object, name: str) -> object | None:
@@ -134,7 +149,7 @@ def _as_float(value: object | None) -> float:
     return 0.0
 
 
-def _poe_ports_from_device(device: object) -> dict[int, bool]:
+def _poe_ports_from_device(device: DeviceLike) -> dict[int, bool]:
     port_table = _get_attr(device, "port_table") or []
     poe_ports: dict[int, bool] = {}
     for entry in port_table:
@@ -195,7 +210,7 @@ def _compose_edge_label(left: str, right: str, port_map: dict[tuple[str, str], s
     return None
 
 
-def coerce_device(device: object) -> Device:
+def coerce_device(device: DeviceLike) -> Device:
     name = _get_attr(device, "name")
     model_name = _get_attr(device, "model_name") or _get_attr(device, "model")
     mac = _get_attr(device, "mac")
@@ -224,7 +239,7 @@ def coerce_device(device: object) -> Device:
     )
 
 
-def normalize_devices(devices: Iterable[object]) -> list[Device]:
+def normalize_devices(devices: Iterable[DeviceLike]) -> list[Device]:
     return [coerce_device(device) for device in devices]
 
 

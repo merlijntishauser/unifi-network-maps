@@ -14,6 +14,8 @@ class LLDPEntry:
     chassis_id: str
     port_id: str
     port_desc: str | None = None
+    local_port_name: str | None = None
+    local_port_idx: int | None = None
 
 
 @dataclass(frozen=True)
@@ -44,14 +46,47 @@ def _normalize_mac(value: str) -> str:
 def _coerce_lldp(entry: object) -> LLDPEntry:
     chassis_id = _get_attr(entry, "chassis_id") or _get_attr(entry, "chassisId")
     port_id = _get_attr(entry, "port_id") or _get_attr(entry, "portId")
-    port_desc = _get_attr(entry, "port_desc") or _get_attr(entry, "portDesc")
+    port_desc = (
+        _get_attr(entry, "port_desc")
+        or _get_attr(entry, "portDesc")
+        or _get_attr(entry, "port_descr")
+        or _get_attr(entry, "portDescr")
+    )
+    local_port_name = _get_attr(entry, "local_port_name") or _get_attr(entry, "localPortName")
+    local_port_idx = _get_attr(entry, "local_port_idx") or _get_attr(entry, "localPortIdx")
     if not chassis_id or not port_id:
         raise ValueError("LLDP entry missing chassis_id or port_id")
     return LLDPEntry(
         chassis_id=str(chassis_id),
         port_id=str(port_id),
         port_desc=str(port_desc) if port_desc else None,
+        local_port_name=str(local_port_name) if local_port_name else None,
+        local_port_idx=int(local_port_idx) if local_port_idx is not None else None,
     )
+
+
+def _looks_like_mac(value: str | None) -> bool:
+    if not value:
+        return False
+    cleaned = value.strip().lower()
+    if cleaned.count(":") == 5:
+        return all(
+            len(part) == 2 and all(ch in "0123456789abcdef" for ch in part)
+            for part in cleaned.split(":")
+        )
+    return False
+
+
+def _local_port_label(entry: LLDPEntry) -> str | None:
+    if entry.local_port_name:
+        return entry.local_port_name
+    if entry.local_port_idx is not None:
+        return f"Port {entry.local_port_idx}"
+    if entry.port_desc and not _looks_like_mac(entry.port_desc):
+        return entry.port_desc
+    if entry.port_id and not _looks_like_mac(entry.port_id):
+        return entry.port_id
+    return None
 
 
 def coerce_device(device: object) -> Device:
@@ -169,7 +204,7 @@ def build_edges(
                     continue
                 neighbor_name = entry.chassis_id
 
-            label = entry.port_desc or entry.port_id
+            label = _local_port_label(entry)
             if label:
                 port_map[(device.name, neighbor_name)] = label
 

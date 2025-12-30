@@ -1,7 +1,7 @@
 # TODO (Refactor Proposals)
 
 ## P0 - Correctness/Clarity
-- **Define a typed device adapter:** Introduce a lightweight Protocol/dataclass for the UniFi device fields we use (name/mac/type/lldp/port_table) to make expectations explicit and reduce defensive `getattr` usage.
+- (done)
 
 ## P1 - Maintainability
 - **Extract debug dump into its own module:** Move `_debug_dump_devices` and `_device_to_dict` into `debug.py` and keep CLI thin.

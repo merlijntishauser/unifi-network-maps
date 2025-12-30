@@ -1,10 +1,18 @@
 # TODO (Refactor Proposals)
 
 ## P0 - Correctness/Clarity
-- (done)
+- **Use uplink data as LLDP fallback:** Leverage `uplink`/`last_uplink` to map links when LLDP is missing or ambiguous.
+- **Stabilize topology ordering:** Sort devices/edges by name or MAC before building the tree for deterministic output.
 
 ## P1 - Maintainability
-- (done)
+- **Expand typed device adapter:** Add explicit fields/models for `port_table`, `uplink`, and `last_uplink`.
+- **LLDP ↔ port_table alignment:** Fallback match port `name`/`ifname` when `local_port_idx` is missing.
 
 ## P2 - Cleanup/Quality
-- (done)
+- **Config ergonomics:** Support `--env-file` to load different `.env` files for multiple sites.
+- **Mermaid styling config:** Allow configuring PoE link color or style instead of hardcoding.
+- **Logging consistency:** Add normalized device/edge counts to logs for easier troubleshooting.
+- **Tests for uplink fallback:** Add a fixture covering missing LLDP but present `uplink` data.
+
+## Next
+- Consider refining client inclusion (filter by wired, limit count, or group by uplink device).

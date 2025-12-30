@@ -8,6 +8,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import Protocol
 
+from .labels import compose_port_label
 from .lldp import LLDPEntry, coerce_lldp, local_port_label
 
 logger = logging.getLogger(__name__)
@@ -107,18 +108,6 @@ def _poe_ports_from_device(device: DeviceLike) -> dict[int, bool]:
         )
         poe_ports[int(port_idx)] = active
     return poe_ports
-
-
-def _compose_edge_label(left: str, right: str, port_map: dict[tuple[str, str], str]) -> str | None:
-    left_label = port_map.get((left, right))
-    right_label = port_map.get((right, left))
-    if left_label and right_label:
-        return f"{left}: {left_label} <-> {right}: {right_label}"
-    if left_label:
-        return f"{left}: {left_label} <-> {right}: ?"
-    if right_label:
-        return f"{left}: ? <-> {right}: {right_label}"
-    return None
 
 
 def coerce_device(device: DeviceLike) -> Device:
@@ -262,7 +251,7 @@ def build_edges(
     edges: list[Edge] = []
     for left, right in pairs:
         poe = poe_map.get((left, right), False) or poe_map.get((right, left), False)
-        label = _compose_edge_label(left, right, port_map) if include_ports else None
+        label = compose_port_label(left, right, port_map) if include_ports else None
         edges.append(Edge(left=left, right=right, label=label, poe=poe))
 
     logger.info("Built %d unique edges", len(edges))

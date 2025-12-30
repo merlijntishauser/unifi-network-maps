@@ -9,7 +9,7 @@ import logging
 from .config import Config
 from .export import write_output
 from .mermaid import render_mermaid
-from .topology import build_edges, build_tree_edges_by_topology, group_devices_by_type
+from .topology import build_topology, group_devices_by_type, normalize_devices
 from .unifi import fetch_devices
 
 logger = logging.getLogger(__name__)
@@ -66,10 +66,18 @@ def main(argv: list[str] | None = None) -> int:
     site = args.site or config.site
 
     try:
-        devices = list(fetch_devices(config, site=site, detailed=True))
+        raw_devices = list(fetch_devices(config, site=site, detailed=True))
+        devices = normalize_devices(raw_devices)
         if args.debug_dump:
-            _debug_dump_devices(devices, sample_count=max(0, args.debug_sample))
-        edges = build_edges(devices, include_ports=args.include_ports, only_unifi=args.only_unifi)
+            _debug_dump_devices(raw_devices, devices, sample_count=max(0, args.debug_sample))
+        groups_for_rank = group_devices_by_type(devices)
+        gateways = groups_for_rank.get("gateway", [])
+        topology = build_topology(
+            devices,
+            include_ports=args.include_ports,
+            only_unifi=args.only_unifi,
+            gateways=gateways,
+        )
     except Exception as exc:
         logging.error("Failed to build topology: %s", exc)
         return 1
@@ -78,12 +86,10 @@ def main(argv: list[str] | None = None) -> int:
         groups = None
         group_order = None
         direction = args.direction
-        groups_for_rank = group_devices_by_type(devices)
-        gateways = groups_for_rank.get("gateway", [])
-        tree_edges = build_tree_edges_by_topology(edges, gateways)
-        if tree_edges:
-            edges = tree_edges
+        if topology.tree_edges:
+            edges = topology.tree_edges
         else:
+            edges = topology.raw_edges
             logging.warning("No gateway found for hierarchy; rendering raw edges.")
         if args.group_by_type:
             groups = groups_for_rank
@@ -115,14 +121,16 @@ def _device_to_dict(device: object) -> dict:
     return {"repr": repr(device)}
 
 
-def _debug_dump_devices(devices: list[object], *, sample_count: int) -> None:
+def _debug_dump_devices(
+    raw_devices: list[object], normalized: list[object], *, sample_count: int
+) -> None:
     name_to_device = {}
-    for device in devices:
+    for device in raw_devices:
         name = getattr(device, "name", None)
         if name:
             name_to_device[name] = device
 
-    groups = group_devices_by_type(devices)
+    groups = group_devices_by_type(normalized)
     gateways = groups.get("gateway", [])
     samples = []
     for group in ("switch", "ap", "other"):

@@ -28,7 +28,7 @@ export UNIFI_VERIFY_SSL=false
 ## Usage
 
 ```bash
-python -m unifi_mermaid.cli --site default --format mermaid --output ./network.md
+python -m unifi_mermaid.cli --site default --format mermaid --markdown --output ./network.md
 ```
 
 Options:
@@ -36,6 +36,7 @@ Options:
 - --only-unifi
 - --direction LR|TB
 - --stdout
+- --markdown
 
 ## Notes
 

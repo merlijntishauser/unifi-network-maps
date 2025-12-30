@@ -18,6 +18,11 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--site", default=None, help="UniFi site name (overrides UNIFI_SITE)")
     parser.add_argument("--format", default="mermaid", choices=["mermaid"], help="Output format")
+    parser.add_argument(
+        "--markdown",
+        action="store_true",
+        help="Wrap output in a Markdown mermaid code fence for notes tools like Obsidian",
+    )
     parser.add_argument("--output", default=None, help="Output file path")
     parser.add_argument("--include-ports", action="store_true", help="Include port labels in edges")
     parser.add_argument(
@@ -53,6 +58,11 @@ def main(argv: list[str] | None = None) -> int:
     else:
         logging.error("Unsupported format: %s", args.format)
         return 2
+
+    if args.markdown:
+        content = f"""```mermaid
+{content}```
+"""
 
     write_output(content, output_path=args.output, stdout=args.stdout)
     return 0

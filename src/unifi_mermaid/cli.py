@@ -54,6 +54,11 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Group nodes by gateway/switch/ap in Mermaid subgraphs",
     )
     parser.add_argument(
+        "--legend",
+        action="store_true",
+        help="Include a legend for node types and PoE links",
+    )
+    parser.add_argument(
         "--include-clients",
         action="store_true",
         help="Include active clients as leaf nodes",
@@ -129,6 +134,7 @@ def main(argv: list[str] | None = None) -> int:
             groups=groups,
             group_order=group_order,
             node_types=build_node_type_map(devices, clients),
+            include_legend=args.legend,
         )
     else:
         logging.error("Unsupported format: %s", args.format)

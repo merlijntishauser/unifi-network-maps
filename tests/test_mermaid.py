@@ -15,3 +15,8 @@ def test_render_mermaid_includes_edge_label():
 def test_render_mermaid_styles_poe_links():
     output = render_mermaid([Edge("A", "B", poe=True)])
     assert "linkStyle 0" in output
+
+
+def test_render_mermaid_includes_legend():
+    output = render_mermaid([Edge("A", "B")], include_legend=True)
+    assert "subgraph legend" in output

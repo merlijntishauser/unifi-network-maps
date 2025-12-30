@@ -39,6 +39,7 @@ Options:
 - --markdown
 - --group-by-type
 - --include-clients
+- --legend
 - --debug-dump
 - --debug-sample N
 
@@ -49,6 +50,7 @@ Notes:
 - `--include-ports` shows both ends when LLDP is available (e.g. `A: Port 1 <-> B: Port 7`).
 - `--include-clients` adds active clients as leaf nodes (may clutter large networks).
 - Nodes are color-coded by type (gateway/switch/AP/client) with a sensible default palette.
+- `--legend` adds a color/PoE legend as a separate subgraph.
 
 ## Notes
 

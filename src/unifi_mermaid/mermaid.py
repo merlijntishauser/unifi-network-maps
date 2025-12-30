@@ -67,7 +67,7 @@ def render_mermaid(
         for members in groups.values():
             group_nodes.extend(members)
     id_map = _build_id_map(edge_list, group_nodes)
-    lines = [f"graph {direction}"]
+    lines = ["%%{init: {'flowchart': {'curve': 'linear'}}}%%", f"graph {direction}"]
     if groups:
         ordered = group_order or list(groups.keys())
         for group_name in ordered:

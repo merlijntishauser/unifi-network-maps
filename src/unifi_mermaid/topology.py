@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from collections import deque
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import Protocol
@@ -187,7 +188,7 @@ def build_tree_edges_by_topology(edges: Iterable[Edge], gateways: list[str]) -> 
 
     visited: set[str] = set()
     parent: dict[str, str] = {}
-    queue: list[str] = []
+    queue: deque[str] = deque()
 
     for gateway in gateways:
         if gateway in adjacency:
@@ -195,7 +196,7 @@ def build_tree_edges_by_topology(edges: Iterable[Edge], gateways: list[str]) -> 
             queue.append(gateway)
 
     while queue:
-        current = queue.pop(0)
+        current = queue.popleft()
         for neighbor in adjacency.get(current, set()):
             if neighbor in visited:
                 continue

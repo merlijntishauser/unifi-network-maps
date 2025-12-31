@@ -9,6 +9,7 @@ from .config import Config
 from .debug import debug_dump_devices
 from .export import write_output
 from .mermaid import render_legend, render_mermaid
+from .svg import SvgOptions, render_svg
 from .topology import (
     build_client_edges,
     build_device_index,
@@ -36,7 +37,9 @@ def _build_parser() -> argparse.ArgumentParser:
         description="Generate Mermaid network maps from UniFi LLDP data"
     )
     parser.add_argument("--site", default=None, help="UniFi site name (overrides UNIFI_SITE)")
-    parser.add_argument("--format", default="mermaid", choices=["mermaid"], help="Output format")
+    parser.add_argument(
+        "--format", default="mermaid", choices=["mermaid", "svg"], help="Output format"
+    )
     parser.add_argument(
         "--markdown",
         action="store_true",
@@ -75,6 +78,8 @@ def _build_parser() -> argparse.ArgumentParser:
         default=2,
         help="Number of non-gateway devices to include in debug dump (default: 2)",
     )
+    parser.add_argument("--svg-width", type=int, default=None, help="SVG width override")
+    parser.add_argument("--svg-height", type=int, default=None, help="SVG height override")
     return parser
 
 
@@ -144,11 +149,30 @@ def main(argv: list[str] | None = None) -> int:
             group_order=group_order,
             node_types=build_node_type_map(devices, clients),
         )
+    elif args.format == "svg":
+        if topology.tree_edges:
+            edges = topology.tree_edges
+        else:
+            edges = topology.raw_edges
+            logging.warning("No gateway found for hierarchy; rendering raw edges.")
+        clients = None
+        if args.include_clients:
+            clients = list(fetch_clients(config, site=site))
+            device_index = build_device_index(devices)
+            edges = edges + build_client_edges(
+                clients, device_index, include_ports=args.include_ports
+            )
+        options = SvgOptions(width=args.svg_width, height=args.svg_height)
+        content = render_svg(
+            edges,
+            node_types=build_node_type_map(devices, clients),
+            options=options,
+        )
     else:
         logging.error("Unsupported format: %s", args.format)
         return 2
 
-    if args.markdown:
+    if args.markdown and args.format == "mermaid":
         content = f"""```mermaid
 {content}```
 """

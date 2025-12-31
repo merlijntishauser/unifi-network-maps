@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import base64
-from collections import deque
+import math
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -68,45 +68,74 @@ def _layout_nodes(
         children[edge.left].append(edge.right)
         incoming[edge.right] = incoming.get(edge.right, 0) + 1
 
+    type_order = {t: i for i, t in enumerate(_TYPE_ORDER)}
+
+    def sort_key(name: str) -> tuple[int, str]:
+        return (type_order.get(node_types.get(name, "other"), 99), name.lower())
+
+    for _parent, child_list in children.items():
+        child_list.sort(key=sort_key)
+
     gateways = [n for n, t in node_types.items() if t == "gateway"]
     roots = gateways if gateways else [n for n in nodes if incoming.get(n, 0) == 0]
     if not roots:
         roots = list(nodes)
+    roots = sorted(roots, key=sort_key)
 
     levels: dict[str, int] = {}
-    queue: deque[str] = deque()
-    for root in roots:
-        levels[root] = 0
-        queue.append(root)
+    positions_index: dict[str, float] = {}
+    visited: set[str] = set()
+    cursor = 0
+    max_level = 0
 
-    while queue:
-        current = queue.popleft()
-        for child in children.get(current, []):
-            if child in levels:
+    def dfs(node: str, level: int) -> float:
+        nonlocal cursor, max_level
+        if node in positions_index:
+            return positions_index[node]
+        visited.add(node)
+        levels[node] = min(levels.get(node, level), level)
+        max_level = max(max_level, level)
+        child_list = children.get(node, [])
+        if not child_list:
+            idx = float(cursor)
+            cursor += 1
+            positions_index[node] = idx
+            return idx
+        child_indices: list[float] = []
+        for child in child_list:
+            if child in visited:
+                child_indices.append(positions_index.get(child, float(cursor)))
                 continue
-            levels[child] = levels[current] + 1
-            queue.append(child)
+            child_indices.append(dfs(child, level + 1))
+        if not child_indices:
+            idx = float(cursor)
+            cursor += 1
+            positions_index[node] = idx
+            return idx
+        idx = sum(child_indices) / len(child_indices)
+        positions_index[node] = idx
+        return idx
 
-    max_level = max(levels.values(), default=0)
-    level_nodes: dict[int, list[str]] = {i: [] for i in range(max_level + 1)}
-    for node, level in levels.items():
-        level_nodes[level].append(node)
+    for root in roots:
+        dfs(root, 0)
 
-    type_order = {t: i for i, t in enumerate(_TYPE_ORDER)}
-    for level, names in level_nodes.items():
-        names.sort(key=lambda n: (type_order.get(node_types.get(n, "other"), 99), n.lower()))
-        level_nodes[level] = names
+    for node in sorted(nodes, key=sort_key):
+        if node not in positions_index:
+            dfs(node, 0)
 
     positions: dict[str, tuple[float, float]] = {}
-    for level, names in level_nodes.items():
-        for idx, name in enumerate(names):
-            x = options.padding + idx * (options.node_width + options.h_gap)
-            y = options.padding + level * (options.node_height + options.v_gap)
-            positions[name] = (x, y)
+    max_index = max(positions_index.values(), default=0.0)
+    leaf_count = max(1, math.ceil(max_index) + 1)
+    for name, idx in positions_index.items():
+        level = levels.get(name, 0)
+        x = options.padding + idx * (options.node_width + options.h_gap)
+        y = options.padding + level * (options.node_height + options.v_gap)
+        positions[name] = (x, y)
 
-    max_nodes = max((len(n) for n in level_nodes.values()), default=1)
     width = (
-        options.padding * 2 + max_nodes * options.node_width + max(0, max_nodes - 1) * options.h_gap
+        options.padding * 2
+        + leaf_count * options.node_width
+        + max(0, leaf_count - 1) * options.h_gap
     )
     height = (
         options.padding * 2

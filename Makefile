@@ -1,4 +1,4 @@
-.PHONY: venv install lint format test ci
+.PHONY: venv install lint format test coverage ci
 
 venv:
 	python -m venv .venv
@@ -14,6 +14,9 @@ format:
 
 test:
 	.venv/bin/pytest
+
+coverage:
+	.venv/bin/pytest --cov=unifi_mermaid --cov-report=term-missing
 
 ci: lint format test
 	.venv/bin/pre-commit run --all-files

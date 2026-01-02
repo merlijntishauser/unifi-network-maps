@@ -19,6 +19,7 @@ dependencies = [
 dev = [
   "pre-commit",
   "pytest",
+  "pytest-cov",
   "ruff",
 ]
 
@@ -38,6 +39,13 @@ line-ending = "lf"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["unifi_mermaid"]
+
+[tool.coverage.report]
+show_missing = true
 
 [tool.setuptools]
 package-dir = {"" = "src"}

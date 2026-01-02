@@ -10,3 +10,7 @@ __pycache__/
 src/*.egg-info/
 *.egg-info/
 network.md
+/.coverage
+.pytest_cache/
+.ruff_cache/
+.coverage.*

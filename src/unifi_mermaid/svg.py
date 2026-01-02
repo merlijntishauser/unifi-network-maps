@@ -41,6 +41,10 @@ _TYPE_COLORS = {
 }
 
 
+def _escape_text(value: str) -> str:
+    return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
 def _load_icons() -> dict[str, str]:
     base = Path(__file__).resolve().parent / "assets" / "icons"
     icons: dict[str, str] = {}
@@ -181,8 +185,9 @@ def render_svg(
         if edge.label:
             label_x = (src_cx + dst_cx) / 2
             label_y = mid_y - 4
+            label = _escape_text(edge.label)
             lines.append(
-                f'<text x="{label_x}" y="{label_y}" text-anchor="middle" fill="#555">{edge.label}</text>'
+                f'<text x="{label_x}" y="{label_y}" text-anchor="middle" fill="#555">{label}</text>'
             )
 
     for name, (x, y) in positions.items():
@@ -204,8 +209,9 @@ def render_svg(
         else:
             text_x = x + 10
         text_y = y + options.node_height / 2 + options.font_size / 2 - 2
+        safe_name = _escape_text(name)
         lines.append(
-            f'<text x="{text_x}" y="{text_y}" fill="#1f1f1f" text-anchor="start">{name}</text>'
+            f'<text x="{text_x}" y="{text_y}" fill="#1f1f1f" text-anchor="start">{safe_name}</text>'
         )
 
     lines.append("</svg>")

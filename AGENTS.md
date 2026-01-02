@@ -1,6 +1,6 @@
 # AGENTS.md
 
-##Top priority (XP values)
+## Top priority (XP values)
 - Naming is critical; choose clear, intention-revealing names.
 - Optimize for human readability and understandability over cleverness.
 - Prefer small, safe refactors and commit often.
@@ -35,7 +35,7 @@ Source → Model → Diagram → Export
    - (Extensible later with clients, VLANs, locations)
 
 3. **Diagram**
-   - Mermaid `graph LR`
+   - Mermaid `graph TB`
    - Unidirectional or deduplicated edges
    - Optional port labels
 
@@ -92,7 +92,7 @@ UNIFI_VERIFY_SSL=false
 ### LLDPEntry
 - chassis_id (usually MAC)
 - port_id
-- port_desc (optioneel)
+- port_desc (optional)
 
 ---
 
@@ -125,7 +125,7 @@ From recent `--debug-dump` samples:
 ## Mermaid output (example)
 
 ```mermaid
-graph LR
+graph TB
   "Cloud Gateway" ---|"Port 9"| "Core Switch"
   "Core Switch" ---|"Port 3"| "AP Woonkamer"
   "Core Switch" ---|"Port 7"| "AP Zolder"
@@ -150,8 +150,14 @@ unifi-mermaid-map/
 │   │   ├── config.py
 │   │   ├── unifi.py
 │   │   ├── topology.py
+│   │   ├── lldp.py
+│   │   ├── labels.py
 │   │   ├── mermaid.py
-│   │   └── export.py
+│   │   ├── svg.py
+│   │   ├── debug.py
+│   │   ├── export.py
+│   │   └── assets/
+│   │       └── icons/
 │   └── cli.py
 └── README.md
 ```
@@ -170,9 +176,16 @@ python -m unifi_mermaid.cli \
 ```
 
 Options:
+- `--format mermaid|svg`
+- `--markdown`
 - `--include-ports`
+- `--include-clients`
 - `--only-unifi`
 - `--direction LR|TB`
+- `--legend-only`
+- `--debug-dump`
+- `--debug-sample`
+- `--svg-width/--svg-height`
 - `--stdout`
 
 ---
@@ -193,7 +206,7 @@ No HA-specific logic in core code; the export layer abstracts this.
 
 - No SNMP discovery
 - No realtime updates
-- No visual styling beyond Mermaid
+- No realtime interactive updates
 
 ---
 

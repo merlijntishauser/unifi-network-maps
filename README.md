@@ -66,17 +66,16 @@ python -m unifi_mermaid.cli --legend-only --stdout
 ## Options
 
 - `--format mermaid|svg`: output format (default mermaid).
-- `--include-ports`: show both ends when LLDP is available (e.g. `A: Port 1 <-> B: Port 7`).
+- `--include-ports`: show port labels (Mermaid shows both ends; SVG shows compact labels).
 - `--only-unifi`: only include neighbors that are UniFi devices.
 - `--direction LR|TB`: diagram direction for Mermaid (default TB).
 - `--stdout`: write output to stdout.
 - `--markdown`: wrap Mermaid output in a code fence.
 - `--group-by-type`: group nodes by gateway/switch/AP in Mermaid subgraphs.
 - `--include-clients`: add active wired clients as leaf nodes.
-- `--legend-only`: render just the legend as a separate Mermaid graph.
+- `--legend-only`: render just the legend as a separate Mermaid graph (Mermaid only).
 - `--debug-dump`: dump gateway + sample devices to stderr for debugging.
 - `--debug-sample N`: number of non-gateway devices in debug dump (default 2).
-- `--svg-width/--svg-height`: override SVG output dimensions.
 - `--svg-width/--svg-height`: override SVG output dimensions.
 
 ## Notes
@@ -85,3 +84,4 @@ python -m unifi_mermaid.cli --legend-only --stdout
 - Nodes are color-coded by type (gateway/switch/AP/client) with a sensible default palette.
 - PoE links are highlighted in green when detected from `port_table`.
 - SVG output uses Material Design Icons for device glyphs.
+- SVG port labels render inside child nodes for readability.

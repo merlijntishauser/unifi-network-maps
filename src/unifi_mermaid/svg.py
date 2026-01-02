@@ -555,6 +555,8 @@ def render_svg_isometric(
             (x + tile_w / 2, y + tile_h + tile_h / 2),
             (x + tile_w, y + tile_h / 2 + tile_h / 2),
         ]
+        right_center_x = sum(px for px, _py in right) / len(right)
+        right_center_y = sum(py for _px, py in right) / len(right)
         left_fill = "#d0d0d0" if node_type == "other" else "#dcdcdc"
         right_fill = "#c2c2c2" if node_type == "other" else "#c8c8c8"
         lines.append(
@@ -608,8 +610,12 @@ def render_svg_isometric(
             lines.append("</text>")
             text_y = text_y + max(tile_height / 2, label_height) + 6
 
+        name_font_size = max(options.font_size - 2, 8)
+        name_x = right_center_x
+        name_y = right_center_y + name_font_size / 2
         lines.append(
-            f'<text x="{center_x}" y="{text_y}" text-anchor="middle" fill="#1f1f1f">'
+            f'<text x="{name_x}" y="{name_y}" text-anchor="middle" fill="#1f1f1f" '
+            f'font-size="{name_font_size}" transform="rotate(-16 {name_x} {name_y})">'
             f"{_escape_text(name)}</text>"
         )
 

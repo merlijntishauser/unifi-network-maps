@@ -59,13 +59,24 @@ def _extract_device_name(side: str) -> str | None:
     return name or None
 
 
-def _compact_edge_label(label: str) -> str:
+def _compact_edge_label(
+    label: str, *, left_node: str | None = None, right_node: str | None = None
+) -> str:
     if "<->" not in label:
         return label
     left, right = (part.strip() for part in label.split("<->", 1))
+    left_name = _extract_device_name(left)
+    right_name = _extract_device_name(right)
     left_port = _extract_port_text(left)
     right_port = _extract_port_text(right)
+    if left_node and right_node:
+        if right_name and right_name == left_node and left_name == right_node:
+            left, right = right, left
+            left_name, right_name = right_name, left_name
+            left_port, right_port = right_port, left_port
     if left_port and right_port:
+        if left_name:
+            return f"{left_name} {left_port} <-> {right_port}"
         return f"{left_port} <-> {right_port}"
     if left_port:
         return left_port
@@ -226,7 +237,7 @@ def render_svg(
         if edge.label:
             label_x = (src_cx + dst_cx) / 2
             label_y = mid_y - 4
-            label_text = _compact_edge_label(edge.label)
+            label_text = _compact_edge_label(edge.label, left_node=edge.left, right_node=edge.right)
             left_type = node_types.get(edge.left, "other")
             right_type = node_types.get(edge.right, "other")
             client_node = None

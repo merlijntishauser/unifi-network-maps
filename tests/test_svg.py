@@ -29,7 +29,15 @@ def test_render_svg_compacts_device_labels():
         [Edge("A", "B", label="Switch A: Port 2 <-> Switch B: Port 5")],
         node_types={"A": "gateway", "B": "switch"},
     )
-    assert "Port 2 &lt;-&gt; Port 5" in output
+    assert "Switch A Port 2 &lt;-&gt; Port 5" in output
+
+
+def test_render_svg_orders_upstream_label():
+    output = render_svg(
+        [Edge("Parent", "Child", label="Child: Port 1 <-> Parent: Port 2")],
+        node_types={"Parent": "switch", "Child": "switch"},
+    )
+    assert "Parent Port 2 &lt;-&gt; Port 1" in output
 
 
 def test_render_svg_moves_client_label_into_node():

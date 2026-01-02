@@ -14,3 +14,11 @@ def test_render_svg_respects_size_override():
         options=SvgOptions(width=800, height=600),
     )
     assert 'width="800"' in output
+
+
+def test_render_svg_escapes_edge_labels():
+    output = render_svg(
+        [Edge("A", "B", label="Port 1 <-> Port 2")],
+        node_types={"A": "gateway", "B": "switch"},
+    )
+    assert "&lt;-&gt;" in output

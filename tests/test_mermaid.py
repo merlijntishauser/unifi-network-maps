@@ -20,3 +20,18 @@ def test_render_mermaid_styles_poe_links():
 def test_render_legend_outputs_subgraph():
     output = render_legend()
     assert "subgraph legend" in output
+
+
+def test_render_mermaid_renders_group_subgraph():
+    output = render_mermaid([Edge("Gateway", "Switch")], groups={"gateway": ["Gateway"]})
+    assert "subgraph group_gateway" in output
+
+
+def test_render_mermaid_assigns_class_for_node_types():
+    output = render_mermaid([Edge("A", "B")], node_types={"A": "gateway"})
+    assert "class a node_gateway" in output
+
+
+def test_render_mermaid_escapes_quotes():
+    output = render_mermaid([Edge('A "1"', "B")])
+    assert '\\"' in output

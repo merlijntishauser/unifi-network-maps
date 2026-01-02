@@ -582,10 +582,7 @@ def render_svg_isometric(
         port_label = node_port_labels.get(name)
         if port_label:
             font_size = max(options.font_size - 2, 8)
-            wrapped = _wrap_text(port_label)
-            label_width, label_height = _label_metrics(
-                wrapped, font_size=font_size, padding_x=8, padding_y=4
-            )
+            max_chars = max(8, int((tile_w * 0.6) / (font_size * 0.6)))
             tile_width = tile_w
             tile_height = tile_h
             label_center_x = center_x
@@ -629,16 +626,51 @@ def render_svg_isometric(
             )
             icon_center_x = label_center_x
             icon_center_y = label_center_y
-            label_text_x = label_center_x + tile_width / 4
-            label_text_y = label_center_y + tile_height / 2 + font_size / 2
-            lines.append(
-                f'<text x="{label_text_x}" y="{label_text_y}" text-anchor="middle" fill="#555" '
-                f'font-size="{font_size}" transform="rotate(-16 {label_text_x} {label_text_y})">'
-            )
-            for idx, line in enumerate(wrapped):
-                dy = 0 if idx == 0 else font_size + 2
-                lines.append(f'<tspan x="{label_text_x}" dy="{dy}">{_escape_text(line)}</tspan>')
-            lines.append("</text>")
+            if port_label:
+
+                def _port_only(segment: str) -> str:
+                    port = _extract_port_text(segment)
+                    if port:
+                        return port
+                    lower = segment.lower()
+                    idx = lower.rfind("port ")
+                    if idx != -1:
+                        return segment[idx:].strip()
+                    return segment.split(":", 1)[-1].strip()
+
+                def _truncate(text: str, max_len: int = max_chars) -> str:
+                    return text[: max_len - 1].rstrip() + "…" if len(text) > max_len else text
+
+                if "<->" in port_label:
+                    left_part, right_part = (part.strip() for part in port_label.split("<->", 1))
+                    front_text = _truncate(f"upst: {_port_only(left_part)}")
+                    side_text = _truncate(f"local: {_port_only(right_part)}")
+                else:
+                    front_text = ""
+                    side_text = _truncate(f"local: {_port_only(port_label)}")
+
+                front_center_x = sum(px for px, _py in left_face) / len(left_face)
+                front_center_y = sum(py for _px, py in left_face) / len(left_face)
+                front_x = front_center_x + tile_width * 0.20
+                front_y = front_center_y + stack_depth * 0.30 + font_size / 3
+                if front_text:
+                    lines.append(
+                        f'<text x="{front_x}" y="{front_y}" text-anchor="middle" fill="#555" '
+                        f'font-size="{font_size}" font-style="normal" '
+                        f'transform="rotate(16 {front_x} {front_y}) skewX(-8)">'
+                        f"{_escape_text(front_text)}</text>"
+                    )
+
+                side_center_x = sum(px for px, _py in right_face) / len(right_face)
+                side_center_y = sum(py for _px, py in right_face) / len(right_face)
+                side_x = side_center_x - tile_width * 0.15
+                side_y = side_center_y + stack_depth * 0.30 + font_size / 3
+                lines.append(
+                    f'<text x="{side_x}" y="{side_y}" text-anchor="middle" fill="#555" '
+                    f'font-size="{font_size}" font-style="italic" '
+                    f'transform="rotate(-16 {side_x} {side_y}) skewX(6)">'
+                    f"{_escape_text(side_text)}</text>"
+                )
 
         if icon_href:
             icon_x = icon_center_x - iso_icon_size / 2

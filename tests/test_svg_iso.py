@@ -45,3 +45,23 @@ def test_isometric_label_tile_stacks_without_gap():
     side_bottom_y = max(y for _x, y in polygons[side_index][1])
 
     assert abs(side_bottom_y - node_top_bottom_y) < 0.01
+
+
+def test_isometric_label_truncates_long_text():
+    output = render_svg_isometric(
+        [
+            Edge(
+                "A",
+                "B",
+                label="Very Long Switch Name: Port 12 <-> Port 23 Extra Extra Extra",
+            )
+        ],
+        node_types={"A": "gateway", "B": "switch"},
+    )
+    texts = re.findall(r'<text[^>]*fill="#555"[^>]*>([^<]+)</text>', output)
+    unescaped = (
+        text.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&") for text in texts
+    )
+    max_len = max(len(text) for text in unescaped)
+    max_chars = int((160 * 0.6) / (8 * 0.6))
+    assert max_len <= max_chars

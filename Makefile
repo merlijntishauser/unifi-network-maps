@@ -29,6 +29,8 @@ smoketest:
 	.venv/bin/python -m unifi_mermaid.cli --legend-only --stdout > smoketest/legend.mmd
 	.venv/bin/python -m unifi_mermaid.cli --format svg --output smoketest/network.svg
 	.venv/bin/python -m unifi_mermaid.cli --format svg-iso --output smoketest/network_iso.svg
+	.venv/bin/python -m unifi_mermaid.cli --include-clients --format svg --output smoketest/network_clients.svg
+	.venv/bin/python -m unifi_mermaid.cli --include-clients --format svg-iso --output smoketest/network_clients_iso.svg
 
 version:
 	@echo $(VERSION)

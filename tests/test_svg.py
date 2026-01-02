@@ -24,6 +24,14 @@ def test_render_svg_escapes_edge_labels():
     assert "&lt;-&gt;" in output
 
 
+def test_render_svg_renders_poe_icon():
+    output = render_svg(
+        [Edge("A", "B", poe=True)],
+        node_types={"A": "gateway", "B": "switch"},
+    )
+    assert "⚡" in output
+
+
 def test_render_svg_compacts_device_labels():
     output = render_svg(
         [Edge("A", "B", label="Switch A: Port 2 <-> Switch B: Port 5")],

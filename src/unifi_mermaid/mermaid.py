@@ -121,7 +121,7 @@ def render_mermaid(
         lines.append("  classDef node_client fill:#f2e5ff,stroke:#7f3fbf,stroke-width:1px")
         lines.append("  classDef node_other fill:#eeeeee,stroke:#8f8f8f,stroke-width:1px")
     for index in poe_links:
-        lines.append(f"  linkStyle {index} stroke:#2ecc71,stroke-width:2px")
+        lines.append(f"  linkStyle {index} stroke:#1e88e5,stroke-width:2px")
     return "\n".join(lines) + "\n"
 
 

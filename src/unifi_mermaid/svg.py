@@ -96,6 +96,17 @@ def _wrap_text(label: str, *, max_len: int = 24) -> list[str]:
     return [first, rest] if rest else [first]
 
 
+def _label_metrics(
+    lines: list[str], *, font_size: int, padding_x: int = 6, padding_y: int = 3
+) -> tuple[float, float]:
+    max_len = max((len(line) for line in lines), default=0)
+    text_width = max_len * font_size * 0.6
+    text_height = len(lines) * (font_size + 2)
+    width = text_width + padding_x * 2
+    height = text_height + padding_y * 2
+    return width, height
+
+
 def _load_icons() -> dict[str, str]:
     base = Path(__file__).resolve().parent / "assets" / "icons"
     icons: dict[str, str] = {}
@@ -235,8 +246,8 @@ def render_svg(
         lines.append(f'<path d="{path}" stroke="{color}" stroke-width="{width_px}" fill="none"/>')
 
         if edge.label:
-            label_x = (src_cx + dst_cx) / 2
-            label_y = mid_y - 4
+            label_x = dst_cx
+            label_y = dst_y - 6
             label_text = _compact_edge_label(edge.label, left_node=edge.left, right_node=edge.right)
             left_type = node_types.get(edge.left, "other")
             right_type = node_types.get(edge.right, "other")
@@ -260,10 +271,24 @@ def render_svg(
                         f'<text x="{label_x}" y="{label_y}" text-anchor="middle" fill="#555">{label}</text>'
                     )
             else:
-                label = _escape_text(label_text)
+                badge_font = max(options.font_size - 1, 8)
+                wrapped = _wrap_text(label_text, max_len=26)
+                badge_width, badge_height = _label_metrics(wrapped, font_size=badge_font)
+                badge_x = label_x - badge_width / 2
+                badge_y = label_y - badge_height
                 lines.append(
-                    f'<text x="{label_x}" y="{label_y}" text-anchor="middle" fill="#555">{label}</text>'
+                    f'<rect x="{badge_x}" y="{badge_y}" width="{badge_width}" '
+                    f'height="{badge_height}" rx="6" ry="6" fill="#f7f7f7" '
+                    f'stroke="#c8c8c8" stroke-width="0.5"/>'
                 )
+                lines.append(
+                    f'<text x="{label_x}" y="{badge_y + badge_font + 3}" '
+                    f'text-anchor="middle" fill="#333" font-size="{badge_font}">'
+                )
+                for idx, line in enumerate(wrapped):
+                    dy = 0 if idx == 0 else badge_font + 2
+                    lines.append(f'<tspan x="{label_x}" dy="{dy}">{_escape_text(line)}</tspan>')
+                lines.append("</text>")
 
     for name, (x, y) in positions.items():
         node_type = node_types.get(name, "other")

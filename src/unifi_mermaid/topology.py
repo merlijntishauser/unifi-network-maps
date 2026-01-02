@@ -302,6 +302,8 @@ def build_node_type_map(
         node_types[device.name] = classify_device_type(device)
     if clients:
         for client in clients:
+            if not _client_is_wired(client):
+                continue
             name = _client_display_name(client)
             if name:
                 node_types[name] = "client"

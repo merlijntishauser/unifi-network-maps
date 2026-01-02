@@ -1,10 +1,23 @@
+from types import SimpleNamespace
+
 import pytest
 
 from unifi_mermaid.topology import (
     Edge,
     LLDPEntry,
+    _as_bool,
+    _as_float,
+    _client_display_name,
+    _client_field,
+    _client_uplink_mac,
+    _client_uplink_port,
+    _poe_ports_from_device,
+    build_client_edges,
     build_edges,
+    build_node_type_map,
+    build_topology,
     build_tree_edges_by_topology,
+    classify_device_type,
     coerce_device,
     normalize_devices,
 )
@@ -210,3 +223,175 @@ def test_coerce_device_tracks_poe_false_when_power_invalid():
 def test_build_tree_edges_returns_empty_without_gateways():
     edges = build_tree_edges_by_topology([Edge("A", "B")], gateways=[])
     assert edges == []
+
+
+def test_coerce_device_missing_name_raises():
+    device = SimpleNamespace(name=None, mac="aa", lldp_info=[])
+    with pytest.raises(ValueError):
+        coerce_device(device)
+
+
+def test_coerce_device_missing_lldp_raises():
+    device = SimpleNamespace(name="Dev", mac="aa", lldp_info=None, lldp=None)
+    with pytest.raises(ValueError):
+        coerce_device(device)
+
+
+def test_poe_ports_from_device_skips_missing_port_idx():
+    device = SimpleNamespace(port_table=[{"poe_enable": True}])
+    assert _poe_ports_from_device(device) == {}
+
+
+def test_poe_ports_from_device_reads_dict_power():
+    device = SimpleNamespace(port_table=[{"port_idx": 2, "poe_power": "1.2"}])
+    assert _poe_ports_from_device(device) == {2: True}
+
+
+def test_poe_ports_from_device_reads_portidx_key():
+    device = SimpleNamespace(port_table=[{"portIdx": 3, "poe_enable": True}])
+    assert _poe_ports_from_device(device) == {3: True}
+
+
+def test_client_uplink_mac_nested():
+    client = {"uplink": {"uplink_mac": "aa:bb"}}
+    assert _client_uplink_mac(client) == "aa:bb"
+
+
+def test_client_uplink_port_nested_str():
+    client = {"uplink": {"uplink_remote_port": "3"}}
+    assert _client_uplink_port(client) == 3
+
+
+def test_build_client_edges_skips_unwired():
+    client = {"name": "Client", "is_wired": False, "sw_mac": "aa"}
+    assert build_client_edges([client], {"aa": "Switch"}) == []
+
+
+def test_build_edges_only_unifi_false_uses_chassis_id():
+    lldp = SimpleNamespace(chassis_id="bb", local_port_idx=None, port_id="Port 1", port_desc=None)
+    device = SimpleNamespace(
+        name="Switch",
+        model_name="",
+        mac="aa",
+        ip="",
+        type="switch",
+        lldp_info=[lldp],
+        port_table=[],
+    )
+    edges = build_edges([coerce_device(device)], only_unifi=False)
+    assert edges[0].right == "bb"
+
+
+def test_build_tree_edges_no_gateways():
+    assert build_tree_edges_by_topology([], []) == []
+
+
+def test_as_bool_int_true():
+    assert _as_bool(1) is True
+
+
+def test_as_bool_str_truthy():
+    assert _as_bool("yes") is True
+
+
+def test_as_float_none_returns_zero():
+    assert _as_float(None) == 0.0
+
+
+def test_as_float_invalid_str_returns_zero():
+    assert _as_float("nope") == 0.0
+
+
+def test_as_float_int_returns_float():
+    assert _as_float(2) == 2.0
+
+
+def test_as_float_unknown_type_returns_zero():
+    assert _as_float([]) == 0.0
+
+
+def test_client_field_attribute_fallback():
+    client = SimpleNamespace(name="Client")
+    assert _client_field(client, "name") == "Client"
+
+
+def test_client_display_name_missing_returns_none():
+    client = {"name": " ", "hostname": "", "mac": ""}
+    assert _client_display_name(client) is None
+
+
+def test_client_uplink_port_direct_int():
+    client = {"uplink_remote_port": 4}
+    assert _client_uplink_port(client) == 4
+
+
+def test_client_uplink_port_direct_str_digit():
+    client = {"sw_port": "7"}
+    assert _client_uplink_port(client) == 7
+
+
+def test_client_uplink_port_nested_int():
+    client = {"uplink": {"uplink_remote_port": 8}}
+    assert _client_uplink_port(client) == 8
+
+
+def test_client_uplink_mac_nested_empty():
+    client = {"uplink": {"uplink_mac": ""}}
+    assert _client_uplink_mac(client) is None
+
+
+def test_build_client_edges_include_ports_without_port():
+    client = {"name": "Client", "is_wired": True, "sw_mac": "aa"}
+    edges = build_client_edges([client], {"aa": "Switch"}, include_ports=True)
+    assert edges[0].label is None
+
+
+def test_build_node_type_map_skips_unwired_clients():
+    client = {"name": "Client", "is_wired": False}
+    assert "Client" not in build_node_type_map([], [client])
+
+
+def test_build_client_edges_missing_name_or_uplink():
+    client = {"name": "", "is_wired": True}
+    assert build_client_edges([client], {"aa": "Switch"}) == []
+
+
+def test_build_tree_edges_gateway_not_in_adjacency():
+    assert build_tree_edges_by_topology([Edge("A", "B")], ["Missing"]) == []
+
+
+def test_build_client_edges_dedupes():
+    clients = [
+        {"name": "Client", "is_wired": True, "sw_mac": "aa"},
+        {"name": "Client", "is_wired": True, "sw_mac": "aa"},
+    ]
+    edges = build_client_edges(clients, {"aa": "Switch"})
+    assert len(edges) == 1
+
+
+def test_build_node_type_map_adds_wired_client():
+    client = {"name": "Client", "is_wired": True}
+    node_types = build_node_type_map([], [client])
+    assert node_types["Client"] == "client"
+
+
+def test_classify_device_type_other():
+    device = SimpleNamespace(type="camera")
+    assert classify_device_type(device) == "other"
+
+
+def test_build_topology_returns_edges():
+    lldp = SimpleNamespace(chassis_id="bb", local_port_idx=None, port_id="Port 1", port_desc=None)
+    device = SimpleNamespace(
+        name="Switch",
+        model_name="",
+        mac="aa",
+        ip="",
+        type="switch",
+        lldp_info=[lldp],
+        port_table=[],
+    )
+    result = build_topology(
+        [coerce_device(device)], include_ports=False, only_unifi=False, gateways=[]
+    )
+    assert result.raw_edges

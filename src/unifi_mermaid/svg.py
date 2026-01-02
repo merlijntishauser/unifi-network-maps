@@ -388,14 +388,9 @@ def render_svg_isometric(
         cx, cy = project_iso_center_padded(gx, gy)
         return cx + tile_w / 2, cy + tile_h / 2
 
-    axis_x = (
-        grid_center(1.0, 0.0)[0] - grid_center(0.0, 0.0)[0],
-        grid_center(1.0, 0.0)[1] - grid_center(0.0, 0.0)[1],
-    )
-    axis_y = (
-        grid_center(0.0, 1.0)[0] - grid_center(0.0, 0.0)[0],
-        grid_center(0.0, 1.0)[1] - grid_center(0.0, 0.0)[1],
-    )
+    def front_anchor(gx: float, gy: float) -> tuple[float, float]:
+        cx, cy = grid_center(gx, gy)
+        return cx, cy + tile_h / 2
 
     width = max_x - min_x + tile_w + padding * 2
     height = max_y - min_y + tile_h + padding * 2
@@ -428,7 +423,7 @@ def render_svg_isometric(
             x2 += padding
             y2 += padding
             grid_lines.append(
-                f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="#e6e6e6" stroke-width="1"/>'
+                f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="#efefef" stroke-width="0.6"/>'
             )
         for gy in range(gy_start, gy_end + 1):
             x1, y1 = project_iso(float(gx_start), float(gy))
@@ -438,7 +433,7 @@ def render_svg_isometric(
             x2 += padding
             y2 += padding
             grid_lines.append(
-                f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="#e6e6e6" stroke-width="1"/>'
+                f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="#efefef" stroke-width="0.6"/>'
             )
         lines.append('<g class="iso-grid" opacity="0.7">')
         lines.extend(grid_lines)
@@ -462,44 +457,30 @@ def render_svg_isometric(
         dst_grid = grid_positions.get(edge.right)
         if not src_grid or not dst_grid:
             continue
-        color = "#1e88e5" if edge.poe else "#9aa0a6"
-        width_px = 4 if edge.poe else 3
+        color = "#1e88e5" if edge.poe else "#2e7d32"
+        width_px = 5 if edge.poe else 4
         src_gx, src_gy = float(src_grid[0]), float(src_grid[1])
         dst_gx, dst_gy = float(dst_grid[0]), float(dst_grid[1])
         dx = dst_gx - src_gx
         dy = dst_gy - src_gy
-        src_cx, src_cy = grid_center(src_gx, src_gy)
-        dst_cx, dst_cy = grid_center(dst_gx, dst_gy)
+        src_cx, src_cy = front_anchor(src_gx, src_gy)
+        dst_cx, dst_cy = front_anchor(dst_gx, dst_gy)
         path_cmds: list[str] = []
         if dx == 0 or dy == 0:
-            if dx != 0:
-                sign = 1 if dx > 0 else -1
-                offset = (axis_x[0] * 0.5 * sign, axis_x[1] * 0.5 * sign)
-            else:
-                sign = 1 if dy > 0 else -1
-                offset = (axis_y[0] * 0.5 * sign, axis_y[1] * 0.5 * sign)
-            start = (src_cx + offset[0], src_cy + offset[1])
-            end = (dst_cx - offset[0], dst_cy - offset[1])
-            path_cmds = [f"M {start[0]} {start[1]}", f"L {end[0]} {end[1]}"]
+            path_cmds = [f"M {src_cx} {src_cy}", f"L {dst_cx} {dst_cy}"]
         else:
-            sign_x = 1 if dx > 0 else -1
-            sign_y = 1 if dy > 0 else -1
             elbow_gx, elbow_gy = dst_gx, src_gy
-            elbow_cx, elbow_cy = grid_center(elbow_gx, elbow_gy)
-            offset_vec_x = (axis_x[0] * 0.5 * sign_x, axis_x[1] * 0.5 * sign_x)
-            offset_vec_y = (axis_y[0] * 0.5 * sign_y, axis_y[1] * 0.5 * sign_y)
-            start = (src_cx + offset_vec_x[0], src_cy + offset_vec_x[1])
-            elbow_in = (elbow_cx - offset_vec_x[0], elbow_cy - offset_vec_x[1])
-            elbow_out = (elbow_cx + offset_vec_y[0], elbow_cy + offset_vec_y[1])
-            end = (dst_cx - offset_vec_y[0], dst_cy - offset_vec_y[1])
+            elbow_cx, elbow_cy = front_anchor(elbow_gx, elbow_gy)
             path_cmds = [
-                f"M {start[0]} {start[1]}",
-                f"L {elbow_in[0]} {elbow_in[1]}",
-                f"L {elbow_out[0]} {elbow_out[1]}",
-                f"L {end[0]} {end[1]}",
+                f"M {src_cx} {src_cy}",
+                f"L {elbow_cx} {elbow_cy}",
+                f"L {dst_cx} {dst_cy}",
             ]
         path = " ".join(path_cmds)
-        lines.append(f'<path d="{path}" stroke="{color}" stroke-width="{width_px}" fill="none"/>')
+        lines.append(
+            f'<path d="{path}" stroke="{color}" stroke-width="{width_px}" '
+            f'fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
+        )
         if edge.poe:
             icon_x = dst_cx
             icon_y = dst_cy - tile_h * 0.4

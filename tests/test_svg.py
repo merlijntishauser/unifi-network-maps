@@ -22,3 +22,11 @@ def test_render_svg_escapes_edge_labels():
         node_types={"A": "gateway", "B": "switch"},
     )
     assert "&lt;-&gt;" in output
+
+
+def test_render_svg_compacts_device_labels():
+    output = render_svg(
+        [Edge("A", "B", label="Switch A: Port 2 <-> Switch B: Port 5")],
+        node_types={"A": "gateway", "B": "switch"},
+    )
+    assert "Port 2 &lt;-&gt; Port 5" in output

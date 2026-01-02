@@ -45,6 +45,28 @@ def _escape_text(value: str) -> str:
     return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
+def _extract_port_text(side: str) -> str | None:
+    candidate = side.split(":", 1)[1].strip() if ":" in side else side.strip()
+    if candidate.lower().startswith("port "):
+        return candidate
+    return None
+
+
+def _compact_edge_label(label: str) -> str:
+    if "<->" not in label:
+        return label
+    left, right = (part.strip() for part in label.split("<->", 1))
+    left_port = _extract_port_text(left)
+    right_port = _extract_port_text(right)
+    if left_port and right_port:
+        return f"{left_port} <-> {right_port}"
+    if left_port:
+        return left_port
+    if right_port:
+        return right_port
+    return label
+
+
 def _load_icons() -> dict[str, str]:
     base = Path(__file__).resolve().parent / "assets" / "icons"
     icons: dict[str, str] = {}
@@ -185,7 +207,7 @@ def render_svg(
         if edge.label:
             label_x = (src_cx + dst_cx) / 2
             label_y = mid_y - 4
-            label = _escape_text(edge.label)
+            label = _escape_text(_compact_edge_label(edge.label))
             lines.append(
                 f'<text x="{label_x}" y="{label_y}" text-anchor="middle" fill="#555">{label}</text>'
             )

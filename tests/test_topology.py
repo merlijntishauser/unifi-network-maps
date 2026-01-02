@@ -1,4 +1,13 @@
-from unifi_mermaid.topology import LLDPEntry, build_edges, normalize_devices
+import pytest
+
+from unifi_mermaid.topology import (
+    Edge,
+    LLDPEntry,
+    build_edges,
+    build_tree_edges_by_topology,
+    coerce_device,
+    normalize_devices,
+)
 
 
 class DummyDevice:
@@ -30,6 +39,12 @@ def test_build_edges_only_unifi_filters_unknown_neighbors():
     dev_a = DummyDevice("Switch A", "aa:bb:cc:dd:ee:01", [LLDPEntry("aa:bb:cc:dd:ee:ff", "1")])
     edges = build_edges(normalize_devices([dev_a]), only_unifi=True)
     assert edges == []
+
+
+def test_build_edges_includes_unknown_neighbors_when_allowed():
+    dev_a = DummyDevice("Switch A", "aa:bb:cc:dd:ee:01", [LLDPEntry("aa:bb:cc:dd:ee:ff", "1")])
+    edges = build_edges(normalize_devices([dev_a]), only_unifi=False)
+    assert edges[0].right == "aa:bb:cc:dd:ee:ff"
 
 
 def test_build_edges_hides_mac_port_id():
@@ -132,3 +147,66 @@ def test_build_edges_sets_poe_with_port_poe():
     )
     edges = build_edges(normalize_devices([dev_switch, dev_ap]))
     assert edges[0].poe is True
+
+
+def test_coerce_device_uses_lldp_fallback():
+    class DeviceWithLldp:
+        name = "Device"
+        model_name = ""
+        mac = "aa"
+        ip = ""
+        type = ""
+        lldp_info = None
+        lldp = [LLDPEntry("bb", "1")]
+        port_table = []
+
+    device = coerce_device(DeviceWithLldp())
+    assert device.lldp_info[0].chassis_id == "bb"
+
+
+def test_coerce_device_requires_name():
+    class MissingName:
+        name = ""
+        model_name = ""
+        mac = "aa"
+        ip = ""
+        type = ""
+        lldp_info = [LLDPEntry("bb", "1")]
+        port_table = []
+
+    with pytest.raises(ValueError):
+        coerce_device(MissingName())
+
+
+def test_coerce_device_requires_lldp():
+    class MissingLldp:
+        name = "Device"
+        model_name = ""
+        mac = "aa"
+        ip = ""
+        type = ""
+        lldp_info = None
+        lldp = None
+        port_table = []
+
+    with pytest.raises(ValueError):
+        coerce_device(MissingLldp())
+
+
+def test_coerce_device_tracks_poe_false_when_power_invalid():
+    class DeviceWithPort:
+        name = "Device"
+        model_name = ""
+        mac = "aa"
+        ip = ""
+        type = ""
+        lldp_info = [LLDPEntry("bb", "1")]
+        port_table = [{"port_idx": 1, "poe_power": "bad"}]
+
+    device = coerce_device(DeviceWithPort())
+    assert device.poe_ports[1] is False
+
+
+def test_build_tree_edges_returns_empty_without_gateways():
+    edges = build_tree_edges_by_topology([Edge("A", "B")], gateways=[])
+    assert edges == []

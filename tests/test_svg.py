@@ -30,3 +30,12 @@ def test_render_svg_compacts_device_labels():
         node_types={"A": "gateway", "B": "switch"},
     )
     assert "Port 2 &lt;-&gt; Port 5" in output
+
+
+def test_render_svg_moves_client_label_into_node():
+    output = render_svg(
+        [Edge("Switch", "Client", label="Port 5")],
+        node_types={"Switch": "switch", "Client": "client"},
+    )
+    assert 'class="node-port"' in output
+    assert 'text-anchor="middle" fill="#555">Port 5' not in output

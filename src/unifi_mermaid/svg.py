@@ -189,6 +189,7 @@ def render_svg(
         f"<style>text{{font-family:Arial,Helvetica,sans-serif;font-size:{options.font_size}px;}}</style>",
     ]
 
+    client_port_labels: dict[str, str] = {}
     for edge in edges:
         if edge.left not in positions or edge.right not in positions:
             continue
@@ -207,10 +208,22 @@ def render_svg(
         if edge.label:
             label_x = (src_cx + dst_cx) / 2
             label_y = mid_y - 4
-            label = _escape_text(_compact_edge_label(edge.label))
-            lines.append(
-                f'<text x="{label_x}" y="{label_y}" text-anchor="middle" fill="#555">{label}</text>'
-            )
+            label_text = _compact_edge_label(edge.label)
+            left_type = node_types.get(edge.left, "other")
+            right_type = node_types.get(edge.right, "other")
+            client_node = None
+            if "<->" not in label_text:
+                if left_type == "client" and right_type != "client":
+                    client_node = edge.left
+                elif right_type == "client" and left_type != "client":
+                    client_node = edge.right
+            if client_node:
+                client_port_labels.setdefault(client_node, label_text)
+            else:
+                label = _escape_text(label_text)
+                lines.append(
+                    f'<text x="{label_x}" y="{label_y}" text-anchor="middle" fill="#555">{label}</text>'
+                )
 
     for name, (x, y) in positions.items():
         node_type = node_types.get(name, "other")
@@ -232,6 +245,14 @@ def render_svg(
             text_x = x + 10
         text_y = y + options.node_height / 2 + options.font_size / 2 - 2
         safe_name = _escape_text(name)
+        if node_type == "client":
+            port_label = client_port_labels.get(name)
+            if port_label:
+                port_y = text_y - options.font_size - 2
+                lines.append(
+                    f'<text x="{text_x}" y="{port_y}" class="node-port" '
+                    f'text-anchor="start" fill="#555">{_escape_text(port_label)}</text>'
+                )
         lines.append(
             f'<text x="{text_x}" y="{text_y}" fill="#1f1f1f" text-anchor="start">{safe_name}</text>'
         )

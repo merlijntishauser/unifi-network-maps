@@ -40,7 +40,7 @@ def test_build_client_edges_includes_uplink_port_label():
         }
     ]
     edges = build_client_edges(clients, device_index, include_ports=True)
-    assert edges[0].label == "Switch A: Port 3 <-> Laptop: ?"
+    assert edges[0].label == "Switch A: Port 3 <-> Laptop"
 
 
 def test_build_node_type_map_skips_wireless_clients():

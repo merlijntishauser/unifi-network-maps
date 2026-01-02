@@ -285,7 +285,7 @@ def build_client_edges(
         if include_ports:
             uplink_port = _client_uplink_port(client)
             if uplink_port is not None:
-                label = f"{device_name}: Port {uplink_port} <-> {name}: ?"
+                label = f"{device_name}: Port {uplink_port} <-> {name}"
         key = (device_name, name)
         if key in seen:
             continue

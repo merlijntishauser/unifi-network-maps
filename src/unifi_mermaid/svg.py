@@ -575,17 +575,9 @@ def render_svg_isometric(
         icon_href = icons.get(node_type, icons.get("other"))
         center_x = x + tile_w / 2
         center_y = y + tile_h / 2
+        icon_center_x = center_x
+        icon_center_y = center_y
         iso_icon_size = min(tile_w, tile_h) * 0.7
-        if icon_href:
-            icon_x = center_x - iso_icon_size / 2
-            icon_y = center_y - iso_icon_size / 2 - tile_h * 0.08
-            lines.append(
-                f'<image href="{icon_href}" x="{icon_x}" y="{icon_y}" '
-                f'width="{iso_icon_size}" height="{iso_icon_size}"/>'
-            )
-            text_y = center_y + iso_icon_size / 2 + options.font_size
-        else:
-            text_y = center_y + options.font_size
 
         port_label = node_port_labels.get(name)
         if port_label:
@@ -594,21 +586,68 @@ def render_svg_isometric(
             label_width, label_height = _label_metrics(
                 wrapped, font_size=font_size, padding_x=8, padding_y=4
             )
-            tile_height = max(label_width / 2, label_height + 6)
-            tile_points = iso_tile_points(center_x, text_y, label_width, tile_height)
+            tile_width = tile_w
+            tile_height = tile_h
+            label_center_x = center_x
+            stack_depth = tile_h / 2
+            label_center_y = y + tile_height / 2 - stack_depth
+            tile_points = iso_tile_points(label_center_x, label_center_y, tile_width, tile_height)
+            # Stack a shallow side to suggest elevation.
+            top_points = [
+                (label_center_x, label_center_y - tile_height / 2),
+                (label_center_x + tile_width / 2, label_center_y),
+                (label_center_x, label_center_y + tile_height / 2),
+                (label_center_x - tile_width / 2, label_center_y),
+            ]
+            bottom_points = [(px, py + stack_depth) for px, py in top_points]
+            # Right face uses points 1->2 and their offset counterparts.
+            right_face = [
+                top_points[1],
+                top_points[2],
+                bottom_points[2],
+                bottom_points[1],
+            ]
+            left_face = [
+                top_points[3],
+                top_points[2],
+                bottom_points[2],
+                bottom_points[3],
+            ]
             lines.append(
-                f'<polygon class="label-tile" points="{tile_points}" '
-                f'fill="#ffffff" stroke="#c0c0c0" stroke-width="1"/>'
+                f'<polygon class="label-tile-side" points="'
+                f'{" ".join(f"{px},{py}" for px, py in left_face)}" '
+                f'fill="{left_fill}" stroke="{stroke}" stroke-width="1"/>'
             )
             lines.append(
-                f'<text x="{center_x}" y="{text_y}" text-anchor="middle" fill="#555" '
-                f'font-size="{font_size}">'
+                f'<polygon class="label-tile-side" points="'
+                f'{" ".join(f"{px},{py}" for px, py in right_face)}" '
+                f'fill="{right_fill}" stroke="{stroke}" stroke-width="1"/>'
+            )
+            lines.append(
+                f'<polygon class="label-tile" points="{tile_points}" '
+                f'fill="{fill}" stroke="{stroke}" stroke-width="1"/>'
+            )
+            icon_center_x = label_center_x
+            icon_center_y = label_center_y
+            label_text_x = label_center_x + tile_width / 4
+            label_text_y = label_center_y + tile_height / 2 + font_size / 2
+            lines.append(
+                f'<text x="{label_text_x}" y="{label_text_y}" text-anchor="middle" fill="#555" '
+                f'font-size="{font_size}" transform="rotate(-16 {label_text_x} {label_text_y})">'
             )
             for idx, line in enumerate(wrapped):
                 dy = 0 if idx == 0 else font_size + 2
-                lines.append(f'<tspan x="{center_x}" dy="{dy}">{_escape_text(line)}</tspan>')
+                lines.append(f'<tspan x="{label_text_x}" dy="{dy}">{_escape_text(line)}</tspan>')
             lines.append("</text>")
-            text_y = text_y + max(tile_height / 2, label_height) + 6
+
+        if icon_href:
+            icon_x = icon_center_x - iso_icon_size / 2
+            icon_lift = tile_h * (0.04 if port_label else 0.08)
+            icon_y = icon_center_y - iso_icon_size / 2 - icon_lift
+            lines.append(
+                f'<image href="{icon_href}" x="{icon_x}" y="{icon_y}" '
+                f'width="{iso_icon_size}" height="{iso_icon_size}"/>'
+            )
 
         name_font_size = max(options.font_size - 2, 8)
         name_x = right_center_x

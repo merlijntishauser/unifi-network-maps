@@ -1,5 +1,7 @@
 import builtins
+import pickle
 import sys
+import time
 from types import SimpleNamespace
 
 import pytest
@@ -106,3 +108,46 @@ def test_fetch_clients_requires_dependency(monkeypatch):
     with pytest.raises(RuntimeError) as excinfo:
         unifi.fetch_clients(config)
     assert "Missing dependency" in str(excinfo.value)
+
+
+def test_fetch_devices_uses_cache(monkeypatch, tmp_path):
+    fake_module = SimpleNamespace(UnifiAuthenticationError=RuntimeError)
+    monkeypatch.setitem(sys.modules, "unifi_controller_api", fake_module)
+    monkeypatch.setenv("UNIFI_CACHE_DIR", str(tmp_path))
+    monkeypatch.setenv("UNIFI_CACHE_TTL_SECONDS", "3600")
+
+    config = Config(
+        url="https://example", site="default", user="user", password="pass", verify_ssl=True
+    )
+    cache_path = tmp_path / f"devices_{unifi._cache_key(config.url, config.site, 'True')}.pkl"
+    unifi._save_cache(cache_path, [{"name": "cached"}])
+
+    def fail_init(*_args, **_kwargs):
+        raise AssertionError("should not fetch when cache is valid")
+
+    monkeypatch.setattr(unifi, "_init_controller", fail_init)
+    devices = list(unifi.fetch_devices(config))
+    assert devices[0]["name"] == "cached"
+
+
+def test_fetch_clients_cache_expired(monkeypatch, tmp_path):
+    fake_module = SimpleNamespace(UnifiAuthenticationError=RuntimeError)
+    monkeypatch.setitem(sys.modules, "unifi_controller_api", fake_module)
+    monkeypatch.setenv("UNIFI_CACHE_DIR", str(tmp_path))
+    monkeypatch.setenv("UNIFI_CACHE_TTL_SECONDS", "1")
+
+    config = Config(
+        url="https://example", site="default", user="user", password="pass", verify_ssl=True
+    )
+    cache_path = tmp_path / f"clients_{unifi._cache_key(config.url, config.site)}.pkl"
+    cache_path.write_bytes(
+        pickle.dumps({"timestamp": time.time() - 3600, "data": [{"stale": True}]})
+    )
+
+    class Controller:
+        def get_unifi_site_client(self, site_name, raw):
+            return [{"fresh": True}]
+
+    monkeypatch.setattr(unifi, "_init_controller", lambda *_a, **_k: Controller())
+    clients = list(unifi.fetch_clients(config))
+    assert clients[0]["fresh"] is True

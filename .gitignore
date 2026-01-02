@@ -13,6 +13,7 @@ network.md
 /.coverage
 .pytest_cache/
 .ruff_cache/
+.cache/
 .coverage.*
 *.svg
 !src/unifi_mermaid/assets/icons/isometric/*.svg

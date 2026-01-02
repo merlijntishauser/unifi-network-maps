@@ -38,7 +38,10 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--site", default=None, help="UniFi site name (overrides UNIFI_SITE)")
     parser.add_argument(
-        "--format", default="mermaid", choices=["mermaid", "svg"], help="Output format"
+        "--format",
+        default="mermaid",
+        choices=["mermaid", "svg", "svg-iso"],
+        help="Output format",
     )
     parser.add_argument(
         "--markdown",
@@ -149,7 +152,7 @@ def main(argv: list[str] | None = None) -> int:
             group_order=group_order,
             node_types=build_node_type_map(devices, clients),
         )
-    elif args.format == "svg":
+    elif args.format in {"svg", "svg-iso"}:
         if topology.tree_edges:
             edges = topology.tree_edges
         else:
@@ -163,11 +166,20 @@ def main(argv: list[str] | None = None) -> int:
                 clients, device_index, include_ports=args.include_ports
             )
         options = SvgOptions(width=args.svg_width, height=args.svg_height)
-        content = render_svg(
-            edges,
-            node_types=build_node_type_map(devices, clients),
-            options=options,
-        )
+        if args.format == "svg-iso":
+            from .svg import render_svg_isometric
+
+            content = render_svg_isometric(
+                edges,
+                node_types=build_node_type_map(devices, clients),
+                options=options,
+            )
+        else:
+            content = render_svg(
+                edges,
+                node_types=build_node_type_map(devices, clients),
+                options=options,
+            )
     else:
         logging.error("Unsupported format: %s", args.format)
         return 2

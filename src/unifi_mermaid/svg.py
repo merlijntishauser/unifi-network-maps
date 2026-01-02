@@ -123,6 +123,33 @@ def _load_icons() -> dict[str, str]:
 def _layout_nodes(
     edges: list[Edge], node_types: dict[str, str], options: SvgOptions
 ) -> tuple[dict[str, tuple[float, float]], int, int]:
+    positions_index, levels = _tree_layout_indices(edges, node_types)
+    positions: dict[str, tuple[float, float]] = {}
+    max_index = max(positions_index.values(), default=0.0)
+    leaf_count = max(1, math.ceil(max_index) + 1)
+    for name, idx in positions_index.items():
+        level = levels.get(name, 0)
+        x = options.padding + idx * (options.node_width + options.h_gap)
+        y = options.padding + level * (options.node_height + options.v_gap)
+        positions[name] = (x, y)
+
+    width = (
+        options.padding * 2
+        + leaf_count * options.node_width
+        + max(0, leaf_count - 1) * options.h_gap
+    )
+    max_level = max(levels.values(), default=0)
+    height = (
+        options.padding * 2
+        + (max_level + 1) * options.node_height
+        + max(0, max_level) * options.v_gap
+    )
+    return positions, width, height
+
+
+def _tree_layout_indices(
+    edges: list[Edge], node_types: dict[str, str]
+) -> tuple[dict[str, float], dict[str, int]]:
     nodes = set(node_types.keys())
     for edge in edges:
         nodes.add(edge.left)
@@ -152,15 +179,13 @@ def _layout_nodes(
     positions_index: dict[str, float] = {}
     visited: set[str] = set()
     cursor = 0
-    max_level = 0
 
     def dfs(node: str, level: int) -> float:
-        nonlocal cursor, max_level
+        nonlocal cursor
         if node in positions_index:
             return positions_index[node]
         visited.add(node)
         levels[node] = min(levels.get(node, level), level)
-        max_level = max(max_level, level)
         child_list = children.get(node, [])
         if not child_list:
             idx = float(cursor)
@@ -189,26 +214,7 @@ def _layout_nodes(
         if node not in positions_index:
             dfs(node, 0)
 
-    positions: dict[str, tuple[float, float]] = {}
-    max_index = max(positions_index.values(), default=0.0)
-    leaf_count = max(1, math.ceil(max_index) + 1)
-    for name, idx in positions_index.items():
-        level = levels.get(name, 0)
-        x = options.padding + idx * (options.node_width + options.h_gap)
-        y = options.padding + level * (options.node_height + options.v_gap)
-        positions[name] = (x, y)
-
-    width = (
-        options.padding * 2
-        + leaf_count * options.node_width
-        + max(0, leaf_count - 1) * options.h_gap
-    )
-    height = (
-        options.padding * 2
-        + (max_level + 1) * options.node_height
-        + max(0, max_level) * options.v_gap
-    )
-    return positions, width, height
+    return positions_index, levels
 
 
 def render_svg(
@@ -316,6 +322,292 @@ def render_svg(
             lines.append("</text>")
         lines.append(
             f'<text x="{text_x}" y="{text_y}" fill="#1f1f1f" text-anchor="start">{safe_name}</text>'
+        )
+
+    lines.append("</svg>")
+    return "\n".join(lines) + "\n"
+
+
+def render_svg_isometric(
+    edges: list[Edge],
+    *,
+    node_types: dict[str, str],
+    options: SvgOptions | None = None,
+) -> str:
+    options = options or SvgOptions()
+    icons = _load_icons()
+    positions_index, levels = _tree_layout_indices(edges, node_types)
+    if not positions_index:
+        positions_index = {}
+    tile_w = options.node_width
+    tile_h = options.node_height
+    step_w = tile_w
+    step_h = tile_h
+    grid_spacing_x = max(2, 1 + int(round(options.h_gap / max(tile_w, 1))))
+    grid_spacing_y = max(2, 1 + int(round(options.v_gap / max(tile_h, 1))))
+
+    grid_positions: dict[str, tuple[float, float]] = {}
+    positions: dict[str, tuple[float, float]] = {}
+
+    def project_iso(gx: float, gy: float) -> tuple[float, float]:
+        iso_x = (gx - gy) * (step_w / 2)
+        iso_y = (gx + gy) * (step_h / 2)
+        return iso_x, iso_y
+
+    def project_iso_center(gx: float, gy: float) -> tuple[float, float]:
+        return project_iso(gx + 0.5, gy + 0.5)
+
+    for name, idx in positions_index.items():
+        level = levels.get(name, 0)
+        gx = round(idx * grid_spacing_x)
+        gy = round(float(level) * grid_spacing_y)
+        grid_positions[name] = (float(gx), float(gy))
+        iso_x, iso_y = project_iso_center(float(gx), float(gy))
+        positions[name] = (iso_x, iso_y)
+
+    if positions:
+        min_x = min(x for x, _ in positions.values())
+        min_y = min(y for _, y in positions.values())
+        max_x = max(x for x, _ in positions.values())
+        max_y = max(y for _, y in positions.values())
+    else:
+        min_x = min_y = 0.0
+        max_x = max_y = 0.0
+
+    padding = options.padding
+    offset_x = -min_x + padding
+    offset_y = -min_y + padding
+    for name, (x, y) in positions.items():
+        positions[name] = (x + offset_x, y + offset_y)
+
+    def project_iso_center_padded(gx: float, gy: float) -> tuple[float, float]:
+        iso_x, iso_y = project_iso_center(gx, gy)
+        return iso_x + offset_x, iso_y + offset_y
+
+    def grid_center(gx: float, gy: float) -> tuple[float, float]:
+        cx, cy = project_iso_center_padded(gx, gy)
+        return cx + tile_w / 2, cy + tile_h / 2
+
+    axis_x = (
+        grid_center(1.0, 0.0)[0] - grid_center(0.0, 0.0)[0],
+        grid_center(1.0, 0.0)[1] - grid_center(0.0, 0.0)[1],
+    )
+    axis_y = (
+        grid_center(0.0, 1.0)[0] - grid_center(0.0, 0.0)[0],
+        grid_center(0.0, 1.0)[1] - grid_center(0.0, 0.0)[1],
+    )
+
+    width = max_x - min_x + tile_w + padding * 2
+    height = max_y - min_y + tile_h + padding * 2
+
+    out_width = options.width or int(width)
+    out_height = options.height or int(height)
+
+    lines = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{out_width}" height="{out_height}" '
+        f'viewBox="0 0 {width} {height}">',
+        f"<style>text{{font-family:Arial,Helvetica,sans-serif;font-size:{options.font_size}px;}}</style>",
+    ]
+
+    if grid_positions:
+        min_gx = min(gx for gx, _ in grid_positions.values())
+        max_gx = max(gx for gx, _ in grid_positions.values())
+        min_gy = min(gy for _, gy in grid_positions.values())
+        max_gy = max(gy for _, gy in grid_positions.values())
+        pad = 12
+        gx_start = int(math.floor(min_gx)) - pad
+        gx_end = int(math.ceil(max_gx)) + pad
+        gy_start = int(math.floor(min_gy)) - pad
+        gy_end = int(math.ceil(max_gy)) + pad
+        grid_lines: list[str] = []
+        for gx in range(gx_start, gx_end + 1):
+            x1, y1 = project_iso(float(gx), float(gy_start))
+            x2, y2 = project_iso(float(gx), float(gy_end))
+            x1 += padding
+            y1 += padding
+            x2 += padding
+            y2 += padding
+            grid_lines.append(
+                f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="#e6e6e6" stroke-width="1"/>'
+            )
+        for gy in range(gy_start, gy_end + 1):
+            x1, y1 = project_iso(float(gx_start), float(gy))
+            x2, y2 = project_iso(float(gx_end), float(gy))
+            x1 += padding
+            y1 += padding
+            x2 += padding
+            y2 += padding
+            grid_lines.append(
+                f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="#e6e6e6" stroke-width="1"/>'
+            )
+        lines.append('<g class="iso-grid" opacity="0.7">')
+        lines.extend(grid_lines)
+        lines.append("</g>")
+
+    node_port_labels: dict[str, str] = {}
+
+    def iso_tile_points(cx: float, cy: float, width: float, height: float) -> str:
+        points = [
+            (cx, cy - height / 2),
+            (cx + width / 2, cy),
+            (cx, cy + height / 2),
+            (cx - width / 2, cy),
+        ]
+        return " ".join(f"{px},{py}" for px, py in points)
+
+    for edge in edges:
+        if edge.left not in positions or edge.right not in positions:
+            continue
+        src_grid = grid_positions.get(edge.left)
+        dst_grid = grid_positions.get(edge.right)
+        if not src_grid or not dst_grid:
+            continue
+        color = "#1e88e5" if edge.poe else "#9aa0a6"
+        width_px = 4 if edge.poe else 3
+        src_gx, src_gy = float(src_grid[0]), float(src_grid[1])
+        dst_gx, dst_gy = float(dst_grid[0]), float(dst_grid[1])
+        dx = dst_gx - src_gx
+        dy = dst_gy - src_gy
+        src_cx, src_cy = grid_center(src_gx, src_gy)
+        dst_cx, dst_cy = grid_center(dst_gx, dst_gy)
+        path_cmds: list[str] = []
+        if dx == 0 or dy == 0:
+            if dx != 0:
+                sign = 1 if dx > 0 else -1
+                offset = (axis_x[0] * 0.5 * sign, axis_x[1] * 0.5 * sign)
+            else:
+                sign = 1 if dy > 0 else -1
+                offset = (axis_y[0] * 0.5 * sign, axis_y[1] * 0.5 * sign)
+            start = (src_cx + offset[0], src_cy + offset[1])
+            end = (dst_cx - offset[0], dst_cy - offset[1])
+            path_cmds = [f"M {start[0]} {start[1]}", f"L {end[0]} {end[1]}"]
+        else:
+            sign_x = 1 if dx > 0 else -1
+            sign_y = 1 if dy > 0 else -1
+            elbow_gx, elbow_gy = dst_gx, src_gy
+            elbow_cx, elbow_cy = grid_center(elbow_gx, elbow_gy)
+            offset_vec_x = (axis_x[0] * 0.5 * sign_x, axis_x[1] * 0.5 * sign_x)
+            offset_vec_y = (axis_y[0] * 0.5 * sign_y, axis_y[1] * 0.5 * sign_y)
+            start = (src_cx + offset_vec_x[0], src_cy + offset_vec_x[1])
+            elbow_in = (elbow_cx - offset_vec_x[0], elbow_cy - offset_vec_x[1])
+            elbow_out = (elbow_cx + offset_vec_y[0], elbow_cy + offset_vec_y[1])
+            end = (dst_cx - offset_vec_y[0], dst_cy - offset_vec_y[1])
+            path_cmds = [
+                f"M {start[0]} {start[1]}",
+                f"L {elbow_in[0]} {elbow_in[1]}",
+                f"L {elbow_out[0]} {elbow_out[1]}",
+                f"L {end[0]} {end[1]}",
+            ]
+        path = " ".join(path_cmds)
+        lines.append(f'<path d="{path}" stroke="{color}" stroke-width="{width_px}" fill="none"/>')
+        if edge.poe:
+            icon_x = dst_cx
+            icon_y = dst_cy - tile_h * 0.4
+            lines.append(
+                f'<text x="{icon_x}" y="{icon_y}" text-anchor="middle" fill="#1e88e5" '
+                f'font-size="{max(options.font_size, 10)}">⚡</text>'
+            )
+        if edge.label:
+            label_text = _compact_edge_label(edge.label, left_node=edge.left, right_node=edge.right)
+            left_type = node_types.get(edge.left, "other")
+            right_type = node_types.get(edge.right, "other")
+            client_node = None
+            upstream_node = None
+            if left_type == "client" and right_type != "client":
+                client_node = edge.left
+                upstream_node = edge.right
+            elif right_type == "client" and left_type != "client":
+                client_node = edge.right
+                upstream_node = edge.left
+            if client_node and upstream_node:
+                if "<->" not in label_text:
+                    upstream_part = edge.label.split("<->", 1)[0].strip()
+                    port_text = _extract_port_text(upstream_part) or label_text
+                    upstream_name = _extract_device_name(upstream_part) or upstream_node
+                    node_port_labels.setdefault(client_node, f"{upstream_name}: {port_text}")
+            else:
+                upstream_part = edge.label.split("<->", 1)[0].strip()
+                upstream_name = _extract_device_name(upstream_part) or edge.left
+                if label_text.lower().startswith("port "):
+                    label_text = f"{upstream_name} {label_text}"
+                node_port_labels.setdefault(edge.right, label_text)
+
+    for name, (x, y) in positions.items():
+        node_type = node_types.get(name, "other")
+        fill, stroke = _TYPE_COLORS.get(node_type, _TYPE_COLORS["other"])
+        top = [
+            (x + tile_w / 2, y),
+            (x + tile_w, y + tile_h / 2),
+            (x + tile_w / 2, y + tile_h),
+            (x, y + tile_h / 2),
+        ]
+        left = [
+            (x, y + tile_h / 2),
+            (x + tile_w / 2, y + tile_h),
+            (x + tile_w / 2, y + tile_h + tile_h / 2),
+            (x, y + tile_h / 2 + tile_h / 2),
+        ]
+        right = [
+            (x + tile_w, y + tile_h / 2),
+            (x + tile_w / 2, y + tile_h),
+            (x + tile_w / 2, y + tile_h + tile_h / 2),
+            (x + tile_w, y + tile_h / 2 + tile_h / 2),
+        ]
+        left_fill = "#d0d0d0" if node_type == "other" else "#dcdcdc"
+        right_fill = "#c2c2c2" if node_type == "other" else "#c8c8c8"
+        lines.append(
+            f'<polygon points="{" ".join(f"{px},{py}" for px, py in left)}" '
+            f'fill="{left_fill}" stroke="{stroke}" stroke-width="1"/>'
+        )
+        lines.append(
+            f'<polygon points="{" ".join(f"{px},{py}" for px, py in right)}" '
+            f'fill="{right_fill}" stroke="{stroke}" stroke-width="1"/>'
+        )
+        lines.append(
+            f'<polygon points="{" ".join(f"{px},{py}" for px, py in top)}" '
+            f'fill="{fill}" stroke="{stroke}" stroke-width="1"/>'
+        )
+
+        icon_href = icons.get(node_type, icons.get("other"))
+        center_x = x + tile_w / 2
+        center_y = y + tile_h / 2
+        if icon_href:
+            icon_x = center_x - options.icon_size / 2
+            icon_y = center_y - options.icon_size / 2
+            lines.append(
+                f'<image href="{icon_href}" x="{icon_x}" y="{icon_y}" '
+                f'width="{options.icon_size}" height="{options.icon_size}"/>'
+            )
+            text_y = center_y + options.icon_size / 2 + options.font_size
+        else:
+            text_y = center_y + options.font_size
+
+        port_label = node_port_labels.get(name)
+        if port_label:
+            font_size = max(options.font_size - 2, 8)
+            wrapped = _wrap_text(port_label)
+            label_width, label_height = _label_metrics(
+                wrapped, font_size=font_size, padding_x=8, padding_y=4
+            )
+            tile_height = max(label_width / 2, label_height + 6)
+            tile_points = iso_tile_points(center_x, text_y, label_width, tile_height)
+            lines.append(
+                f'<polygon class="label-tile" points="{tile_points}" '
+                f'fill="#ffffff" stroke="#c0c0c0" stroke-width="1"/>'
+            )
+            lines.append(
+                f'<text x="{center_x}" y="{text_y}" text-anchor="middle" fill="#555" '
+                f'font-size="{font_size}">'
+            )
+            for idx, line in enumerate(wrapped):
+                dy = 0 if idx == 0 else font_size + 2
+                lines.append(f'<tspan x="{center_x}" dy="{dy}">{_escape_text(line)}</tspan>')
+            lines.append("</text>")
+            text_y = text_y + max(tile_height / 2, label_height) + 6
+
+        lines.append(
+            f'<text x="{center_x}" y="{text_y}" text-anchor="middle" fill="#1f1f1f">'
+            f"{_escape_text(name)}</text>"
         )
 
     lines.append("</svg>")

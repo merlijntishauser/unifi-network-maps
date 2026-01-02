@@ -176,7 +176,7 @@ python -m unifi_mermaid.cli \
 ```
 
 Options:
-- `--format mermaid|svg`
+- `--format mermaid|svg|svg-iso`
 - `--markdown`
 - `--include-ports`
 - `--include-clients`

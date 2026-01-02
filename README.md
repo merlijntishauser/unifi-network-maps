@@ -51,6 +51,12 @@ SVG output (orthogonal layout + icons):
 python -m unifi_mermaid.cli --format svg --output ./network.svg
 ```
 
+Isometric SVG output:
+
+```bash
+python -m unifi_mermaid.cli --format svg-iso --output ./network.svg
+```
+
 SVG size overrides:
 
 ```bash
@@ -65,7 +71,7 @@ python -m unifi_mermaid.cli --legend-only --stdout
 
 ## Options
 
-- `--format mermaid|svg`: output format (default mermaid).
+- `--format mermaid|svg|svg-iso`: output format (default mermaid).
 - `--include-ports`: show port labels (Mermaid shows both ends; SVG shows compact labels).
 - `--only-unifi`: only include neighbors that are UniFi devices.
 - `--direction LR|TB`: diagram direction for Mermaid (default TB).
@@ -82,6 +88,6 @@ python -m unifi_mermaid.cli --legend-only --stdout
 
 - Default output is top-to-bottom (TB) and rendered as a hop-based tree from the gateway(s).
 - Nodes are color-coded by type (gateway/switch/AP/client) with a sensible default palette.
-- PoE links are highlighted in green when detected from `port_table`.
+- PoE links are highlighted in blue and annotated with a power icon when detected from `port_table`.
 - SVG output uses Material Design Icons for device glyphs.
 - SVG port labels render inside child nodes for readability.

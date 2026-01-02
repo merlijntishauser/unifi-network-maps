@@ -1,4 +1,4 @@
-from unifi_mermaid.topology import build_client_edges
+from unifi_mermaid.topology import Device, build_client_edges, build_node_type_map
 
 
 def test_build_client_edges_maps_ap_mac():
@@ -41,3 +41,10 @@ def test_build_client_edges_includes_uplink_port_label():
     ]
     edges = build_client_edges(clients, device_index, include_ports=True)
     assert edges[0].label == "Switch A: Port 3 <-> Laptop: ?"
+
+
+def test_build_node_type_map_skips_wireless_clients():
+    devices = [Device(name="Gateway", model_name="", mac="aa", ip="", type="udm", lldp_info=[])]
+    clients = [{"name": "Phone", "is_wired": False}]
+    node_types = build_node_type_map(devices, clients)
+    assert "Phone" not in node_types

@@ -245,7 +245,7 @@ def render_svg(
     options: SvgOptions | None = None,
 ) -> str:
     options = options or SvgOptions()
-    icons = _load_isometric_icons()
+    icons = _load_icons()
     positions, width, height = _layout_nodes(edges, node_types, options)
     out_width = options.width or width
     out_height = options.height or height
@@ -356,7 +356,7 @@ def render_svg_isometric(
     options: SvgOptions | None = None,
 ) -> str:
     options = options or SvgOptions()
-    icons = _load_icons()
+    icons = _load_isometric_icons()
     positions_index, levels = _tree_layout_indices(edges, node_types)
     if not positions_index:
         positions_index = {}
@@ -573,10 +573,10 @@ def render_svg_isometric(
         icon_href = icons.get(node_type, icons.get("other"))
         center_x = x + tile_w / 2
         center_y = y + tile_h / 2
-        iso_icon_size = min(tile_w, tile_h) * 0.55
+        iso_icon_size = min(tile_w, tile_h) * 0.7
         if icon_href:
             icon_x = center_x - iso_icon_size / 2
-            icon_y = center_y - iso_icon_size / 2
+            icon_y = center_y - iso_icon_size / 2 - tile_h * 0.08
             lines.append(
                 f'<image href="{icon_href}" x="{icon_x}" y="{icon_y}" '
                 f'width="{iso_icon_size}" height="{iso_icon_size}"/>'

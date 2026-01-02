@@ -74,6 +74,17 @@ def _compact_edge_label(label: str) -> str:
     return label
 
 
+def _wrap_text(label: str, *, max_len: int = 24) -> list[str]:
+    if len(label) <= max_len:
+        return [label]
+    split_at = label.rfind(" ", 0, max_len + 1)
+    if split_at == -1:
+        split_at = max_len
+    first = label[:split_at].rstrip()
+    rest = label[split_at:].lstrip()
+    return [first, rest] if rest else [first]
+
+
 def _load_icons() -> dict[str, str]:
     base = Path(__file__).resolve().parent / "assets" / "icons"
     icons: dict[str, str] = {}
@@ -261,16 +272,26 @@ def render_svg(
             text_x = icon_x + options.icon_size + 6
         else:
             text_x = x + 10
-        text_y = y + options.node_height / 2 + options.font_size / 2 - 2
+        if node_type == "client":
+            text_y = y + options.node_height - 6
+        else:
+            text_y = y + options.node_height / 2 + options.font_size / 2 - 2
         safe_name = _escape_text(name)
         if node_type == "client":
             port_label = client_port_labels.get(name)
             if port_label:
-                port_y = text_y - options.font_size - 4
+                font_size = max(options.font_size - 2, 8)
+                line_height = font_size + 2
+                port_y = y + font_size + 4
+                wrapped = _wrap_text(port_label)
                 lines.append(
                     f'<text x="{text_x}" y="{port_y}" class="node-port" '
-                    f'text-anchor="start" fill="#555">{_escape_text(port_label)}</text>'
+                    f'text-anchor="start" fill="#555" font-size="{font_size}">'
                 )
+                for idx, line in enumerate(wrapped):
+                    dy = 0 if idx == 0 else line_height
+                    lines.append(f'<tspan x="{text_x}" dy="{dy}">{_escape_text(line)}</tspan>')
+                lines.append("</text>")
         lines.append(
             f'<text x="{text_x}" y="{text_y}" fill="#1f1f1f" text-anchor="start">{safe_name}</text>'
         )

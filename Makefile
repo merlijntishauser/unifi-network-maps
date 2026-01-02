@@ -1,4 +1,4 @@
-.PHONY: venv install lint format test coverage ci version version-bump
+.PHONY: venv install lint format test coverage smoketest ci version version-bump
 
 VERSION_FILE = VERSION
 
@@ -19,6 +19,16 @@ test:
 
 coverage:
 	.venv/bin/pytest --cov=unifi_mermaid --cov-report=term-missing
+
+smoketest:
+	@mkdir -p smoketest
+	.venv/bin/python -m unifi_mermaid.cli --stdout > smoketest/network.mmd
+	.venv/bin/python -m unifi_mermaid.cli --markdown --output smoketest/network.md
+	.venv/bin/python -m unifi_mermaid.cli --group-by-type --stdout > smoketest/network_grouped.mmd
+	.venv/bin/python -m unifi_mermaid.cli --include-ports --include-clients --stdout > smoketest/network_ports_clients.mmd
+	.venv/bin/python -m unifi_mermaid.cli --legend-only --stdout > smoketest/legend.mmd
+	.venv/bin/python -m unifi_mermaid.cli --format svg --output smoketest/network.svg
+	.venv/bin/python -m unifi_mermaid.cli --format svg-iso --output smoketest/network_iso.svg
 
 version:
 	@echo $(VERSION)

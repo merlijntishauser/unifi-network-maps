@@ -16,4 +16,5 @@ network.md
 .coverage.*
 *.svg
 !src/unifi_mermaid/assets/icons/isometric/*.svg
+smoketest/
 network*.md

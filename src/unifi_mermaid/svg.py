@@ -32,6 +32,14 @@ _ICON_FILES = {
     "other": "server.svg",
 }
 
+_ISO_ICON_FILES = {
+    "gateway": "icon_security.svg",
+    "switch": "icon_storage.svg",
+    "ap": "icon_cloud.svg",
+    "client": "icon_application.svg",
+    "other": "icon_query.svg",
+}
+
 _TYPE_COLORS = {
     "gateway": ("#ffe3b3", "#d98300"),
     "switch": ("#d6ecff", "#3a7bd5"),
@@ -111,6 +119,19 @@ def _load_icons() -> dict[str, str]:
     base = Path(__file__).resolve().parent / "assets" / "icons"
     icons: dict[str, str] = {}
     for node_type, filename in _ICON_FILES.items():
+        path = base / filename
+        if not path.exists():
+            continue
+        data = path.read_bytes()
+        encoded = base64.b64encode(data).decode("ascii")
+        icons[node_type] = f"data:image/svg+xml;base64,{encoded}"
+    return icons
+
+
+def _load_isometric_icons() -> dict[str, str]:
+    base = Path(__file__).resolve().parent / "assets" / "icons" / "isometric"
+    icons: dict[str, str] = {}
+    for node_type, filename in _ISO_ICON_FILES.items():
         path = base / filename
         if not path.exists():
             continue
@@ -224,7 +245,7 @@ def render_svg(
     options: SvgOptions | None = None,
 ) -> str:
     options = options or SvgOptions()
-    icons = _load_icons()
+    icons = _load_isometric_icons()
     positions, width, height = _layout_nodes(edges, node_types, options)
     out_width = options.width or width
     out_height = options.height or height
@@ -552,14 +573,15 @@ def render_svg_isometric(
         icon_href = icons.get(node_type, icons.get("other"))
         center_x = x + tile_w / 2
         center_y = y + tile_h / 2
+        iso_icon_size = min(tile_w, tile_h) * 0.55
         if icon_href:
-            icon_x = center_x - options.icon_size / 2
-            icon_y = center_y - options.icon_size / 2
+            icon_x = center_x - iso_icon_size / 2
+            icon_y = center_y - iso_icon_size / 2
             lines.append(
                 f'<image href="{icon_href}" x="{icon_x}" y="{icon_y}" '
-                f'width="{options.icon_size}" height="{options.icon_size}"/>'
+                f'width="{iso_icon_size}" height="{iso_icon_size}"/>'
             )
-            text_y = center_y + options.icon_size / 2 + options.font_size
+            text_y = center_y + iso_icon_size / 2 + options.font_size
         else:
             text_y = center_y + options.font_size
 

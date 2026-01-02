@@ -90,4 +90,5 @@ python -m unifi_mermaid.cli --legend-only --stdout
 - Nodes are color-coded by type (gateway/switch/AP/client) with a sensible default palette.
 - PoE links are highlighted in blue and annotated with a power icon when detected from `port_table`.
 - SVG output uses Material Design Icons for device glyphs.
+- Isometric SVG output uses MIT-licensed isometric icons from `richbl/isometric-icons`.
 - SVG port labels render inside child nodes for readability.

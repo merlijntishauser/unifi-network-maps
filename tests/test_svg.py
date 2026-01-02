@@ -29,7 +29,9 @@ def test_render_svg_compacts_device_labels():
         [Edge("A", "B", label="Switch A: Port 2 <-> Switch B: Port 5")],
         node_types={"A": "gateway", "B": "switch"},
     )
-    assert "Switch A Port 2 &lt;-&gt; Port 5" in output
+    assert 'class="node-port"' in output
+    assert "Switch A Port 2" in output
+    assert ">5</tspan>" in output
 
 
 def test_render_svg_orders_upstream_label():

@@ -229,7 +229,7 @@ def render_svg(
         f"<style>text{{font-family:Arial,Helvetica,sans-serif;font-size:{options.font_size}px;}}</style>",
     ]
 
-    client_port_labels: dict[str, str] = {}
+    node_port_labels: dict[str, str] = {}
     for edge in edges:
         if edge.left not in positions or edge.right not in positions:
             continue
@@ -246,8 +246,6 @@ def render_svg(
         lines.append(f'<path d="{path}" stroke="{color}" stroke-width="{width_px}" fill="none"/>')
 
         if edge.label:
-            label_x = dst_cx
-            label_y = dst_y - 6
             label_text = _compact_edge_label(edge.label, left_node=edge.left, right_node=edge.right)
             left_type = node_types.get(edge.left, "other")
             right_type = node_types.get(edge.right, "other")
@@ -264,31 +262,13 @@ def render_svg(
                     upstream_part = edge.label.split("<->", 1)[0].strip()
                     port_text = _extract_port_text(upstream_part) or label_text
                     upstream_name = _extract_device_name(upstream_part) or upstream_node
-                    client_port_labels.setdefault(client_node, f"{upstream_name}: {port_text}")
-                else:
-                    label = _escape_text(label_text)
-                    lines.append(
-                        f'<text x="{label_x}" y="{label_y}" text-anchor="middle" fill="#555">{label}</text>'
-                    )
+                    node_port_labels.setdefault(client_node, f"{upstream_name}: {port_text}")
             else:
-                badge_font = max(options.font_size - 1, 8)
-                wrapped = _wrap_text(label_text, max_len=26)
-                badge_width, badge_height = _label_metrics(wrapped, font_size=badge_font)
-                badge_x = label_x - badge_width / 2
-                badge_y = label_y - badge_height
-                lines.append(
-                    f'<rect x="{badge_x}" y="{badge_y}" width="{badge_width}" '
-                    f'height="{badge_height}" rx="6" ry="6" fill="#f7f7f7" '
-                    f'stroke="#c8c8c8" stroke-width="0.5"/>'
-                )
-                lines.append(
-                    f'<text x="{label_x}" y="{badge_y + badge_font + 3}" '
-                    f'text-anchor="middle" fill="#333" font-size="{badge_font}">'
-                )
-                for idx, line in enumerate(wrapped):
-                    dy = 0 if idx == 0 else badge_font + 2
-                    lines.append(f'<tspan x="{label_x}" dy="{dy}">{_escape_text(line)}</tspan>')
-                lines.append("</text>")
+                upstream_part = edge.label.split("<->", 1)[0].strip()
+                upstream_name = _extract_device_name(upstream_part) or edge.left
+                if label_text.lower().startswith("port "):
+                    label_text = f"{upstream_name} {label_text}"
+                node_port_labels.setdefault(edge.right, label_text)
 
     for name, (x, y) in positions.items():
         node_type = node_types.get(name, "other")
@@ -308,26 +288,25 @@ def render_svg(
             text_x = icon_x + options.icon_size + 6
         else:
             text_x = x + 10
-        if node_type == "client":
+        port_label = node_port_labels.get(name)
+        if port_label:
             text_y = y + options.node_height - 6
         else:
             text_y = y + options.node_height / 2 + options.font_size / 2 - 2
         safe_name = _escape_text(name)
-        if node_type == "client":
-            port_label = client_port_labels.get(name)
-            if port_label:
-                font_size = max(options.font_size - 2, 8)
-                line_height = font_size + 2
-                port_y = y + font_size + 4
-                wrapped = _wrap_text(port_label)
-                lines.append(
-                    f'<text x="{text_x}" y="{port_y}" class="node-port" '
-                    f'text-anchor="start" fill="#555" font-size="{font_size}">'
-                )
-                for idx, line in enumerate(wrapped):
-                    dy = 0 if idx == 0 else line_height
-                    lines.append(f'<tspan x="{text_x}" dy="{dy}">{_escape_text(line)}</tspan>')
-                lines.append("</text>")
+        if port_label:
+            font_size = max(options.font_size - 2, 8)
+            line_height = font_size + 2
+            port_y = y + font_size + 4
+            wrapped = _wrap_text(port_label)
+            lines.append(
+                f'<text x="{text_x}" y="{port_y}" class="node-port" '
+                f'text-anchor="start" fill="#555" font-size="{font_size}">'
+            )
+            for idx, line in enumerate(wrapped):
+                dy = 0 if idx == 0 else line_height
+                lines.append(f'<tspan x="{text_x}" dy="{dy}">{_escape_text(line)}</tspan>')
+            lines.append("</text>")
         lines.append(
             f'<text x="{text_x}" y="{text_y}" fill="#1f1f1f" text-anchor="start">{safe_name}</text>'
         )

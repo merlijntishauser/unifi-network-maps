@@ -26,11 +26,16 @@ smoketest:
 	.venv/bin/python -m unifi_mermaid.cli --markdown --output smoketest/network.md
 	.venv/bin/python -m unifi_mermaid.cli --group-by-type --stdout > smoketest/network_grouped.mmd
 	.venv/bin/python -m unifi_mermaid.cli --include-ports --include-clients --stdout > smoketest/network_ports_clients.mmd
+	.venv/bin/python -m unifi_mermaid.cli --include-ports --stdout > smoketest/network_ports.mmd
 	.venv/bin/python -m unifi_mermaid.cli --legend-only --stdout > smoketest/legend.mmd
 	.venv/bin/python -m unifi_mermaid.cli --format svg --output smoketest/network.svg
 	.venv/bin/python -m unifi_mermaid.cli --format svg-iso --output smoketest/network_iso.svg
 	.venv/bin/python -m unifi_mermaid.cli --include-clients --format svg --output smoketest/network_clients.svg
 	.venv/bin/python -m unifi_mermaid.cli --include-clients --format svg-iso --output smoketest/network_clients_iso.svg
+	.venv/bin/python -m unifi_mermaid.cli --include-ports --format svg --output smoketest/network_ports.svg
+	.venv/bin/python -m unifi_mermaid.cli --include-ports --format svg-iso --output smoketest/network_ports_iso.svg
+	.venv/bin/python -m unifi_mermaid.cli --include-ports --include-clients --format svg --output smoketest/network_ports_clients.svg
+	.venv/bin/python -m unifi_mermaid.cli --include-ports --include-clients --format svg-iso --output smoketest/network_ports_clients_iso.svg
 
 version:
 	@echo $(VERSION)

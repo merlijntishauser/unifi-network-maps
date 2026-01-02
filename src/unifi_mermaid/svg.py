@@ -240,10 +240,17 @@ def render_svg(
         src_bottom = src_y + options.node_height
         dst_top = dst_y
         mid_y = (src_bottom + dst_top) / 2
-        color = "#2ecc71" if edge.poe else "#9aa0a6"
+        color = "#1e88e5" if edge.poe else "#9aa0a6"
         width_px = 2 if edge.poe else 1
         path = f"M {src_cx} {src_bottom} L {src_cx} {mid_y} L {dst_cx} {mid_y} L {dst_cx} {dst_top}"
         lines.append(f'<path d="{path}" stroke="{color}" stroke-width="{width_px}" fill="none"/>')
+        if edge.poe:
+            icon_x = dst_cx
+            icon_y = dst_top - 6
+            lines.append(
+                f'<text x="{icon_x}" y="{icon_y}" text-anchor="middle" fill="#1e88e5" '
+                f'font-size="{max(options.font_size, 10)}">⚡</text>'
+            )
 
         if edge.label:
             label_text = _compact_edge_label(edge.label, left_node=edge.left, right_node=edge.right)

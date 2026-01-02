@@ -52,6 +52,13 @@ def _extract_port_text(side: str) -> str | None:
     return None
 
 
+def _extract_device_name(side: str) -> str | None:
+    if ":" not in side:
+        return None
+    name = side.split(":", 1)[0].strip()
+    return name or None
+
+
 def _compact_edge_label(label: str) -> str:
     if "<->" not in label:
         return label
@@ -212,13 +219,24 @@ def render_svg(
             left_type = node_types.get(edge.left, "other")
             right_type = node_types.get(edge.right, "other")
             client_node = None
-            if "<->" not in label_text:
-                if left_type == "client" and right_type != "client":
-                    client_node = edge.left
-                elif right_type == "client" and left_type != "client":
-                    client_node = edge.right
-            if client_node:
-                client_port_labels.setdefault(client_node, label_text)
+            upstream_node = None
+            if left_type == "client" and right_type != "client":
+                client_node = edge.left
+                upstream_node = edge.right
+            elif right_type == "client" and left_type != "client":
+                client_node = edge.right
+                upstream_node = edge.left
+            if client_node and upstream_node:
+                if "<->" not in label_text:
+                    upstream_part = edge.label.split("<->", 1)[0].strip()
+                    port_text = _extract_port_text(upstream_part) or label_text
+                    upstream_name = _extract_device_name(upstream_part) or upstream_node
+                    client_port_labels.setdefault(client_node, f"{upstream_name}: {port_text}")
+                else:
+                    label = _escape_text(label_text)
+                    lines.append(
+                        f'<text x="{label_x}" y="{label_y}" text-anchor="middle" fill="#555">{label}</text>'
+                    )
             else:
                 label = _escape_text(label_text)
                 lines.append(
@@ -248,7 +266,7 @@ def render_svg(
         if node_type == "client":
             port_label = client_port_labels.get(name)
             if port_label:
-                port_y = text_y - options.font_size - 2
+                port_y = text_y - options.font_size - 4
                 lines.append(
                     f'<text x="{text_x}" y="{port_y}" class="node-port" '
                     f'text-anchor="start" fill="#555">{_escape_text(port_label)}</text>'

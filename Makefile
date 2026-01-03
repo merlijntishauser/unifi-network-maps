@@ -1,4 +1,4 @@
-.PHONY: venv install lint format test coverage smoketest ci version version-bump
+.PHONY: venv install lint format test coverage smoketest ci version version-sync version-bump
 
 VERSION_FILE = VERSION
 
@@ -40,6 +40,15 @@ smoketest:
 version:
 	@echo $(VERSION)
 
+version-sync:
+	@python3 -c 'from pathlib import Path; v=Path("$(VERSION_FILE)").read_text().strip(); \
+py=Path("pyproject.toml"); \
+text=py.read_text(encoding="utf-8"); \
+import re; \
+text=re.sub(r"^version\\s*=\\s*\\\"[^\\\"]+\\\"", f"version = \\\"{v}\\\"", text, flags=re.M); \
+py.write_text(text, encoding="utf-8"); \
+Path("src/unifi_mermaid/__init__.py").write_text(f"__version__ = \"{v}\"\n", encoding="utf-8")'
+
 version-bump:
 	@current=$$(cat $(VERSION_FILE)); \
 	default=$$(python3 -c 'import sys; v=sys.argv[1].strip().split("."); \
@@ -56,11 +65,7 @@ version-bump:
 		echo "Working tree not clean. Commit or stash changes first."; exit 1; \
 	fi; \
 	printf "%s\n" "$$next" > $(VERSION_FILE); \
-	printf "__version__ = \"%s\"\n" "$$next" > src/unifi_mermaid/__init__.py; \
-	python3 -c 'import re,sys; v=sys.argv[1]; p="pyproject.toml"; \
-text=open(p, encoding="utf-8").read(); \
-text=re.sub(r"^version\\s*=\\s*\\\"[^\\\"]+\\\"", f"version = \\\"{v}\\\"", text, flags=re.M); \
-open(p, "w", encoding="utf-8").write(text)' "$$next"; \
+	$(MAKE) version-sync; \
 	git add $(VERSION_FILE) src/unifi_mermaid/__init__.py pyproject.toml; \
 	git commit -m "Bump version to $$next"; \
 	git tag -a "v$$next" -m "v$$next"; \

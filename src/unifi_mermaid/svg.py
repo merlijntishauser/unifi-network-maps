@@ -360,7 +360,7 @@ def render_svg_isometric(
     positions_index, levels = _tree_layout_indices(edges, node_types)
     if not positions_index:
         positions_index = {}
-    tile_w = options.node_width
+    tile_w = options.node_width * 1.5
     iso_angle = math.radians(30.0)
     tile_h = tile_w * math.tan(iso_angle)
     step_w = tile_w
@@ -397,8 +397,9 @@ def render_svg_isometric(
         max_x = max_y = 0.0
 
     padding = options.padding
+    tile_y_offset = tile_h / 2
     offset_x = -min_x + padding
-    offset_y = -min_y + padding
+    offset_y = -min_y + padding + tile_y_offset
     for name, (x, y) in positions.items():
         positions[name] = (x + offset_x, y + offset_y)
 
@@ -412,10 +413,10 @@ def render_svg_isometric(
 
     def front_anchor(gx: float, gy: float) -> tuple[float, float]:
         cx, cy = grid_center(gx, gy)
-        return cx, cy + tile_h / 2
+        return cx, cy
 
     width = max_x - min_x + tile_w + padding * 2
-    height = max_y - min_y + tile_h + padding * 2
+    height = max_y - min_y + tile_h + padding * 2 + tile_y_offset
 
     out_width = options.width or int(width)
     out_height = options.height or int(height)
@@ -535,6 +536,8 @@ def render_svg_isometric(
                     label_text = f"{upstream_name} {label_text}"
                 node_port_labels.setdefault(edge.right, label_text)
 
+    node_depth = 0.0
+
     for name, (x, y) in positions.items():
         node_type = node_types.get(name, "other")
         fill, stroke = _TYPE_COLORS.get(node_type, _TYPE_COLORS["other"])
@@ -547,27 +550,26 @@ def render_svg_isometric(
         left = [
             (x, y + tile_h / 2),
             (x + tile_w / 2, y + tile_h),
-            (x + tile_w / 2, y + tile_h + tile_h / 2),
-            (x, y + tile_h / 2 + tile_h / 2),
+            (x + tile_w / 2, y + tile_h + node_depth),
+            (x, y + tile_h / 2 + node_depth),
         ]
         right = [
             (x + tile_w, y + tile_h / 2),
             (x + tile_w / 2, y + tile_h),
-            (x + tile_w / 2, y + tile_h + tile_h / 2),
-            (x + tile_w, y + tile_h / 2 + tile_h / 2),
+            (x + tile_w / 2, y + tile_h + node_depth),
+            (x + tile_w, y + tile_h / 2 + node_depth),
         ]
-        right_center_x = sum(px for px, _py in right) / len(right)
-        right_center_y = sum(py for _px, py in right) / len(right)
         left_fill = "#d0d0d0" if node_type == "other" else "#dcdcdc"
         right_fill = "#c2c2c2" if node_type == "other" else "#c8c8c8"
-        lines.append(
-            f'<polygon points="{" ".join(f"{px},{py}" for px, py in left)}" '
-            f'fill="{left_fill}" stroke="{stroke}" stroke-width="1"/>'
-        )
-        lines.append(
-            f'<polygon points="{" ".join(f"{px},{py}" for px, py in right)}" '
-            f'fill="{right_fill}" stroke="{stroke}" stroke-width="1"/>'
-        )
+        if node_depth > 0:
+            lines.append(
+                f'<polygon points="{" ".join(f"{px},{py}" for px, py in left)}" '
+                f'fill="{left_fill}" stroke="{stroke}" stroke-width="1"/>'
+            )
+            lines.append(
+                f'<polygon points="{" ".join(f"{px},{py}" for px, py in right)}" '
+                f'fill="{right_fill}" stroke="{stroke}" stroke-width="1"/>'
+            )
         lines.append(
             f'<polygon points="{" ".join(f"{px},{py}" for px, py in top)}" '
             f'fill="{fill}" stroke="{stroke}" stroke-width="1"/>'
@@ -650,28 +652,41 @@ def render_svg_isometric(
                     front_text = ""
                     side_text = _truncate(f"local: {_port_only(port_label)}")
 
-                front_center_x = sum(px for px, _py in left_face) / len(left_face)
-                front_center_y = sum(py for _px, py in left_face) / len(left_face)
-                front_x = front_center_x + tile_width * 0.20
-                front_y = front_center_y + stack_depth * 0.30 + font_size / 3
-                if front_text:
-                    lines.append(
-                        f'<text x="{front_x}" y="{front_y}" text-anchor="middle" fill="#555" '
-                        f'font-size="{font_size}" font-style="normal" '
-                        f'transform="rotate(16 {front_x} {front_y}) skewX(-8)">'
-                        f"{_escape_text(front_text)}</text>"
+                # Place port text along the front edge of the top tile.
+                front_edge_left = top[3]
+                front_edge_right = top[2]
+                edge_mid_x = (front_edge_left[0] + front_edge_right[0]) / 2
+                edge_mid_y = (front_edge_left[1] + front_edge_right[1]) / 2
+                center_x = sum(px for px, _py in top) / len(top)
+                center_y = sum(py for _px, py in top) / len(top)
+                normal_x = center_x - edge_mid_x
+                normal_y = center_y - edge_mid_y
+                normal_len = math.hypot(normal_x, normal_y) or 1.0
+                normal_x /= normal_len
+                normal_y /= normal_len
+                inset = tile_h * 0.12
+                text_x = edge_mid_x + normal_x * inset
+                text_y = edge_mid_y + normal_y * inset
+                edge_angle = math.degrees(
+                    math.atan2(
+                        front_edge_right[1] - front_edge_left[1],
+                        front_edge_right[0] - front_edge_left[0],
                     )
-
-                side_center_x = sum(px for px, _py in right_face) / len(right_face)
-                side_center_y = sum(py for _px, py in right_face) / len(right_face)
-                side_x = side_center_x - tile_width * 0.15
-                side_y = side_center_y + stack_depth * 0.30 + font_size / 3
-                lines.append(
-                    f'<text x="{side_x}" y="{side_y}" text-anchor="middle" fill="#555" '
-                    f'font-size="{font_size}" font-style="italic" '
-                    f'transform="rotate(-16 {side_x} {side_y}) skewX(6)">'
-                    f"{_escape_text(side_text)}</text>"
                 )
+
+                front_lines = [line for line in (front_text, side_text) if line]
+                if front_lines:
+                    line_height = font_size + 2
+                    start_y = text_y - (len(front_lines) - 1) * line_height / 2
+                    lines.append(
+                        f'<text x="{text_x}" y="{start_y}" text-anchor="middle" fill="#555" '
+                        f'font-size="{font_size}" font-style="normal" '
+                        f'transform="rotate({edge_angle} {text_x} {start_y})">'
+                    )
+                    for idx, line in enumerate(front_lines):
+                        dy = 0 if idx == 0 else line_height
+                        lines.append(f'<tspan x="{text_x}" dy="{dy}">{_escape_text(line)}</tspan>')
+                    lines.append("</text>")
 
         if icon_href:
             icon_x = icon_center_x - iso_icon_size / 2
@@ -684,11 +699,29 @@ def render_svg_isometric(
             )
 
         name_font_size = max(options.font_size - 2, 8)
-        name_x = right_center_x
-        name_y = right_center_y + name_font_size / 2
+        name_edge_left = top[3]
+        name_edge_right = top[2]
+        name_mid_x = (name_edge_left[0] + name_edge_right[0]) / 2
+        name_mid_y = (name_edge_left[1] + name_edge_right[1]) / 2
+        name_center_x = sum(px for px, _py in top) / len(top)
+        name_center_y = sum(py for _px, py in top) / len(top)
+        name_normal_x = name_center_x - name_mid_x
+        name_normal_y = name_center_y - name_mid_y
+        name_normal_len = math.hypot(name_normal_x, name_normal_y) or 1.0
+        name_normal_x /= name_normal_len
+        name_normal_y /= name_normal_len
+        name_inset = tile_h * 0.22
+        name_x = name_mid_x + name_normal_x * name_inset
+        name_y = name_mid_y + name_normal_y * name_inset + name_font_size + 2
+        name_angle = math.degrees(
+            math.atan2(
+                name_edge_right[1] - name_edge_left[1],
+                name_edge_right[0] - name_edge_left[0],
+            )
+        )
         lines.append(
             f'<text x="{name_x}" y="{name_y}" text-anchor="middle" fill="#1f1f1f" '
-            f'font-size="{name_font_size}" transform="rotate(-16 {name_x} {name_y})">'
+            f'font-size="{name_font_size}" transform="rotate({name_angle} {name_x} {name_y})">'
             f"{_escape_text(name)}</text>"
         )
 

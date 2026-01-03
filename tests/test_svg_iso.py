@@ -58,10 +58,10 @@ def test_isometric_label_truncates_long_text():
         ],
         node_types={"A": "gateway", "B": "switch"},
     )
-    texts = re.findall(r'<text[^>]*fill="#555"[^>]*>([^<]+)</text>', output)
+    tspans = re.findall(r"<tspan[^>]*>([^<]+)</tspan>", output)
     unescaped = (
-        text.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&") for text in texts
+        text.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&") for text in tspans
     )
     max_len = max(len(text) for text in unescaped)
-    max_chars = int((160 * 0.6) / (8 * 0.6))
+    max_chars = int((160 * 1.5 * 0.6) / (8 * 0.6))
     assert max_len <= max_chars

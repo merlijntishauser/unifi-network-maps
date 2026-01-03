@@ -41,11 +41,11 @@ _ISO_ICON_FILES = {
 }
 
 _TYPE_COLORS = {
-    "gateway": ("#ffe3b3", "#d98300"),
-    "switch": ("#d6ecff", "#3a7bd5"),
-    "ap": ("#d7f5e7", "#27ae60"),
-    "client": ("#f2e5ff", "#7f3fbf"),
-    "other": ("#eeeeee", "#8f8f8f"),
+    "gateway": ("#ffd199", "#f08a00"),
+    "switch": ("#bfe4ff", "#1c6dd0"),
+    "ap": ("#c4f2d4", "#1f9a50"),
+    "client": ("#e4ccff", "#6b2fb4"),
+    "other": ("#e3e3e3", "#7b7b7b"),
 }
 
 
@@ -260,6 +260,16 @@ def render_svg(
     lines = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{out_width}" height="{out_height}" '
         f'viewBox="0 0 {width} {height}">',
+        "<defs>"
+        '<linearGradient id="link-standard" x1="0%" y1="0%" x2="100%" y2="0%">'
+        '<stop offset="0%" stop-color="#16a085"/>'
+        '<stop offset="100%" stop-color="#2ecc71"/>'
+        "</linearGradient>"
+        '<linearGradient id="link-poe" x1="0%" y1="0%" x2="100%" y2="0%">'
+        '<stop offset="0%" stop-color="#1e88e5"/>'
+        '<stop offset="100%" stop-color="#42a5f5"/>'
+        "</linearGradient>"
+        "</defs>",
         f"<style>text{{font-family:Arial,Helvetica,sans-serif;font-size:{options.font_size}px;}}</style>",
     ]
 
@@ -276,7 +286,7 @@ def render_svg(
         src_bottom = src_y + options.node_height
         dst_top = dst_y
         mid_y = (src_bottom + dst_top) / 2
-        color = "#1e88e5" if edge.poe else "#9aa0a6"
+        color = "url(#link-poe)" if edge.poe else "url(#link-standard)"
         width_px = 2 if edge.poe else 1
         path = f"M {src_cx} {src_bottom} L {src_cx} {mid_y} L {dst_cx} {mid_y} L {dst_cx} {dst_top}"
         lines.append(f'<path d="{path}" stroke="{color}" stroke-width="{width_px}" fill="none"/>')
@@ -435,6 +445,16 @@ def render_svg_isometric(
     lines = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{out_width}" height="{out_height}" '
         f'viewBox="0 0 {width} {height}">',
+        "<defs>"
+        '<linearGradient id="iso-link-standard" x1="0%" y1="0%" x2="100%" y2="0%">'
+        '<stop offset="0%" stop-color="#16a085"/>'
+        '<stop offset="100%" stop-color="#2ecc71"/>'
+        "</linearGradient>"
+        '<linearGradient id="iso-link-poe" x1="0%" y1="0%" x2="100%" y2="0%">'
+        '<stop offset="0%" stop-color="#1e88e5"/>'
+        '<stop offset="100%" stop-color="#42a5f5"/>'
+        "</linearGradient>"
+        "</defs>",
         f"<style>text{{font-family:Arial,Helvetica,sans-serif;font-size:{options.font_size}px;}}</style>",
     ]
 
@@ -492,7 +512,7 @@ def render_svg_isometric(
         dst_grid = grid_positions.get(edge.right)
         if not src_grid or not dst_grid:
             continue
-        color = "#1e88e5" if edge.poe else "#2e7d32"
+        color = "url(#iso-link-poe)" if edge.poe else "url(#iso-link-standard)"
         width_px = 5 if edge.poe else 4
         src_gx, src_gy = float(src_grid[0]), float(src_grid[1])
         dst_gx, dst_gy = float(dst_grid[0]), float(dst_grid[1])

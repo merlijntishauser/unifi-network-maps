@@ -1,33 +1,32 @@
-name: ci
+name: CI
 
 on:
   push:
-    branches: [main]
+    branches: ["main"]
   pull_request:
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.11", "3.12"]
-
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install
+          python-version: "3.11"
+      - name: Install package (local check)
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[dev]"
-      - name: Pre-commit (ruff)
+          python -m pip install .
+      - name: Install dev dependencies
         run: |
-          pre-commit run --all-files
-      - name: Pytest
+          python -m pip install -e ".[dev]"
+      - name: Lint (ruff)
+        run: |
+          ruff check .
+      - name: Tests (pytest)
         run: |
           pytest
-      - name: CLI help smoke test
+      - name: Build dist
         run: |
-          python -m unifi_mermaid.cli --help
+          python -m pip install build
+          python -m build

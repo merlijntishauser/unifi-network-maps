@@ -1,0 +1,9 @@
+include LICENSE
+include README.md
+include CHANGELOG.md
+include SECURITY.md
+include CONTRIBUTING.md
+include LICENSES.md
+include RELEASING.md
+recursive-include src/unifi_mermaid/assets/icons *.svg
+recursive-include src/unifi_mermaid/assets/icons/isometric ISOPACKS_LICENSE

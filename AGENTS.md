@@ -63,6 +63,9 @@ Install:
 pip install unifi-controller-api
 ```
 
+### Icons
+- Isometric SVG icons are sourced from **markmanx/isopacks** (MIT).
+
 ---
 
 ## Configuration

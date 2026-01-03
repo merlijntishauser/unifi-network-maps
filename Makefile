@@ -57,7 +57,11 @@ version-bump:
 	fi; \
 	printf "%s\n" "$$next" > $(VERSION_FILE); \
 	printf "__version__ = \"%s\"\n" "$$next" > src/unifi_mermaid/__init__.py; \
-	git add $(VERSION_FILE) src/unifi_mermaid/__init__.py; \
+	python3 -c 'import re,sys; v=sys.argv[1]; p="pyproject.toml"; \
+text=open(p, encoding="utf-8").read(); \
+text=re.sub(r"^version\\s*=\\s*\\\"[^\\\"]+\\\"", f"version = \\\"{v}\\\"", text, flags=re.M); \
+open(p, "w", encoding="utf-8").write(text)' "$$next"; \
+	git add $(VERSION_FILE) src/unifi_mermaid/__init__.py pyproject.toml; \
 	git commit -m "Bump version to $$next"; \
 	git tag -a "v$$next" -m "v$$next"; \
 	git push origin HEAD; \

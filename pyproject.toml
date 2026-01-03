@@ -4,16 +4,36 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "unifi-mermaid-map"
-version = "0.1.0"
+version = "1.1.0"
 description = "Dynamic UniFi -> Mermaid network maps"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "Merlijn" }]
+keywords = ["unifi", "mermaid", "network", "topology", "diagram", "svg"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: System Administrators",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Documentation",
+  "Topic :: System :: Networking",
+]
 dependencies = [
   "unifi-controller-api",
   "python-dotenv",
 ]
+
+[project.urls]
+Homepage = "https://github.com/merlijntishauser/unifi-network-maps"
+Repository = "https://github.com/merlijntishauser/unifi-network-maps"
+Issues = "https://github.com/merlijntishauser/unifi-network-maps/issues"
+Changelog = "https://github.com/merlijntishauser/unifi-network-maps/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [
@@ -51,7 +71,11 @@ show_missing = true
 package-dir = {"" = "src"}
 
 [tool.setuptools.package-data]
-"unifi_mermaid" = ["assets/icons/*.svg"]
+"unifi_mermaid" = [
+  "assets/icons/*.svg",
+  "assets/icons/isometric/*.svg",
+  "assets/icons/isometric/ISOPACKS_LICENSE",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]

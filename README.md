@@ -13,6 +13,12 @@ source .venv/bin/activate
 pip install -e .
 ```
 
+Local install (non-editable):
+
+```bash
+pip install .
+```
+
 ## Configuration
 
 Set environment variables (no secrets in code). The CLI loads `.env` automatically if present:
@@ -69,6 +75,31 @@ Legend only:
 python -m unifi_mermaid.cli --legend-only --stdout
 ```
 
+## Local install check
+
+```bash
+pip install .
+```
+
+## Release
+
+Build and upload to PyPI:
+
+```bash
+python -m pip install build twine
+python -m build
+twine upload dist/*
+```
+
+Tagging is recommended before release:
+
+```bash
+git tag -a vX.Y.Z -m "vX.Y.Z"
+git push origin vX.Y.Z
+```
+
+See `LICENSES.md` for third-party license info.
+
 ## Options
 
 - `--format mermaid|svg|svg-iso`: output format (default mermaid).
@@ -89,6 +120,6 @@ python -m unifi_mermaid.cli --legend-only --stdout
 - Default output is top-to-bottom (TB) and rendered as a hop-based tree from the gateway(s).
 - Nodes are color-coded by type (gateway/switch/AP/client) with a sensible default palette.
 - PoE links are highlighted in blue and annotated with a power icon when detected from `port_table`.
-- SVG output uses Material Design Icons for device glyphs.
-- Isometric SVG output uses MIT-licensed isometric icons from `richbl/isometric-icons`.
+- SVG output uses vendored device glyphs from `src/unifi_mermaid/assets/icons`.
+- Isometric SVG output uses MIT-licensed icons from `markmanx/isopacks`.
 - SVG port labels render inside child nodes for readability.

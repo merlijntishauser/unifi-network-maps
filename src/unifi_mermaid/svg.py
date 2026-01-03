@@ -721,6 +721,8 @@ def render_svg_isometric(
             icon_x = icon_center_x - iso_icon_size / 2
             icon_lift = tile_h * (0.02 if port_label else 0.04)
             icon_y = icon_center_y - iso_icon_size / 2 - icon_lift - tile_h * 0.05
+            if node_type == "client":
+                icon_y -= tile_h * 0.05
             lines.append(
                 f'<image href="{icon_href}" x="{icon_x}" y="{icon_y}" '
                 f'width="{iso_icon_size}" height="{iso_icon_size}" '

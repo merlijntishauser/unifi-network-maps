@@ -20,3 +20,4 @@ network.md
 smoketest/
 network*.md
 build/
+/dist/

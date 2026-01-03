@@ -14,7 +14,3 @@
 - **Mermaid styling config:** Allow configuring PoE link color or style instead of hardcoding.
 - **Logging consistency:** Add normalized device/edge counts to logs for easier troubleshooting.
 - **Tests for uplink fallback:** Add a fixture covering missing LLDP but present `uplink` data.
-
-## Open Source Readiness
-- **Release automation:** Add a GitHub Actions release workflow (build + publish on tag).
-- **PyPI credentials:** Configure PyPI trusted publisher or token in repo settings.

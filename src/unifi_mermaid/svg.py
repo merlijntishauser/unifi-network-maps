@@ -269,6 +269,26 @@ def render_svg(
         '<stop offset="0%" stop-color="#1e88e5"/>'
         '<stop offset="100%" stop-color="#42a5f5"/>'
         "</linearGradient>"
+        '<linearGradient id="node-gateway" x1="0%" y1="0%" x2="100%" y2="100%">'
+        '<stop offset="0%" stop-color="#ffd199"/>'
+        '<stop offset="100%" stop-color="#ffb15a"/>'
+        "</linearGradient>"
+        '<linearGradient id="node-switch" x1="0%" y1="0%" x2="100%" y2="100%">'
+        '<stop offset="0%" stop-color="#bfe4ff"/>'
+        '<stop offset="100%" stop-color="#8ac6ff"/>'
+        "</linearGradient>"
+        '<linearGradient id="node-ap" x1="0%" y1="0%" x2="100%" y2="100%">'
+        '<stop offset="0%" stop-color="#c4f2d4"/>'
+        '<stop offset="100%" stop-color="#8ee3b4"/>'
+        "</linearGradient>"
+        '<linearGradient id="node-client" x1="0%" y1="0%" x2="100%" y2="100%">'
+        '<stop offset="0%" stop-color="#e4ccff"/>'
+        '<stop offset="100%" stop-color="#c5a4ff"/>'
+        "</linearGradient>"
+        '<linearGradient id="node-other" x1="0%" y1="0%" x2="100%" y2="100%">'
+        '<stop offset="0%" stop-color="#e3e3e3"/>'
+        '<stop offset="100%" stop-color="#cfcfcf"/>'
+        "</linearGradient>"
         "</defs>",
         f"<style>text{{font-family:Arial,Helvetica,sans-serif;font-size:{options.font_size}px;}}</style>",
     ]
@@ -328,6 +348,7 @@ def render_svg(
     for name, (x, y) in positions.items():
         node_type = node_types.get(name, "other")
         fill, stroke = _TYPE_COLORS.get(node_type, _TYPE_COLORS["other"])
+        fill = f"url(#node-{node_type})"
         lines.append(
             f'<rect x="{x}" y="{y}" width="{options.node_width}" height="{options.node_height}" '
             f'rx="6" ry="6" fill="{fill}" stroke="{stroke}" stroke-width="1"/>'
@@ -454,6 +475,26 @@ def render_svg_isometric(
         '<stop offset="0%" stop-color="#1e88e5"/>'
         '<stop offset="100%" stop-color="#42a5f5"/>'
         "</linearGradient>"
+        '<linearGradient id="iso-node-gateway" x1="0%" y1="0%" x2="100%" y2="100%">'
+        '<stop offset="0%" stop-color="#ffd199"/>'
+        '<stop offset="100%" stop-color="#ffb15a"/>'
+        "</linearGradient>"
+        '<linearGradient id="iso-node-switch" x1="0%" y1="0%" x2="100%" y2="100%">'
+        '<stop offset="0%" stop-color="#bfe4ff"/>'
+        '<stop offset="100%" stop-color="#8ac6ff"/>'
+        "</linearGradient>"
+        '<linearGradient id="iso-node-ap" x1="0%" y1="0%" x2="100%" y2="100%">'
+        '<stop offset="0%" stop-color="#c4f2d4"/>'
+        '<stop offset="100%" stop-color="#8ee3b4"/>'
+        "</linearGradient>"
+        '<linearGradient id="iso-node-client" x1="0%" y1="0%" x2="100%" y2="100%">'
+        '<stop offset="0%" stop-color="#e4ccff"/>'
+        '<stop offset="100%" stop-color="#c5a4ff"/>'
+        "</linearGradient>"
+        '<linearGradient id="iso-node-other" x1="0%" y1="0%" x2="100%" y2="100%">'
+        '<stop offset="0%" stop-color="#e3e3e3"/>'
+        '<stop offset="100%" stop-color="#cfcfcf"/>'
+        "</linearGradient>"
         "</defs>",
         f"<style>text{{font-family:Arial,Helvetica,sans-serif;font-size:{options.font_size}px;}}</style>",
     ]
@@ -575,6 +616,7 @@ def render_svg_isometric(
     for name, (x, y) in positions.items():
         node_type = node_types.get(name, "other")
         fill, stroke = _TYPE_COLORS.get(node_type, _TYPE_COLORS["other"])
+        fill = f"url(#iso-node-{node_type})"
         top = [
             (x + tile_w / 2, y),
             (x + tile_w, y + tile_h / 2),
@@ -657,9 +699,10 @@ def render_svg_isometric(
                 f'{" ".join(f"{px},{py}" for px, py in right_face)}" '
                 f'fill="{right_fill}" stroke="{stroke}" stroke-width="1"/>'
             )
+            label_fill = fill
             lines.append(
                 f'<polygon class="label-tile" points="{tile_points}" '
-                f'fill="{fill}" stroke="{stroke}" stroke-width="1"/>'
+                f'fill="{label_fill}" stroke="{stroke}" stroke-width="1"/>'
             )
             icon_center_x = label_center_x
             icon_center_y = label_center_y

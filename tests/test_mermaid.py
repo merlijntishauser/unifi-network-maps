@@ -22,6 +22,19 @@ def test_render_legend_outputs_subgraph():
     assert "subgraph legend" in output
 
 
+def test_render_mermaid_grouped_uses_semicolons():
+    output = render_mermaid(
+        [Edge("A", "B")],
+        groups={"group": ["A", "B"]},
+        group_order=["group"],
+        node_types={"A": "gateway", "B": "switch"},
+    )
+    lines = output.splitlines()
+    assert '  subgraph group_group["Group"];' in lines
+    assert any(line.endswith(";") for line in lines if "---" in line)
+    assert any(line.endswith(";") for line in lines if line.strip().startswith("class "))
+
+
 def test_render_legend_link_inside_subgraph():
     output = render_legend().splitlines()
     link_line = "    legend_poe_a ---|⚡| legend_poe_b;"

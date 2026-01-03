@@ -67,10 +67,7 @@ def render_mermaid(
         for members in groups.values():
             group_nodes.extend(members)
     id_map = _build_id_map(edge_list, group_nodes)
-    lines = [
-        '%%{init: {"flowchart": {"curve": "linear", "defaultRenderer": "dagre"}}}%%',
-        f"graph {direction}",
-    ]
+    lines = [f"graph {direction}"]
     poe_links: list[int] = []
     link_index = 0
     if groups:
@@ -81,9 +78,9 @@ def render_mermaid(
                 continue
             group_id = _slugify(f"group_{group_name}")
             label = group_name.replace("_", " ").title()
-            lines.append(f'  subgraph {group_id}["{_escape(label)}"]')
+            lines.append(f'  subgraph {group_id}["{_escape(label)}"];')
             for member in members:
-                lines.append(f"    {_node_ref(member, id_map[member])}")
+                lines.append(f"    {_node_ref(member, id_map[member])};")
             lines.append("  end")
     use_node_labels = not groups
     for edge in edge_list:
@@ -95,9 +92,9 @@ def render_mermaid(
             right = id_map[edge.right]
         if edge.label:
             label = _escape(edge.label)
-            lines.append(f'  {left} ---|"{label}"| {right}')
+            lines.append(f'  {left} ---|"{label}"| {right};')
         else:
-            lines.append(f"  {left} --- {right}")
+            lines.append(f"  {left} --- {right};")
         if edge.poe:
             poe_links.append(link_index)
         link_index += 1
@@ -114,14 +111,14 @@ def render_mermaid(
                 class_name = class_map.get(node_type, "node_other")
                 node_id = id_map.get(name)
                 if node_id:
-                    lines.append(f"  class {node_id} {class_name}")
-        lines.append("  classDef node_gateway fill:#ffe3b3,stroke:#d98300,stroke-width:1px")
-        lines.append("  classDef node_switch fill:#d6ecff,stroke:#3a7bd5,stroke-width:1px")
-        lines.append("  classDef node_ap fill:#d7f5e7,stroke:#27ae60,stroke-width:1px")
-        lines.append("  classDef node_client fill:#f2e5ff,stroke:#7f3fbf,stroke-width:1px")
-        lines.append("  classDef node_other fill:#eeeeee,stroke:#8f8f8f,stroke-width:1px")
+                    lines.append(f"  class {node_id} {class_name};")
+        lines.append("  classDef node_gateway fill:#ffe3b3,stroke:#d98300,stroke-width:1px;")
+        lines.append("  classDef node_switch fill:#d6ecff,stroke:#3a7bd5,stroke-width:1px;")
+        lines.append("  classDef node_ap fill:#d7f5e7,stroke:#27ae60,stroke-width:1px;")
+        lines.append("  classDef node_client fill:#f2e5ff,stroke:#7f3fbf,stroke-width:1px;")
+        lines.append("  classDef node_other fill:#eeeeee,stroke:#8f8f8f,stroke-width:1px;")
     for index in poe_links:
-        lines.append(f"  linkStyle {index} stroke:#1e88e5,stroke-width:2px")
+        lines.append(f"  linkStyle {index} stroke:#1e88e5,stroke-width:2px;")
     return "\n".join(lines) + "\n"
 
 

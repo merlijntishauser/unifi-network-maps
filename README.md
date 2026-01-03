@@ -1,4 +1,4 @@
-# unifi-network-map
+# unifi-network-maps
 
 Dynamic UniFi -> Mermaid network maps generated from LLDP topology.
 
@@ -36,43 +36,43 @@ export UNIFI_VERIFY_SSL=false
 Basic map (tree layout by LLDP hops):
 
 ```bash
-unifi-network-map --stdout
+unifi-network-maps --stdout
 ```
 
 Write Markdown for notes tools:
 
 ```bash
-unifi-network-map --markdown --output ./network.md
+unifi-network-maps --markdown --output ./network.md
 ```
 
 Show ports + clients:
 
 ```bash
-unifi-network-map --include-ports --include-clients --stdout
+unifi-network-maps --include-ports --include-clients --stdout
 ```
 
 SVG output (orthogonal layout + icons):
 
 ```bash
-unifi-network-map --format svg --output ./network.svg
+unifi-network-maps --format svg --output ./network.svg
 ```
 
 Isometric SVG output:
 
 ```bash
-unifi-network-map --format svg-iso --output ./network.svg
+unifi-network-maps --format svg-iso --output ./network.svg
 ```
 
 SVG size overrides:
 
 ```bash
-unifi-network-map --format svg --svg-width 1400 --svg-height 900 --output ./network.svg
+unifi-network-maps --format svg --svg-width 1400 --svg-height 900 --output ./network.svg
 ```
 
 Legend only:
 
 ```bash
-unifi-network-map --legend-only --stdout
+unifi-network-maps --legend-only --stdout
 ```
 
 ## Local install check

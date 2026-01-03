@@ -172,7 +172,7 @@ unifi-network-map/
 Example:
 
 ```bash
-unifi-network-map \
+unifi-network-maps \
   --site default \
   --format mermaid \
   --output ./network.md

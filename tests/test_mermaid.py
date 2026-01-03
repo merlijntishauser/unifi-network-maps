@@ -22,6 +22,34 @@ def test_render_legend_outputs_subgraph():
     assert "subgraph legend" in output
 
 
+def test_render_legend_link_inside_subgraph():
+    output = render_legend().splitlines()
+    link_line = "    legend_poe_a ---|⚡| legend_poe_b;"
+    end_line = "  end"
+    assert link_line in output
+    assert output.index(link_line) < output.index(end_line)
+    assert "    legend_no_poe_a --- legend_no_poe_b;" in output
+    assert "    linkStyle 0 arrowhead:none;" in output
+    assert "    linkStyle 1 arrowhead:none;" in output
+
+
+def test_render_legend_subgraph_ends_with_semicolon():
+    output = render_legend().splitlines()
+    assert '  subgraph legend["Legend"];' in output
+
+
+def test_render_legend_link_style_default():
+    output = render_legend().splitlines()
+    assert "  linkStyle 0 stroke:#1e88e5,stroke-width:2px,arrowhead:none;" in output
+    assert "  linkStyle 1 stroke:#2ecc71,stroke-width:2px,arrowhead:none;" in output
+
+
+def test_render_legend_class_lines_end_with_semicolon():
+    output = render_legend().splitlines()
+    assert "  class legend_gateway node_gateway;" in output
+    assert "  classDef node_gateway fill:#ffe3b3,stroke:#d98300,stroke-width:1px;" in output
+
+
 def test_render_mermaid_renders_group_subgraph():
     output = render_mermaid([Edge("Gateway", "Switch")], groups={"gateway": ["Gateway"]})
     assert "subgraph group_gateway" in output

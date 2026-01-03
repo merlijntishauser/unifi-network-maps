@@ -361,7 +361,8 @@ def render_svg_isometric(
     if not positions_index:
         positions_index = {}
     tile_w = options.node_width
-    tile_h = options.node_height
+    iso_angle = math.radians(30.0)
+    tile_h = tile_w * math.tan(iso_angle)
     step_w = tile_w
     step_h = tile_h
     grid_spacing_x = max(2, 1 + int(round(options.h_gap / max(tile_w, 1))))
@@ -676,17 +677,10 @@ def render_svg_isometric(
             icon_x = icon_center_x - iso_icon_size / 2
             icon_lift = tile_h * (0.02 if port_label else 0.04)
             icon_y = icon_center_y - iso_icon_size / 2 - icon_lift - tile_h * 0.05
-            icon_center_x = icon_x + iso_icon_size / 2
-            icon_center_y = icon_y + iso_icon_size / 2
-            transform = (
-                f"translate({icon_center_x} {icon_center_y}) "
-                f"skewX(-28) rotate(-24) skewX(-4) rotate(-4) "
-                f"translate({-icon_center_x} {-icon_center_y})"
-            )
             lines.append(
                 f'<image href="{icon_href}" x="{icon_x}" y="{icon_y}" '
                 f'width="{iso_icon_size}" height="{iso_icon_size}" '
-                f'preserveAspectRatio="xMidYMid meet" transform="{transform}"/>'
+                f'preserveAspectRatio="xMidYMid meet"/>'
             )
 
         name_font_size = max(options.font_size - 2, 8)

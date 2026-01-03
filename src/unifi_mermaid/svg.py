@@ -104,6 +104,13 @@ def _wrap_text(label: str, *, max_len: int = 24) -> list[str]:
     return [first, rest] if rest else [first]
 
 
+def _shorten_prefix(name: str, max_words: int = 2) -> str:
+    words = name.split()
+    if len(words) <= max_words:
+        return name
+    return " ".join(words[:max_words]) + "..."
+
+
 def _label_metrics(
     lines: list[str], *, font_size: int, padding_x: int = 6, padding_y: int = 3
 ) -> tuple[float, float]:
@@ -299,18 +306,14 @@ def render_svg(
                     port_text = _extract_port_text(upstream_part) or label_text
                     upstream_name = _extract_device_name(upstream_part) or upstream_node
                     node_port_labels.setdefault(client_node, f"{upstream_name}: {port_text}")
-                    upstream_type = node_types.get(upstream_node, "switch")
-                    prefix = "gateway" if upstream_type == "gateway" else "switch"
-                    node_port_prefix.setdefault(client_node, prefix)
+                    node_port_prefix.setdefault(client_node, upstream_name)
             else:
                 upstream_part = edge.label.split("<->", 1)[0].strip()
                 upstream_name = _extract_device_name(upstream_part) or edge.left
                 if label_text.lower().startswith("port "):
                     label_text = f"{upstream_name} {label_text}"
                 node_port_labels.setdefault(edge.right, label_text)
-                upstream_type = node_types.get(edge.left, "switch")
-                prefix = "gateway" if upstream_type == "gateway" else "switch"
-                node_port_prefix.setdefault(edge.right, prefix)
+                node_port_prefix.setdefault(edge.right, upstream_name)
 
     for name, (x, y) in positions.items():
         node_type = node_types.get(name, "other")
@@ -538,18 +541,14 @@ def render_svg_isometric(
                     port_text = _extract_port_text(upstream_part) or label_text
                     upstream_name = _extract_device_name(upstream_part) or upstream_node
                     node_port_labels.setdefault(client_node, f"{upstream_name}: {port_text}")
-                    upstream_type = node_types.get(upstream_node, "switch")
-                    prefix = "gateway" if upstream_type == "gateway" else "switch"
-                    node_port_prefix.setdefault(client_node, prefix)
+                    node_port_prefix.setdefault(client_node, _shorten_prefix(upstream_name))
             else:
                 upstream_part = edge.label.split("<->", 1)[0].strip()
                 upstream_name = _extract_device_name(upstream_part) or edge.left
                 if label_text.lower().startswith("port "):
                     label_text = f"{upstream_name} {label_text}"
                 node_port_labels.setdefault(edge.right, label_text)
-                upstream_type = node_types.get(edge.left, "switch")
-                prefix = "gateway" if upstream_type == "gateway" else "switch"
-                node_port_prefix.setdefault(edge.right, prefix)
+                node_port_prefix.setdefault(edge.right, _shorten_prefix(upstream_name))
 
     node_depth = 0.0
 
@@ -656,8 +655,17 @@ def render_svg_isometric(
                         return segment[idx:].strip()
                     return segment.split(":", 1)[-1].strip()
 
+                # Place port text along the front edge of the top tile.
+                left_edge_top = top[0]
+                left_edge_bottom = top[3]
+                edge_len = math.hypot(
+                    left_edge_bottom[0] - left_edge_top[0],
+                    left_edge_bottom[1] - left_edge_top[1],
+                )
+                max_chars = max(6, int((edge_len * 0.85) / (font_size * 0.6)))
+
                 def _truncate(text: str, max_len: int = max_chars) -> str:
-                    return text[: max_len - 1].rstrip() + "…" if len(text) > max_len else text
+                    return text[: max_len - 3].rstrip() + "..." if len(text) > max_len else text
 
                 prefix = node_port_prefix.get(name, "switch")
                 if "<->" in port_label:
@@ -670,9 +678,6 @@ def render_svg_isometric(
                     side_prefix = prefix if node_type == "client" else "local"
                     side_text = _truncate(f"{side_prefix}: {_port_only(port_label)}")
 
-                # Place port text along the front edge of the top tile.
-                left_edge_top = top[0]
-                left_edge_bottom = top[3]
                 edge_mid_x = (left_edge_top[0] + left_edge_bottom[0]) / 2
                 edge_mid_y = (left_edge_top[1] + left_edge_bottom[1]) / 2
                 center_x = sum(px for px, _py in top) / len(top)
@@ -682,9 +687,9 @@ def render_svg_isometric(
                 normal_len = math.hypot(normal_x, normal_y) or 1.0
                 normal_x /= normal_len
                 normal_y /= normal_len
-                inset = tile_h * 0.22
-                text_x = edge_mid_x + normal_x * inset - tile_w * 0.20
-                text_y = edge_mid_y + normal_y * inset - tile_h * 0.03
+                inset = tile_h * 0.27
+                text_x = edge_mid_x + normal_x * inset - tile_w * 0.16
+                text_y = edge_mid_y + normal_y * inset + tile_h * 0.02
                 edge_angle = math.degrees(
                     math.atan2(
                         left_edge_bottom[1] - left_edge_top[1],
@@ -743,9 +748,9 @@ def render_svg_isometric(
         name_normal_len = math.hypot(name_normal_x, name_normal_y) or 1.0
         name_normal_x /= name_normal_len
         name_normal_y /= name_normal_len
-        name_inset = tile_h * 0.08
-        name_x = name_mid_x + name_normal_x * name_inset + tile_w * 0.01
-        name_y = name_mid_y + name_normal_y * name_inset + name_font_size
+        name_inset = tile_h * 0.13
+        name_x = name_mid_x + name_normal_x * name_inset - tile_w * 0.08
+        name_y = name_mid_y + name_normal_y * name_inset + name_font_size - tile_h * 0.05
         name_angle = math.degrees(
             math.atan2(
                 name_edge_right[1] - name_edge_left[1],

@@ -208,6 +208,14 @@ def normalize_devices(devices: Iterable[DeviceLike]) -> list[Device]:
 
 def classify_device_type(device: Device) -> str:
     value = device.type.strip().lower()
+    if not value:
+        name = device.name.strip().lower()
+        if "gateway" in name or name.startswith("gw"):
+            return "gateway"
+        if "switch" in name:
+            return "switch"
+        if "ap" in name:
+            return "ap"
     if value in {"gateway", "ugw", "usg", "ux", "udm", "udr"}:
         return "gateway"
     if value in {"switch", "usw"}:
@@ -249,7 +257,7 @@ def build_tree_edges_by_topology(edges: Iterable[Edge], gateways: list[str]) -> 
 
     while queue:
         current = queue.popleft()
-        for neighbor in adjacency.get(current, set()):
+        for neighbor in sorted(adjacency.get(current, set())):
             if neighbor in visited:
                 continue
             visited.add(neighbor)
@@ -257,7 +265,8 @@ def build_tree_edges_by_topology(edges: Iterable[Edge], gateways: list[str]) -> 
             queue.append(neighbor)
 
     tree_edges: list[Edge] = []
-    for child, parent_name in parent.items():
+    for child in sorted(parent):
+        parent_name = parent[child]
         original = edge_map.get(frozenset({child, parent_name}))
         if original is None:
             tree_edges.append(Edge(left=parent_name, right=child))
@@ -379,17 +388,25 @@ def build_edges(
     include_ports: bool = False,
     only_unifi: bool = True,
 ) -> list[Edge]:
-    index = build_device_index(devices)
-    device_by_name = {device.name: device for device in devices}
+    ordered_devices = sorted(devices, key=lambda item: (item.name.lower(), item.mac.lower()))
+    index = build_device_index(ordered_devices)
+    device_by_name = {device.name: device for device in ordered_devices}
     pairs: list[tuple[str, str]] = []
     seen: set[frozenset[str]] = set()
     port_map: dict[tuple[str, str], str] = {}
     poe_map: dict[tuple[str, str], bool] = {}
     devices_with_lldp_edges: set[str] = set()
 
-    for device in devices:
+    for device in ordered_devices:
         poe_ports = device.poe_ports
-        for entry in device.lldp_info:
+        for entry in sorted(
+            device.lldp_info,
+            key=lambda item: (
+                _normalize_mac(item.chassis_id),
+                str(item.port_id or ""),
+                str(item.port_desc or ""),
+            ),
+        ):
             neighbor_mac = _normalize_mac(entry.chassis_id)
             neighbor_name = index.get(neighbor_mac)
             if neighbor_name is None:
@@ -411,7 +428,7 @@ def build_edges(
             seen.add(key)
             devices_with_lldp_edges.add(device.name)
 
-    for device in devices:
+    for device in ordered_devices:
         if device.name in devices_with_lldp_edges:
             continue
         uplink_name = None
@@ -442,6 +459,20 @@ def build_edges(
 
     edges: list[Edge] = []
     for left, right in pairs:
+        if include_ports:
+            left_label = port_map.get((left, right))
+            right_label = port_map.get((right, left))
+            if left_label is None and right_label is not None:
+                left, right = right, left
+            elif left_label and right_label:
+                left_device = device_by_name.get(left)
+                right_device = device_by_name.get(right)
+                if left_device and right_device:
+                    type_rank = {"gateway": 0, "switch": 1, "ap": 2, "other": 3}
+                    left_rank = type_rank.get(classify_device_type(left_device), 3)
+                    right_rank = type_rank.get(classify_device_type(right_device), 3)
+                    if (left_rank, left.lower()) > (right_rank, right.lower()):
+                        left, right = right, left
         poe = poe_map.get((left, right), False) or poe_map.get((right, left), False)
         label = compose_port_label(left, right, port_map) if include_ports else None
         edges.append(Edge(left=left, right=right, label=label, poe=poe))

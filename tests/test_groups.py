@@ -29,4 +29,4 @@ def test_render_mermaid_with_groups_uses_subgraph():
 def test_rank_edges_by_topology_uses_hops():
     edges = [Edge("GW", "SW"), Edge("SW", "AP")]
     tree_edges = build_tree_edges_by_topology(edges, ["GW"])
-    assert tree_edges[0].left == "GW"
+    assert {edge.left: edge.right for edge in tree_edges} == {"GW": "SW", "SW": "AP"}

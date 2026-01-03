@@ -42,6 +42,21 @@ def test_build_edges_deduplicates_links():
     assert len(edges) == 1
 
 
+def test_build_edges_orders_deterministically():
+    dev_a = DummyDevice(
+        "Switch Z",
+        "aa:bb:cc:dd:ee:02",
+        [LLDPEntry("aa:bb:cc:dd:ee:01", "2")],
+    )
+    dev_b = DummyDevice(
+        "Switch A",
+        "aa:bb:cc:dd:ee:01",
+        [LLDPEntry("aa:bb:cc:dd:ee:02", "1")],
+    )
+    edges = build_edges(normalize_devices([dev_a, dev_b]))
+    assert [(edge.left, edge.right) for edge in edges] == [("Switch A", "Switch Z")]
+
+
 def test_build_edges_includes_ports():
     dev_a = DummyDevice("Switch A", "aa:bb:cc:dd:ee:01", [LLDPEntry("aa:bb:cc:dd:ee:02", "1")])
     dev_b = DummyDevice("Switch B", "aa:bb:cc:dd:ee:02", [LLDPEntry("aa:bb:cc:dd:ee:01", "2")])

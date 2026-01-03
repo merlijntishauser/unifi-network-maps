@@ -6,6 +6,7 @@ from unifi_mermaid.topology import (
     Device,
     Edge,
     LLDPEntry,
+    UplinkInfo,
     _as_bool,
     _as_float,
     _client_display_name,
@@ -286,9 +287,7 @@ def test_build_edges_uses_uplink_fallback():
         ip="",
         type="switch",
         lldp_info=[],
-        uplink_mac="aa",
-        uplink_name="Gateway",
-        uplink_port=1,
+        uplink=UplinkInfo(mac="aa", name="Gateway", port=1),
     )
     edges = build_edges([gateway, switch], include_ports=True)
     assert edges[0].label == "Gateway: Port 1 <-> Switch: ?"

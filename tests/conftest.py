@@ -6,3 +6,7 @@ from pathlib import Path
 SRC = Path(__file__).resolve().parents[1] / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
+
+for name in list(sys.modules):
+    if name == "unifi_mermaid" or name.startswith("unifi_mermaid."):
+        del sys.modules[name]

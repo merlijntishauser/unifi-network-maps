@@ -1,7 +1,7 @@
 # TODO (Refactor Proposals)
 
 ## P0 - Correctness/Clarity
-- **Stabilize topology ordering:** Sort devices/edges by name or MAC before building the tree for deterministic output.
+- done
 
 ## P1 - Maintainability
 - **Expand typed device adapter:** Add explicit fields/models for `port_table`, `uplink`, and `last_uplink`.
@@ -14,9 +14,6 @@
 - **Mermaid styling config:** Allow configuring PoE link color or style instead of hardcoding.
 - **Logging consistency:** Add normalized device/edge counts to logs for easier troubleshooting.
 - **Tests for uplink fallback:** Add a fixture covering missing LLDP but present `uplink` data.
-
-## Next
-- Consider refining client inclusion (filter by wired, limit count, or group by uplink device).
 
 ## Open Source Readiness
 - **Release automation:** Add a GitHub Actions release workflow (build + publish on tag).

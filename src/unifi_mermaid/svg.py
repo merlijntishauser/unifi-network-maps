@@ -663,10 +663,12 @@ def render_svg_isometric(
                 if "<->" in port_label:
                     left_part, right_part = (part.strip() for part in port_label.split("<->", 1))
                     front_text = _truncate(f"{prefix}: {_port_only(left_part)}")
-                    side_text = _truncate(f"local: {_port_only(right_part)}")
+                    side_prefix = prefix if node_type == "client" else "local"
+                    side_text = _truncate(f"{side_prefix}: {_port_only(right_part)}")
                 else:
                     front_text = ""
-                    side_text = _truncate(f"local: {_port_only(port_label)}")
+                    side_prefix = prefix if node_type == "client" else "local"
+                    side_text = _truncate(f"{side_prefix}: {_port_only(port_label)}")
 
                 # Place port text along the front edge of the top tile.
                 left_edge_top = top[0]

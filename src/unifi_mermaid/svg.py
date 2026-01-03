@@ -703,10 +703,14 @@ def render_svg_isometric(
                 if front_lines:
                     line_height = font_size + 2
                     start_y = text_y - (len(front_lines) - 1) * line_height / 2
+                    text_transform = (
+                        f"translate({text_x} {start_y}) rotate({edge_angle}) skewX(30) "
+                        f"translate({-text_x} {-start_y})"
+                    )
                     lines.append(
                         f'<text x="{text_x}" y="{start_y}" text-anchor="middle" fill="#555" '
                         f'font-size="{font_size}" font-style="normal" '
-                        f'transform="rotate({edge_angle} {text_x} {start_y})">'
+                        f'transform="{text_transform}">'
                     )
                     for idx, line in enumerate(front_lines):
                         dy = 0 if idx == 0 else line_height
@@ -744,9 +748,13 @@ def render_svg_isometric(
                 name_edge_right[0] - name_edge_left[0],
             )
         )
+        name_transform = (
+            f"translate({name_x} {name_y}) rotate({name_angle}) skewX(30) "
+            f"translate({-name_x} {-name_y})"
+        )
         lines.append(
             f'<text x="{name_x}" y="{name_y}" text-anchor="middle" fill="#1f1f1f" '
-            f'font-size="{name_font_size}" transform="rotate({name_angle} {name_x} {name_y})">'
+            f'font-size="{name_font_size}" transform="{name_transform}">'
             f"{_escape_text(name)}</text>"
         )
 

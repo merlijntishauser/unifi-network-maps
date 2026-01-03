@@ -35,7 +35,7 @@ _ICON_FILES = {
 _ISO_ICON_FILES = {
     "gateway": "router.svg",
     "switch": "switch-module.svg",
-    "ap": "cloud.svg",
+    "ap": "tower.svg",
     "client": "laptop.svg",
     "other": "server.svg",
 }
@@ -539,7 +539,7 @@ def render_svg_isometric(
                 if "<->" not in label_text:
                     upstream_part = edge.label.split("<->", 1)[0].strip()
                     port_text = _extract_port_text(upstream_part) or label_text
-                    upstream_name = _extract_device_name(upstream_part) or upstream_node
+                    upstream_name = upstream_node
                     node_port_labels.setdefault(client_node, f"{upstream_name}: {port_text}")
                     node_port_prefix.setdefault(client_node, _shorten_prefix(upstream_name))
             else:
@@ -548,7 +548,7 @@ def render_svg_isometric(
                 if label_text.lower().startswith("port "):
                     label_text = f"{upstream_name} {label_text}"
                 node_port_labels.setdefault(edge.right, label_text)
-                node_port_prefix.setdefault(edge.right, _shorten_prefix(upstream_name))
+                node_port_prefix.setdefault(edge.right, _shorten_prefix(edge.left))
 
     node_depth = 0.0
 
@@ -724,6 +724,8 @@ def render_svg_isometric(
                         lines.append(f'<tspan x="{text_x}" dy="{dy}">{_escape_text(line)}</tspan>')
                     lines.append("</text>")
 
+        if node_type == "ap":
+            icon_center_y -= tile_h * 0.4
         if icon_href:
             icon_x = icon_center_x - iso_icon_size / 2
             icon_lift = tile_h * (0.02 if port_label else 0.04)

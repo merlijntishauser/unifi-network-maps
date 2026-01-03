@@ -176,7 +176,7 @@ def test_render_svg_isometric_client_label_without_arrow():
         [Edge("Switch", "Client", label="Switch: Port 4")],
         node_types={"Switch": "switch", "Client": "client"},
     )
-    assert "local: Port 4" in output
+    assert "Switch: Port 4" in output
 
 
 def test_render_svg_handles_missing_positions(monkeypatch):
@@ -224,7 +224,7 @@ def test_render_svg_isometric_client_left_label():
         [Edge("Client", "Switch", label="Switch: Port 2")],
         node_types={"Switch": "switch", "Client": "client"},
     )
-    assert "local: Port 2" in output
+    assert "Switch: Port 2" in output
 
 
 def test_render_svg_isometric_port_prefixes_upstream():
@@ -232,4 +232,4 @@ def test_render_svg_isometric_port_prefixes_upstream():
         [Edge("Switch", "AP", label="Port 1 <-> Port 2")],
         node_types={"Switch": "switch", "AP": "ap"},
     )
-    assert "switch: Port 1" in output
+    assert "Switch: Port 1" in output

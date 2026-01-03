@@ -232,4 +232,4 @@ def test_render_svg_isometric_port_prefixes_upstream():
         [Edge("Switch", "AP", label="Port 1 <-> Port 2")],
         node_types={"Switch": "switch", "AP": "ap"},
     )
-    assert "upst: Port 1" in output
+    assert "switch: Port 1" in output

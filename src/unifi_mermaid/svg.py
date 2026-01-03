@@ -257,6 +257,8 @@ def render_svg(
     ]
 
     node_port_labels: dict[str, str] = {}
+    node_port_prefix: dict[str, str] = {}
+    node_port_prefix: dict[str, str] = {}
     for edge in edges:
         if edge.left not in positions or edge.right not in positions:
             continue
@@ -297,12 +299,18 @@ def render_svg(
                     port_text = _extract_port_text(upstream_part) or label_text
                     upstream_name = _extract_device_name(upstream_part) or upstream_node
                     node_port_labels.setdefault(client_node, f"{upstream_name}: {port_text}")
+                    upstream_type = node_types.get(upstream_node, "switch")
+                    prefix = "gateway" if upstream_type == "gateway" else "switch"
+                    node_port_prefix.setdefault(client_node, prefix)
             else:
                 upstream_part = edge.label.split("<->", 1)[0].strip()
                 upstream_name = _extract_device_name(upstream_part) or edge.left
                 if label_text.lower().startswith("port "):
                     label_text = f"{upstream_name} {label_text}"
                 node_port_labels.setdefault(edge.right, label_text)
+                upstream_type = node_types.get(edge.left, "switch")
+                prefix = "gateway" if upstream_type == "gateway" else "switch"
+                node_port_prefix.setdefault(edge.right, prefix)
 
     for name, (x, y) in positions.items():
         node_type = node_types.get(name, "other")
@@ -463,6 +471,7 @@ def render_svg_isometric(
         lines.append("</g>")
 
     node_port_labels: dict[str, str] = {}
+    node_port_prefix: dict[str, str] = {}
 
     def iso_tile_points(cx: float, cy: float, width: float, height: float) -> str:
         points = [
@@ -529,12 +538,18 @@ def render_svg_isometric(
                     port_text = _extract_port_text(upstream_part) or label_text
                     upstream_name = _extract_device_name(upstream_part) or upstream_node
                     node_port_labels.setdefault(client_node, f"{upstream_name}: {port_text}")
+                    upstream_type = node_types.get(upstream_node, "switch")
+                    prefix = "gateway" if upstream_type == "gateway" else "switch"
+                    node_port_prefix.setdefault(client_node, prefix)
             else:
                 upstream_part = edge.label.split("<->", 1)[0].strip()
                 upstream_name = _extract_device_name(upstream_part) or edge.left
                 if label_text.lower().startswith("port "):
                     label_text = f"{upstream_name} {label_text}"
                 node_port_labels.setdefault(edge.right, label_text)
+                upstream_type = node_types.get(edge.left, "switch")
+                prefix = "gateway" if upstream_type == "gateway" else "switch"
+                node_port_prefix.setdefault(edge.right, prefix)
 
     node_depth = 0.0
 
@@ -644,9 +659,10 @@ def render_svg_isometric(
                 def _truncate(text: str, max_len: int = max_chars) -> str:
                     return text[: max_len - 1].rstrip() + "…" if len(text) > max_len else text
 
+                prefix = node_port_prefix.get(name, "switch")
                 if "<->" in port_label:
                     left_part, right_part = (part.strip() for part in port_label.split("<->", 1))
-                    front_text = _truncate(f"upst: {_port_only(left_part)}")
+                    front_text = _truncate(f"{prefix}: {_port_only(left_part)}")
                     side_text = _truncate(f"local: {_port_only(right_part)}")
                 else:
                     front_text = ""

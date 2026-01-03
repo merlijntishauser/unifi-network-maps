@@ -41,13 +41,7 @@ version:
 	@echo $(VERSION)
 
 version-sync:
-	@python3 -c 'from pathlib import Path; v=Path("$(VERSION_FILE)").read_text().strip(); \
-py=Path("pyproject.toml"); \
-text=py.read_text(encoding="utf-8"); \
-import re; \
-text=re.sub(r"^version\\s*=\\s*\\\"[^\\\"]+\\\"", f"version = \\\"{v}\\\"", text, flags=re.M); \
-py.write_text(text, encoding="utf-8"); \
-Path("src/unifi_mermaid/__init__.py").write_text(f"__version__ = \"{v}\"\n", encoding="utf-8")'
+	@python3 scripts/version_sync.py
 
 version-bump:
 	@current=$$(cat $(VERSION_FILE)); \
@@ -65,12 +59,7 @@ version-bump:
 		echo "Working tree not clean. Commit or stash changes first."; exit 1; \
 	fi; \
 	printf "%s\n" "$$next" > $(VERSION_FILE); \
-	python3 -c 'import re,sys; v=sys.argv[1]; \
-py="pyproject.toml"; \
-text=open(py, encoding="utf-8").read(); \
-text=re.sub(r"^version\\s*=\\s*\\\"[^\\\"]+\\\"", f"version = \\\"{v}\\\"", text, flags=re.M); \
-open(py, "w", encoding="utf-8").write(text); \
-open("src/unifi_mermaid/__init__.py", "w", encoding="utf-8").write(f"__version__ = \\\"{v}\\\"\\n")' "$$next"; \
+	python3 scripts/version_sync.py; \
 	if ! grep -q "version = \"$$next\"" pyproject.toml; then \
 		echo "pyproject.toml version did not update"; exit 1; \
 	fi; \

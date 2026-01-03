@@ -23,6 +23,9 @@ class Device:
     type: str
     lldp_info: list[LLDPEntry]
     poe_ports: dict[int, bool] = field(default_factory=dict)
+    uplink_mac: str | None = None
+    uplink_name: str | None = None
+    uplink_port: int | None = None
 
 
 @dataclass(frozen=True)
@@ -45,6 +48,13 @@ class DeviceLike(Protocol):
     lldp_info: object | None
     lldp: object | None
     port_table: object | None
+    uplink: object | None
+    last_uplink: object | None
+    uplink_mac: object | None
+    uplink_device_mac: object | None
+    last_uplink_mac: object | None
+    uplink_device_name: object | None
+    uplink_remote_port: object | None
 
 
 def _get_attr(obj: object, name: str) -> object | None:
@@ -76,6 +86,14 @@ def _as_float(value: object | None) -> float:
         except ValueError:
             return 0.0
     return 0.0
+
+
+def _as_int(value: object | None) -> int | None:
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str) and value.isdigit():
+        return int(value)
+    return None
 
 
 def _poe_ports_from_device(device: DeviceLike) -> dict[int, bool]:
@@ -110,6 +128,43 @@ def _poe_ports_from_device(device: DeviceLike) -> dict[int, bool]:
     return poe_ports
 
 
+def _device_field(device: object, name: str) -> object | None:
+    if isinstance(device, dict):
+        return device.get(name)
+    return getattr(device, name, None)
+
+
+def _uplink_info(device: DeviceLike) -> tuple[str | None, str | None, int | None]:
+    mac = None
+    name = None
+    port = None
+    for key in ("uplink", "last_uplink"):
+        nested = _device_field(device, key)
+        if isinstance(nested, dict):
+            mac = mac or nested.get("uplink_mac") or nested.get("uplink_device_mac")
+            name = name or nested.get("uplink_device_name") or nested.get("uplink_name")
+            port = port or _as_int(nested.get("uplink_remote_port") or nested.get("port_idx"))
+        elif nested is not None:
+            mac = mac or _get_attr(nested, "uplink_mac") or _get_attr(nested, "uplink_device_mac")
+            name = (
+                name or _get_attr(nested, "uplink_device_name") or _get_attr(nested, "uplink_name")
+            )
+            port = port or _as_int(
+                _get_attr(nested, "uplink_remote_port") or _get_attr(nested, "port_idx")
+            )
+
+    mac = mac or _device_field(device, "uplink_mac") or _device_field(device, "uplink_device_mac")
+    mac = mac or _device_field(device, "last_uplink_mac")
+    name = name or _device_field(device, "uplink_device_name")
+    port = port or _as_int(_device_field(device, "uplink_remote_port"))
+
+    return (
+        str(mac).strip() if isinstance(mac, str) and mac.strip() else None,
+        str(name).strip() if isinstance(name, str) and name.strip() else None,
+        port,
+    )
+
+
 def coerce_device(device: DeviceLike) -> Device:
     name = _get_attr(device, "name")
     model_name = _get_attr(device, "model_name") or _get_attr(device, "model")
@@ -122,8 +177,13 @@ def coerce_device(device: DeviceLike) -> Device:
 
     if not name or not mac:
         raise ValueError("Device missing name or mac")
+    uplink_mac, uplink_name, uplink_port = _uplink_info(device)
     if lldp_info is None:
-        raise ValueError(f"Device {name} missing LLDP info")
+        if uplink_mac or uplink_name:
+            logger.warning("Device %s missing LLDP info; using uplink fallback", name)
+            lldp_info = []
+        else:
+            raise ValueError(f"Device {name} missing LLDP info")
 
     coerced_lldp = [coerce_lldp(entry) for entry in lldp_info]
     poe_ports = _poe_ports_from_device(device)
@@ -136,6 +196,9 @@ def coerce_device(device: DeviceLike) -> Device:
         type=str(dev_type or ""),
         lldp_info=coerced_lldp,
         poe_ports=poe_ports,
+        uplink_mac=uplink_mac,
+        uplink_name=uplink_name,
+        uplink_port=uplink_port,
     )
 
 
@@ -317,10 +380,12 @@ def build_edges(
     only_unifi: bool = True,
 ) -> list[Edge]:
     index = build_device_index(devices)
+    device_by_name = {device.name: device for device in devices}
     pairs: list[tuple[str, str]] = []
     seen: set[frozenset[str]] = set()
     port_map: dict[tuple[str, str], str] = {}
     poe_map: dict[tuple[str, str], bool] = {}
+    devices_with_lldp_edges: set[str] = set()
 
     for device in devices:
         poe_ports = device.poe_ports
@@ -344,6 +409,36 @@ def build_edges(
 
             pairs.append((device.name, neighbor_name))
             seen.add(key)
+            devices_with_lldp_edges.add(device.name)
+
+    for device in devices:
+        if device.name in devices_with_lldp_edges:
+            continue
+        uplink_name = None
+        if device.uplink_mac:
+            uplink_name = index.get(_normalize_mac(device.uplink_mac))
+        if not uplink_name:
+            uplink_name = device.uplink_name
+        if not uplink_name and not only_unifi and device.uplink_mac:
+            uplink_name = device.uplink_mac
+        if not uplink_name:
+            continue
+        if only_unifi and uplink_name not in device_by_name:
+            continue
+        key = frozenset({device.name, uplink_name})
+        if key in seen:
+            continue
+        poe = False
+        if device.uplink_port is not None:
+            if include_ports:
+                port_map[(uplink_name, device.name)] = f"Port {device.uplink_port}"
+            uplink_device = device_by_name.get(uplink_name)
+            if uplink_device and device.uplink_port in uplink_device.poe_ports:
+                poe = uplink_device.poe_ports[device.uplink_port]
+        pairs.append((uplink_name, device.name))
+        seen.add(key)
+        if poe:
+            poe_map[(uplink_name, device.name)] = poe
 
     edges: list[Edge] = []
     for left, right in pairs:

@@ -3,6 +3,7 @@ from types import SimpleNamespace
 import pytest
 
 from unifi_mermaid.topology import (
+    Device,
     Edge,
     LLDPEntry,
     _as_bool,
@@ -206,6 +207,22 @@ def test_coerce_device_requires_lldp():
         coerce_device(MissingLldp())
 
 
+def test_coerce_device_allows_uplink_when_lldp_missing():
+    class MissingLldpWithUplink:
+        name = "Device"
+        model_name = ""
+        mac = "aa"
+        ip = ""
+        type = ""
+        lldp_info = None
+        lldp = None
+        uplink = {"uplink_mac": "bb", "uplink_device_name": "Gateway", "uplink_remote_port": 1}
+        port_table = []
+
+    device = coerce_device(MissingLldpWithUplink())
+    assert device.lldp_info == []
+
+
 def test_coerce_device_tracks_poe_false_when_power_invalid():
     class DeviceWithPort:
         name = "Device"
@@ -235,6 +252,31 @@ def test_coerce_device_missing_lldp_raises():
     device = SimpleNamespace(name="Dev", mac="aa", lldp_info=None, lldp=None)
     with pytest.raises(ValueError):
         coerce_device(device)
+
+
+def test_build_edges_uses_uplink_fallback():
+    gateway = Device(
+        name="Gateway",
+        model_name="",
+        mac="aa",
+        ip="",
+        type="gateway",
+        lldp_info=[],
+        poe_ports={1: True},
+    )
+    switch = Device(
+        name="Switch",
+        model_name="",
+        mac="bb",
+        ip="",
+        type="switch",
+        lldp_info=[],
+        uplink_mac="aa",
+        uplink_name="Gateway",
+        uplink_port=1,
+    )
+    edges = build_edges([gateway, switch], include_ports=True)
+    assert edges[0].label == "Gateway: Port 1 <-> Switch: ?"
 
 
 def test_poe_ports_from_device_skips_missing_port_idx():

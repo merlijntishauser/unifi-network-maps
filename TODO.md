@@ -1,7 +1,6 @@
 # TODO (Refactor Proposals)
 
 ## P0 - Correctness/Clarity
-- **Use uplink data as LLDP fallback:** Leverage `uplink`/`last_uplink` to map links when LLDP is missing or ambiguous.
 - **Stabilize topology ordering:** Sort devices/edges by name or MAC before building the tree for deterministic output.
 
 ## P1 - Maintainability

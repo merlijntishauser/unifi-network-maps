@@ -1,6 +1,7 @@
 import builtins
 import logging
 import runpy
+import sys
 
 import pytest
 
@@ -174,9 +175,10 @@ def test_main_svg_uses_size_overrides(monkeypatch):
 
 
 def test_cli_wrapper_calls_main(monkeypatch):
-    monkeypatch.setattr(cli_module, "main", lambda *args, **kwargs: 0)
+    monkeypatch.setattr(sys, "argv", ["unifi_mermaid.cli", "--help"])
+    sys.modules.pop("unifi_mermaid.cli", None)
     with pytest.raises(SystemExit) as excinfo:
-        runpy.run_module("cli", run_name="__main__")
+        runpy.run_module("unifi_mermaid.cli", run_name="__main__")
     assert excinfo.value.code == 0
 
 

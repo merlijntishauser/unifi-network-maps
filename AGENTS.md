@@ -144,7 +144,7 @@ Guidelines:
 ## File structure (proposed)
 
 ```text
-unifi-mermaid-map/
+unifi-network-map/
 ├── agents.md
 ├── pyproject.toml
 ├── src/
@@ -172,7 +172,7 @@ unifi-mermaid-map/
 Example:
 
 ```bash
-python -m unifi_mermaid.cli \
+unifi-network-map \
   --site default \
   --format mermaid \
   --output ./network.md

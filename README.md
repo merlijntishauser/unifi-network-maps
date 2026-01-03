@@ -1,4 +1,4 @@
-# unifi-mermaid-map
+# unifi-network-map
 
 Dynamic UniFi -> Mermaid network maps generated from LLDP topology.
 
@@ -36,43 +36,43 @@ export UNIFI_VERIFY_SSL=false
 Basic map (tree layout by LLDP hops):
 
 ```bash
-python -m unifi_mermaid.cli --stdout
+unifi-network-map --stdout
 ```
 
 Write Markdown for notes tools:
 
 ```bash
-python -m unifi_mermaid.cli --markdown --output ./network.md
+unifi-network-map --markdown --output ./network.md
 ```
 
 Show ports + clients:
 
 ```bash
-python -m unifi_mermaid.cli --include-ports --include-clients --stdout
+unifi-network-map --include-ports --include-clients --stdout
 ```
 
 SVG output (orthogonal layout + icons):
 
 ```bash
-python -m unifi_mermaid.cli --format svg --output ./network.svg
+unifi-network-map --format svg --output ./network.svg
 ```
 
 Isometric SVG output:
 
 ```bash
-python -m unifi_mermaid.cli --format svg-iso --output ./network.svg
+unifi-network-map --format svg-iso --output ./network.svg
 ```
 
 SVG size overrides:
 
 ```bash
-python -m unifi_mermaid.cli --format svg --svg-width 1400 --svg-height 900 --output ./network.svg
+unifi-network-map --format svg --svg-width 1400 --svg-height 900 --output ./network.svg
 ```
 
 Legend only:
 
 ```bash
-python -m unifi_mermaid.cli --legend-only --stdout
+unifi-network-map --legend-only --stdout
 ```
 
 ## Local install check

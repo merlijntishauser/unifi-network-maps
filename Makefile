@@ -22,20 +22,20 @@ coverage:
 
 smoketest:
 	@mkdir -p smoketest
-	.venv/bin/python -m unifi_mermaid.cli --stdout > smoketest/network.mmd
-	.venv/bin/python -m unifi_mermaid.cli --markdown --output smoketest/network.md
-	.venv/bin/python -m unifi_mermaid.cli --group-by-type --stdout > smoketest/network_grouped.mmd
-	.venv/bin/python -m unifi_mermaid.cli --include-ports --include-clients --stdout > smoketest/network_ports_clients.mmd
-	.venv/bin/python -m unifi_mermaid.cli --include-ports --stdout > smoketest/network_ports.mmd
-	.venv/bin/python -m unifi_mermaid.cli --legend-only --stdout > smoketest/legend.mmd
-	.venv/bin/python -m unifi_mermaid.cli --format svg --output smoketest/network.svg
-	.venv/bin/python -m unifi_mermaid.cli --format svg-iso --output smoketest/network_iso.svg
-	.venv/bin/python -m unifi_mermaid.cli --include-clients --format svg --output smoketest/network_clients.svg
-	.venv/bin/python -m unifi_mermaid.cli --include-clients --format svg-iso --output smoketest/network_clients_iso.svg
-	.venv/bin/python -m unifi_mermaid.cli --include-ports --format svg --output smoketest/network_ports.svg
-	.venv/bin/python -m unifi_mermaid.cli --include-ports --format svg-iso --output smoketest/network_ports_iso.svg
-	.venv/bin/python -m unifi_mermaid.cli --include-ports --include-clients --format svg --output smoketest/network_ports_clients.svg
-	.venv/bin/python -m unifi_mermaid.cli --include-ports --include-clients --format svg-iso --output smoketest/network_ports_clients_iso.svg
+	.venv/bin/unifi-network-map --stdout > smoketest/network.mmd
+	.venv/bin/unifi-network-map --markdown --output smoketest/network.md
+	.venv/bin/unifi-network-map --group-by-type --stdout > smoketest/network_grouped.mmd
+	.venv/bin/unifi-network-map --include-ports --include-clients --stdout > smoketest/network_ports_clients.mmd
+	.venv/bin/unifi-network-map --include-ports --stdout > smoketest/network_ports.mmd
+	.venv/bin/unifi-network-map --legend-only --stdout > smoketest/legend.mmd
+	.venv/bin/unifi-network-map --format svg --output smoketest/network.svg
+	.venv/bin/unifi-network-map --format svg-iso --output smoketest/network_iso.svg
+	.venv/bin/unifi-network-map --include-clients --format svg --output smoketest/network_clients.svg
+	.venv/bin/unifi-network-map --include-clients --format svg-iso --output smoketest/network_clients_iso.svg
+	.venv/bin/unifi-network-map --include-ports --format svg --output smoketest/network_ports.svg
+	.venv/bin/unifi-network-map --include-ports --format svg-iso --output smoketest/network_ports_iso.svg
+	.venv/bin/unifi-network-map --include-ports --include-clients --format svg --output smoketest/network_ports_clients.svg
+	.venv/bin/unifi-network-map --include-ports --include-clients --format svg-iso --output smoketest/network_ports_clients_iso.svg
 
 version:
 	@echo $(VERSION)
@@ -69,4 +69,4 @@ open(p, "w", encoding="utf-8").write(text)' "$$next"; \
 
 ci: lint format test
 	.venv/bin/pre-commit run --all-files
-	.venv/bin/python -m unifi_mermaid.cli --help
+	.venv/bin/unifi-network-map --help

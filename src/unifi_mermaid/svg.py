@@ -33,11 +33,11 @@ _ICON_FILES = {
 }
 
 _ISO_ICON_FILES = {
-    "gateway": "icon_security.svg",
-    "switch": "icon_storage.svg",
-    "ap": "icon_cloud.svg",
-    "client": "icon_application.svg",
-    "other": "icon_query.svg",
+    "gateway": "router.svg",
+    "switch": "switch-module.svg",
+    "ap": "cloud.svg",
+    "client": "laptop.svg",
+    "other": "server.svg",
 }
 
 _TYPE_COLORS = {
@@ -577,7 +577,7 @@ def render_svg_isometric(
         center_y = y + tile_h / 2
         icon_center_x = center_x
         icon_center_y = center_y
-        iso_icon_size = min(tile_w, tile_h) * 0.7
+        iso_icon_size = min(tile_w, tile_h) * 1.26
 
         port_label = node_port_labels.get(name)
         if port_label:
@@ -674,11 +674,19 @@ def render_svg_isometric(
 
         if icon_href:
             icon_x = icon_center_x - iso_icon_size / 2
-            icon_lift = tile_h * (0.04 if port_label else 0.08)
-            icon_y = icon_center_y - iso_icon_size / 2 - icon_lift
+            icon_lift = tile_h * (0.02 if port_label else 0.04)
+            icon_y = icon_center_y - iso_icon_size / 2 - icon_lift - tile_h * 0.05
+            icon_center_x = icon_x + iso_icon_size / 2
+            icon_center_y = icon_y + iso_icon_size / 2
+            transform = (
+                f"translate({icon_center_x} {icon_center_y}) "
+                f"skewX(-28) rotate(-24) skewX(-4) rotate(-4) "
+                f"translate({-icon_center_x} {-icon_center_y})"
+            )
             lines.append(
                 f'<image href="{icon_href}" x="{icon_x}" y="{icon_y}" '
-                f'width="{iso_icon_size}" height="{iso_icon_size}"/>'
+                f'width="{iso_icon_size}" height="{iso_icon_size}" '
+                f'preserveAspectRatio="xMidYMid meet" transform="{transform}"/>'
             )
 
         name_font_size = max(options.font_size - 2, 8)

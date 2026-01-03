@@ -653,10 +653,10 @@ def render_svg_isometric(
                     side_text = _truncate(f"local: {_port_only(port_label)}")
 
                 # Place port text along the front edge of the top tile.
-                front_edge_left = top[3]
-                front_edge_right = top[2]
-                edge_mid_x = (front_edge_left[0] + front_edge_right[0]) / 2
-                edge_mid_y = (front_edge_left[1] + front_edge_right[1]) / 2
+                left_edge_top = top[0]
+                left_edge_bottom = top[3]
+                edge_mid_x = (left_edge_top[0] + left_edge_bottom[0]) / 2
+                edge_mid_y = (left_edge_top[1] + left_edge_bottom[1]) / 2
                 center_x = sum(px for px, _py in top) / len(top)
                 center_y = sum(py for _px, py in top) / len(top)
                 normal_x = center_x - edge_mid_x
@@ -664,15 +664,24 @@ def render_svg_isometric(
                 normal_len = math.hypot(normal_x, normal_y) or 1.0
                 normal_x /= normal_len
                 normal_y /= normal_len
-                inset = tile_h * 0.12
-                text_x = edge_mid_x + normal_x * inset
-                text_y = edge_mid_y + normal_y * inset
+                inset = tile_h * 0.22
+                text_x = edge_mid_x + normal_x * inset - tile_w * 0.20
+                text_y = edge_mid_y + normal_y * inset - tile_h * 0.03
                 edge_angle = math.degrees(
                     math.atan2(
-                        front_edge_right[1] - front_edge_left[1],
-                        front_edge_right[0] - front_edge_left[0],
+                        left_edge_bottom[1] - left_edge_top[1],
+                        left_edge_bottom[0] - left_edge_top[0],
                     )
                 )
+                name_edge_left = top[3]
+                name_edge_right = top[2]
+                name_angle = math.degrees(
+                    math.atan2(
+                        name_edge_right[1] - name_edge_left[1],
+                        name_edge_right[0] - name_edge_left[0],
+                    )
+                )
+                edge_angle = name_angle
 
                 front_lines = [line for line in (front_text, side_text) if line]
                 if front_lines:
@@ -710,9 +719,9 @@ def render_svg_isometric(
         name_normal_len = math.hypot(name_normal_x, name_normal_y) or 1.0
         name_normal_x /= name_normal_len
         name_normal_y /= name_normal_len
-        name_inset = tile_h * 0.22
-        name_x = name_mid_x + name_normal_x * name_inset
-        name_y = name_mid_y + name_normal_y * name_inset + name_font_size + 2
+        name_inset = tile_h * 0.08
+        name_x = name_mid_x + name_normal_x * name_inset + tile_w * 0.01
+        name_y = name_mid_y + name_normal_y * name_inset + name_font_size
         name_angle = math.degrees(
             math.atan2(
                 name_edge_right[1] - name_edge_left[1],

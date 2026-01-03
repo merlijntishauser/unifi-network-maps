@@ -65,7 +65,15 @@ version-bump:
 		echo "Working tree not clean. Commit or stash changes first."; exit 1; \
 	fi; \
 	printf "%s\n" "$$next" > $(VERSION_FILE); \
-	$(MAKE) version-sync; \
+	python3 -c 'import re,sys; v=sys.argv[1]; \
+py="pyproject.toml"; \
+text=open(py, encoding="utf-8").read(); \
+text=re.sub(r"^version\\s*=\\s*\\\"[^\\\"]+\\\"", f"version = \\\"{v}\\\"", text, flags=re.M); \
+open(py, "w", encoding="utf-8").write(text); \
+open("src/unifi_mermaid/__init__.py", "w", encoding="utf-8").write(f"__version__ = \\\"{v}\\\"\\n")' "$$next"; \
+	if ! grep -q "version = \"$$next\"" pyproject.toml; then \
+		echo "pyproject.toml version did not update"; exit 1; \
+	fi; \
 	git add $(VERSION_FILE) src/unifi_mermaid/__init__.py pyproject.toml; \
 	git commit -m "Bump version to $$next"; \
 	git tag -a "v$$next" -m "v$$next"; \

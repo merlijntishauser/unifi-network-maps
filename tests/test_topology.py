@@ -223,7 +223,8 @@ def test_coerce_device_requires_lldp():
         coerce_device(MissingLldp())
 
 
-def test_coerce_device_allows_uplink_when_lldp_missing():
+@pytest.fixture()
+def device_with_uplink_no_lldp():
     class MissingLldpWithUplink:
         name = "Device"
         model_name = ""
@@ -235,8 +236,26 @@ def test_coerce_device_allows_uplink_when_lldp_missing():
         uplink = {"uplink_mac": "bb", "uplink_device_name": "Gateway", "uplink_remote_port": 1}
         port_table = []
 
-    device = coerce_device(MissingLldpWithUplink())
+    return MissingLldpWithUplink()
+
+
+def test_coerce_device_allows_uplink_when_lldp_missing(device_with_uplink_no_lldp):
+    device = coerce_device(device_with_uplink_no_lldp)
     assert device.lldp_info == []
+
+
+def test_build_edges_uses_uplink_fallback_fixture(device_with_uplink_no_lldp):
+    gateway = Device(
+        name="Gateway",
+        model_name="",
+        mac="bb",
+        ip="",
+        type="gateway",
+        lldp_info=[],
+    )
+    device = coerce_device(device_with_uplink_no_lldp)
+    edges = build_edges([gateway, device], include_ports=True)
+    assert edges[0].label == "Gateway: Port 1 <-> Device: ?"
 
 
 def test_coerce_device_tracks_poe_false_when_power_invalid():

@@ -7,6 +7,7 @@ import math
 from dataclasses import dataclass
 from pathlib import Path
 
+from .svg_theme import DEFAULT_THEME, SvgTheme, svg_defs
 from .topology import Edge
 
 
@@ -250,6 +251,7 @@ def render_svg(
     *,
     node_types: dict[str, str],
     options: SvgOptions | None = None,
+    theme: SvgTheme = DEFAULT_THEME,
 ) -> str:
     options = options or SvgOptions()
     icons = _load_icons()
@@ -260,36 +262,7 @@ def render_svg(
     lines = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{out_width}" height="{out_height}" '
         f'viewBox="0 0 {width} {height}">',
-        "<defs>"
-        '<linearGradient id="link-standard" x1="0%" y1="0%" x2="100%" y2="0%">'
-        '<stop offset="0%" stop-color="#16a085"/>'
-        '<stop offset="100%" stop-color="#2ecc71"/>'
-        "</linearGradient>"
-        '<linearGradient id="link-poe" x1="0%" y1="0%" x2="100%" y2="0%">'
-        '<stop offset="0%" stop-color="#1e88e5"/>'
-        '<stop offset="100%" stop-color="#42a5f5"/>'
-        "</linearGradient>"
-        '<linearGradient id="node-gateway" x1="0%" y1="0%" x2="100%" y2="100%">'
-        '<stop offset="0%" stop-color="#ffd199"/>'
-        '<stop offset="100%" stop-color="#ffb15a"/>'
-        "</linearGradient>"
-        '<linearGradient id="node-switch" x1="0%" y1="0%" x2="100%" y2="100%">'
-        '<stop offset="0%" stop-color="#bfe4ff"/>'
-        '<stop offset="100%" stop-color="#8ac6ff"/>'
-        "</linearGradient>"
-        '<linearGradient id="node-ap" x1="0%" y1="0%" x2="100%" y2="100%">'
-        '<stop offset="0%" stop-color="#c4f2d4"/>'
-        '<stop offset="100%" stop-color="#8ee3b4"/>'
-        "</linearGradient>"
-        '<linearGradient id="node-client" x1="0%" y1="0%" x2="100%" y2="100%">'
-        '<stop offset="0%" stop-color="#e4ccff"/>'
-        '<stop offset="100%" stop-color="#c5a4ff"/>'
-        "</linearGradient>"
-        '<linearGradient id="node-other" x1="0%" y1="0%" x2="100%" y2="100%">'
-        '<stop offset="0%" stop-color="#e3e3e3"/>'
-        '<stop offset="100%" stop-color="#cfcfcf"/>'
-        "</linearGradient>"
-        "</defs>",
+        svg_defs("", theme),
         f"<style>text{{font-family:Arial,Helvetica,sans-serif;font-size:{options.font_size}px;}}</style>",
     ]
 
@@ -396,6 +369,7 @@ def render_svg_isometric(
     *,
     node_types: dict[str, str],
     options: SvgOptions | None = None,
+    theme: SvgTheme = DEFAULT_THEME,
 ) -> str:
     options = options or SvgOptions()
     icons = _load_isometric_icons()
@@ -466,36 +440,7 @@ def render_svg_isometric(
     lines = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{out_width}" height="{out_height}" '
         f'viewBox="0 0 {width} {height}">',
-        "<defs>"
-        '<linearGradient id="iso-link-standard" x1="0%" y1="0%" x2="100%" y2="0%">'
-        '<stop offset="0%" stop-color="#16a085"/>'
-        '<stop offset="100%" stop-color="#2ecc71"/>'
-        "</linearGradient>"
-        '<linearGradient id="iso-link-poe" x1="0%" y1="0%" x2="100%" y2="0%">'
-        '<stop offset="0%" stop-color="#1e88e5"/>'
-        '<stop offset="100%" stop-color="#42a5f5"/>'
-        "</linearGradient>"
-        '<linearGradient id="iso-node-gateway" x1="0%" y1="0%" x2="100%" y2="100%">'
-        '<stop offset="0%" stop-color="#ffd199"/>'
-        '<stop offset="100%" stop-color="#ffb15a"/>'
-        "</linearGradient>"
-        '<linearGradient id="iso-node-switch" x1="0%" y1="0%" x2="100%" y2="100%">'
-        '<stop offset="0%" stop-color="#bfe4ff"/>'
-        '<stop offset="100%" stop-color="#8ac6ff"/>'
-        "</linearGradient>"
-        '<linearGradient id="iso-node-ap" x1="0%" y1="0%" x2="100%" y2="100%">'
-        '<stop offset="0%" stop-color="#c4f2d4"/>'
-        '<stop offset="100%" stop-color="#8ee3b4"/>'
-        "</linearGradient>"
-        '<linearGradient id="iso-node-client" x1="0%" y1="0%" x2="100%" y2="100%">'
-        '<stop offset="0%" stop-color="#e4ccff"/>'
-        '<stop offset="100%" stop-color="#c5a4ff"/>'
-        "</linearGradient>"
-        '<linearGradient id="iso-node-other" x1="0%" y1="0%" x2="100%" y2="100%">'
-        '<stop offset="0%" stop-color="#e3e3e3"/>'
-        '<stop offset="100%" stop-color="#cfcfcf"/>'
-        "</linearGradient>"
-        "</defs>",
+        svg_defs("iso", theme),
         f"<style>text{{font-family:Arial,Helvetica,sans-serif;font-size:{options.font_size}px;}}</style>",
     ]
 

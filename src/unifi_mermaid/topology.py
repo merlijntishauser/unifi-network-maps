@@ -9,7 +9,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import Protocol
 
-from .labels import compose_port_label
+from .labels import compose_port_label, order_edge_names
 from .lldp import LLDPEntry, coerce_lldp, local_port_label
 
 logger = logging.getLogger(__name__)
@@ -545,24 +545,25 @@ def build_edges(
         if poe:
             poe_map[(upstream_name, device.name)] = poe
 
+    type_rank = {"gateway": 0, "switch": 1, "ap": 2, "other": 3}
+
+    def _rank_for_name(name: str) -> int:
+        device = device_by_name.get(name)
+        if not device:
+            return 3
+        return type_rank.get(classify_device_type(device), 3)
+
     edges: list[Edge] = []
     for source_name, target_name in raw_links:
         left_name = source_name
         right_name = target_name
         if include_ports:
-            left_label = port_map.get((left_name, right_name))
-            right_label = port_map.get((right_name, left_name))
-            if left_label is None and right_label is not None:
-                left_name, right_name = right_name, left_name
-            elif left_label and right_label:
-                left_device = device_by_name.get(left_name)
-                right_device = device_by_name.get(right_name)
-                if left_device and right_device:
-                    type_rank = {"gateway": 0, "switch": 1, "ap": 2, "other": 3}
-                    left_rank = type_rank.get(classify_device_type(left_device), 3)
-                    right_rank = type_rank.get(classify_device_type(right_device), 3)
-                    if (left_rank, left_name.lower()) > (right_rank, right_name.lower()):
-                        left_name, right_name = right_name, left_name
+            left_name, right_name = order_edge_names(
+                left_name,
+                right_name,
+                port_map,
+                _rank_for_name,
+            )
         poe = poe_map.get((left_name, right_name), False) or poe_map.get(
             (right_name, left_name), False
         )

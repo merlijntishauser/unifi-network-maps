@@ -1,8 +1,6 @@
 # TODO (Refactor Proposals)
 
 ## P0 - Correctness/Clarity
-- Align SVG-iso node ID naming with defs everywhere (prevent silent theme fallbacks).
-- Normalize device/edge naming: unify `uplink_name`/`neighbor_name`/`left/right` usage to avoid label swaps.
 - Centralize port label direction rules to ensure upstream/downstream ordering is consistent.
 
 ## P1 - Maintainability

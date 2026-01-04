@@ -466,7 +466,7 @@ def build_edges(
     ordered_devices = sorted(devices, key=lambda item: (item.name.lower(), item.mac.lower()))
     index = build_device_index(ordered_devices)
     device_by_name = {device.name: device for device in ordered_devices}
-    pairs: list[tuple[str, str]] = []
+    raw_links: list[tuple[str, str]] = []
     seen: set[frozenset[str]] = set()
     port_map: dict[tuple[str, str], str] = {}
     poe_map: dict[tuple[str, str], bool] = {}
@@ -482,12 +482,12 @@ def build_edges(
                 str(item.port_desc or ""),
             ),
         ):
-            neighbor_mac = _normalize_mac(entry.chassis_id)
-            neighbor_name = index.get(neighbor_mac)
-            if neighbor_name is None:
+            peer_mac = _normalize_mac(entry.chassis_id)
+            peer_name = index.get(peer_mac)
+            if peer_name is None:
                 if only_unifi:
                     continue
-                neighbor_name = entry.chassis_id
+                peer_name = entry.chassis_id
 
             resolved_port_idx = _resolve_port_idx_from_lldp(entry, device.port_table)
             entry_for_label = (
@@ -503,15 +503,15 @@ def build_edges(
             )
             label = local_port_label(entry_for_label)
             if label:
-                port_map[(device.name, neighbor_name)] = label
+                port_map[(device.name, peer_name)] = label
             if resolved_port_idx is not None and resolved_port_idx in poe_ports:
-                poe_map[(device.name, neighbor_name)] = poe_ports[resolved_port_idx]
+                poe_map[(device.name, peer_name)] = poe_ports[resolved_port_idx]
 
-            key = frozenset({device.name, neighbor_name})
+            key = frozenset({device.name, peer_name})
             if key in seen:
                 continue
 
-            pairs.append((device.name, neighbor_name))
+            raw_links.append((device.name, peer_name))
             seen.add(key)
             devices_with_lldp_edges.add(device.name)
 
@@ -519,51 +519,55 @@ def build_edges(
         if device.name in devices_with_lldp_edges:
             continue
         uplink = device.uplink or device.last_uplink
-        uplink_name = None
+        upstream_name = None
         if uplink and uplink.mac:
-            uplink_name = index.get(_normalize_mac(uplink.mac))
-        if not uplink_name and uplink and uplink.name:
-            uplink_name = uplink.name
-        if not uplink_name and not only_unifi and uplink and uplink.mac:
-            uplink_name = uplink.mac
-        if not uplink_name:
+            upstream_name = index.get(_normalize_mac(uplink.mac))
+        if not upstream_name and uplink and uplink.name:
+            upstream_name = uplink.name
+        if not upstream_name and not only_unifi and uplink and uplink.mac:
+            upstream_name = uplink.mac
+        if not upstream_name:
             continue
-        if only_unifi and uplink_name not in device_by_name:
+        if only_unifi and upstream_name not in device_by_name:
             continue
-        key = frozenset({device.name, uplink_name})
+        key = frozenset({device.name, upstream_name})
         if key in seen:
             continue
         poe = False
         if uplink and uplink.port is not None:
             if include_ports:
-                port_map[(uplink_name, device.name)] = f"Port {uplink.port}"
-            uplink_device = device_by_name.get(uplink_name)
+                port_map[(upstream_name, device.name)] = f"Port {uplink.port}"
+            uplink_device = device_by_name.get(upstream_name)
             if uplink_device and uplink.port in uplink_device.poe_ports:
                 poe = uplink_device.poe_ports[uplink.port]
-        pairs.append((uplink_name, device.name))
+        raw_links.append((upstream_name, device.name))
         seen.add(key)
         if poe:
-            poe_map[(uplink_name, device.name)] = poe
+            poe_map[(upstream_name, device.name)] = poe
 
     edges: list[Edge] = []
-    for left, right in pairs:
+    for source_name, target_name in raw_links:
+        left_name = source_name
+        right_name = target_name
         if include_ports:
-            left_label = port_map.get((left, right))
-            right_label = port_map.get((right, left))
+            left_label = port_map.get((left_name, right_name))
+            right_label = port_map.get((right_name, left_name))
             if left_label is None and right_label is not None:
-                left, right = right, left
+                left_name, right_name = right_name, left_name
             elif left_label and right_label:
-                left_device = device_by_name.get(left)
-                right_device = device_by_name.get(right)
+                left_device = device_by_name.get(left_name)
+                right_device = device_by_name.get(right_name)
                 if left_device and right_device:
                     type_rank = {"gateway": 0, "switch": 1, "ap": 2, "other": 3}
                     left_rank = type_rank.get(classify_device_type(left_device), 3)
                     right_rank = type_rank.get(classify_device_type(right_device), 3)
-                    if (left_rank, left.lower()) > (right_rank, right.lower()):
-                        left, right = right, left
-        poe = poe_map.get((left, right), False) or poe_map.get((right, left), False)
-        label = compose_port_label(left, right, port_map) if include_ports else None
-        edges.append(Edge(left=left, right=right, label=label, poe=poe))
+                    if (left_rank, left_name.lower()) > (right_rank, right_name.lower()):
+                        left_name, right_name = right_name, left_name
+        poe = poe_map.get((left_name, right_name), False) or poe_map.get(
+            (right_name, left_name), False
+        )
+        label = compose_port_label(left_name, right_name, port_map) if include_ports else None
+        edges.append(Edge(left=left_name, right=right_name, label=label, poe=poe))
 
     poe_edges = sum(1 for edge in edges if edge.poe)
     logger.info(

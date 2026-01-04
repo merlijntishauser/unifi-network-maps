@@ -134,6 +134,7 @@ Source:
 Functional:
 - `--include-ports`: show port labels (Mermaid shows both ends; SVG shows compact labels).
 - `--include-clients`: add active wired clients as leaf nodes.
+- `--client-scope wired|wireless|all`: which client types to include (default wired).
 - `--only-unifi`: only include neighbors that are UniFi devices.
 
 Mermaid:
@@ -159,6 +160,7 @@ Debug:
 - Default output is top-to-bottom (TB) and rendered as a hop-based tree from the gateway(s).
 - Nodes are color-coded by type (gateway/switch/AP/client) with a sensible default palette.
 - PoE links are highlighted in blue and annotated with a power icon when detected from `port_table`.
+- Wireless client links render as dashed lines to indicate the last-known upstream.
 - SVG output uses vendored device glyphs from `src/unifi_network_maps/assets/icons`.
 - Isometric SVG output uses MIT-licensed icons from `markmanx/isopacks`.
 - SVG port labels render inside child nodes for readability.

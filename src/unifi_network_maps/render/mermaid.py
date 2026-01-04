@@ -71,6 +71,7 @@ def render_mermaid(
     id_map = _build_id_map(edge_list, group_nodes)
     lines = [f"graph {direction}"]
     poe_links: list[int] = []
+    wireless_links: list[int] = []
     link_index = 0
     if groups:
         ordered = group_order or list(groups.keys())
@@ -99,6 +100,8 @@ def render_mermaid(
             lines.append(f"  {left} --- {right};")
         if edge.poe:
             poe_links.append(link_index)
+        if edge.wireless:
+            wireless_links.append(link_index)
         link_index += 1
     if node_types:
         class_map = {
@@ -121,6 +124,8 @@ def render_mermaid(
             f"{index} stroke:{theme.poe_link},stroke-width:{theme.poe_link_width}px,"
             f"arrowhead:{theme.poe_link_arrow};"
         )
+    for index in wireless_links:
+        lines.append(f"  linkStyle {index} stroke-dasharray: 5 4;")
     return "\n".join(lines) + "\n"
 
 

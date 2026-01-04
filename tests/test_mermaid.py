@@ -17,6 +17,11 @@ def test_render_mermaid_styles_poe_links():
     assert "linkStyle 0 stroke:#1e88e5" in output
 
 
+def test_render_mermaid_styles_wireless_links():
+    output = render_mermaid([Edge("A", "B", wireless=True)])
+    assert "stroke-dasharray: 5 4" in output
+
+
 def test_render_legend_outputs_subgraph():
     output = render_legend()
     assert "subgraph legend" in output

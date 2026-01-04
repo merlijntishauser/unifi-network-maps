@@ -224,6 +224,7 @@ def test_main_lldp_md_includes_clients(monkeypatch):
     def fake_render_lldp_md(*_args, **kwargs):
         captured["clients"] = kwargs.get("clients")
         captured["show_clients"] = kwargs.get("show_clients")
+        captured["client_mode"] = kwargs.get("client_mode")
         return "# LLDP\n"
 
     monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
@@ -236,6 +237,7 @@ def test_main_lldp_md_includes_clients(monkeypatch):
     assert main(["--format", "lldp-md", "--include-clients", "--stdout"]) == 0
     assert captured["clients"] is not None
     assert captured["show_clients"] is True
+    assert captured["client_mode"] == "wired"
 
 
 def test_cli_wrapper_calls_main(monkeypatch):

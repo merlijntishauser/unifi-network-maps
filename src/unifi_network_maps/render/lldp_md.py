@@ -62,6 +62,15 @@ def _client_is_wired(client: object) -> bool:
     return bool(_client_field(client, "is_wired"))
 
 
+def _client_matches_mode(client: object, mode: str) -> bool:
+    wired = _client_is_wired(client)
+    if mode == "all":
+        return True
+    if mode == "wireless":
+        return not wired
+    return wired
+
+
 def _lldp_sort_key(entry: LLDPEntry) -> tuple[int, str, str]:
     port_label = local_port_label(entry) or ""
     port_number = "".join(ch for ch in port_label if ch.isdigit())
@@ -123,8 +132,10 @@ def _client_summary(
 def _details_table_lines(
     device: Device,
     client_rows: dict[str, list[tuple[str, str | None]]],
+    client_mode: str,
 ) -> list[str]:
     wired_count, client_sample = _client_summary(device, client_rows)
+    client_label = f"Clients ({client_mode})"
     lines = [
         "### Details",
         "",
@@ -133,7 +144,7 @@ def _details_table_lines(
         f"| Firmware | {_escape_cell(device.version or '-')} |",
         f"| Uplink | {_escape_cell(_uplink_summary(device))} |",
         f"| Ports | {_escape_cell(_port_summary(device))} |",
-        f"| Wired clients | {_escape_cell(wired_count)} |",
+        f"| {client_label} | {_escape_cell(wired_count)} |",
         f"| Client examples | {_escape_cell(client_sample)} |",
         "",
     ]
@@ -171,10 +182,11 @@ def _client_rows(
     device_index: dict[str, str],
     *,
     include_ports: bool,
+    client_mode: str,
 ) -> dict[str, list[tuple[str, str | None]]]:
     rows_by_device: dict[str, list[tuple[str, str | None]]] = {}
     for client in clients:
-        if not _client_is_wired(client):
+        if not _client_matches_mode(client, client_mode):
             continue
         name = _client_display_name(client)
         uplink_mac = _client_uplink_mac(client)
@@ -198,16 +210,19 @@ def render_lldp_md(
     clients: Iterable[object] | None = None,
     include_ports: bool = False,
     show_clients: bool = False,
+    client_mode: str = "wired",
 ) -> str:
     device_index = build_device_index(devices)
     client_rows = (
-        _client_rows(clients, device_index, include_ports=include_ports) if clients else {}
+        _client_rows(clients, device_index, include_ports=include_ports, client_mode=client_mode)
+        if clients
+        else {}
     )
     lines: list[str] = ["# LLDP Neighbors", ""]
     for device in sorted(devices, key=lambda item: item.name.lower()):
         lines.extend(_device_header_lines(device))
         lines.append("")
-        lines.extend(_details_table_lines(device, client_rows))
+        lines.extend(_details_table_lines(device, client_rows, client_mode))
         if device.lldp_info:
             lines.append("")
             lines.append(

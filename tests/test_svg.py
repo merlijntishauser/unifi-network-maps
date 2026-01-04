@@ -46,6 +46,14 @@ def test_render_svg_renders_poe_icon():
     assert "⚡" in output
 
 
+def test_render_svg_dashes_wireless_links():
+    output = render_svg(
+        [Edge("A", "B", wireless=True)],
+        node_types={"A": "gateway", "B": "switch"},
+    )
+    assert 'stroke-dasharray="6 4"' in output
+
+
 def test_render_svg_compacts_device_labels():
     output = render_svg(
         [Edge("A", "B", label="Switch A: Port 2 <-> Switch B: Port 5")],

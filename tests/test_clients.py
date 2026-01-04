@@ -29,6 +29,13 @@ def test_build_client_edges_skips_wireless_clients():
     assert edges == []
 
 
+def test_build_client_edges_includes_wireless_when_requested():
+    device_index = {"aa:bb:cc:dd:ee:ff": "AP One"}
+    clients = [{"name": "Laptop", "ap_mac": "aa:bb:cc:dd:ee:ff", "is_wired": False}]
+    edges = build_client_edges(clients, device_index, client_mode="wireless")
+    assert edges[0].wireless is True
+
+
 def test_build_client_edges_includes_uplink_port_label():
     device_index = {"aa:bb:cc:dd:ee:ff": "Switch A"}
     clients = [

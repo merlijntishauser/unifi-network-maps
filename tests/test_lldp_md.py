@@ -36,5 +36,7 @@ def test_render_lldp_md_reports_missing_neighbors():
 def test_render_lldp_md_includes_clients_when_requested():
     devices = [Device(name="Switch A", model_name="", mac="aa:bb", ip="", type="usw", lldp_info=[])]
     clients = [{"name": "TV", "is_wired": True, "sw_mac": "aa:bb", "sw_port": 3}]
-    output = render_lldp_md(devices, clients=clients, include_ports=True, show_clients=True)
+    output = render_lldp_md(
+        devices, clients=clients, include_ports=True, show_clients=True, client_mode="wired"
+    )
     assert "| TV | Port 3 |" in output

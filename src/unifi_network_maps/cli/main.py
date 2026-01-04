@@ -67,6 +67,12 @@ def _add_functional_args(parser: argparse._ArgumentGroup) -> None:
         help="Include active clients as leaf nodes",
     )
     parser.add_argument(
+        "--client-scope",
+        choices=["wired", "wireless", "all"],
+        default="wired",
+        help="Client types to include (default: wired)",
+    )
+    parser.add_argument(
         "--only-unifi", action="store_true", help="Only include neighbors that are UniFi devices"
     )
 
@@ -184,7 +190,12 @@ def _build_edges_with_clients(
     if args.include_clients:
         clients = list(fetch_clients(config, site=site))
         device_index = build_device_index(devices)
-        edges = edges + build_client_edges(clients, device_index, include_ports=args.include_ports)
+        edges = edges + build_client_edges(
+            clients,
+            device_index,
+            include_ports=args.include_ports,
+            client_mode=args.client_scope,
+        )
     return edges, clients
 
 
@@ -215,7 +226,7 @@ def _render_mermaid_output(
         direction=args.direction,
         groups=groups,
         group_order=group_order,
-        node_types=build_node_type_map(devices, clients),
+        node_types=build_node_type_map(devices, clients, client_mode=args.client_scope),
         theme=mermaid_theme,
     )
     if args.markdown:
@@ -241,13 +252,13 @@ def _render_svg_output(
 
         return render_svg_isometric(
             edges,
-            node_types=build_node_type_map(devices, clients),
+            node_types=build_node_type_map(devices, clients, client_mode=args.client_scope),
             options=options,
             theme=svg_theme,
         )
     return render_svg(
         edges,
-        node_types=build_node_type_map(devices, clients),
+        node_types=build_node_type_map(devices, clients, client_mode=args.client_scope),
         options=options,
         theme=svg_theme,
     )
@@ -279,6 +290,7 @@ def main(argv: list[str] | None = None) -> int:
             clients=clients,
             include_ports=args.include_ports,
             show_clients=args.include_clients,
+            client_mode=args.client_scope,
         )
         write_output(content, output_path=args.output, stdout=args.stdout)
         return 0

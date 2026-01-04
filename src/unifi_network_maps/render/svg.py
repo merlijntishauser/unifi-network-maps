@@ -194,8 +194,16 @@ def _iso_front_text_position(
     normal_x /= normal_len
     normal_y /= normal_len
     inset = tile_height * 0.27
-    text_x = edge_mid_x + normal_x * inset - tile_width * 0.16
-    text_y = edge_mid_y + normal_y * inset + tile_height * 0.02
+    text_x = edge_mid_x + normal_x * inset + tile_width * 0.02
+    text_y = edge_mid_y + normal_y * inset + tile_height * 0.33
+    edge_dx = left_edge_bottom[0] - left_edge_top[0]
+    edge_dy = left_edge_bottom[1] - left_edge_top[1]
+    edge_len = math.hypot(edge_dx, edge_dy) or 1.0
+    edge_dx /= edge_len
+    edge_dy /= edge_len
+    slide = tile_height * 0.32
+    text_x += edge_dx * slide
+    text_y += edge_dy * slide
     name_edge_left = top_points[3]
     name_edge_right = top_points[2]
     angle = math.degrees(
@@ -293,7 +301,7 @@ def _label_metrics(
 
 
 def _load_icons() -> dict[str, str]:
-    base = Path(__file__).resolve().parent / "assets" / "icons"
+    base = Path(__file__).resolve().parents[1] / "assets" / "icons"
     icons: dict[str, str] = {}
     for node_type, filename in _ICON_FILES.items():
         path = base / filename
@@ -306,7 +314,7 @@ def _load_icons() -> dict[str, str]:
 
 
 def _load_isometric_icons() -> dict[str, str]:
-    base = Path(__file__).resolve().parent / "assets" / "icons" / "isometric"
+    base = Path(__file__).resolve().parents[1] / "assets" / "icons" / "isometric"
     icons: dict[str, str] = {}
     for node_type, filename in _ISO_ICON_FILES.items():
         path = base / filename
@@ -450,7 +458,10 @@ def render_svg(
         color = "url(#link-poe)" if edge.poe else "url(#link-standard)"
         width_px = 2 if edge.poe else 1
         path = f"M {src_cx} {src_bottom} L {src_cx} {mid_y} L {dst_cx} {mid_y} L {dst_cx} {dst_top}"
-        lines.append(f'<path d="{path}" stroke="{color}" stroke-width="{width_px}" fill="none"/>')
+        dash = ' stroke-dasharray="6 4"' if edge.wireless else ""
+        lines.append(
+            f'<path d="{path}" stroke="{color}" stroke-width="{width_px}" fill="none"{dash}/>'
+        )
         if edge.poe:
             icon_x = dst_cx
             icon_y = dst_top - 6
@@ -677,9 +688,10 @@ def render_svg_isometric(
                 f"L {dst_cx} {dst_cy}",
             ]
         path = " ".join(path_cmds)
+        dash = ' stroke-dasharray="8 6"' if edge.wireless else ""
         lines.append(
             f'<path d="{path}" stroke="{color}" stroke-width="{width_px}" '
-            f'fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
+            f'fill="none" stroke-linecap="round" stroke-linejoin="round"{dash}/>'
         )
         if edge.poe:
             icon_x = dst_cx

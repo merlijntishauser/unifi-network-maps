@@ -36,6 +36,7 @@ class Edge:
     right: str
     label: str | None = None
     poe: bool = False
+    wireless: bool = False
 
 
 class DeviceLike(Protocol):
@@ -412,16 +413,26 @@ def _client_is_wired(client: object) -> bool:
     return bool(_client_field(client, "is_wired"))
 
 
+def _client_matches_mode(client: object, mode: str) -> bool:
+    wired = _client_is_wired(client)
+    if mode == "all":
+        return True
+    if mode == "wireless":
+        return not wired
+    return wired
+
+
 def build_client_edges(
     clients: Iterable[object],
     device_index: dict[str, str],
     *,
     include_ports: bool = False,
+    client_mode: str = "wired",
 ) -> list[Edge]:
     edges: list[Edge] = []
     seen: set[tuple[str, str]] = set()
     for client in clients:
-        if not _client_is_wired(client):
+        if not _client_matches_mode(client, client_mode):
             continue
         name = _client_display_name(client)
         uplink_mac = _client_uplink_mac(client)
@@ -438,20 +449,30 @@ def build_client_edges(
         key = (device_name, name)
         if key in seen:
             continue
-        edges.append(Edge(left=device_name, right=name, label=label))
+        edges.append(
+            Edge(
+                left=device_name,
+                right=name,
+                label=label,
+                wireless=not _client_is_wired(client),
+            )
+        )
         seen.add(key)
     return edges
 
 
 def build_node_type_map(
-    devices: Iterable[Device], clients: Iterable[object] | None = None
+    devices: Iterable[Device],
+    clients: Iterable[object] | None = None,
+    *,
+    client_mode: str = "wired",
 ) -> dict[str, str]:
     node_types: dict[str, str] = {}
     for device in devices:
         node_types[device.name] = classify_device_type(device)
     if clients:
         for client in clients:
-            if not _client_is_wired(client):
+            if not _client_matches_mode(client, client_mode):
                 continue
             name = _client_display_name(client)
             if name:

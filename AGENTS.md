@@ -194,6 +194,7 @@ Source:
 Functional:
 - `--include-ports`
 - `--include-clients`
+- `--client-scope wired|wireless|all`
 - `--only-unifi`
 
 Mermaid:

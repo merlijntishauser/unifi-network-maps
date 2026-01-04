@@ -14,6 +14,14 @@ def test_render_svg_isometric_includes_polygons():
     assert "<path" in output
 
 
+def test_render_svg_isometric_dashes_wireless_links():
+    output = render_svg_isometric(
+        [Edge("A", "B", wireless=True)],
+        node_types={"A": "gateway", "B": "switch"},
+    )
+    assert 'stroke-dasharray="8 6"' in output
+
+
 def _parse_points(points: str) -> list[tuple[float, float]]:
     coords = []
     for pair in points.strip().split():

@@ -40,13 +40,16 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Generate network maps from UniFi LLDP data, as mermaid or SVG"
     )
-    _add_source_args(parser)
-    _add_render_args(parser)
-    _add_debug_args(parser)
+    _add_source_args(parser.add_argument_group("Source"))
+    _add_functional_args(parser.add_argument_group("Functional"))
+    _add_mermaid_args(parser.add_argument_group("Mermaid"))
+    _add_svg_args(parser.add_argument_group("SVG"))
+    _add_general_render_args(parser.add_argument_group("Output"))
+    _add_debug_args(parser.add_argument_group("Debug"))
     return parser
 
 
-def _add_source_args(parser: argparse.ArgumentParser) -> None:
+def _add_source_args(parser: argparse._ArgumentGroup) -> None:
     parser.add_argument("--site", default=None, help="UniFi site name (overrides UNIFI_SITE)")
     parser.add_argument(
         "--env-file",
@@ -55,7 +58,39 @@ def _add_source_args(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def _add_render_args(parser: argparse.ArgumentParser) -> None:
+def _add_functional_args(parser: argparse._ArgumentGroup) -> None:
+    parser.add_argument("--include-ports", action="store_true", help="Include port labels in edges")
+    parser.add_argument(
+        "--include-clients",
+        action="store_true",
+        help="Include active clients as leaf nodes",
+    )
+    parser.add_argument(
+        "--only-unifi", action="store_true", help="Only include neighbors that are UniFi devices"
+    )
+
+
+def _add_mermaid_args(parser: argparse._ArgumentGroup) -> None:
+    parser.add_argument("--direction", default="TB", choices=["LR", "TB"], help="Mermaid direction")
+    parser.add_argument(
+        "--group-by-type",
+        action="store_true",
+        help="Group nodes by gateway/switch/ap in Mermaid subgraphs",
+    )
+    parser.add_argument(
+        "--legend-only",
+        action="store_true",
+        help="Render only the legend as a separate Mermaid graph",
+    )
+
+
+def _add_svg_args(parser: argparse._ArgumentGroup) -> None:
+    parser.add_argument("--svg-width", type=int, default=None, help="SVG width override")
+    parser.add_argument("--svg-height", type=int, default=None, help="SVG height override")
+    parser.add_argument("--theme-file", default=None, help="Path to theme YAML file")
+
+
+def _add_general_render_args(parser: argparse._ArgumentGroup) -> None:
     parser.add_argument(
         "--format",
         default="mermaid",
@@ -69,32 +104,9 @@ def _add_render_args(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument("--output", default=None, help="Output file path")
     parser.add_argument("--stdout", action="store_true", help="Write output to stdout")
-    parser.add_argument("--include-ports", action="store_true", help="Include port labels in edges")
-    parser.add_argument(
-        "--include-clients",
-        action="store_true",
-        help="Include active clients as leaf nodes",
-    )
-    parser.add_argument(
-        "--only-unifi", action="store_true", help="Only include neighbors that are UniFi devices"
-    )
-    parser.add_argument("--direction", default="TB", choices=["LR", "TB"], help="Mermaid direction")
-    parser.add_argument(
-        "--group-by-type",
-        action="store_true",
-        help="Group nodes by gateway/switch/ap in Mermaid subgraphs",
-    )
-    parser.add_argument(
-        "--legend-only",
-        action="store_true",
-        help="Render only the legend as a separate Mermaid graph",
-    )
-    parser.add_argument("--svg-width", type=int, default=None, help="SVG width override")
-    parser.add_argument("--svg-height", type=int, default=None, help="SVG height override")
-    parser.add_argument("--theme-file", default=None, help="Path to theme YAML file")
 
 
-def _add_debug_args(parser: argparse.ArgumentParser) -> None:
+def _add_debug_args(parser: argparse._ArgumentGroup) -> None:
     parser.add_argument(
         "--debug-dump",
         action="store_true",

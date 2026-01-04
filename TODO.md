@@ -8,7 +8,6 @@
 
 ## P2 - Cleanup/Quality
 - done
-- group cli options in --help
 
 ## P3 - Features
 - homeassistant export/integration

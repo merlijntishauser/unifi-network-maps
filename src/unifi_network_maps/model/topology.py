@@ -27,6 +27,7 @@ class Device:
     poe_ports: dict[int, bool] = field(default_factory=dict)
     uplink: UplinkInfo | None = None
     last_uplink: UplinkInfo | None = None
+    version: str = ""
 
 
 @dataclass(frozen=True)
@@ -56,6 +57,8 @@ class DeviceLike(Protocol):
     last_uplink_mac: object | None
     uplink_device_name: object | None
     uplink_remote_port: object | None
+    version: object | None
+    displayable_version: object | None
 
 
 @dataclass(frozen=True)
@@ -242,6 +245,7 @@ def coerce_device(device: DeviceLike) -> Device:
     mac = _get_attr(device, "mac")
     ip = _get_attr(device, "ip") or _get_attr(device, "ip_address")
     dev_type = _get_attr(device, "type") or _get_attr(device, "device_type")
+    version = _get_attr(device, "displayable_version") or _get_attr(device, "version")
     lldp_info = _get_attr(device, "lldp_info")
     if lldp_info is None:
         lldp_info = _get_attr(device, "lldp")
@@ -271,6 +275,7 @@ def coerce_device(device: DeviceLike) -> Device:
         poe_ports=poe_ports,
         uplink=uplink,
         last_uplink=last_uplink,
+        version=str(version or ""),
     )
 
 

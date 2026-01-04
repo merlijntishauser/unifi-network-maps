@@ -22,13 +22,15 @@ coverage:
 
 smoketest:
 	@rm -rf smoketest
-	@mkdir -p smoketest/mermaid smoketest/svg smoketest/svg-iso smoketest/themes
+	@mkdir -p smoketest/lldp smoketest/mermaid smoketest/svg smoketest/svg-iso smoketest/themes
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --stdout > smoketest/mermaid/network.mmd
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --markdown --output smoketest/mermaid/network.md
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --group-by-type --stdout > smoketest/mermaid/network_grouped.mmd
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-ports --include-clients --stdout > smoketest/mermaid/network_ports_clients.mmd
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-ports --stdout > smoketest/mermaid/network_ports.mmd
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --legend-only --stdout > smoketest/mermaid/legend.mmd
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format lldp-md --output smoketest/lldp/lldp.md
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format lldp-md --include-clients --output smoketest/lldp/lldp_clients.md
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format svg --output smoketest/svg/network.svg
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format svg-iso --output smoketest/svg-iso/network_iso.svg
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-clients --format svg --output smoketest/svg/network_clients.svg

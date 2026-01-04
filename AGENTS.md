@@ -205,7 +205,7 @@ SVG:
 - `--theme-file`
 
 Output:
-- `--format mermaid|svg|svg-iso`
+- `--format mermaid|svg|svg-iso|lldp-md`
 - `--markdown`
 - `--stdout`
 

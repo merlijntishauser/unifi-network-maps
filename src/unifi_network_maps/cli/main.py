@@ -18,6 +18,7 @@ from ..model.topology import (
     group_devices_by_type,
     normalize_devices,
 )
+from ..render.lldp_md import render_lldp_md
 from ..render.mermaid import render_legend, render_mermaid
 from ..render.mermaid_theme import MermaidTheme
 from ..render.svg import SvgOptions, render_svg
@@ -94,7 +95,7 @@ def _add_general_render_args(parser: argparse._ArgumentGroup) -> None:
     parser.add_argument(
         "--format",
         default="mermaid",
-        choices=["mermaid", "svg", "svg-iso"],
+        choices=["mermaid", "svg", "svg-iso", "lldp-md"],
         help="Output format",
     )
     parser.add_argument(
@@ -147,13 +148,20 @@ def _render_legend_only(args: argparse.Namespace, mermaid_theme: MermaidTheme) -
     return content
 
 
-def _build_topology_data(
+def _load_devices_data(
     args: argparse.Namespace, config: Config, site: str
-) -> tuple[list[Device], list[str], object]:
+) -> tuple[list[object], list[Device]]:
     raw_devices = list(fetch_devices(config, site=site, detailed=True))
     devices = normalize_devices(raw_devices)
     if args.debug_dump:
         debug_dump_devices(raw_devices, devices, sample_count=max(0, args.debug_sample))
+    return raw_devices, devices
+
+
+def _build_topology_data(
+    args: argparse.Namespace, config: Config, site: str
+) -> tuple[list[Device], list[str], object]:
+    _raw_devices, devices = _load_devices_data(args, config, site)
     groups_for_rank = group_devices_by_type(devices)
     gateways = groups_for_rank.get("gateway", [])
     topology = build_topology(
@@ -256,6 +264,22 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.legend_only:
         content = _render_legend_only(args, mermaid_theme)
+        write_output(content, output_path=args.output, stdout=args.stdout)
+        return 0
+
+    if args.format == "lldp-md":
+        try:
+            _raw_devices, devices = _load_devices_data(args, config, site)
+        except Exception as exc:
+            logging.error("Failed to load devices: %s", exc)
+            return 1
+        clients = list(fetch_clients(config, site=site))
+        content = render_lldp_md(
+            devices,
+            clients=clients,
+            include_ports=args.include_ports,
+            show_clients=args.include_clients,
+        )
         write_output(content, output_path=args.output, stdout=args.stdout)
         return 0
 

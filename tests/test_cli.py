@@ -200,6 +200,44 @@ def test_main_svg_uses_size_overrides(monkeypatch):
     assert captured["width"] == 800
 
 
+def test_main_lldp_md_skips_topology(monkeypatch):
+    devices = [Device(name="Gateway", model_name="", mac="aa:bb", ip="", type="udm", lldp_info=[])]
+
+    def explode(*_args, **_kwargs):
+        raise RuntimeError("unexpected topology build")
+
+    monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
+    monkeypatch.setattr(cli_module, "fetch_devices", lambda *args, **kwargs: devices)
+    monkeypatch.setattr(cli_module, "fetch_clients", lambda *args, **kwargs: [])
+    monkeypatch.setattr(cli_module, "normalize_devices", lambda raw: raw)
+    monkeypatch.setattr(cli_module, "build_topology", explode)
+    monkeypatch.setattr(cli_module, "render_lldp_md", lambda *_args, **_kwargs: "# LLDP\n")
+    monkeypatch.setattr(cli_module, "write_output", lambda *args, **kwargs: None)
+
+    assert main(["--format", "lldp-md", "--stdout"]) == 0
+
+
+def test_main_lldp_md_includes_clients(monkeypatch):
+    devices = [Device(name="Gateway", model_name="", mac="aa:bb", ip="", type="udm", lldp_info=[])]
+    captured = {}
+
+    def fake_render_lldp_md(*_args, **kwargs):
+        captured["clients"] = kwargs.get("clients")
+        captured["show_clients"] = kwargs.get("show_clients")
+        return "# LLDP\n"
+
+    monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
+    monkeypatch.setattr(cli_module, "fetch_devices", lambda *args, **kwargs: devices)
+    monkeypatch.setattr(cli_module, "normalize_devices", lambda raw: raw)
+    monkeypatch.setattr(cli_module, "fetch_clients", lambda *args, **kwargs: [{"name": "TV"}])
+    monkeypatch.setattr(cli_module, "render_lldp_md", fake_render_lldp_md)
+    monkeypatch.setattr(cli_module, "write_output", lambda *args, **kwargs: None)
+
+    assert main(["--format", "lldp-md", "--include-clients", "--stdout"]) == 0
+    assert captured["clients"] is not None
+    assert captured["show_clients"] is True
+
+
 def test_cli_wrapper_calls_main(monkeypatch):
     monkeypatch.setattr(sys, "argv", ["unifi_network_maps.cli", "--help"])
     sys.modules.pop("unifi_network_maps.cli", None)

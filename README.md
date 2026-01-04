@@ -73,6 +73,9 @@ SVG size overrides:
 
 ```bash
 unifi-network-maps --format svg --svg-width 1400 --svg-height 900 --output ./network.svg
+
+# LLDP tables for troubleshooting
+unifi-network-maps --format lldp-md --output ./lldp.md
 ```
 
 Legend only:
@@ -143,7 +146,7 @@ SVG:
 - `--theme-file`: load a YAML theme for Mermaid + SVG colors (see `examples/theme.yaml` and `examples/theme-dark.yaml`).
 
 Output:
-- `--format mermaid|svg|svg-iso`: output format (default mermaid).
+- `--format mermaid|svg|svg-iso|lldp-md`: output format (default mermaid).
 - `--stdout`: write output to stdout.
 - `--markdown`: wrap Mermaid output in a code fence.
 

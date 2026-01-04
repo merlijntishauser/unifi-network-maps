@@ -23,13 +23,13 @@ from .unifi import fetch_clients, fetch_devices
 logger = logging.getLogger(__name__)
 
 
-def _load_dotenv() -> None:
+def _load_dotenv(env_file: str | None = None) -> None:
     try:
         from dotenv import load_dotenv
     except ImportError:
         logger.info("python-dotenv not installed; skipping .env loading")
         return
-    load_dotenv()
+    load_dotenv(dotenv_path=env_file) if env_file else load_dotenv()
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -71,6 +71,11 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--stdout", action="store_true", help="Write output to stdout")
     parser.add_argument(
+        "--env-file",
+        default=None,
+        help="Path to .env file (overrides default .env discovery)",
+    )
+    parser.add_argument(
         "--debug-dump",
         action="store_true",
         help="Dump gateway and sample device data to stderr for debugging",
@@ -92,8 +97,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        _load_dotenv()
-        config = Config.from_env()
+        _load_dotenv(args.env_file)
+        config = Config.from_env(env_file=args.env_file)
     except ValueError as exc:
         logging.error(str(exc))
         return 2

@@ -181,6 +181,7 @@ unifi-network-maps \
 Options:
 - `--format mermaid|svg|svg-iso`
 - `--markdown`
+- `--env-file`
 - `--include-ports`
 - `--include-clients`
 - `--only-unifi`

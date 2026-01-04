@@ -26,7 +26,13 @@ class Config:
     verify_ssl: bool
 
     @classmethod
-    def from_env(cls) -> Config:
+    def from_env(cls, *, env_file: str | None = None) -> Config:
+        if env_file:
+            try:
+                from dotenv import load_dotenv
+            except ImportError:
+                raise ValueError("python-dotenv required for --env-file") from None
+            load_dotenv(dotenv_path=env_file)
         url = os.environ.get("UNIFI_URL", "").strip()
         site = os.environ.get("UNIFI_SITE", "default").strip()
         user = os.environ.get("UNIFI_USER", "").strip()

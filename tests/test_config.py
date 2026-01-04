@@ -50,3 +50,18 @@ def test_config_from_env_success(monkeypatch):
     monkeypatch.setenv("UNIFI_VERIFY_SSL", "false")
     config = Config.from_env()
     assert config.verify_ssl is False
+
+
+def test_config_from_env_requires_dotenv_for_env_file(monkeypatch):
+    import builtins
+
+    real_import = builtins.__import__
+
+    def fake_import(name, *args, **kwargs):
+        if name == "dotenv":
+            raise ImportError("missing")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+    with pytest.raises(ValueError, match="python-dotenv required"):
+        Config.from_env(env_file="custom.env")

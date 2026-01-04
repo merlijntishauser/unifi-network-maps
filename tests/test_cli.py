@@ -11,7 +11,7 @@ from unifi_mermaid.topology import Device, Edge, TopologyResult
 
 
 def test_main_returns_error_on_config_failure(monkeypatch):
-    def raise_config():
+    def raise_config(**_kwargs):
         raise ValueError("missing config")
 
     monkeypatch.setattr("unifi_mermaid.cli.Config.from_env", raise_config)
@@ -28,8 +28,36 @@ def test_load_dotenv_logs_when_missing(monkeypatch, caplog):
 
     monkeypatch.setattr(builtins, "__import__", fake_import)
     caplog.set_level(logging.INFO)
-    cli_module._load_dotenv()
+    cli_module._load_dotenv(None)
     assert "python-dotenv not installed" in caplog.text
+
+
+def test_load_dotenv_passes_env_file(monkeypatch):
+    captured = {}
+
+    def fake_load_dotenv(*, dotenv_path=None):
+        captured["dotenv_path"] = dotenv_path
+
+    import types
+
+    monkeypatch.setitem(sys.modules, "dotenv", types.SimpleNamespace(load_dotenv=fake_load_dotenv))
+    cli_module._load_dotenv("custom.env")
+    assert captured["dotenv_path"] == "custom.env"
+
+
+def test_main_passes_env_file_to_config(monkeypatch):
+    captured = {}
+
+    def fake_from_env(*, env_file=None):
+        captured["env_file"] = env_file
+        return _dummy_config()
+
+    monkeypatch.setattr("unifi_mermaid.cli.Config.from_env", fake_from_env)
+    monkeypatch.setattr("unifi_mermaid.cli.render_legend", lambda: "graph TB\n")
+    monkeypatch.setattr("unifi_mermaid.cli.write_output", lambda *args, **kwargs: None)
+
+    assert main(["--env-file", "custom.env", "--legend-only", "--stdout"]) == 0
+    assert captured["env_file"] == "custom.env"
 
 
 def test_main_legend_outputs_markdown(monkeypatch):
@@ -38,7 +66,7 @@ def test_main_legend_outputs_markdown(monkeypatch):
     def write_output(content, *, output_path, stdout):
         captured["content"] = content
 
-    monkeypatch.setattr("unifi_mermaid.cli.Config.from_env", lambda: _dummy_config())
+    monkeypatch.setattr("unifi_mermaid.cli.Config.from_env", lambda **_kwargs: _dummy_config())
     monkeypatch.setattr("unifi_mermaid.cli.render_legend", lambda: "graph TB\n")
     monkeypatch.setattr("unifi_mermaid.cli.write_output", write_output)
 
@@ -55,7 +83,7 @@ def test_main_mermaid_includes_wired_clients(monkeypatch):
         captured["node_types"] = node_types
         return "graph TB\n"
 
-    monkeypatch.setattr("unifi_mermaid.cli.Config.from_env", lambda: _dummy_config())
+    monkeypatch.setattr("unifi_mermaid.cli.Config.from_env", lambda **_kwargs: _dummy_config())
     monkeypatch.setattr("unifi_mermaid.cli.fetch_devices", lambda *args, **kwargs: devices)
     monkeypatch.setattr("unifi_mermaid.cli.normalize_devices", lambda raw: raw)
     monkeypatch.setattr(
@@ -77,7 +105,7 @@ def test_main_mermaid_includes_wired_clients(monkeypatch):
 
 
 def test_main_logs_topology_errors(monkeypatch, caplog):
-    monkeypatch.setattr("unifi_mermaid.cli.Config.from_env", lambda: _dummy_config())
+    monkeypatch.setattr("unifi_mermaid.cli.Config.from_env", lambda **_kwargs: _dummy_config())
     monkeypatch.setattr("unifi_mermaid.cli.fetch_devices", lambda *args, **kwargs: [])
     monkeypatch.setattr("unifi_mermaid.cli.normalize_devices", lambda raw: raw)
 
@@ -97,7 +125,7 @@ def test_main_mermaid_wraps_markdown(monkeypatch):
     def write_output(content, *, output_path, stdout):
         captured["content"] = content
 
-    monkeypatch.setattr("unifi_mermaid.cli.Config.from_env", lambda: _dummy_config())
+    monkeypatch.setattr("unifi_mermaid.cli.Config.from_env", lambda **_kwargs: _dummy_config())
     monkeypatch.setattr("unifi_mermaid.cli.fetch_devices", lambda *args, **kwargs: devices)
     monkeypatch.setattr("unifi_mermaid.cli.normalize_devices", lambda raw: raw)
     monkeypatch.setattr(
@@ -124,7 +152,7 @@ def test_main_debug_dump_uses_non_negative_sample(monkeypatch):
     def debug_dump(raw_devices, normalized, *, sample_count):
         captured["sample_count"] = sample_count
 
-    monkeypatch.setattr("unifi_mermaid.cli.Config.from_env", lambda: _dummy_config())
+    monkeypatch.setattr("unifi_mermaid.cli.Config.from_env", lambda **_kwargs: _dummy_config())
     monkeypatch.setattr("unifi_mermaid.cli.fetch_devices", lambda *args, **kwargs: devices)
     monkeypatch.setattr("unifi_mermaid.cli.normalize_devices", lambda raw: raw)
     monkeypatch.setattr("unifi_mermaid.cli.debug_dump_devices", debug_dump)
@@ -154,7 +182,7 @@ def test_main_svg_uses_size_overrides(monkeypatch):
         captured["height"] = options.height
         return "<svg></svg>"
 
-    monkeypatch.setattr("unifi_mermaid.cli.Config.from_env", lambda: _dummy_config())
+    monkeypatch.setattr("unifi_mermaid.cli.Config.from_env", lambda **_kwargs: _dummy_config())
     monkeypatch.setattr("unifi_mermaid.cli.fetch_devices", lambda *args, **kwargs: devices)
     monkeypatch.setattr("unifi_mermaid.cli.normalize_devices", lambda raw: raw)
     monkeypatch.setattr(

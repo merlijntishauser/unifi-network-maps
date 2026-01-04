@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 - TBD.
 
+## v1.2.4
+- Added typed `UplinkInfo`/`PortInfo` and uplink fallback for LLDP gaps.
+- Deterministic edge ordering for repeatable output.
+- CI publish workflow (trusted publishing) and release docs.
+- Project metadata and packaging updated for OSS readiness.
+
 ## v1.1.0
 - Added isometric SVG output with grid-aligned links and isometric icon set.
 - Improved port label placement and client labeling in SVG outputs.

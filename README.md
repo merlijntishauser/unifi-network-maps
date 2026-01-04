@@ -31,6 +31,12 @@ export UNIFI_PASS=********
 export UNIFI_VERIFY_SSL=false
 ```
 
+Use a custom env file:
+
+```bash
+unifi-network-maps --env-file ./site.env --stdout
+```
+
 ## Usage
 
 Basic map (tree layout by LLDP hops):

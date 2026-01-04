@@ -127,7 +127,7 @@ See `LICENSES.md` for third-party license info.
 - Default output is top-to-bottom (TB) and rendered as a hop-based tree from the gateway(s).
 - Nodes are color-coded by type (gateway/switch/AP/client) with a sensible default palette.
 - PoE links are highlighted in blue and annotated with a power icon when detected from `port_table`.
-- SVG output uses vendored device glyphs from `src/unifi_mermaid/assets/icons`.
+- SVG output uses vendored device glyphs from `src/unifi_network_maps/assets/icons`.
 - Isometric SVG output uses MIT-licensed icons from `markmanx/isopacks`.
 - SVG port labels render inside child nodes for readability.
 
@@ -156,5 +156,5 @@ svg:
       to: "#b6dcff"
 ```
 
-The built-in themes live at `src/unifi_mermaid/assets/themes/default.yaml` and
-`src/unifi_mermaid/assets/themes/dark.yaml`.
+The built-in themes live at `src/unifi_network_maps/assets/themes/default.yaml` and
+`src/unifi_network_maps/assets/themes/dark.yaml`.

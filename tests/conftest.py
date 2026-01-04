@@ -8,5 +8,5 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 for name in list(sys.modules):
-    if name == "unifi_mermaid" or name.startswith("unifi_mermaid."):
+    if name == "unifi_network_maps" or name.startswith("unifi_network_maps."):
         del sys.modules[name]

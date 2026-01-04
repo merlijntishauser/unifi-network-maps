@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 def _cache_dir() -> Path:
-    return Path(os.environ.get("UNIFI_CACHE_DIR", ".cache/unifi_mermaid"))
+    return Path(os.environ.get("UNIFI_CACHE_DIR", ".cache/unifi_network_maps"))
 
 
 def _cache_ttl_seconds() -> int:

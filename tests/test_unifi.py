@@ -6,8 +6,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from unifi_mermaid import unifi
-from unifi_mermaid.config import Config
+from unifi_network_maps import unifi
+from unifi_network_maps.config import Config
 
 
 def test_fetch_devices_falls_back_on_auth_error(monkeypatch):

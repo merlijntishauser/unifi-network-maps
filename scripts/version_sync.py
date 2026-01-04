@@ -13,7 +13,7 @@ def main() -> None:
     text = pyproject.read_text(encoding="utf-8")
     text = re.sub(r'^version\s*=\s*"[^"]+"', f'version = "{version}"', text, flags=re.M)
     pyproject.write_text(text, encoding="utf-8")
-    (ROOT / "src" / "unifi_mermaid" / "__init__.py").write_text(
+    (ROOT / "src" / "unifi_network_maps" / "__init__.py").write_text(
         f'__version__ = "{version}"\n', encoding="utf-8"
     )
 

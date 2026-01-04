@@ -8,8 +8,7 @@
 
 ## P2 - Cleanup/Quality
 - done
-- add comment to all regular expressions with example of match and non-match
-- rename component unifi_mermaid to unifi_network_maps
+- rename component unifi_network_maps to unifi_network_maps
 - maybe split in multiple (sub)components?
 - group cli options in --help
 

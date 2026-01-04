@@ -1,6 +1,6 @@
 import pytest
 
-from unifi_mermaid.config import Config, _parse_bool
+from unifi_network_maps.config import Config, _parse_bool
 
 
 def test_parse_bool_true_default():

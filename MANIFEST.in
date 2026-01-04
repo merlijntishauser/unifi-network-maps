@@ -5,6 +5,6 @@ include SECURITY.md
 include CONTRIBUTING.md
 include LICENSES.md
 include RELEASING.md
-recursive-include src/unifi_mermaid/assets/icons *.svg
-recursive-include src/unifi_mermaid/assets/icons/isometric ISOPACKS_LICENSE
-recursive-include src/unifi_mermaid/assets/themes *.yaml
+recursive-include src/unifi_network_maps/assets/icons *.svg
+recursive-include src/unifi_network_maps/assets/icons/isometric ISOPACKS_LICENSE
+recursive-include src/unifi_network_maps/assets/themes *.yaml

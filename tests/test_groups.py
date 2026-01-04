@@ -1,5 +1,5 @@
-from unifi_mermaid.mermaid import render_mermaid
-from unifi_mermaid.topology import (
+from unifi_network_maps.mermaid import render_mermaid
+from unifi_network_maps.topology import (
     Device,
     Edge,
     build_tree_edges_by_topology,

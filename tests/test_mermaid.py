@@ -1,5 +1,5 @@
-from unifi_mermaid.mermaid import render_legend, render_mermaid
-from unifi_mermaid.topology import Edge
+from unifi_network_maps.mermaid import render_legend, render_mermaid
+from unifi_network_maps.topology import Edge
 
 
 def test_render_mermaid_uses_ids_with_labels():

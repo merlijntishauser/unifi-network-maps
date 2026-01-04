@@ -148,7 +148,7 @@ unifi-network-map/
 ├── agents.md
 ├── pyproject.toml
 ├── src/
-│   ├── unifi_mermaid/
+│   ├── unifi_network_maps/
 │   │   ├── __init__.py
 │   │   ├── config.py
 │   │   ├── unifi.py

@@ -1,8 +1,8 @@
 import logging
 from types import SimpleNamespace
 
-from unifi_mermaid.debug import debug_dump_devices, device_to_dict
-from unifi_mermaid.topology import Device
+from unifi_network_maps.debug import debug_dump_devices, device_to_dict
+from unifi_network_maps.topology import Device
 
 
 def test_device_to_dict_prefers_to_dict():

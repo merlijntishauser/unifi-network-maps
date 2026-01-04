@@ -1,4 +1,4 @@
-from unifi_mermaid.theme import load_theme
+from unifi_network_maps.theme import load_theme
 
 
 def test_load_theme_rejects_non_object(tmp_path):

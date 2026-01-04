@@ -1,4 +1,4 @@
-from unifi_mermaid.topology import Device, build_client_edges, build_node_type_map
+from unifi_network_maps.topology import Device, build_client_edges, build_node_type_map
 
 
 def test_build_client_edges_maps_ap_mac():

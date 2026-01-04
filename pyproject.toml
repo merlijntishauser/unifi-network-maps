@@ -45,7 +45,7 @@ dev = [
 ]
 
 [project.scripts]
-unifi-network-maps = "unifi_mermaid.cli:main"
+unifi-network-maps = "unifi_network_maps.cli:main"
 
 [tool.ruff]
 line-length = 100
@@ -63,7 +63,7 @@ testpaths = ["tests"]
 
 [tool.coverage.run]
 branch = true
-source = ["unifi_mermaid"]
+source = ["unifi_network_maps"]
 
 [tool.coverage.report]
 show_missing = true
@@ -72,7 +72,7 @@ show_missing = true
 package-dir = {"" = "src"}
 
 [tool.setuptools.package-data]
-"unifi_mermaid" = [
+"unifi_network_maps" = [
   "assets/icons/*.svg",
   "assets/icons/isometric/*.svg",
   "assets/icons/isometric/ISOPACKS_LICENSE",

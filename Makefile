@@ -1,4 +1,4 @@
-.PHONY: venv install lint format test coverage smoketest ci version version-sync version-bump
+.PHONY: venv install lint format test coverage smoketest ci version version-sync version-bump help
 
 VERSION_FILE = VERSION
 
@@ -18,33 +18,33 @@ test:
 	.venv/bin/pytest
 
 coverage:
-	.venv/bin/pytest --cov=unifi_mermaid --cov-report=term-missing
+	.venv/bin/pytest --cov=unifi_network_maps --cov-report=term-missing
 
 smoketest:
 	@rm -rf smoketest
 	@mkdir -p smoketest/mermaid smoketest/svg smoketest/svg-iso smoketest/themes
-	PYTHONPATH=src .venv/bin/python -m unifi_mermaid.cli --stdout > smoketest/mermaid/network.mmd
-	PYTHONPATH=src .venv/bin/python -m unifi_mermaid.cli --markdown --output smoketest/mermaid/network.md
-	PYTHONPATH=src .venv/bin/python -m unifi_mermaid.cli --group-by-type --stdout > smoketest/mermaid/network_grouped.mmd
-	PYTHONPATH=src .venv/bin/python -m unifi_mermaid.cli --include-ports --include-clients --stdout > smoketest/mermaid/network_ports_clients.mmd
-	PYTHONPATH=src .venv/bin/python -m unifi_mermaid.cli --include-ports --stdout > smoketest/mermaid/network_ports.mmd
-	PYTHONPATH=src .venv/bin/python -m unifi_mermaid.cli --legend-only --stdout > smoketest/mermaid/legend.mmd
-	PYTHONPATH=src .venv/bin/python -m unifi_mermaid.cli --format svg --output smoketest/svg/network.svg
-	PYTHONPATH=src .venv/bin/python -m unifi_mermaid.cli --format svg-iso --output smoketest/svg-iso/network_iso.svg
-	PYTHONPATH=src .venv/bin/python -m unifi_mermaid.cli --include-clients --format svg --output smoketest/svg/network_clients.svg
-	PYTHONPATH=src .venv/bin/python -m unifi_mermaid.cli --include-clients --format svg-iso --output smoketest/svg-iso/network_clients_iso.svg
-	PYTHONPATH=src .venv/bin/python -m unifi_mermaid.cli --include-ports --format svg --output smoketest/svg/network_ports.svg
-	PYTHONPATH=src .venv/bin/python -m unifi_mermaid.cli --include-ports --format svg-iso --output smoketest/svg-iso/network_ports_iso.svg
-	PYTHONPATH=src .venv/bin/python -m unifi_mermaid.cli --include-ports --include-clients --format svg --output smoketest/svg/network_ports_clients.svg
-	PYTHONPATH=src .venv/bin/python -m unifi_mermaid.cli --include-ports --include-clients --format svg-iso --output smoketest/svg-iso/network_ports_clients_iso.svg
-	PYTHONPATH=src .venv/bin/python -m unifi_mermaid.cli --theme-file src/unifi_mermaid/assets/themes/default.yaml --stdout > smoketest/themes/mermaid_default.mmd
-	PYTHONPATH=src .venv/bin/python -m unifi_mermaid.cli --theme-file src/unifi_mermaid/assets/themes/dark.yaml --stdout > smoketest/themes/mermaid_dark.mmd
-	PYTHONPATH=src .venv/bin/python -m unifi_mermaid.cli --theme-file src/unifi_mermaid/assets/themes/default.yaml --legend-only --stdout > smoketest/themes/legend_default.mmd
-	PYTHONPATH=src .venv/bin/python -m unifi_mermaid.cli --theme-file src/unifi_mermaid/assets/themes/dark.yaml --legend-only --stdout > smoketest/themes/legend_dark.mmd
-	PYTHONPATH=src .venv/bin/python -m unifi_mermaid.cli --theme-file src/unifi_mermaid/assets/themes/default.yaml --format svg --output smoketest/themes/svg_default.svg
-	PYTHONPATH=src .venv/bin/python -m unifi_mermaid.cli --theme-file src/unifi_mermaid/assets/themes/dark.yaml --format svg --output smoketest/themes/svg_dark.svg
-	PYTHONPATH=src .venv/bin/python -m unifi_mermaid.cli --theme-file src/unifi_mermaid/assets/themes/default.yaml --format svg-iso --output smoketest/themes/svg_iso_default.svg
-	PYTHONPATH=src .venv/bin/python -m unifi_mermaid.cli --theme-file src/unifi_mermaid/assets/themes/dark.yaml --format svg-iso --output smoketest/themes/svg_iso_dark.svg
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --stdout > smoketest/mermaid/network.mmd
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --markdown --output smoketest/mermaid/network.md
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --group-by-type --stdout > smoketest/mermaid/network_grouped.mmd
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-ports --include-clients --stdout > smoketest/mermaid/network_ports_clients.mmd
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-ports --stdout > smoketest/mermaid/network_ports.mmd
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --legend-only --stdout > smoketest/mermaid/legend.mmd
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format svg --output smoketest/svg/network.svg
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format svg-iso --output smoketest/svg-iso/network_iso.svg
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-clients --format svg --output smoketest/svg/network_clients.svg
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-clients --format svg-iso --output smoketest/svg-iso/network_clients_iso.svg
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-ports --format svg --output smoketest/svg/network_ports.svg
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-ports --format svg-iso --output smoketest/svg-iso/network_ports_iso.svg
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-ports --include-clients --format svg --output smoketest/svg/network_ports_clients.svg
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-ports --include-clients --format svg-iso --output smoketest/svg-iso/network_ports_clients_iso.svg
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --theme-file src/unifi_network_maps/assets/themes/default.yaml --stdout > smoketest/themes/mermaid_default.mmd
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --theme-file src/unifi_network_maps/assets/themes/dark.yaml --stdout > smoketest/themes/mermaid_dark.mmd
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --theme-file src/unifi_network_maps/assets/themes/default.yaml --legend-only --stdout > smoketest/themes/legend_default.mmd
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --theme-file src/unifi_network_maps/assets/themes/dark.yaml --legend-only --stdout > smoketest/themes/legend_dark.mmd
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --theme-file src/unifi_network_maps/assets/themes/default.yaml --format svg --output smoketest/themes/svg_default.svg
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --theme-file src/unifi_network_maps/assets/themes/dark.yaml --format svg --output smoketest/themes/svg_dark.svg
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --theme-file src/unifi_network_maps/assets/themes/default.yaml --format svg-iso --output smoketest/themes/svg_iso_default.svg
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --theme-file src/unifi_network_maps/assets/themes/dark.yaml --format svg-iso --output smoketest/themes/svg_iso_dark.svg
 
 version:
 	@echo $(VERSION)
@@ -72,7 +72,7 @@ version-bump:
 	if ! grep -q "version = \"$$next\"" pyproject.toml; then \
 		echo "pyproject.toml version did not update"; exit 1; \
 	fi; \
-	git add $(VERSION_FILE) src/unifi_mermaid/__init__.py pyproject.toml; \
+	git add $(VERSION_FILE) src/unifi_network_maps/__init__.py pyproject.toml; \
 	git commit -m "Bump version to $$next"; \
 	git tag -a "v$$next" -m "v$$next"; \
 	git push origin HEAD; \
@@ -80,4 +80,6 @@ version-bump:
 
 ci: lint format test
 	.venv/bin/pre-commit run --all-files
-	.venv/bin/python -m unifi_mermaid.cli --help
+	$(MAKE) help
+help:
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --help

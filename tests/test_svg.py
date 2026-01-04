@@ -1,7 +1,7 @@
 from pathlib import Path
 
-import unifi_mermaid.svg as svg_module
-from unifi_mermaid.svg import (
+import unifi_network_maps.svg as svg_module
+from unifi_network_maps.svg import (
     SvgOptions,
     _compact_edge_label,
     _extract_port_text,
@@ -13,7 +13,7 @@ from unifi_mermaid.svg import (
     render_svg,
     render_svg_isometric,
 )
-from unifi_mermaid.topology import Edge
+from unifi_network_maps.topology import Edge
 
 
 def test_render_svg_outputs_svg_root():

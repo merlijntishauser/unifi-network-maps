@@ -120,7 +120,7 @@ See `LICENSES.md` for third-party license info.
 - `--debug-dump`: dump gateway + sample devices to stderr for debugging.
 - `--debug-sample N`: number of non-gateway devices in debug dump (default 2).
 - `--svg-width/--svg-height`: override SVG output dimensions.
-- `--theme-file`: load a YAML theme for Mermaid + SVG colors (see `examples/theme.yaml`).
+- `--theme-file`: load a YAML theme for Mermaid + SVG colors (see `examples/theme.yaml` and `examples/theme-dark.yaml`).
 
 ## Notes
 
@@ -156,4 +156,5 @@ svg:
       to: "#b6dcff"
 ```
 
-The built-in default theme lives at `src/unifi_mermaid/assets/themes/default.yaml`.
+The built-in themes live at `src/unifi_mermaid/assets/themes/default.yaml` and
+`src/unifi_mermaid/assets/themes/dark.yaml`.

@@ -29,7 +29,7 @@ DEFAULT_THEME = SvgTheme(
 
 def svg_defs(prefix: str, theme: SvgTheme = DEFAULT_THEME) -> str:
     gradient_prefix = f"{prefix}-" if prefix else ""
-    node_prefix = f"{prefix}node-" if prefix else "node-"
+    node_prefix = f"{prefix}-node-" if prefix else "node-"
     return (
         "<defs>"
         f'<linearGradient id="{gradient_prefix}link-standard" x1="0%" y1="0%" x2="100%" y2="0%">'

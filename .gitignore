@@ -16,6 +16,7 @@ network.md
 .cache/
 .coverage.*
 *.svg
+!src/unifi_mermaid/assets/icons/*.svg
 !src/unifi_mermaid/assets/icons/isometric/*.svg
 smoketest/
 network*.md

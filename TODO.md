@@ -17,3 +17,4 @@
 - export LLDP as markdown (all info per device?)
 - add scenario's / BDD like behave
 - and maybe gui test on svg? 
+- add static code analysis

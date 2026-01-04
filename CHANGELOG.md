@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 - TBD.
 
+## v1.3.0
+- Reorganized package into submodules (`adapters/`, `model/`, `render/`, `io/`, `cli/`).
+- YAML-based theming with default + dark themes and `--theme-file`.
+- CLI help now grouped by category; CLI logic split into focused helpers.
+- Isometric SVG layout constants centralized; extra viewBox padding to avoid clipping.
+- LLDP port index fallback matches `port_table` `ifname`/`name`.
+- Added PoE/edge/device count logging and improved label ordering helpers.
+- Coverage excludes asset packages; docs updated (options/groups + AI disclosure).
+
 ## v1.2.4
 - Added typed `UplinkInfo`/`PortInfo` and uplink fallback for LLDP gaps.
 - Deterministic edge ordering for repeatable output.

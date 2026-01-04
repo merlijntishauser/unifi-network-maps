@@ -268,7 +268,6 @@ def render_svg(
 
     node_port_labels: dict[str, str] = {}
     node_port_prefix: dict[str, str] = {}
-    node_port_prefix: dict[str, str] = {}
     for edge in edges:
         if edge.left not in positions or edge.right not in positions:
             continue

@@ -53,7 +53,7 @@ def test_main_passes_env_file_to_config(monkeypatch):
         return _dummy_config()
 
     monkeypatch.setattr("unifi_mermaid.cli.Config.from_env", fake_from_env)
-    monkeypatch.setattr("unifi_mermaid.cli.render_legend", lambda: "graph TB\n")
+    monkeypatch.setattr("unifi_mermaid.cli.render_legend", lambda **_kwargs: "graph TB\n")
     monkeypatch.setattr("unifi_mermaid.cli.write_output", lambda *args, **kwargs: None)
 
     assert main(["--env-file", "custom.env", "--legend-only", "--stdout"]) == 0
@@ -67,7 +67,7 @@ def test_main_legend_outputs_markdown(monkeypatch):
         captured["content"] = content
 
     monkeypatch.setattr("unifi_mermaid.cli.Config.from_env", lambda **_kwargs: _dummy_config())
-    monkeypatch.setattr("unifi_mermaid.cli.render_legend", lambda: "graph TB\n")
+    monkeypatch.setattr("unifi_mermaid.cli.render_legend", lambda **_kwargs: "graph TB\n")
     monkeypatch.setattr("unifi_mermaid.cli.write_output", write_output)
 
     main(["--legend-only", "--markdown", "--stdout"])

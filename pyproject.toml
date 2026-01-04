@@ -8,13 +8,13 @@ version = "1.3.0"
 description = "Dynamic UniFi -> network maps in mermaid or svg"
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "Merlijn" }]
 keywords = ["unifi", "mermaid", "network", "topology", "diagram", "svg"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: System Administrators",
-  "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",

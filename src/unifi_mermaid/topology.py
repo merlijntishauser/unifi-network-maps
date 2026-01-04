@@ -473,9 +473,53 @@ def build_edges(
     seen: set[frozenset[str]] = set()
     port_map: dict[tuple[str, str], str] = {}
     poe_map: dict[tuple[str, str], bool] = {}
-    devices_with_lldp_edges: set[str] = set()
 
-    for device in ordered_devices:
+    devices_with_lldp_edges = _collect_lldp_links(
+        ordered_devices,
+        index,
+        port_map,
+        poe_map,
+        raw_links,
+        seen,
+        only_unifi=only_unifi,
+    )
+    _collect_uplink_links(
+        ordered_devices,
+        devices_with_lldp_edges,
+        index,
+        device_by_name,
+        port_map,
+        poe_map,
+        raw_links,
+        seen,
+        include_ports=include_ports,
+        only_unifi=only_unifi,
+    )
+    edges = _build_ordered_edges(
+        raw_links,
+        port_map,
+        poe_map,
+        device_by_name,
+        include_ports=include_ports,
+    )
+
+    poe_edges = sum(1 for edge in edges if edge.poe)
+    logger.info("Built %d unique edges (%d PoE)", len(edges), poe_edges)
+    return edges
+
+
+def _collect_lldp_links(
+    devices: list[Device],
+    index: dict[str, str],
+    port_map: dict[tuple[str, str], str],
+    poe_map: dict[tuple[str, str], bool],
+    raw_links: list[tuple[str, str]],
+    seen: set[frozenset[str]],
+    *,
+    only_unifi: bool,
+) -> set[str]:
+    devices_with_lldp_edges: set[str] = set()
+    for device in devices:
         poe_ports = device.poe_ports
         for lldp_entry in sorted(
             device.lldp_info,
@@ -517,8 +561,23 @@ def build_edges(
             raw_links.append((device.name, peer_name))
             seen.add(key)
             devices_with_lldp_edges.add(device.name)
+    return devices_with_lldp_edges
 
-    for device in ordered_devices:
+
+def _collect_uplink_links(
+    devices: list[Device],
+    devices_with_lldp_edges: set[str],
+    index: dict[str, str],
+    device_by_name: dict[str, Device],
+    port_map: dict[tuple[str, str], str],
+    poe_map: dict[tuple[str, str], bool],
+    raw_links: list[tuple[str, str]],
+    seen: set[frozenset[str]],
+    *,
+    include_ports: bool,
+    only_unifi: bool,
+) -> None:
+    for device in devices:
         if device.name in devices_with_lldp_edges:
             continue
         uplink = device.uplink or device.last_uplink
@@ -548,6 +607,15 @@ def build_edges(
         if poe:
             poe_map[(upstream_name, device.name)] = poe
 
+
+def _build_ordered_edges(
+    raw_links: list[tuple[str, str]],
+    port_map: dict[tuple[str, str], str],
+    poe_map: dict[tuple[str, str], bool],
+    device_by_name: dict[str, Device],
+    *,
+    include_ports: bool,
+) -> list[Edge]:
     type_rank = {"gateway": 0, "switch": 1, "ap": 2, "other": 3}
 
     def _rank_for_name(name: str) -> int:
@@ -572,13 +640,6 @@ def build_edges(
         )
         label = compose_port_label(left_name, right_name, port_map) if include_ports else None
         edges.append(Edge(left=left_name, right=right_name, label=label, poe=poe))
-
-    poe_edges = sum(1 for edge in edges if edge.poe)
-    logger.info(
-        "Built %d unique edges (%d PoE)",
-        len(edges),
-        poe_edges,
-    )
     return edges
 
 

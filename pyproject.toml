@@ -60,10 +60,15 @@ line-ending = "lf"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+norecursedirs = ["src/unifi_network_maps/assets"]
 
 [tool.coverage.run]
 branch = true
 source = ["unifi_network_maps"]
+omit = [
+  "src/unifi_network_maps/assets/*",
+  "src/unifi_network_maps/assets/**",
+]
 
 [tool.coverage.report]
 show_missing = true

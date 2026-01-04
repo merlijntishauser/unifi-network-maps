@@ -24,6 +24,45 @@ class SvgOptions:
     height: int | None = None
 
 
+@dataclass(frozen=True)
+class IsoLayout:
+    iso_angle: float
+    tile_width: float
+    tile_height: float
+    step_width: float
+    step_height: float
+    grid_spacing_x: int
+    grid_spacing_y: int
+    padding: float
+    tile_y_offset: float
+    extra_pad: float
+
+
+def _iso_layout(options: SvgOptions) -> IsoLayout:
+    tile_width = options.node_width * 1.5
+    iso_angle = math.radians(30.0)
+    tile_height = tile_width * math.tan(iso_angle)
+    step_width = tile_width
+    step_height = tile_height
+    grid_spacing_x = max(2, 1 + int(round(options.h_gap / max(tile_width, 1))))
+    grid_spacing_y = max(2, 1 + int(round(options.v_gap / max(tile_height, 1))))
+    padding = float(options.padding)
+    tile_y_offset = tile_height / 2
+    extra_pad = max(12.0, tile_width * 0.35)
+    return IsoLayout(
+        iso_angle=iso_angle,
+        tile_width=tile_width,
+        tile_height=tile_height,
+        step_width=step_width,
+        step_height=step_height,
+        grid_spacing_x=grid_spacing_x,
+        grid_spacing_y=grid_spacing_y,
+        padding=padding,
+        tile_y_offset=tile_y_offset,
+        extra_pad=extra_pad,
+    )
+
+
 _TYPE_ORDER = ["gateway", "switch", "ap", "client", "other"]
 _ICON_FILES = {
     "gateway": "router-network.svg",
@@ -375,13 +414,13 @@ def render_svg_isometric(
     positions_index, levels = _tree_layout_indices(edges, node_types)
     if not positions_index:
         positions_index = {}
-    tile_w = options.node_width * 1.5
-    iso_angle = math.radians(30.0)
-    tile_h = tile_w * math.tan(iso_angle)
-    step_w = tile_w
-    step_h = tile_h
-    grid_spacing_x = max(2, 1 + int(round(options.h_gap / max(tile_w, 1))))
-    grid_spacing_y = max(2, 1 + int(round(options.v_gap / max(tile_h, 1))))
+    layout = _iso_layout(options)
+    tile_w = layout.tile_width
+    tile_h = layout.tile_height
+    step_w = layout.step_width
+    step_h = layout.step_height
+    grid_spacing_x = layout.grid_spacing_x
+    grid_spacing_y = layout.grid_spacing_y
 
     grid_positions: dict[str, tuple[float, float]] = {}
     positions: dict[str, tuple[float, float]] = {}
@@ -411,8 +450,8 @@ def render_svg_isometric(
         min_x = min_y = 0.0
         max_x = max_y = 0.0
 
-    padding = options.padding
-    tile_y_offset = tile_h / 2
+    padding = layout.padding
+    tile_y_offset = layout.tile_y_offset
     offset_x = -min_x + padding
     offset_y = -min_y + padding + tile_y_offset
     for name, (x, y) in positions.items():
@@ -430,9 +469,8 @@ def render_svg_isometric(
         cx, cy = grid_center(gx, gy)
         return cx, cy
 
-    extra_pad = max(12.0, tile_w * 0.35)
-    width = max_x - min_x + tile_w + padding * 2 + extra_pad
-    height = max_y - min_y + tile_h + padding * 2 + tile_y_offset + extra_pad
+    width = max_x - min_x + tile_w + padding * 2 + layout.extra_pad
+    height = max_y - min_y + tile_h + padding * 2 + tile_y_offset + layout.extra_pad
 
     out_width = options.width or int(width)
     out_height = options.height or int(height)

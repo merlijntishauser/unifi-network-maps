@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import re
 from collections import deque
 from collections.abc import Iterable
 from dataclasses import dataclass, field
@@ -11,6 +10,7 @@ from typing import Protocol
 
 from .labels import compose_port_label, order_edge_names
 from .lldp import LLDPEntry, coerce_lldp, local_port_label
+from .ports import extract_port_number
 
 logger = logging.getLogger(__name__)
 
@@ -84,15 +84,6 @@ def _normalize_mac(value: str) -> str:
     return value.strip().lower()
 
 
-def _extract_port_number(label: str | None) -> int | None:
-    if not label:
-        return None
-    match = re.search(r"(?:^|[^0-9])(?:port|eth)\s*([0-9]+)", label.strip(), re.IGNORECASE)
-    if match:
-        return int(match.group(1))
-    return None
-
-
 def _as_bool(value: object | None) -> bool:
     if isinstance(value, bool):
         return value
@@ -140,7 +131,7 @@ def _resolve_port_idx_from_lldp(lldp_entry: LLDPEntry, port_table: list[PortInfo
             if port.name and port.name.strip().lower() == normalized:
                 return port.port_idx
     for candidate in candidates:
-        number = _extract_port_number(candidate)
+        number = extract_port_number(candidate)
         if number is None:
             continue
         for port in port_table:

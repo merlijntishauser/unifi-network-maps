@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
+
+from .ports import extract_port_number, normalize_port_label
 
 
 @dataclass(frozen=True)
@@ -51,23 +52,6 @@ def _looks_like_mac(value: str | None) -> bool:
     return False
 
 
-def _extract_port_number(label: str | None) -> int | None:
-    if not label:
-        return None
-    match = re.search(r"(?:^|[^0-9])(?:port|eth)\s*([0-9]+)", label.strip(), re.IGNORECASE)
-    if match:
-        return int(match.group(1))
-    return None
-
-
-def _normalize_port_label(label: str) -> str:
-    trimmed = label.strip()
-    number = _extract_port_number(trimmed)
-    if number is not None:
-        return f"Port {number}"
-    return trimmed
-
-
 def local_port_label(entry: LLDPEntry) -> str | None:
     number = None
     name = None
@@ -76,17 +60,17 @@ def local_port_label(entry: LLDPEntry) -> str | None:
     if entry.local_port_idx is not None:
         number = entry.local_port_idx
     if entry.local_port_name:
-        name = _normalize_port_label(entry.local_port_name)
+        name = normalize_port_label(entry.local_port_name)
     if entry.port_desc and not _looks_like_mac(entry.port_desc):
         desc = entry.port_desc.strip()
     if entry.port_id and not _looks_like_mac(entry.port_id):
         if name is None:
-            name = _normalize_port_label(entry.port_id)
+            name = normalize_port_label(entry.port_id)
 
     if number is None:
-        number = _extract_port_number(name)
+        number = extract_port_number(name)
     if number is None:
-        number = _extract_port_number(desc)
+        number = extract_port_number(desc)
 
     if number is not None and desc:
         return f"Port {number} ({desc})"

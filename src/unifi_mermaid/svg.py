@@ -430,8 +430,9 @@ def render_svg_isometric(
         cx, cy = grid_center(gx, gy)
         return cx, cy
 
-    width = max_x - min_x + tile_w + padding * 2
-    height = max_y - min_y + tile_h + padding * 2 + tile_y_offset
+    extra_pad = max(12.0, tile_w * 0.35)
+    width = max_x - min_x + tile_w + padding * 2 + extra_pad
+    height = max_y - min_y + tile_h + padding * 2 + tile_y_offset + extra_pad
 
     out_width = options.width or int(width)
     out_height = options.height or int(height)

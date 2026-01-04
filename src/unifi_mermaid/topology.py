@@ -124,14 +124,14 @@ def _as_int(value: object | None) -> int | None:
     return None
 
 
-def _resolve_port_idx_from_lldp(entry: LLDPEntry, port_table: list[PortInfo]) -> int | None:
-    if entry.local_port_idx is not None:
-        return entry.local_port_idx
+def _resolve_port_idx_from_lldp(lldp_entry: LLDPEntry, port_table: list[PortInfo]) -> int | None:
+    if lldp_entry.local_port_idx is not None:
+        return lldp_entry.local_port_idx
     candidates = []
-    if entry.local_port_name:
-        candidates.append(entry.local_port_name)
-    if entry.port_id:
-        candidates.append(entry.port_id)
+    if lldp_entry.local_port_name:
+        candidates.append(lldp_entry.local_port_name)
+    if lldp_entry.port_id:
+        candidates.append(lldp_entry.port_id)
     for candidate in candidates:
         normalized = candidate.strip().lower()
         for port in port_table:
@@ -152,23 +152,23 @@ def _resolve_port_idx_from_lldp(entry: LLDPEntry, port_table: list[PortInfo]) ->
 def _coerce_port_table(device: DeviceLike) -> list[PortInfo]:
     port_table = _get_attr(device, "port_table") or []
     result: list[PortInfo] = []
-    for entry in port_table:
-        if isinstance(entry, dict):
-            port_idx = entry.get("port_idx") or entry.get("portIdx")
-            name = entry.get("name")
-            ifname = entry.get("ifname")
-            port_poe = _as_bool(entry.get("port_poe"))
-            poe_enable = _as_bool(entry.get("poe_enable"))
-            poe_good = _as_bool(entry.get("poe_good"))
-            poe_power = _as_float(entry.get("poe_power"))
+    for port_entry in port_table:
+        if isinstance(port_entry, dict):
+            port_idx = port_entry.get("port_idx") or port_entry.get("portIdx")
+            name = port_entry.get("name")
+            ifname = port_entry.get("ifname")
+            port_poe = _as_bool(port_entry.get("port_poe"))
+            poe_enable = _as_bool(port_entry.get("poe_enable"))
+            poe_good = _as_bool(port_entry.get("poe_good"))
+            poe_power = _as_float(port_entry.get("poe_power"))
         else:
-            port_idx = _get_attr(entry, "port_idx") or _get_attr(entry, "portIdx")
-            name = _get_attr(entry, "name")
-            ifname = _get_attr(entry, "ifname")
-            port_poe = _as_bool(_get_attr(entry, "port_poe"))
-            poe_enable = _as_bool(_get_attr(entry, "poe_enable"))
-            poe_good = _as_bool(_get_attr(entry, "poe_good"))
-            poe_power = _as_float(_get_attr(entry, "poe_power"))
+            port_idx = _get_attr(port_entry, "port_idx") or _get_attr(port_entry, "portIdx")
+            name = _get_attr(port_entry, "name")
+            ifname = _get_attr(port_entry, "ifname")
+            port_poe = _as_bool(_get_attr(port_entry, "port_poe"))
+            poe_enable = _as_bool(_get_attr(port_entry, "poe_enable"))
+            poe_good = _as_bool(_get_attr(port_entry, "poe_good"))
+            poe_power = _as_float(_get_attr(port_entry, "poe_power"))
         result.append(
             PortInfo(
                 port_idx=_as_int(port_idx),
@@ -186,13 +186,16 @@ def _coerce_port_table(device: DeviceLike) -> list[PortInfo]:
 def _poe_ports_from_device(device: DeviceLike) -> dict[int, bool]:
     port_table = _coerce_port_table(device)
     poe_ports: dict[int, bool] = {}
-    for entry in port_table:
-        if entry.port_idx is None:
+    for port_entry in port_table:
+        if port_entry.port_idx is None:
             continue
         active = (
-            entry.poe_enable or entry.port_poe or entry.poe_good or _as_float(entry.poe_power) > 0.0
+            port_entry.poe_enable
+            or port_entry.port_poe
+            or port_entry.poe_good
+            or _as_float(port_entry.poe_power) > 0.0
         )
-        poe_ports[int(entry.port_idx)] = active
+        poe_ports[int(port_entry.port_idx)] = active
     return poe_ports
 
 
@@ -259,7 +262,7 @@ def coerce_device(device: DeviceLike) -> Device:
         else:
             raise ValueError(f"Device {name} missing LLDP info")
 
-    coerced_lldp = [coerce_lldp(entry) for entry in lldp_info]
+    coerced_lldp = [coerce_lldp(lldp_entry) for lldp_entry in lldp_info]
     port_table = _coerce_port_table(device)
     poe_ports = _poe_ports_from_device(device)
 
@@ -474,7 +477,7 @@ def build_edges(
 
     for device in ordered_devices:
         poe_ports = device.poe_ports
-        for entry in sorted(
+        for lldp_entry in sorted(
             device.lldp_info,
             key=lambda item: (
                 _normalize_mac(item.chassis_id),
@@ -482,24 +485,24 @@ def build_edges(
                 str(item.port_desc or ""),
             ),
         ):
-            peer_mac = _normalize_mac(entry.chassis_id)
+            peer_mac = _normalize_mac(lldp_entry.chassis_id)
             peer_name = index.get(peer_mac)
             if peer_name is None:
                 if only_unifi:
                     continue
-                peer_name = entry.chassis_id
+                peer_name = lldp_entry.chassis_id
 
-            resolved_port_idx = _resolve_port_idx_from_lldp(entry, device.port_table)
+            resolved_port_idx = _resolve_port_idx_from_lldp(lldp_entry, device.port_table)
             entry_for_label = (
                 LLDPEntry(
-                    chassis_id=entry.chassis_id,
-                    port_id=entry.port_id,
-                    port_desc=entry.port_desc,
-                    local_port_name=entry.local_port_name,
+                    chassis_id=lldp_entry.chassis_id,
+                    port_id=lldp_entry.port_id,
+                    port_desc=lldp_entry.port_desc,
+                    local_port_name=lldp_entry.local_port_name,
                     local_port_idx=resolved_port_idx,
                 )
                 if resolved_port_idx is not None
-                else entry
+                else lldp_entry
             )
             label = local_port_label(entry_for_label)
             if label:
@@ -592,14 +595,14 @@ def build_topology(
     only_unifi: bool,
     gateways: list[str],
 ) -> TopologyResult:
-    device_list = list(devices)
-    lldp_entries = sum(len(device.lldp_info) for device in device_list)
+    normalized_devices = list(devices)
+    lldp_entries = sum(len(device.lldp_info) for device in normalized_devices)
     logger.info(
         "Normalized %d devices (%d LLDP entries)",
-        len(device_list),
+        len(normalized_devices),
         lldp_entries,
     )
-    raw_edges = build_edges(device_list, include_ports=include_ports, only_unifi=only_unifi)
+    raw_edges = build_edges(normalized_devices, include_ports=include_ports, only_unifi=only_unifi)
     tree_edges = build_tree_edges_by_topology(raw_edges, gateways)
     logger.info(
         "Built %d hierarchy edges (gateways=%d)",

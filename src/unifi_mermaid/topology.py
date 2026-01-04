@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from collections import deque
 from collections.abc import Iterable
 from dataclasses import dataclass, field
@@ -83,6 +84,15 @@ def _normalize_mac(value: str) -> str:
     return value.strip().lower()
 
 
+def _extract_port_number(label: str | None) -> int | None:
+    if not label:
+        return None
+    match = re.search(r"(?:^|[^0-9])(?:port|eth)\s*([0-9]+)", label.strip(), re.IGNORECASE)
+    if match:
+        return int(match.group(1))
+    return None
+
+
 def _as_bool(value: object | None) -> bool:
     if isinstance(value, bool):
         return value
@@ -111,6 +121,31 @@ def _as_int(value: object | None) -> int | None:
         return value
     if isinstance(value, str) and value.isdigit():
         return int(value)
+    return None
+
+
+def _resolve_port_idx_from_lldp(entry: LLDPEntry, port_table: list[PortInfo]) -> int | None:
+    if entry.local_port_idx is not None:
+        return entry.local_port_idx
+    candidates = []
+    if entry.local_port_name:
+        candidates.append(entry.local_port_name)
+    if entry.port_id:
+        candidates.append(entry.port_id)
+    for candidate in candidates:
+        normalized = candidate.strip().lower()
+        for port in port_table:
+            if port.ifname and port.ifname.strip().lower() == normalized:
+                return port.port_idx
+            if port.name and port.name.strip().lower() == normalized:
+                return port.port_idx
+    for candidate in candidates:
+        number = _extract_port_number(candidate)
+        if number is None:
+            continue
+        for port in port_table:
+            if port.port_idx == number:
+                return port.port_idx
     return None
 
 
@@ -454,11 +489,23 @@ def build_edges(
                     continue
                 neighbor_name = entry.chassis_id
 
-            label = local_port_label(entry)
+            resolved_port_idx = _resolve_port_idx_from_lldp(entry, device.port_table)
+            entry_for_label = (
+                LLDPEntry(
+                    chassis_id=entry.chassis_id,
+                    port_id=entry.port_id,
+                    port_desc=entry.port_desc,
+                    local_port_name=entry.local_port_name,
+                    local_port_idx=resolved_port_idx,
+                )
+                if resolved_port_idx is not None
+                else entry
+            )
+            label = local_port_label(entry_for_label)
             if label:
                 port_map[(device.name, neighbor_name)] = label
-            if entry.local_port_idx is not None and entry.local_port_idx in poe_ports:
-                poe_map[(device.name, neighbor_name)] = poe_ports[entry.local_port_idx]
+            if resolved_port_idx is not None and resolved_port_idx in poe_ports:
+                poe_map[(device.name, neighbor_name)] = poe_ports[resolved_port_idx]
 
             key = frozenset({device.name, neighbor_name})
             if key in seen:

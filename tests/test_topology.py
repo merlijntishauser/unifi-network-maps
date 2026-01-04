@@ -338,6 +338,36 @@ def test_build_edges_only_unifi_false_uses_chassis_id():
     assert edges[0].right == "bb"
 
 
+def test_build_edges_resolves_port_idx_from_ifname():
+    lldp = SimpleNamespace(
+        chassis_id="bb",
+        local_port_idx=None,
+        local_port_name="eth1",
+        port_id="Port 1",
+        port_desc=None,
+    )
+    device = SimpleNamespace(
+        name="Switch A",
+        model_name="",
+        mac="aa",
+        ip="",
+        type="switch",
+        lldp_info=[lldp],
+        port_table=[{"port_idx": 2, "ifname": "eth1", "poe_enable": True}],
+    )
+    neighbor = SimpleNamespace(
+        name="Switch B",
+        model_name="",
+        mac="bb",
+        ip="",
+        type="switch",
+        lldp_info=[],
+        port_table=[],
+    )
+    edges = build_edges([coerce_device(device), coerce_device(neighbor)], include_ports=True)
+    assert edges[0].label == "Switch A: Port 2 <-> Switch B: ?"
+
+
 def test_build_tree_edges_no_gateways():
     assert build_tree_edges_by_topology([], []) == []
 

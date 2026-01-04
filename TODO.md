@@ -4,7 +4,6 @@
 - done
 
 ## P1 - Maintainability
-- **Expand typed device adapter:** Add explicit fields/models for `port_table`, `uplink`, and `last_uplink`.
 - **LLDP ↔ port_table alignment:** Fallback match port `name`/`ifname` when `local_port_idx` is missing.
 
 ## P2 - Cleanup/Quality

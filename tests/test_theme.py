@@ -1,11 +1,9 @@
-import json
-
 from unifi_mermaid.theme import load_theme
 
 
 def test_load_theme_rejects_non_object(tmp_path):
-    path = tmp_path / "theme.json"
-    path.write_text(json.dumps(["nope"]), encoding="utf-8")
+    path = tmp_path / "theme.yaml"
+    path.write_text("- nope\n", encoding="utf-8")
 
     try:
         load_theme(path)
@@ -14,13 +12,13 @@ def test_load_theme_rejects_non_object(tmp_path):
     else:
         message = ""
 
-    assert "Theme file must contain a JSON object" in message
+    assert "Theme file must contain a YAML mapping" in message
 
 
 def test_load_theme_applies_mermaid_gateway_colors(tmp_path):
-    path = tmp_path / "theme.json"
+    path = tmp_path / "theme.yaml"
     path.write_text(
-        json.dumps({"mermaid": {"nodes": {"gateway": {"fill": "#111111", "stroke": "#222222"}}}}),
+        'mermaid:\n  nodes:\n    gateway:\n      fill: "#111111"\n      stroke: "#222222"\n',
         encoding="utf-8",
     )
 
@@ -30,9 +28,9 @@ def test_load_theme_applies_mermaid_gateway_colors(tmp_path):
 
 
 def test_load_theme_applies_svg_link_colors(tmp_path):
-    path = tmp_path / "theme.json"
+    path = tmp_path / "theme.yaml"
     path.write_text(
-        json.dumps({"svg": {"links": {"standard": {"from": "#abc", "to": "#def"}}}}),
+        'svg:\n  links:\n    standard:\n      from: "#abc"\n      to: "#def"\n',
         encoding="utf-8",
     )
 

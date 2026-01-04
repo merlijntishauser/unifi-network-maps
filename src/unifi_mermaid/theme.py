@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
+
+import yaml
 
 from .mermaid_theme import DEFAULT_THEME as DEFAULT_MERMAID_THEME
 from .mermaid_theme import MermaidTheme
@@ -71,9 +72,9 @@ def _svg_theme_from_dict(data: dict, base: SvgTheme) -> SvgTheme:
 
 def load_theme(path: str | Path) -> tuple[MermaidTheme, SvgTheme]:
     theme_path = Path(path)
-    payload = json.loads(theme_path.read_text(encoding="utf-8"))
+    payload = yaml.safe_load(theme_path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
-        raise ValueError("Theme file must contain a JSON object")
+        raise ValueError("Theme file must contain a YAML mapping")
 
     mermaid_data = payload.get("mermaid", {})
     svg_data = payload.get("svg", {})

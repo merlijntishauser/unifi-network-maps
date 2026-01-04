@@ -27,6 +27,7 @@ classifiers = [
 dependencies = [
   "unifi-controller-api",
   "python-dotenv",
+  "PyYAML",
 ]
 
 [project.urls]

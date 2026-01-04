@@ -1,0 +1,47 @@
+mermaid:
+  nodes:
+    gateway:
+      fill: "#ffe3b3"
+      stroke: "#d98300"
+    switch:
+      fill: "#d6ecff"
+      stroke: "#3a7bd5"
+    ap:
+      fill: "#d7f5e7"
+      stroke: "#27ae60"
+    client:
+      fill: "#f2e5ff"
+      stroke: "#7f3fbf"
+    other:
+      fill: "#eeeeee"
+      stroke: "#8f8f8f"
+  poe_link: "#1e88e5"
+  poe_link_width: 2
+  poe_link_arrow: "none"
+  standard_link: "#2ecc71"
+  standard_link_width: 2
+  standard_link_arrow: "none"
+svg:
+  links:
+    standard:
+      from: "#2ecc71"
+      to: "#1b8f4a"
+    poe:
+      from: "#1e88e5"
+      to: "#0d47a1"
+  nodes:
+    gateway:
+      from: "#ffe3b3"
+      to: "#f7c77b"
+    switch:
+      from: "#d6ecff"
+      to: "#b6dcff"
+    ap:
+      from: "#d7f5e7"
+      to: "#b8f0d2"
+    client:
+      from: "#f2e5ff"
+      to: "#e0c9ff"
+    other:
+      from: "#eeeeee"
+      to: "#d7d7d7"

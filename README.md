@@ -106,6 +106,20 @@ git push origin vX.Y.Z
 
 See `LICENSES.md` for third-party license info.
 
+## Installation
+
+PyPI: https://pypi.org/project/unifi-network-maps/
+
+```bash
+pip install unifi-network-maps
+```
+
+Then run:
+
+```bash
+unifi-network-maps --help
+```
+
 ## Options
 
 The CLI groups options by category (`Source`, `Functional`, `Mermaid`, `SVG`, `Output`, `Debug`).

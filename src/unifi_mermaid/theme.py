@@ -82,3 +82,9 @@ def load_theme(path: str | Path) -> tuple[MermaidTheme, SvgTheme]:
     mermaid_theme = _mermaid_theme_from_dict(mermaid_data, DEFAULT_MERMAID_THEME)
     svg_theme = _svg_theme_from_dict(svg_data, DEFAULT_SVG_THEME)
     return mermaid_theme, svg_theme
+
+
+def resolve_themes(theme_file: str | Path | None) -> tuple[MermaidTheme, SvgTheme]:
+    if theme_file:
+        return load_theme(theme_file)
+    return DEFAULT_MERMAID_THEME, DEFAULT_SVG_THEME

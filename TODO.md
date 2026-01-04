@@ -4,7 +4,7 @@
 - Done
 
 ## P1 - Maintainability
-- Consolidate theme handling into a single loader + default injector to avoid repeated `load_theme` calls.
+- Done
 
 ## P2 - Cleanup/Quality
 - done

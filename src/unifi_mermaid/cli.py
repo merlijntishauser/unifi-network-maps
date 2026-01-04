@@ -9,12 +9,10 @@ from .config import Config
 from .debug import debug_dump_devices
 from .export import write_output
 from .mermaid import render_legend, render_mermaid
-from .mermaid_theme import DEFAULT_THEME as DEFAULT_MERMAID_THEME
 from .mermaid_theme import MermaidTheme
 from .svg import SvgOptions, render_svg
-from .svg_theme import DEFAULT_THEME as DEFAULT_SVG_THEME
 from .svg_theme import SvgTheme
-from .theme import load_theme
+from .theme import resolve_themes
 from .topology import (
     Device,
     build_client_edges,
@@ -94,7 +92,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--svg-width", type=int, default=None, help="SVG width override")
     parser.add_argument("--svg-height", type=int, default=None, help="SVG height override")
-    parser.add_argument("--theme-file", default=None, help="Path to theme JSON file")
+    parser.add_argument("--theme-file", default=None, help="Path to theme YAML file")
     return parser
 
 
@@ -114,11 +112,6 @@ def _load_config(args: argparse.Namespace) -> Config | None:
 
 def _resolve_site(args: argparse.Namespace, config: Config) -> str:
     return args.site or config.site
-
-
-def _load_themes(args: argparse.Namespace) -> tuple[MermaidTheme, SvgTheme]:
-    mermaid_theme, svg_theme = load_theme(args.theme_file) if args.theme_file else (None, None)
-    return mermaid_theme or DEFAULT_MERMAID_THEME, svg_theme or DEFAULT_SVG_THEME
 
 
 def _render_legend_only(args: argparse.Namespace, mermaid_theme: MermaidTheme) -> str:
@@ -235,7 +228,7 @@ def main(argv: list[str] | None = None) -> int:
     if config is None:
         return 2
     site = _resolve_site(args, config)
-    mermaid_theme, svg_theme = _load_themes(args)
+    mermaid_theme, svg_theme = resolve_themes(args.theme_file)
 
     if args.legend_only:
         content = _render_legend_only(args, mermaid_theme)

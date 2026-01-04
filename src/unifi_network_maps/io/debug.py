@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import logging
 
-from .topology import group_devices_by_type
+from ..model.topology import group_devices_by_type
 
 logger = logging.getLogger(__name__)
 

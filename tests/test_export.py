@@ -1,4 +1,4 @@
-from unifi_network_maps.export import write_output
+from unifi_network_maps.io.export import write_output
 
 
 def test_write_output_defaults_to_stdout(capsys):

@@ -1,6 +1,6 @@
 import pytest
 
-from unifi_network_maps.lldp import LLDPEntry, coerce_lldp, local_port_label
+from unifi_network_maps.model.lldp import LLDPEntry, coerce_lldp, local_port_label
 
 
 def test_coerce_lldp_requires_chassis_id():

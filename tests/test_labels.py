@@ -1,4 +1,4 @@
-from unifi_network_maps.labels import compose_port_label, order_edge_names
+from unifi_network_maps.model.labels import compose_port_label, order_edge_names
 
 
 def test_compose_port_label_with_both_sides():

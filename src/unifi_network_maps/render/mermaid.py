@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
+from ..model.topology import Edge
 from .mermaid_theme import DEFAULT_THEME, MermaidTheme, class_defs
-from .topology import Edge
 
 
 def _escape(label: str) -> str:

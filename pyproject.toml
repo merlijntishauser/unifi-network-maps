@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "unifi-network-maps"
 version = "1.2.4"
-description = "Dynamic UniFi -> Mermaid network maps"
+description = "Dynamic UniFi -> network maps in mermaid or svg"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }

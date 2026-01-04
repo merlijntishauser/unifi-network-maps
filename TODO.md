@@ -8,8 +8,6 @@
 
 ## P2 - Cleanup/Quality
 - done
-- rename component unifi_network_maps to unifi_network_maps
-- maybe split in multiple (sub)components?
 - group cli options in --help
 
 ## P3 - Features
@@ -18,3 +16,5 @@
 - integrate with cable/link labeling? 
 - QR codes? 
 - export LLDP as markdown (all info per device?)
+- add scenario's / BDD like behave
+- and maybe gui test on svg? 

@@ -7,8 +7,8 @@ import math
 from dataclasses import dataclass
 from pathlib import Path
 
+from ..model.topology import Edge
 from .svg_theme import DEFAULT_THEME, SvgTheme, svg_defs
-from .topology import Edge
 
 
 @dataclass(frozen=True)

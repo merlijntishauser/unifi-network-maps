@@ -1,11 +1,11 @@
-from unifi_network_maps.mermaid import render_mermaid
-from unifi_network_maps.topology import (
+from unifi_network_maps.model.topology import (
     Device,
     Edge,
     build_tree_edges_by_topology,
     classify_device_type,
     group_devices_by_type,
 )
+from unifi_network_maps.render.mermaid import render_mermaid
 
 
 def test_classify_gateway_type():

@@ -150,15 +150,23 @@ unifi-network-map/
 ├── src/
 │   ├── unifi_network_maps/
 │   │   ├── __init__.py
-│   │   ├── config.py
-│   │   ├── unifi.py
-│   │   ├── topology.py
-│   │   ├── lldp.py
-│   │   ├── labels.py
-│   │   ├── mermaid.py
-│   │   ├── svg.py
-│   │   ├── debug.py
-│   │   ├── export.py
+│   │   ├── adapters/
+│   │   │   ├── config.py
+│   │   │   └── unifi.py
+│   │   ├── model/
+│   │   │   ├── topology.py
+│   │   │   ├── lldp.py
+│   │   │   ├── labels.py
+│   │   │   └── ports.py
+│   │   ├── render/
+│   │   │   ├── mermaid.py
+│   │   │   ├── mermaid_theme.py
+│   │   │   ├── svg.py
+│   │   │   ├── svg_theme.py
+│   │   │   └── theme.py
+│   │   ├── io/
+│   │   │   ├── debug.py
+│   │   │   └── export.py
 │   │   └── assets/
 │   │       └── icons/
 │   └── cli.py

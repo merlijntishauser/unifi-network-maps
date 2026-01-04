@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from unifi_network_maps.topology import (
+from unifi_network_maps.model.topology import (
     Device,
     Edge,
     LLDPEntry,

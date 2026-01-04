@@ -5,15 +5,11 @@ from __future__ import annotations
 import argparse
 import logging
 
-from .config import Config
-from .debug import debug_dump_devices
-from .export import write_output
-from .mermaid import render_legend, render_mermaid
-from .mermaid_theme import MermaidTheme
-from .svg import SvgOptions, render_svg
-from .svg_theme import SvgTheme
-from .theme import resolve_themes
-from .topology import (
+from ..adapters.config import Config
+from ..adapters.unifi import fetch_clients, fetch_devices
+from ..io.debug import debug_dump_devices
+from ..io.export import write_output
+from ..model.topology import (
     Device,
     build_client_edges,
     build_device_index,
@@ -22,7 +18,11 @@ from .topology import (
     group_devices_by_type,
     normalize_devices,
 )
-from .unifi import fetch_clients, fetch_devices
+from ..render.mermaid import render_legend, render_mermaid
+from ..render.mermaid_theme import MermaidTheme
+from ..render.svg import SvgOptions, render_svg
+from ..render.svg_theme import SvgTheme
+from ..render.theme import resolve_themes
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ def _load_dotenv(env_file: str | None = None) -> None:
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Generate Mermaid network maps from UniFi LLDP data"
+        description="Generate network maps from UniFi LLDP data, as mermaid or SVG"
     )
     _add_source_args(parser)
     _add_render_args(parser)
@@ -217,7 +217,7 @@ def _render_svg_output(
     edges, clients = _build_edges_with_clients(args, edges, devices, config, site)
     options = SvgOptions(width=args.svg_width, height=args.svg_height)
     if args.format == "svg-iso":
-        from .svg import render_svg_isometric
+        from ..render.svg import render_svg_isometric
 
         return render_svg_isometric(
             edges,

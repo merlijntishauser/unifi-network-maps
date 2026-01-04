@@ -108,19 +108,34 @@ See `LICENSES.md` for third-party license info.
 
 ## Options
 
-- `--format mermaid|svg|svg-iso`: output format (default mermaid).
+The CLI groups options by category (`Source`, `Functional`, `Mermaid`, `SVG`, `Output`, `Debug`).
+
+Source:
+- `--site`: override `UNIFI_SITE`.
+- `--env-file`: load environment variables from a specific `.env` file.
+
+Functional:
 - `--include-ports`: show port labels (Mermaid shows both ends; SVG shows compact labels).
-- `--only-unifi`: only include neighbors that are UniFi devices.
-- `--direction LR|TB`: diagram direction for Mermaid (default TB).
-- `--stdout`: write output to stdout.
-- `--markdown`: wrap Mermaid output in a code fence.
-- `--group-by-type`: group nodes by gateway/switch/AP in Mermaid subgraphs.
 - `--include-clients`: add active wired clients as leaf nodes.
+- `--only-unifi`: only include neighbors that are UniFi devices.
+
+Mermaid:
+- `--direction LR|TB`: diagram direction for Mermaid (default TB).
+- `--group-by-type`: group nodes by gateway/switch/AP in Mermaid subgraphs.
 - `--legend-only`: render just the legend as a separate Mermaid graph (Mermaid only).
-- `--debug-dump`: dump gateway + sample devices to stderr for debugging.
-- `--debug-sample N`: number of non-gateway devices in debug dump (default 2).
+
+SVG:
 - `--svg-width/--svg-height`: override SVG output dimensions.
 - `--theme-file`: load a YAML theme for Mermaid + SVG colors (see `examples/theme.yaml` and `examples/theme-dark.yaml`).
+
+Output:
+- `--format mermaid|svg|svg-iso`: output format (default mermaid).
+- `--stdout`: write output to stdout.
+- `--markdown`: wrap Mermaid output in a code fence.
+
+Debug:
+- `--debug-dump`: dump gateway + sample devices to stderr for debugging.
+- `--debug-sample N`: number of non-gateway devices in debug dump (default 2).
 
 ## Notes
 
@@ -130,6 +145,10 @@ See `LICENSES.md` for third-party license info.
 - SVG output uses vendored device glyphs from `src/unifi_network_maps/assets/icons`.
 - Isometric SVG output uses MIT-licensed icons from `markmanx/isopacks`.
 - SVG port labels render inside child nodes for readability.
+
+## AI Disclosure
+
+This project used OpenAI Codex as a coding assistant for portions of the implementation and documentation.
 
 ## Theme file
 

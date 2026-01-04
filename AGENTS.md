@@ -187,19 +187,31 @@ unifi-network-maps \
 ```
 
 Options:
-- `--format mermaid|svg|svg-iso`
-- `--markdown`
+Source:
+- `--site`
 - `--env-file`
-- `--theme-file`
+
+Functional:
 - `--include-ports`
 - `--include-clients`
 - `--only-unifi`
+
+Mermaid:
 - `--direction LR|TB`
 - `--legend-only`
+
+SVG:
+- `--svg-width/--svg-height`
+- `--theme-file`
+
+Output:
+- `--format mermaid|svg|svg-iso`
+- `--markdown`
+- `--stdout`
+
+Debug:
 - `--debug-dump`
 - `--debug-sample`
-- `--svg-width/--svg-height`
-- `--stdout`
 
 ---
 

@@ -18,3 +18,4 @@
 - material for mkdocs integration
 - integrate with cable/link labeling? 
 - QR codes? 
+- export LLDP as markdown (all info per device?)

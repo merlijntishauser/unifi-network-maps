@@ -144,38 +144,37 @@ def _resolve_port_idx_from_lldp(lldp_entry: LLDPEntry, port_table: list[PortInfo
     return None
 
 
+def _port_info_from_entry(port_entry: object) -> PortInfo:
+    if isinstance(port_entry, dict):
+        port_idx = port_entry.get("port_idx") or port_entry.get("portIdx")
+        name = port_entry.get("name")
+        ifname = port_entry.get("ifname")
+        port_poe = _as_bool(port_entry.get("port_poe"))
+        poe_enable = _as_bool(port_entry.get("poe_enable"))
+        poe_good = _as_bool(port_entry.get("poe_good"))
+        poe_power = _as_float(port_entry.get("poe_power"))
+    else:
+        port_idx = _get_attr(port_entry, "port_idx") or _get_attr(port_entry, "portIdx")
+        name = _get_attr(port_entry, "name")
+        ifname = _get_attr(port_entry, "ifname")
+        port_poe = _as_bool(_get_attr(port_entry, "port_poe"))
+        poe_enable = _as_bool(_get_attr(port_entry, "poe_enable"))
+        poe_good = _as_bool(_get_attr(port_entry, "poe_good"))
+        poe_power = _as_float(_get_attr(port_entry, "poe_power"))
+    return PortInfo(
+        port_idx=_as_int(port_idx),
+        name=str(name) if isinstance(name, str) and name.strip() else None,
+        ifname=str(ifname) if isinstance(ifname, str) and ifname.strip() else None,
+        port_poe=port_poe,
+        poe_enable=poe_enable,
+        poe_good=poe_good,
+        poe_power=poe_power,
+    )
+
+
 def _coerce_port_table(device: DeviceLike) -> list[PortInfo]:
     port_table = _get_attr(device, "port_table") or []
-    result: list[PortInfo] = []
-    for port_entry in port_table:
-        if isinstance(port_entry, dict):
-            port_idx = port_entry.get("port_idx") or port_entry.get("portIdx")
-            name = port_entry.get("name")
-            ifname = port_entry.get("ifname")
-            port_poe = _as_bool(port_entry.get("port_poe"))
-            poe_enable = _as_bool(port_entry.get("poe_enable"))
-            poe_good = _as_bool(port_entry.get("poe_good"))
-            poe_power = _as_float(port_entry.get("poe_power"))
-        else:
-            port_idx = _get_attr(port_entry, "port_idx") or _get_attr(port_entry, "portIdx")
-            name = _get_attr(port_entry, "name")
-            ifname = _get_attr(port_entry, "ifname")
-            port_poe = _as_bool(_get_attr(port_entry, "port_poe"))
-            poe_enable = _as_bool(_get_attr(port_entry, "poe_enable"))
-            poe_good = _as_bool(_get_attr(port_entry, "poe_good"))
-            poe_power = _as_float(_get_attr(port_entry, "poe_power"))
-        result.append(
-            PortInfo(
-                port_idx=_as_int(port_idx),
-                name=str(name) if isinstance(name, str) and name.strip() else None,
-                ifname=str(ifname) if isinstance(ifname, str) and ifname.strip() else None,
-                port_poe=port_poe,
-                poe_enable=poe_enable,
-                poe_good=poe_good,
-                poe_power=poe_power,
-            )
-        )
-    return result
+    return [_port_info_from_entry(port_entry) for port_entry in port_table]
 
 
 def _poe_ports_from_device(device: DeviceLike) -> dict[int, bool]:

@@ -52,26 +52,28 @@ def _looks_like_mac(value: str | None) -> bool:
     return False
 
 
-def local_port_label(entry: LLDPEntry) -> str | None:
-    number = None
-    name = None
-    desc = None
+def _port_label_parts(entry: LLDPEntry) -> tuple[int | None, str | None, str | None]:
+    number = entry.local_port_idx
+    name = normalize_port_label(entry.local_port_name) if entry.local_port_name else None
+    desc = (
+        entry.port_desc.strip()
+        if entry.port_desc and not _looks_like_mac(entry.port_desc)
+        else None
+    )
 
-    if entry.local_port_idx is not None:
-        number = entry.local_port_idx
-    if entry.local_port_name:
-        name = normalize_port_label(entry.local_port_name)
-    if entry.port_desc and not _looks_like_mac(entry.port_desc):
-        desc = entry.port_desc.strip()
-    if entry.port_id and not _looks_like_mac(entry.port_id):
-        if name is None:
-            name = normalize_port_label(entry.port_id)
+    if entry.port_id and not _looks_like_mac(entry.port_id) and name is None:
+        name = normalize_port_label(entry.port_id)
 
     if number is None:
         number = extract_port_number(name)
     if number is None:
         number = extract_port_number(desc)
 
+    return number, name, desc
+
+
+def local_port_label(entry: LLDPEntry) -> str | None:
+    number, name, desc = _port_label_parts(entry)
     if number is not None and desc:
         return f"Port {number} ({desc})"
     if number is not None:

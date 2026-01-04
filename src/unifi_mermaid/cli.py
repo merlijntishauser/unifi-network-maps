@@ -40,7 +40,22 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Generate Mermaid network maps from UniFi LLDP data"
     )
+    _add_source_args(parser)
+    _add_render_args(parser)
+    _add_debug_args(parser)
+    return parser
+
+
+def _add_source_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--site", default=None, help="UniFi site name (overrides UNIFI_SITE)")
+    parser.add_argument(
+        "--env-file",
+        default=None,
+        help="Path to .env file (overrides default .env discovery)",
+    )
+
+
+def _add_render_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--format",
         default="mermaid",
@@ -53,7 +68,13 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Wrap output in a Markdown mermaid code fence for notes tools like Obsidian",
     )
     parser.add_argument("--output", default=None, help="Output file path")
+    parser.add_argument("--stdout", action="store_true", help="Write output to stdout")
     parser.add_argument("--include-ports", action="store_true", help="Include port labels in edges")
+    parser.add_argument(
+        "--include-clients",
+        action="store_true",
+        help="Include active clients as leaf nodes",
+    )
     parser.add_argument(
         "--only-unifi", action="store_true", help="Only include neighbors that are UniFi devices"
     )
@@ -68,17 +89,12 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Render only the legend as a separate Mermaid graph",
     )
-    parser.add_argument(
-        "--include-clients",
-        action="store_true",
-        help="Include active clients as leaf nodes",
-    )
-    parser.add_argument("--stdout", action="store_true", help="Write output to stdout")
-    parser.add_argument(
-        "--env-file",
-        default=None,
-        help="Path to .env file (overrides default .env discovery)",
-    )
+    parser.add_argument("--svg-width", type=int, default=None, help="SVG width override")
+    parser.add_argument("--svg-height", type=int, default=None, help="SVG height override")
+    parser.add_argument("--theme-file", default=None, help="Path to theme YAML file")
+
+
+def _add_debug_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--debug-dump",
         action="store_true",
@@ -90,10 +106,6 @@ def _build_parser() -> argparse.ArgumentParser:
         default=2,
         help="Number of non-gateway devices to include in debug dump (default: 2)",
     )
-    parser.add_argument("--svg-width", type=int, default=None, help="SVG width override")
-    parser.add_argument("--svg-height", type=int, default=None, help="SVG height override")
-    parser.add_argument("--theme-file", default=None, help="Path to theme YAML file")
-    return parser
 
 
 def _parse_args(argv: list[str] | None) -> argparse.Namespace:

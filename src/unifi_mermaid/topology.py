@@ -6,7 +6,7 @@ import logging
 from collections import deque
 from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Protocol
+from typing import Protocol, TypeAlias
 
 from .labels import compose_port_label, order_edge_names
 from .lldp import LLDPEntry, coerce_lldp, local_port_label
@@ -74,6 +74,10 @@ class PortInfo:
     poe_enable: bool
     poe_good: bool
     poe_power: float | None
+
+
+PortMap: TypeAlias = dict[tuple[str, str], str]
+PoeMap: TypeAlias = dict[tuple[str, str], bool]
 
 
 def _get_attr(obj: object, name: str) -> object | None:
@@ -462,8 +466,8 @@ def build_edges(
     device_by_name = {device.name: device for device in ordered_devices}
     raw_links: list[tuple[str, str]] = []
     seen: set[frozenset[str]] = set()
-    port_map: dict[tuple[str, str], str] = {}
-    poe_map: dict[tuple[str, str], bool] = {}
+    port_map: PortMap = {}
+    poe_map: PoeMap = {}
 
     devices_with_lldp_edges = _collect_lldp_links(
         ordered_devices,
@@ -502,8 +506,8 @@ def build_edges(
 def _collect_lldp_links(
     devices: list[Device],
     index: dict[str, str],
-    port_map: dict[tuple[str, str], str],
-    poe_map: dict[tuple[str, str], bool],
+    port_map: PortMap,
+    poe_map: PoeMap,
     raw_links: list[tuple[str, str]],
     seen: set[frozenset[str]],
     *,
@@ -560,8 +564,8 @@ def _collect_uplink_links(
     devices_with_lldp_edges: set[str],
     index: dict[str, str],
     device_by_name: dict[str, Device],
-    port_map: dict[tuple[str, str], str],
-    poe_map: dict[tuple[str, str], bool],
+    port_map: PortMap,
+    poe_map: PoeMap,
     raw_links: list[tuple[str, str]],
     seen: set[frozenset[str]],
     *,
@@ -601,8 +605,8 @@ def _collect_uplink_links(
 
 def _build_ordered_edges(
     raw_links: list[tuple[str, str]],
-    port_map: dict[tuple[str, str], str],
-    poe_map: dict[tuple[str, str], bool],
+    port_map: PortMap,
+    poe_map: PoeMap,
     device_by_name: dict[str, Device],
     *,
     include_ports: bool,

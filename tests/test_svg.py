@@ -233,3 +233,13 @@ def test_render_svg_isometric_port_prefixes_upstream():
         node_types={"Switch": "switch", "AP": "ap"},
     )
     assert "Switch: Port 1" in output
+
+
+def test_render_svg_isometric_defs_use_iso_node_prefix():
+    output = render_svg_isometric([Edge("A", "B")], node_types={"A": "switch", "B": "switch"})
+    assert 'id="iso-node-switch"' in output
+
+
+def test_render_svg_isometric_nodes_reference_iso_node_prefix():
+    output = render_svg_isometric([Edge("A", "B")], node_types={"A": "switch", "B": "switch"})
+    assert 'fill="url(#iso-node-switch)"' in output

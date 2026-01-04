@@ -133,6 +133,136 @@ def _compact_edge_label(
     return label
 
 
+def _iso_tile_points(
+    center_x: float, center_y: float, width: float, height: float
+) -> list[tuple[float, float]]:
+    return [
+        (center_x, center_y - height / 2),
+        (center_x + width / 2, center_y),
+        (center_x, center_y + height / 2),
+        (center_x - width / 2, center_y),
+    ]
+
+
+def _points_to_svg(points: list[tuple[float, float]]) -> str:
+    return " ".join(f"{px},{py}" for px, py in points)
+
+
+def _format_port_label_lines(
+    port_label: str,
+    *,
+    node_type: str,
+    prefix: str,
+    max_chars: int,
+) -> list[str]:
+    def _port_only(segment: str) -> str:
+        port = _extract_port_text(segment)
+        if port:
+            return port
+        lower = segment.lower()
+        idx = lower.rfind("port ")
+        if idx != -1:
+            return segment[idx:].strip()
+        return segment.split(":", 1)[-1].strip()
+
+    def _truncate(text: str, max_len: int = max_chars) -> str:
+        return text[: max_len - 3].rstrip() + "..." if len(text) > max_len else text
+
+    if "<->" in port_label:
+        left_part, right_part = (part.strip() for part in port_label.split("<->", 1))
+        front_text = _truncate(f"{prefix}: {_port_only(left_part)}")
+        side_prefix = prefix if node_type == "client" else "local"
+        side_text = _truncate(f"{side_prefix}: {_port_only(right_part)}")
+        return [line for line in (front_text, side_text) if line]
+    side_prefix = prefix if node_type == "client" else "local"
+    side_text = _truncate(f"{side_prefix}: {_port_only(port_label)}")
+    return [side_text]
+
+
+def _iso_front_text_position(
+    top_points: list[tuple[float, float]], tile_width: float, tile_height: float
+) -> tuple[float, float, float]:
+    left_edge_top = top_points[0]
+    left_edge_bottom = top_points[3]
+    edge_mid_x = (left_edge_top[0] + left_edge_bottom[0]) / 2
+    edge_mid_y = (left_edge_top[1] + left_edge_bottom[1]) / 2
+    center_x = sum(px for px, _py in top_points) / len(top_points)
+    center_y = sum(py for _px, py in top_points) / len(top_points)
+    normal_x = center_x - edge_mid_x
+    normal_y = center_y - edge_mid_y
+    normal_len = math.hypot(normal_x, normal_y) or 1.0
+    normal_x /= normal_len
+    normal_y /= normal_len
+    inset = tile_height * 0.27
+    text_x = edge_mid_x + normal_x * inset - tile_width * 0.16
+    text_y = edge_mid_y + normal_y * inset + tile_height * 0.02
+    name_edge_left = top_points[3]
+    name_edge_right = top_points[2]
+    angle = math.degrees(
+        math.atan2(
+            name_edge_right[1] - name_edge_left[1],
+            name_edge_right[0] - name_edge_left[0],
+        )
+    )
+    return text_x, text_y, angle
+
+
+def _render_iso_text(
+    lines: list[str],
+    *,
+    text_x: float,
+    text_y: float,
+    angle: float,
+    text_lines: list[str],
+    font_size: int,
+    fill: str,
+) -> None:
+    line_height = font_size + 2
+    start_y = text_y - (len(text_lines) - 1) * line_height / 2
+    text_transform = (
+        f"translate({text_x} {start_y}) rotate({angle}) skewX(30) translate({-text_x} {-start_y})"
+    )
+    lines.append(
+        f'<text x="{text_x}" y="{start_y}" text-anchor="middle" fill="{fill}" '
+        f'font-size="{font_size}" font-style="normal" '
+        f'transform="{text_transform}">'
+    )
+    for idx, line in enumerate(text_lines):
+        dy = 0 if idx == 0 else line_height
+        lines.append(f'<tspan x="{text_x}" dy="{dy}">{_escape_text(line)}</tspan>')
+    lines.append("</text>")
+
+
+def _iso_name_label_position(
+    top_points: list[tuple[float, float]],
+    *,
+    tile_width: float,
+    tile_height: float,
+    font_size: int,
+) -> tuple[float, float, float]:
+    name_edge_left = top_points[3]
+    name_edge_right = top_points[2]
+    name_mid_x = (name_edge_left[0] + name_edge_right[0]) / 2
+    name_mid_y = (name_edge_left[1] + name_edge_right[1]) / 2
+    name_center_x = sum(px for px, _py in top_points) / len(top_points)
+    name_center_y = sum(py for _px, py in top_points) / len(top_points)
+    name_normal_x = name_center_x - name_mid_x
+    name_normal_y = name_center_y - name_mid_y
+    name_normal_len = math.hypot(name_normal_x, name_normal_y) or 1.0
+    name_normal_x /= name_normal_len
+    name_normal_y /= name_normal_len
+    name_inset = tile_height * 0.13
+    name_x = name_mid_x + name_normal_x * name_inset - tile_width * 0.08
+    name_y = name_mid_y + name_normal_y * name_inset + font_size - tile_height * 0.05
+    name_angle = math.degrees(
+        math.atan2(
+            name_edge_right[1] - name_edge_left[1],
+            name_edge_right[0] - name_edge_left[0],
+        )
+    )
+    return name_x, name_y, name_angle
+
+
 def _wrap_text(label: str, *, max_len: int = 24) -> list[str]:
     if len(label) <= max_len:
         return [label]
@@ -520,15 +650,6 @@ def render_svg_isometric(
     node_port_labels: dict[str, str] = {}
     node_port_prefix: dict[str, str] = {}
 
-    def iso_tile_points(cx: float, cy: float, width: float, height: float) -> str:
-        points = [
-            (cx, cy - height / 2),
-            (cx + width / 2, cy),
-            (cx, cy + height / 2),
-            (cx - width / 2, cy),
-        ]
-        return " ".join(f"{px},{py}" for px, py in points)
-
     for edge in edges:
         if edge.left not in positions or edge.right not in positions:
             continue
@@ -650,14 +771,9 @@ def render_svg_isometric(
             label_center_x = center_x
             stack_depth = tile_h / 2
             label_center_y = y + tile_height / 2 - stack_depth
-            tile_points = iso_tile_points(label_center_x, label_center_y, tile_width, tile_height)
+            top_points = _iso_tile_points(label_center_x, label_center_y, tile_width, tile_height)
+            tile_points = _points_to_svg(top_points)
             # Stack a shallow side to suggest elevation.
-            top_points = [
-                (label_center_x, label_center_y - tile_height / 2),
-                (label_center_x + tile_width / 2, label_center_y),
-                (label_center_x, label_center_y + tile_height / 2),
-                (label_center_x - tile_width / 2, label_center_y),
-            ]
             bottom_points = [(px, py + stack_depth) for px, py in top_points]
             # Right face uses points 1->2 and their offset counterparts.
             right_face = [
@@ -690,18 +806,6 @@ def render_svg_isometric(
             icon_center_x = label_center_x
             icon_center_y = label_center_y
             if port_label:
-
-                def _port_only(segment: str) -> str:
-                    port = _extract_port_text(segment)
-                    if port:
-                        return port
-                    lower = segment.lower()
-                    idx = lower.rfind("port ")
-                    if idx != -1:
-                        return segment[idx:].strip()
-                    return segment.split(":", 1)[-1].strip()
-
-                # Place port text along the front edge of the top tile.
                 left_edge_top = top[0]
                 left_edge_bottom = top[3]
                 edge_len = math.hypot(
@@ -709,66 +813,26 @@ def render_svg_isometric(
                     left_edge_bottom[1] - left_edge_top[1],
                 )
                 max_chars = max(6, int((edge_len * 0.85) / (font_size * 0.6)))
-
-                def _truncate(text: str, max_len: int = max_chars) -> str:
-                    return text[: max_len - 3].rstrip() + "..." if len(text) > max_len else text
-
                 prefix = node_port_prefix.get(name, "switch")
-                if "<->" in port_label:
-                    left_part, right_part = (part.strip() for part in port_label.split("<->", 1))
-                    front_text = _truncate(f"{prefix}: {_port_only(left_part)}")
-                    side_prefix = prefix if node_type == "client" else "local"
-                    side_text = _truncate(f"{side_prefix}: {_port_only(right_part)}")
-                else:
-                    front_text = ""
-                    side_prefix = prefix if node_type == "client" else "local"
-                    side_text = _truncate(f"{side_prefix}: {_port_only(port_label)}")
-
-                edge_mid_x = (left_edge_top[0] + left_edge_bottom[0]) / 2
-                edge_mid_y = (left_edge_top[1] + left_edge_bottom[1]) / 2
-                center_x = sum(px for px, _py in top) / len(top)
-                center_y = sum(py for _px, py in top) / len(top)
-                normal_x = center_x - edge_mid_x
-                normal_y = center_y - edge_mid_y
-                normal_len = math.hypot(normal_x, normal_y) or 1.0
-                normal_x /= normal_len
-                normal_y /= normal_len
-                inset = tile_h * 0.27
-                text_x = edge_mid_x + normal_x * inset - tile_w * 0.16
-                text_y = edge_mid_y + normal_y * inset + tile_h * 0.02
-                edge_angle = math.degrees(
-                    math.atan2(
-                        left_edge_bottom[1] - left_edge_top[1],
-                        left_edge_bottom[0] - left_edge_top[0],
-                    )
+                front_lines = _format_port_label_lines(
+                    port_label,
+                    node_type=node_type,
+                    prefix=prefix,
+                    max_chars=max_chars,
                 )
-                name_edge_left = top[3]
-                name_edge_right = top[2]
-                name_angle = math.degrees(
-                    math.atan2(
-                        name_edge_right[1] - name_edge_left[1],
-                        name_edge_right[0] - name_edge_left[0],
-                    )
-                )
-                edge_angle = name_angle
-
-                front_lines = [line for line in (front_text, side_text) if line]
                 if front_lines:
-                    line_height = font_size + 2
-                    start_y = text_y - (len(front_lines) - 1) * line_height / 2
-                    text_transform = (
-                        f"translate({text_x} {start_y}) rotate({edge_angle}) skewX(30) "
-                        f"translate({-text_x} {-start_y})"
+                    text_x, text_y, edge_angle = _iso_front_text_position(
+                        top_points, tile_w, tile_h
                     )
-                    lines.append(
-                        f'<text x="{text_x}" y="{start_y}" text-anchor="middle" fill="#555" '
-                        f'font-size="{font_size}" font-style="normal" '
-                        f'transform="{text_transform}">'
+                    _render_iso_text(
+                        lines,
+                        text_x=text_x,
+                        text_y=text_y,
+                        angle=edge_angle,
+                        text_lines=front_lines,
+                        font_size=font_size,
+                        fill="#555",
                     )
-                    for idx, line in enumerate(front_lines):
-                        dy = 0 if idx == 0 else line_height
-                        lines.append(f'<tspan x="{text_x}" dy="{dy}">{_escape_text(line)}</tspan>')
-                    lines.append("</text>")
 
         if node_type == "ap":
             icon_center_y -= tile_h * 0.4
@@ -785,25 +849,11 @@ def render_svg_isometric(
             )
 
         name_font_size = max(options.font_size - 2, 8)
-        name_edge_left = top[3]
-        name_edge_right = top[2]
-        name_mid_x = (name_edge_left[0] + name_edge_right[0]) / 2
-        name_mid_y = (name_edge_left[1] + name_edge_right[1]) / 2
-        name_center_x = sum(px for px, _py in top) / len(top)
-        name_center_y = sum(py for _px, py in top) / len(top)
-        name_normal_x = name_center_x - name_mid_x
-        name_normal_y = name_center_y - name_mid_y
-        name_normal_len = math.hypot(name_normal_x, name_normal_y) or 1.0
-        name_normal_x /= name_normal_len
-        name_normal_y /= name_normal_len
-        name_inset = tile_h * 0.13
-        name_x = name_mid_x + name_normal_x * name_inset - tile_w * 0.08
-        name_y = name_mid_y + name_normal_y * name_inset + name_font_size - tile_h * 0.05
-        name_angle = math.degrees(
-            math.atan2(
-                name_edge_right[1] - name_edge_left[1],
-                name_edge_right[0] - name_edge_left[0],
-            )
+        name_x, name_y, name_angle = _iso_name_label_position(
+            top,
+            tile_width=tile_w,
+            tile_height=tile_h,
+            font_size=name_font_size,
         )
         name_transform = (
             f"translate({name_x} {name_y}) rotate({name_angle}) skewX(30) "

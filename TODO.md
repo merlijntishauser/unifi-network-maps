@@ -8,6 +8,5 @@
 - **LLDP ↔ port_table alignment:** Fallback match port `name`/`ifname` when `local_port_idx` is missing.
 
 ## P2 - Cleanup/Quality
-- **Mermaid styling config:** Allow configuring PoE link color or style instead of hardcoding.
 - **Logging consistency:** Add normalized device/edge counts to logs for easier troubleshooting.
 - **Tests for uplink fallback:** Add a fixture covering missing LLDP but present `uplink` data.

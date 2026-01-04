@@ -9,7 +9,10 @@ from .config import Config
 from .debug import debug_dump_devices
 from .export import write_output
 from .mermaid import render_legend, render_mermaid
+from .mermaid_theme import DEFAULT_THEME as DEFAULT_MERMAID_THEME
 from .svg import SvgOptions, render_svg
+from .svg_theme import DEFAULT_THEME as DEFAULT_SVG_THEME
+from .theme import load_theme
 from .topology import (
     build_client_edges,
     build_device_index,
@@ -88,6 +91,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--svg-width", type=int, default=None, help="SVG width override")
     parser.add_argument("--svg-height", type=int, default=None, help="SVG height override")
+    parser.add_argument("--theme-file", default=None, help="Path to theme JSON file")
     return parser
 
 
@@ -106,7 +110,8 @@ def main(argv: list[str] | None = None) -> int:
     site = args.site or config.site
 
     if args.legend_only:
-        content = render_legend()
+        mermaid_theme, _svg_theme = load_theme(args.theme_file) if args.theme_file else (None, None)
+        content = render_legend(theme=mermaid_theme) if mermaid_theme else render_legend()
         if args.markdown:
             content = f"""```mermaid
 {content}```
@@ -150,12 +155,15 @@ def main(argv: list[str] | None = None) -> int:
         if args.group_by_type:
             groups = groups_for_rank
             group_order = ["gateway", "switch", "ap", "other"]
+        mermaid_theme, svg_theme = load_theme(args.theme_file) if args.theme_file else (None, None)
+        mermaid_theme = mermaid_theme or DEFAULT_MERMAID_THEME
         content = render_mermaid(
             edges,
             direction=direction,
             groups=groups,
             group_order=group_order,
             node_types=build_node_type_map(devices, clients),
+            theme=mermaid_theme,
         )
     elif args.format in {"svg", "svg-iso"}:
         if topology.tree_edges:
@@ -170,6 +178,8 @@ def main(argv: list[str] | None = None) -> int:
             edges = edges + build_client_edges(
                 clients, device_index, include_ports=args.include_ports
             )
+        mermaid_theme, svg_theme = load_theme(args.theme_file) if args.theme_file else (None, None)
+        svg_theme = svg_theme or DEFAULT_SVG_THEME
         options = SvgOptions(width=args.svg_width, height=args.svg_height)
         if args.format == "svg-iso":
             from .svg import render_svg_isometric
@@ -178,12 +188,14 @@ def main(argv: list[str] | None = None) -> int:
                 edges,
                 node_types=build_node_type_map(devices, clients),
                 options=options,
+                theme=svg_theme,
             )
         else:
             content = render_svg(
                 edges,
                 node_types=build_node_type_map(devices, clients),
                 options=options,
+                theme=svg_theme,
             )
     else:
         logging.error("Unsupported format: %s", args.format)

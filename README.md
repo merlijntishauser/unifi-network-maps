@@ -120,6 +120,7 @@ See `LICENSES.md` for third-party license info.
 - `--debug-dump`: dump gateway + sample devices to stderr for debugging.
 - `--debug-sample N`: number of non-gateway devices in debug dump (default 2).
 - `--svg-width/--svg-height`: override SVG output dimensions.
+- `--theme-file`: load a JSON theme for Mermaid + SVG colors.
 
 ## Notes
 
@@ -129,3 +130,27 @@ See `LICENSES.md` for third-party license info.
 - SVG output uses vendored device glyphs from `src/unifi_mermaid/assets/icons`.
 - Isometric SVG output uses MIT-licensed icons from `markmanx/isopacks`.
 - SVG port labels render inside child nodes for readability.
+
+## Theme file
+
+Example theme JSON (override only the values you want):
+
+```json
+{
+  "mermaid": {
+    "nodes": {
+      "gateway": { "fill": "#ffe3b3", "stroke": "#d98300" }
+    },
+    "poe_link": "#1e88e5"
+  },
+  "svg": {
+    "links": {
+      "standard": { "from": "#2ecc71", "to": "#1b8f4a" },
+      "poe": { "from": "#1e88e5", "to": "#0d47a1" }
+    },
+    "nodes": {
+      "switch": { "from": "#d6ecff", "to": "#b6dcff" }
+    }
+  }
+}
+```

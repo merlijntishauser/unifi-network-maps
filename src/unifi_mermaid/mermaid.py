@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
+from .mermaid_theme import DEFAULT_THEME, MermaidTheme, class_defs
 from .topology import Edge
 
 
@@ -60,6 +61,7 @@ def render_mermaid(
     groups: dict[str, list[str]] | None = None,
     group_order: list[str] | None = None,
     node_types: dict[str, str] | None = None,
+    theme: MermaidTheme = DEFAULT_THEME,
 ) -> str:
     edge_list = list(edges)
     group_nodes: list[str] = []
@@ -112,17 +114,17 @@ def render_mermaid(
                 node_id = id_map.get(name)
                 if node_id:
                     lines.append(f"  class {node_id} {class_name};")
-        lines.append("  classDef node_gateway fill:#ffe3b3,stroke:#d98300,stroke-width:1px;")
-        lines.append("  classDef node_switch fill:#d6ecff,stroke:#3a7bd5,stroke-width:1px;")
-        lines.append("  classDef node_ap fill:#d7f5e7,stroke:#27ae60,stroke-width:1px;")
-        lines.append("  classDef node_client fill:#f2e5ff,stroke:#7f3fbf,stroke-width:1px;")
-        lines.append("  classDef node_other fill:#eeeeee,stroke:#8f8f8f,stroke-width:1px;")
+        lines.extend(class_defs(theme))
     for index in poe_links:
-        lines.append(f"  linkStyle {index} stroke:#1e88e5,stroke-width:2px;")
+        lines.append(
+            "  linkStyle "
+            f"{index} stroke:{theme.poe_link},stroke-width:{theme.poe_link_width}px,"
+            f"arrowhead:{theme.poe_link_arrow};"
+        )
     return "\n".join(lines) + "\n"
 
 
-def render_legend() -> str:
+def render_legend(theme: MermaidTheme = DEFAULT_THEME) -> str:
     lines = [
         "graph TB",
         '  subgraph legend["Legend"];',
@@ -149,13 +151,16 @@ def render_legend() -> str:
         "  class legend_poe_b node_legend;",
         "  class legend_no_poe_a node_legend;",
         "  class legend_no_poe_b node_legend;",
-        "  classDef node_gateway fill:#ffe3b3,stroke:#d98300,stroke-width:1px;",
-        "  classDef node_switch fill:#d6ecff,stroke:#3a7bd5,stroke-width:1px;",
-        "  classDef node_ap fill:#d7f5e7,stroke:#27ae60,stroke-width:1px;",
-        "  classDef node_client fill:#f2e5ff,stroke:#7f3fbf,stroke-width:1px;",
-        "  classDef node_other fill:#eeeeee,stroke:#8f8f8f,stroke-width:1px;",
-        "  classDef node_legend font-size:10px;",
     ]
-    lines.append("  linkStyle 0 stroke:#1e88e5,stroke-width:2px,arrowhead:none;")
-    lines.append("  linkStyle 1 stroke:#2ecc71,stroke-width:2px,arrowhead:none;")
+    lines.extend(class_defs(theme))
+    lines.append(
+        "  linkStyle 0 "
+        f"stroke:{theme.poe_link},stroke-width:{theme.poe_link_width}px,"
+        f"arrowhead:{theme.poe_link_arrow};"
+    )
+    lines.append(
+        "  linkStyle 1 "
+        f"stroke:{theme.standard_link},stroke-width:{theme.standard_link_width}px,"
+        f"arrowhead:{theme.standard_link_arrow};"
+    )
     return "\n".join(lines) + "\n"

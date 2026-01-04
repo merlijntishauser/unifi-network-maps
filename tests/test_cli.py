@@ -177,7 +177,7 @@ def test_main_svg_uses_size_overrides(monkeypatch):
     captured = {}
     devices = [Device(name="Gateway", model_name="", mac="aa:bb", ip="", type="udm", lldp_info=[])]
 
-    def fake_render_svg(edges, *, node_types, options):
+    def fake_render_svg(edges, *, node_types, options, theme=None):
         captured["width"] = options.width
         captured["height"] = options.height
         return "<svg></svg>"

@@ -182,6 +182,7 @@ Options:
 - `--format mermaid|svg|svg-iso`
 - `--markdown`
 - `--env-file`
+- `--theme-file`
 - `--include-ports`
 - `--include-clients`
 - `--only-unifi`

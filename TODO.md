@@ -19,9 +19,6 @@
 - Cable/link labeling
   - Feasibility: Medium; needs port metadata (`port_desc`, `port_overrides`) and consistent naming rules.
   - Plan: extend port label composition with optional cable-name mapping file; add tests for mixed labels.
-- Material for MkDocs integration
-  - Feasibility: Low/Medium; requires theme-specific markdown conventions and Mermaid rendering notes.
-  - Plan: add example `mkdocs.yml` snippet, sample page, and guidance for Mermaid plugin setup.
 - Static code analysis
   - Feasibility: High; add mypy/pyright and stricter ruff rules incrementally.
   - Plan: introduce a `typecheck` make target and CI job; start with module-by-module typing.

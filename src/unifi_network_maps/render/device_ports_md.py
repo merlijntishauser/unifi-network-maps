@@ -53,6 +53,17 @@ def _render_device_group(
     return lines
 
 
+def render_device_port_details(
+    device: Device,
+    port_map: PortMap,
+    *,
+    client_ports: ClientPortMap | None = None,
+) -> str:
+    lines = _render_device_details(device)
+    lines.extend(_render_device_ports(device, port_map, client_ports))
+    return "\n".join(lines).rstrip() + "\n"
+
+
 def _render_device_ports(
     device: Device,
     port_map: PortMap,

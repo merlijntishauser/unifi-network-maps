@@ -5,7 +5,8 @@ from __future__ import annotations
 from collections.abc import Iterable
 
 from ..model.lldp import LLDPEntry, local_port_label
-from ..model.topology import Device, build_device_index
+from ..model.topology import Device, build_client_port_map, build_device_index, build_port_map
+from .device_ports_md import render_device_port_details
 
 
 def _normalize_mac(value: str) -> str:
@@ -78,17 +79,7 @@ def _lldp_sort_key(entry: LLDPEntry) -> tuple[int, str, str]:
 
 
 def _device_header_lines(device: Device) -> list[str]:
-    lines = [f"## {device.name}"]
-    meta = []
-    if device.model_name:
-        meta.append(f"Model: {device.model_name}")
-    if device.ip:
-        meta.append(f"IP: {device.ip}")
-    if device.mac:
-        meta.append(f"MAC: {device.mac}")
-    if meta:
-        lines.append(f"*{' | '.join(meta)}*")
-    return lines
+    return [f"## {device.name}"]
 
 
 def _port_summary(device: Device) -> str:
@@ -100,6 +91,19 @@ def _port_summary(device: Device) -> str:
     poe_active = sum(1 for port in ports if device.poe_ports.get(port.port_idx or -1))
     total_power = sum(port.poe_power or 0.0 for port in ports)
     summary = f"Total {total_ports}, PoE {poe_capable} (active {poe_active})"
+    if total_power > 0:
+        summary = f"{summary}, {total_power:.2f}W"
+    return summary
+
+
+def _poe_summary(device: Device) -> str:
+    ports = [port for port in device.port_table if port.port_idx is not None]
+    if not ports:
+        return "-"
+    poe_capable = sum(1 for port in ports if port.port_poe or port.poe_enable)
+    poe_active = sum(1 for port in ports if (port.poe_power or 0.0) > 0 or port.poe_good)
+    total_power = sum(port.poe_power or 0.0 for port in ports)
+    summary = f"{poe_capable} capable, {poe_active} active"
     if total_power > 0:
         summary = f"{summary}, {total_power:.2f}W"
     return summary
@@ -141,9 +145,14 @@ def _details_table_lines(
         "",
         "| Field | Value |",
         "| --- | --- |",
+        f"| Model | {_escape_cell(device.model_name or device.type or '-')} |",
+        f"| Type | {_escape_cell(device.type or '-')} |",
+        f"| IP | {_escape_cell(device.ip or '-')} |",
+        f"| MAC | {_escape_cell(device.mac or '-')} |",
         f"| Firmware | {_escape_cell(device.version or '-')} |",
         f"| Uplink | {_escape_cell(_uplink_summary(device))} |",
         f"| Ports | {_escape_cell(_port_summary(device))} |",
+        f"| PoE | {_escape_cell(_poe_summary(device))} |",
         f"| {client_label} | {_escape_cell(wired_count)} |",
         f"| Client examples | {_escape_cell(client_sample)} |",
         "",
@@ -213,16 +222,28 @@ def render_lldp_md(
     client_mode: str = "wired",
 ) -> str:
     device_index = build_device_index(devices)
+    port_map = {}
+    client_port_map = None
     client_rows = (
         _client_rows(clients, device_index, include_ports=include_ports, client_mode=client_mode)
         if clients
         else {}
     )
+    if include_ports:
+        port_map = build_port_map(devices, only_unifi=False)
+        if clients and show_clients:
+            client_port_map = build_client_port_map(devices, clients, client_mode=client_mode)
     lines: list[str] = ["# LLDP Neighbors", ""]
     for device in sorted(devices, key=lambda item: item.name.lower()):
         lines.extend(_device_header_lines(device))
         lines.append("")
         lines.extend(_details_table_lines(device, client_rows, client_mode))
+        if include_ports:
+            lines.append("### Ports")
+            lines.append("")
+            lines.append(
+                render_device_port_details(device, port_map, client_ports=client_port_map).strip()
+            )
         if device.lldp_info:
             lines.append("")
             lines.append(

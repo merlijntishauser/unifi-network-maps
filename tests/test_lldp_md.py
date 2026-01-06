@@ -11,6 +11,8 @@ def test_render_lldp_md_includes_device_header():
     ]
     output = render_lldp_md(devices)
     assert "## Switch A" in output
+    assert "### Details" in output
+    assert "| PoE |" in output
 
 
 def test_render_lldp_md_uses_neighbor_name_from_index():
@@ -40,6 +42,16 @@ def test_render_lldp_md_reports_missing_neighbors():
     ]
     output = render_lldp_md(devices)
     assert "_No LLDP neighbors._" in output
+
+
+def test_render_lldp_md_includes_ports_section_when_enabled():
+    devices = [
+        Device(
+            name="Switch A", model_name="", model="", mac="aa:bb", ip="", type="usw", lldp_info=[]
+        )
+    ]
+    output = render_lldp_md(devices, include_ports=True)
+    assert "### Ports" in output
 
 
 def test_render_lldp_md_includes_clients_when_requested():

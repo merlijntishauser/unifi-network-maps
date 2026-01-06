@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 class Device:
     name: str
     model_name: str
+    model: str
     mac: str
     ip: str
     type: str
@@ -75,6 +76,7 @@ class PortInfo:
     name: str | None
     ifname: str | None
     speed: int | None
+    aggregation_group: str | None
     port_poe: bool
     poe_enable: bool
     poe_good: bool
@@ -125,6 +127,44 @@ def _as_int(value: object | None) -> int | None:
     return None
 
 
+def _as_group_id(value: object | None) -> str | None:
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, str):
+        return value.strip() or None
+    return None
+
+
+def _aggregation_group(port_entry: object) -> object | None:
+    keys = (
+        "aggregation_group",
+        "aggregation_id",
+        "aggregate_id",
+        "agg_id",
+        "lag_id",
+        "lag_group",
+        "link_aggregation_group",
+        "link_aggregation_id",
+        "aggregate",
+        "aggregated_by",
+    )
+    if isinstance(port_entry, dict):
+        for key in keys:
+            value = port_entry.get(key)
+            if value not in (None, "", False):
+                return value
+        return None
+    for key in keys:
+        value = _get_attr(port_entry, key)
+        if value not in (None, "", False):
+            return value
+    return None
+
+
 def _resolve_port_idx_from_lldp(lldp_entry: LLDPEntry, port_table: list[PortInfo]) -> int | None:
     if lldp_entry.local_port_idx is not None:
         return lldp_entry.local_port_idx
@@ -156,6 +196,7 @@ def _port_info_from_entry(port_entry: object) -> PortInfo:
         name = port_entry.get("name")
         ifname = port_entry.get("ifname")
         speed = port_entry.get("speed")
+        aggregation_group = _aggregation_group(port_entry)
         port_poe = _as_bool(port_entry.get("port_poe"))
         poe_enable = _as_bool(port_entry.get("poe_enable"))
         poe_good = _as_bool(port_entry.get("poe_good"))
@@ -165,6 +206,7 @@ def _port_info_from_entry(port_entry: object) -> PortInfo:
         name = _get_attr(port_entry, "name")
         ifname = _get_attr(port_entry, "ifname")
         speed = _get_attr(port_entry, "speed")
+        aggregation_group = _aggregation_group(port_entry)
         port_poe = _as_bool(_get_attr(port_entry, "port_poe"))
         poe_enable = _as_bool(_get_attr(port_entry, "poe_enable"))
         poe_good = _as_bool(_get_attr(port_entry, "poe_good"))
@@ -174,6 +216,7 @@ def _port_info_from_entry(port_entry: object) -> PortInfo:
         name=str(name) if isinstance(name, str) and name.strip() else None,
         ifname=str(ifname) if isinstance(ifname, str) and ifname.strip() else None,
         speed=_as_int(speed),
+        aggregation_group=_as_group_id(aggregation_group),
         port_poe=port_poe,
         poe_enable=poe_enable,
         poe_good=poe_good,
@@ -248,6 +291,7 @@ def _uplink_info(device: DeviceLike) -> tuple[UplinkInfo | None, UplinkInfo | No
 def coerce_device(device: DeviceLike) -> Device:
     name = _get_attr(device, "name")
     model_name = _get_attr(device, "model_name") or _get_attr(device, "model")
+    model = _get_attr(device, "model")
     mac = _get_attr(device, "mac")
     ip = _get_attr(device, "ip") or _get_attr(device, "ip_address")
     dev_type = _get_attr(device, "type") or _get_attr(device, "device_type")
@@ -273,6 +317,7 @@ def coerce_device(device: DeviceLike) -> Device:
     return Device(
         name=str(name),
         model_name=str(model_name or ""),
+        model=str(model or ""),
         mac=str(mac),
         ip=str(ip or ""),
         type=str(dev_type or ""),

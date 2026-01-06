@@ -9,12 +9,16 @@ from unifi_network_maps.render.mermaid import render_mermaid
 
 
 def test_classify_gateway_type():
-    device = Device(name="Gateway", model_name="", mac="aa", ip="", type="gateway", lldp_info=[])
+    device = Device(
+        name="Gateway", model_name="", model="", mac="aa", ip="", type="gateway", lldp_info=[]
+    )
     assert classify_device_type(device) == "gateway"
 
 
 def test_group_devices_by_type_includes_ap():
-    devices = [Device(name="AP One", model_name="", mac="aa", ip="", type="uap", lldp_info=[])]
+    devices = [
+        Device(name="AP One", model_name="", model="", mac="aa", ip="", type="uap", lldp_info=[])
+    ]
     groups = group_devices_by_type(devices)
     assert groups["ap"] == ["AP One"]
 

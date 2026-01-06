@@ -37,8 +37,8 @@ def test_debug_dump_devices_logs_gateway_and_sample(caplog):
         SimpleNamespace(name="Switch", data="sw"),
     ]
     normalized = [
-        Device(name="Gateway", model_name="", mac="aa", ip="", type="udm", lldp_info=[]),
-        Device(name="Switch", model_name="", mac="bb", ip="", type="usw", lldp_info=[]),
+        Device(name="Gateway", model_name="", model="", mac="aa", ip="", type="udm", lldp_info=[]),
+        Device(name="Switch", model_name="", model="", mac="bb", ip="", type="usw", lldp_info=[]),
     ]
 
     caplog.set_level(logging.INFO)

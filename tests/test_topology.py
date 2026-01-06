@@ -248,6 +248,7 @@ def test_build_edges_uses_uplink_fallback_fixture(device_with_uplink_no_lldp):
     gateway = Device(
         name="Gateway",
         model_name="",
+        model="",
         mac="bb",
         ip="",
         type="gateway",
@@ -293,6 +294,7 @@ def test_build_edges_uses_uplink_fallback():
     gateway = Device(
         name="Gateway",
         model_name="",
+        model="",
         mac="aa",
         ip="",
         type="gateway",
@@ -302,6 +304,7 @@ def test_build_edges_uses_uplink_fallback():
     switch = Device(
         name="Switch",
         model_name="",
+        model="",
         mac="bb",
         ip="",
         type="switch",
@@ -347,6 +350,7 @@ def test_build_edges_only_unifi_false_uses_chassis_id():
     device = SimpleNamespace(
         name="Switch",
         model_name="",
+        model="",
         mac="aa",
         ip="",
         type="switch",
@@ -368,6 +372,7 @@ def test_build_edges_resolves_port_idx_from_ifname():
     device = SimpleNamespace(
         name="Switch A",
         model_name="",
+        model="",
         mac="aa",
         ip="",
         type="switch",
@@ -377,6 +382,7 @@ def test_build_edges_resolves_port_idx_from_ifname():
     neighbor = SimpleNamespace(
         name="Switch B",
         model_name="",
+        model="",
         mac="bb",
         ip="",
         type="switch",
@@ -490,6 +496,7 @@ def test_build_topology_returns_edges():
     device = SimpleNamespace(
         name="Switch",
         model_name="",
+        model="",
         mac="aa",
         ip="",
         type="switch",

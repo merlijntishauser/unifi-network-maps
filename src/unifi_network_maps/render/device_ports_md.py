@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from html import escape as _escape_html
 
 from ..model.ports import extract_port_number
 from ..model.topology import ClientPortMap, Device, PortMap, classify_device_type
@@ -79,9 +80,21 @@ def _build_port_rows(
 ) -> list[tuple[str, str, str, str, str]]:
     connections = _device_port_connections(device.name, port_map)
     client_connections = _device_client_connections(device.name, client_ports)
-    rows: list[tuple[str, str, str, str, str]] = []
+    aggregated = _aggregate_ports(device.port_table)
+    aggregated_indices = {
+        port.port_idx
+        for ports in aggregated.values()
+        for port in ports
+        if getattr(port, "port_idx", None) is not None
+    }
+    rows: list[tuple[tuple[int, int], tuple[str, str, str, str, str]]] = []
     seen_ports: set[int] = set()
     for port in sorted(device.port_table, key=_port_sort_key):
+        if port.port_idx in aggregated_indices:
+            port_idx = _port_index(port.port_idx, port.name)
+            if port_idx is not None:
+                seen_ports.add(port_idx)
+            continue
         port_idx = _port_index(port.port_idx, port.name)
         if port_idx is not None:
             seen_ports.add(port_idx)
@@ -95,11 +108,36 @@ def _build_port_rows(
         )
         rows.append(
             (
-                port_label,
-                connected,
-                _format_speed(port.speed),
-                _format_poe_state(device, port),
-                _format_poe_power(port.poe_power),
+                (0, port_idx or 10_000),
+                (
+                    port_label,
+                    connected,
+                    _format_speed(port.speed),
+                    _format_poe_state(port),
+                    _format_poe_power(port.poe_power),
+                ),
+            )
+        )
+    for _group_id, group_ports in aggregated.items():
+        group_label = _format_aggregate_label(group_ports)
+        group_sort = _aggregate_sort_key(group_ports)
+        group_connections = _format_aggregate_connections(
+            device.name,
+            group_ports,
+            connections,
+            client_connections,
+            port_map,
+        )
+        rows.append(
+            (
+                (0, group_sort),
+                (
+                    group_label,
+                    group_connections,
+                    _format_aggregate_speed(group_ports),
+                    _format_aggregate_poe_state(group_ports),
+                    _format_aggregate_power(group_ports),
+                ),
             )
         )
     for port_idx in sorted(connections):
@@ -113,16 +151,8 @@ def _build_port_rows(
             client_connections,
             port_map,
         )
-        rows.append(
-            (
-                port_label,
-                connected,
-                "-",
-                "-",
-                "-",
-            )
-        )
-    return rows
+        rows.append(((2, port_idx), (port_label, connected, "-", "-", "-")))
+    return [row for _key, row in sorted(rows, key=lambda item: item[0])]
 
 
 def _device_port_connections(device_name: str, port_map: PortMap) -> dict[int, list[str]]:
@@ -162,42 +192,52 @@ def _format_connections(
     clients = client_connections.get(port_idx, [])
     if not peers and not clients:
         return ""
-    rendered: list[str] = []
+    peer_entries: list[str] = []
     for peer in sorted(peers, key=str.lower):
         peer_label = port_map.get((peer, device_name))
         if peer_label:
-            rendered.append(f"{peer} ({peer_label})")
+            peer_entries.append(f"{peer} ({peer_label})")
         else:
-            rendered.append(peer)
-    for client_name in sorted(clients, key=str.lower):
-        rendered.append(f"{client_name} (client)")
-    return ", ".join(rendered)
+            peer_entries.append(peer)
+    peer_text = ", ".join(peer_entries)
+    client_text = _format_client_connections(clients)
+    if peer_text and client_text:
+        return f"{peer_text}<br/>{client_text}"
+    return peer_text or client_text
 
 
 def _format_port_label(port_idx: int | None, name: str | None) -> str:
-    if port_idx is None and name:
-        return name
+    if name and name.strip():
+        normalized = name.strip()
+        if port_idx is None:
+            return normalized
+        if normalized.lower() != f"port {port_idx}".lower():
+            return normalized
     if port_idx is None:
         return "Port ?"
-    base = f"Port {port_idx}"
-    if name and name.strip() and name.strip() != base:
-        return f"{base} ({name.strip()})"
-    return base
+    return f"Port {port_idx}"
 
 
 def _format_speed(speed: int | None) -> str:
     if speed is None or speed <= 0:
         return "-"
-    if speed % 1000 == 0:
-        return f"{speed // 1000}G"
+    if speed >= 1000:
+        if speed % 1000 == 0:
+            return f"{speed // 1000}G"
+        return f"{speed / 1000:.1f}G"
     return f"{speed}M"
 
 
-def _format_poe_state(device: Device, port: object) -> str:
-    port_idx = _port_index(getattr(port, "port_idx", None), getattr(port, "name", None))
-    if port_idx is not None and device.poe_ports.get(port_idx):
+def _format_poe_state(port: object) -> str:
+    poe_power = getattr(port, "poe_power", None)
+    poe_good = getattr(port, "poe_good", False)
+    poe_enable = getattr(port, "poe_enable", False)
+    port_poe = getattr(port, "port_poe", False)
+    if (poe_power or 0.0) > 0 or poe_good:
         return "active"
-    if getattr(port, "port_poe", False) or getattr(port, "poe_enable", False):
+    if port_poe or poe_enable:
+        if not poe_enable:
+            return "disabled"
         return "capable"
     return "-"
 
@@ -234,7 +274,8 @@ def _render_device_details(device: Device) -> list[str]:
         "",
         "| Field | Value |",
         "| --- | --- |",
-        f"| Model | {_escape_cell(device.model_name or '-')} |",
+        f"| Model | {_escape_cell(_device_model_label(device))} |",
+        f"| Type | {_escape_cell(device.type or '-')} |",
         f"| IP | {_escape_cell(device.ip or '-')} |",
         f"| MAC | {_escape_cell(device.mac or '-')} |",
         f"| Firmware | {_escape_cell(device.version or '-')} |",
@@ -260,7 +301,7 @@ def _poe_summary(device: Device) -> str:
     if not ports:
         return "-"
     poe_capable = sum(1 for port in ports if port.port_poe or port.poe_enable)
-    poe_active = sum(1 for port in ports if device.poe_ports.get(port.port_idx or -1))
+    poe_active = sum(1 for port in ports if _format_poe_state(port) == "active")
     total_power = sum(port.poe_power or 0.0 for port in ports)
     summary = f"{poe_capable} capable, {poe_active} active"
     if total_power > 0:
@@ -271,8 +312,138 @@ def _poe_summary(device: Device) -> str:
 def _uplink_summary(device: Device) -> str:
     uplink = device.uplink or device.last_uplink
     if not uplink:
+        if classify_device_type(device) == "gateway":
+            return "Internet"
         return "-"
     name = uplink.name or uplink.mac or "Unknown"
+    if classify_device_type(device) == "gateway":
+        lowered = name.lower()
+        if lowered in {"unknown", "wan", "internet"}:
+            name = "Internet"
+        elif lowered.startswith(("eth", "wan")):
+            name = "Internet"
     if uplink.port is not None:
         return f"{name} (Port {uplink.port})"
     return name
+
+
+def _device_model_label(device: Device) -> str:
+    if device.model_name:
+        return device.model_name
+    if device.model:
+        return device.model
+    return device.type or "-"
+
+
+def _format_client_connections(clients: list[str]) -> str:
+    if not clients:
+        return ""
+    if len(clients) == 1:
+        return f"{clients[0]} (client)"
+    items = "".join(f"<li>{_escape_html(name)}</li>" for name in clients)
+    return f'<ul class="unifi-port-clients">{items}</ul>'
+
+
+def _aggregate_ports(port_table: list[object]) -> dict[str, list[object]]:
+    groups: dict[str, list[object]] = defaultdict(list)
+    for port in port_table:
+        group = getattr(port, "aggregation_group", None)
+        if group:
+            groups[str(group)].append(port)
+            continue
+        if _looks_like_lag(port):
+            port_idx = getattr(port, "port_idx", None)
+            if port_idx is not None:
+                groups[f"lag-{port_idx}"].append(port)
+    if not groups:
+        return groups
+    port_by_idx = {
+        getattr(port, "port_idx", None): port for port in port_table if port.port_idx is not None
+    }
+    for group_id, group_ports in list(groups.items()):
+        if len(group_ports) > 1:
+            continue
+        lone_port = group_ports[0]
+        if not _looks_like_lag(lone_port):
+            continue
+        candidates = []
+        for neighbor in (lone_port.port_idx - 1, lone_port.port_idx + 1):
+            port = port_by_idx.get(neighbor)
+            if port and not getattr(port, "aggregation_group", None):
+                if getattr(port, "speed", None) == getattr(lone_port, "speed", None):
+                    candidates.append(port)
+        if candidates:
+            groups[group_id].extend(candidates)
+    return groups
+
+
+def _looks_like_lag(port: object) -> bool:
+    name = (getattr(port, "name", "") or "").lower()
+    ifname = (getattr(port, "ifname", "") or "").lower()
+    return "lag" in name or "lag" in ifname or "aggregate" in name
+
+
+def _format_aggregate_label(group_ports: list[object]) -> str:
+    ports = sorted([p.port_idx for p in group_ports if getattr(p, "port_idx", None) is not None])
+    if ports:
+        if len(ports) == 1:
+            return f"Port {ports[0]} (LAG)"
+        if ports == list(range(ports[0], ports[-1] + 1)):
+            return f"Port {ports[0]}-{ports[-1]} (LAG)"
+        return "Ports " + "+".join(str(port) for port in ports) + " (LAG)"
+    return "Aggregated ports"
+
+
+def _aggregate_sort_key(group_ports: list[object]) -> int:
+    ports = sorted([p.port_idx for p in group_ports if getattr(p, "port_idx", None) is not None])
+    return ports[0] if ports else 10_000
+
+
+def _format_aggregate_connections(
+    device_name: str,
+    group_ports: list[object],
+    connections: dict[int, list[str]],
+    client_connections: dict[int, list[str]],
+    port_map: PortMap,
+) -> str:
+    rendered: list[str] = []
+    for port in group_ports:
+        port_idx = _port_index(getattr(port, "port_idx", None), getattr(port, "name", None))
+        if port_idx is None:
+            continue
+        text = _format_connections(
+            device_name,
+            port_idx,
+            connections,
+            client_connections,
+            port_map,
+        )
+        if text:
+            rendered.append(text)
+    return ", ".join([item for item in rendered if item])
+
+
+def _format_aggregate_speed(group_ports: list[object]) -> str:
+    speeds = {getattr(port, "speed", None) for port in group_ports}
+    speeds.discard(None)
+    if not speeds:
+        return "-"
+    if len(speeds) == 1:
+        return _format_speed(next(iter(speeds)))
+    return "mixed"
+
+
+def _format_aggregate_poe_state(group_ports: list[object]) -> str:
+    states = {_format_poe_state(port) for port in group_ports}
+    if "active" in states:
+        return "active"
+    if "disabled" in states:
+        return "disabled"
+    if "capable" in states:
+        return "capable"
+    return "-"
+
+
+def _format_aggregate_power(group_ports: list[object]) -> str:
+    total = sum(getattr(port, "poe_power", 0.0) or 0.0 for port in group_ports)
+    return _format_poe_power(total)

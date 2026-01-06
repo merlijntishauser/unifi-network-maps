@@ -78,7 +78,11 @@ def test_main_legend_outputs_markdown(monkeypatch):
 
 def test_main_mermaid_includes_wired_clients(monkeypatch):
     captured = {}
-    devices = [Device(name="Gateway", model_name="", mac="aa:bb", ip="", type="udm", lldp_info=[])]
+    devices = [
+        Device(
+            name="Gateway", model_name="", model="", mac="aa:bb", ip="", type="udm", lldp_info=[]
+        )
+    ]
     clients = [{"name": "Client", "is_wired": True, "sw_mac": "aa:bb"}]
 
     def fake_render_mermaid(edges, *, node_types, **kwargs):
@@ -121,7 +125,11 @@ def test_main_logs_topology_errors(monkeypatch, caplog):
 
 def test_main_mermaid_wraps_markdown(monkeypatch):
     captured = {}
-    devices = [Device(name="Gateway", model_name="", mac="aa:bb", ip="", type="udm", lldp_info=[])]
+    devices = [
+        Device(
+            name="Gateway", model_name="", model="", mac="aa:bb", ip="", type="udm", lldp_info=[]
+        )
+    ]
 
     def write_output(content, *, output_path, stdout):
         captured["content"] = content
@@ -147,7 +155,11 @@ def test_main_mermaid_wraps_markdown(monkeypatch):
 
 def test_main_mkdocs_includes_legend(monkeypatch):
     captured = {}
-    devices = [Device(name="Gateway", model_name="", mac="aa:bb", ip="", type="udm", lldp_info=[])]
+    devices = [
+        Device(
+            name="Gateway", model_name="", model="", mac="aa:bb", ip="", type="udm", lldp_info=[]
+        )
+    ]
 
     def write_output(content, *, output_path, stdout):
         captured["content"] = content
@@ -195,7 +207,11 @@ def test_main_mkdocs_sidebar_requires_output(monkeypatch):
 
 def test_main_debug_dump_uses_non_negative_sample(monkeypatch):
     captured = {}
-    devices = [Device(name="Gateway", model_name="", mac="aa:bb", ip="", type="udm", lldp_info=[])]
+    devices = [
+        Device(
+            name="Gateway", model_name="", model="", mac="aa:bb", ip="", type="udm", lldp_info=[]
+        )
+    ]
 
     def debug_dump(raw_devices, normalized, *, sample_count):
         captured["sample_count"] = sample_count
@@ -222,7 +238,11 @@ def test_main_debug_dump_uses_non_negative_sample(monkeypatch):
 
 def test_main_svg_uses_size_overrides(monkeypatch):
     captured = {}
-    devices = [Device(name="Gateway", model_name="", mac="aa:bb", ip="", type="udm", lldp_info=[])]
+    devices = [
+        Device(
+            name="Gateway", model_name="", model="", mac="aa:bb", ip="", type="udm", lldp_info=[]
+        )
+    ]
 
     def fake_render_svg(edges, *, node_types, options, theme=None):
         captured["width"] = options.width
@@ -249,7 +269,11 @@ def test_main_svg_uses_size_overrides(monkeypatch):
 
 
 def test_main_lldp_md_skips_topology(monkeypatch):
-    devices = [Device(name="Gateway", model_name="", mac="aa:bb", ip="", type="udm", lldp_info=[])]
+    devices = [
+        Device(
+            name="Gateway", model_name="", model="", mac="aa:bb", ip="", type="udm", lldp_info=[]
+        )
+    ]
 
     def explode(*_args, **_kwargs):
         raise RuntimeError("unexpected topology build")
@@ -266,7 +290,11 @@ def test_main_lldp_md_skips_topology(monkeypatch):
 
 
 def test_main_lldp_md_includes_clients(monkeypatch):
-    devices = [Device(name="Gateway", model_name="", mac="aa:bb", ip="", type="udm", lldp_info=[])]
+    devices = [
+        Device(
+            name="Gateway", model_name="", model="", mac="aa:bb", ip="", type="udm", lldp_info=[]
+        )
+    ]
     captured = {}
 
     def fake_render_lldp_md(*_args, **kwargs):

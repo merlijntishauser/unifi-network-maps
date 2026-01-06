@@ -51,7 +51,9 @@ def test_build_client_edges_includes_uplink_port_label():
 
 
 def test_build_node_type_map_skips_wireless_clients():
-    devices = [Device(name="Gateway", model_name="", mac="aa", ip="", type="udm", lldp_info=[])]
+    devices = [
+        Device(name="Gateway", model_name="", model="", mac="aa", ip="", type="udm", lldp_info=[])
+    ]
     clients = [{"name": "Phone", "is_wired": False}]
     node_types = build_node_type_map(devices, clients)
     assert "Phone" not in node_types

@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## v1.4.1
+- pip install was broken, fixed.
+
 ## v1.4.0
 - Added MkDocs output, which includes gateway/switch details and per-port tables.
 - Port tables show speed, PoE status, power, and wired clients per port.

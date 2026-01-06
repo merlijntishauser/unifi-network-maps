@@ -4,13 +4,14 @@ Dynamic UniFi -> Mermaid network maps generated from LLDP topology.
 
 ## Setup
 
-- Python >= 3.10
+- Python >= 3.13
 - Virtualenv required
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install -e .
+pip install -r requirements-build.txt
+pip install -e . -c constraints.txt
 ```
 
 Local install (non-editable):
@@ -97,6 +98,12 @@ unifi-network-maps --legend-only --stdout
 
 ```bash
 pip install .
+```
+
+## Dev
+
+```bash
+pip install -r requirements-dev.txt -c constraints.txt
 ```
 
 ## Release

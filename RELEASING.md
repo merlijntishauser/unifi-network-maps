@@ -10,7 +10,8 @@
    ```
 3) Build the package:
    ```bash
-   python -m pip install build twine
+   python -m pip install -r requirements-build.txt
+   python -m pip install build twine -c constraints.txt
    python -m build
    ```
 4) Inspect the artifacts:

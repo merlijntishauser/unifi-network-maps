@@ -7,7 +7,8 @@ Thanks for considering a contribution!
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install -e ".[dev]"
+pip install -r requirements-build.txt
+pip install -r requirements-dev.txt -c constraints.txt
 pre-commit install
 ```
 

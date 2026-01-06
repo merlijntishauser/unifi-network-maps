@@ -13,9 +13,6 @@
 - Home Assistant export/integration
   - Feasibility: Medium; export layer already exists, needs HA-specific examples.
   - Plan: add HA export presets (markdown card + include), document /config/www flow, keep core logic unchanged.
-- Export LLDP as markdown (all info per device)
-  - Feasibility: High; data already available after normalization.
-  - Plan: add `--format lldp-md` or `--export lldp` to dump per-device LLDP tables into Markdown.
 - Cable/link labeling
   - Feasibility: Medium; needs port metadata (`port_desc`, `port_overrides`) and consistent naming rules.
   - Plan: extend port label composition with optional cable-name mapping file; add tests for mixed labels.

@@ -61,6 +61,7 @@ line-ending = "lf"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 norecursedirs = ["src/unifi_network_maps/assets"]
+addopts = "--cov=src --cov-report=term-missing"
 
 [tool.coverage.run]
 branch = true

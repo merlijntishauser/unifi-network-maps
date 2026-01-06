@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## v1.4.0
+- Added MkDocs output, which includes gateway/switch details and per-port tables.
+- Port tables show speed, PoE status, power, and wired clients per port.
+- Added compact legend with sidebar injection (`--mkdocs-sidebar-legend`).
+- LLDP markdown includes the same device details and port tables when enabled.
+- Improved uplink labeling (gateway shows Internet for WAN/unknown).
+- Aggregated ports are combined into single LAG rows.
+
 ## v1.3.1
 - Added `lldp-md` output with per-device details tables and optional client sections.
 - Added `--client-scope wired|wireless|all` and dashed wireless client links in Mermaid/SVG.

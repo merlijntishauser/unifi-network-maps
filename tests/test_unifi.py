@@ -151,3 +151,75 @@ def test_fetch_clients_cache_expired(monkeypatch, tmp_path):
     monkeypatch.setattr(unifi, "_init_controller", lambda *_a, **_k: Controller())
     clients = list(unifi.fetch_clients(config))
     assert clients[0]["fresh"] is True
+
+
+def test_fetch_devices_uses_stale_cache_on_error(monkeypatch, tmp_path):
+    fake_module = SimpleNamespace(UnifiAuthenticationError=RuntimeError)
+    monkeypatch.setitem(sys.modules, "unifi_controller_api", fake_module)
+    monkeypatch.setenv("UNIFI_CACHE_DIR", str(tmp_path))
+    monkeypatch.setenv("UNIFI_CACHE_TTL_SECONDS", "1")
+
+    config = Config(
+        url="https://example", site="default", user="user", password="pass", verify_ssl=True
+    )
+    cache_path = tmp_path / f"devices_{unifi._cache_key(config.url, config.site, 'True')}.pkl"
+    cache_path.write_bytes(
+        pickle.dumps({"timestamp": time.time() - 3600, "data": [{"stale": True}]})
+    )
+
+    class Controller:
+        def get_unifi_site_device(self, site_name, detailed, raw):
+            raise RuntimeError("boom")
+
+    monkeypatch.setattr(unifi, "_init_controller", lambda *_a, **_k: Controller())
+    devices = list(unifi.fetch_devices(config))
+    assert devices[0]["stale"] is True
+
+
+def test_fetch_clients_uses_stale_cache_on_error(monkeypatch, tmp_path):
+    fake_module = SimpleNamespace(UnifiAuthenticationError=RuntimeError)
+    monkeypatch.setitem(sys.modules, "unifi_controller_api", fake_module)
+    monkeypatch.setenv("UNIFI_CACHE_DIR", str(tmp_path))
+    monkeypatch.setenv("UNIFI_CACHE_TTL_SECONDS", "1")
+
+    config = Config(
+        url="https://example", site="default", user="user", password="pass", verify_ssl=True
+    )
+    cache_path = tmp_path / f"clients_{unifi._cache_key(config.url, config.site)}.pkl"
+    cache_path.write_bytes(
+        pickle.dumps({"timestamp": time.time() - 3600, "data": [{"stale": True}]})
+    )
+
+    class Controller:
+        def get_unifi_site_client(self, site_name, raw):
+            raise RuntimeError("boom")
+
+    monkeypatch.setattr(unifi, "_init_controller", lambda *_a, **_k: Controller())
+    clients = list(unifi.fetch_clients(config))
+    assert clients[0]["stale"] is True
+
+
+def test_fetch_devices_retries(monkeypatch, tmp_path):
+    fake_module = SimpleNamespace(UnifiAuthenticationError=RuntimeError)
+    monkeypatch.setitem(sys.modules, "unifi_controller_api", fake_module)
+    monkeypatch.setenv("UNIFI_RETRY_ATTEMPTS", "2")
+    monkeypatch.setenv("UNIFI_RETRY_BACKOFF_SECONDS", "0")
+    monkeypatch.setenv("UNIFI_CACHE_TTL_SECONDS", "0")
+    monkeypatch.setenv("UNIFI_CACHE_DIR", str(tmp_path))
+
+    calls = {"count": 0}
+
+    class Controller:
+        def get_unifi_site_device(self, site_name, detailed, raw):
+            calls["count"] += 1
+            if calls["count"] == 1:
+                raise RuntimeError("boom")
+            return [{"ok": True}]
+
+    monkeypatch.setattr(unifi, "_init_controller", lambda *_a, **_k: Controller())
+    config = Config(
+        url="https://example", site="default", user="user", password="pass", verify_ssl=True
+    )
+    devices = list(unifi.fetch_devices(config))
+    assert calls["count"] == 2
+    assert devices[0]["ok"] is True

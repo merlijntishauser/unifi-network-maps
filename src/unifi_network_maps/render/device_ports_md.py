@@ -377,6 +377,8 @@ def _aggregate_ports(port_table: list[object]) -> dict[str, list[object]]:
         lone_port = group_ports[0]
         if not _looks_like_lag(lone_port):
             continue
+        if getattr(lone_port, "port_idx", None) is None:
+            continue
         candidates = []
         for neighbor in (lone_port.port_idx - 1, lone_port.port_idx + 1):
             port = port_by_idx.get(neighbor)

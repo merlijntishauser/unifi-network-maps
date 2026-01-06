@@ -39,28 +39,81 @@ def _cache_key(*parts: str) -> str:
 
 
 def _load_cache(path: Path, ttl_seconds: int) -> object | None:
-    if ttl_seconds <= 0 or not path.exists():
+    data, age = _load_cache_with_age(path)
+    if data is None:
         return None
+    if ttl_seconds <= 0:
+        return None
+    if age is None or age > ttl_seconds:
+        return None
+    return data
+
+
+def _load_cache_with_age(path: Path) -> tuple[object | None, float | None]:
+    if not path.exists():
+        return None, None
     try:
         payload = pickle.loads(path.read_bytes())
     except Exception as exc:
         logger.debug("Failed to read cache %s: %s", path, exc)
-        return None
+        return None, None
     timestamp = payload.get("timestamp")
     if not isinstance(timestamp, int | float):
-        return None
-    if time.time() - timestamp > ttl_seconds:
-        return None
-    return payload.get("data")
+        return None, None
+    data = payload.get("data")
+    if not isinstance(data, list):
+        logger.debug("Cached payload at %s is not a list", path)
+        return None, None
+    return data, time.time() - timestamp
 
 
 def _save_cache(path: Path, data: object) -> None:
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         payload = {"timestamp": time.time(), "data": data}
-        path.write_bytes(pickle.dumps(payload))
+        tmp_path = path.with_suffix(path.suffix + ".tmp")
+        tmp_path.write_bytes(pickle.dumps(payload))
+        tmp_path.replace(path)
     except Exception as exc:
         logger.debug("Failed to write cache %s: %s", path, exc)
+
+
+def _retry_attempts() -> int:
+    value = os.environ.get("UNIFI_RETRY_ATTEMPTS", "").strip()
+    if not value:
+        return 2
+    if value.isdigit():
+        return max(1, int(value))
+    logger.warning("Invalid UNIFI_RETRY_ATTEMPTS value: %s", value)
+    return 2
+
+
+def _retry_backoff_seconds() -> float:
+    value = os.environ.get("UNIFI_RETRY_BACKOFF_SECONDS", "").strip()
+    if not value:
+        return 0.5
+    try:
+        return max(0.0, float(value))
+    except ValueError:
+        logger.warning("Invalid UNIFI_RETRY_BACKOFF_SECONDS value: %s", value)
+        return 0.5
+
+
+def _call_with_retries(operation: str, func) -> object:
+    attempts = _retry_attempts()
+    backoff = _retry_backoff_seconds()
+    last_exc: Exception | None = None
+    for attempt in range(1, attempts + 1):
+        try:
+            return func()
+        except Exception as exc:  # noqa: BLE001 - surface full error after retries
+            last_exc = exc
+            logger.warning("Failed %s attempt %d/%d: %s", operation, attempt, attempts, exc)
+            if attempt < attempts and backoff > 0:
+                time.sleep(backoff * attempt)
+    if last_exc:
+        raise last_exc
+    raise RuntimeError(f"Failed {operation}")
 
 
 def _init_controller(config: Config, *, is_udm_pro: bool) -> UnifiController:
@@ -91,6 +144,7 @@ def fetch_devices(
     ttl_seconds = _cache_ttl_seconds()
     cache_path = _cache_dir() / f"devices_{_cache_key(config.url, site_name, str(detailed))}.pkl"
     cached = _load_cache(cache_path, ttl_seconds)
+    stale_cached, cache_age = _load_cache_with_age(cache_path)
     if cached is not None:
         logger.info("Using cached devices (%d)", len(cached))
         return cached
@@ -101,7 +155,20 @@ def fetch_devices(
         logger.info("UDM Pro authentication failed, retrying legacy auth")
         controller = _init_controller(config, is_udm_pro=False)
 
-    devices = controller.get_unifi_site_device(site_name=site_name, detailed=detailed, raw=False)
+    def _fetch() -> list[object]:
+        return controller.get_unifi_site_device(site_name=site_name, detailed=detailed, raw=False)
+
+    try:
+        devices = _call_with_retries("device fetch", _fetch)
+    except Exception as exc:  # noqa: BLE001 - fallback to cache
+        if stale_cached is not None:
+            logger.warning(
+                "Device fetch failed; using stale cache (%ds old): %s",
+                int(cache_age or 0),
+                exc,
+            )
+            return stale_cached
+        raise
     _save_cache(cache_path, devices)
     logger.info("Fetched %d devices", len(devices))
     return devices
@@ -118,6 +185,7 @@ def fetch_clients(config: Config, *, site: str | None = None) -> Iterable[object
     ttl_seconds = _cache_ttl_seconds()
     cache_path = _cache_dir() / f"clients_{_cache_key(config.url, site_name)}.pkl"
     cached = _load_cache(cache_path, ttl_seconds)
+    stale_cached, cache_age = _load_cache_with_age(cache_path)
     if cached is not None:
         logger.info("Using cached clients (%d)", len(cached))
         return cached
@@ -128,7 +196,20 @@ def fetch_clients(config: Config, *, site: str | None = None) -> Iterable[object
         logger.info("UDM Pro authentication failed, retrying legacy auth")
         controller = _init_controller(config, is_udm_pro=False)
 
-    clients = controller.get_unifi_site_client(site_name=site_name, raw=True)
+    def _fetch() -> list[object]:
+        return controller.get_unifi_site_client(site_name=site_name, raw=True)
+
+    try:
+        clients = _call_with_retries("client fetch", _fetch)
+    except Exception as exc:  # noqa: BLE001 - fallback to cache
+        if stale_cached is not None:
+            logger.warning(
+                "Client fetch failed; using stale cache (%ds old): %s",
+                int(cache_age or 0),
+                exc,
+            )
+            return stale_cached
+        raise
     _save_cache(cache_path, clients)
     logger.info("Fetched %d clients", len(clients))
     return clients

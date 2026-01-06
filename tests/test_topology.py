@@ -7,8 +7,10 @@ from unifi_network_maps.model.topology import (
     Edge,
     LLDPEntry,
     UplinkInfo,
+    _aggregation_group,
     _as_bool,
     _as_float,
+    _as_group_id,
     _client_display_name,
     _client_field,
     _client_uplink_mac,
@@ -328,6 +330,33 @@ def test_poe_ports_from_device_reads_dict_power():
 def test_poe_ports_from_device_reads_portidx_key():
     device = SimpleNamespace(port_table=[{"portIdx": 3, "poe_enable": True}])
     assert _poe_ports_from_device(device) == {3: True}
+
+
+def test_as_group_id_handles_types():
+    assert _as_group_id(None) is None
+    assert _as_group_id(True) is None
+    assert _as_group_id(5) == "5"
+    assert _as_group_id(" lag1 ") == "lag1"
+    assert _as_group_id(" ") is None
+    assert _as_group_id(object()) is None
+
+
+def test_aggregation_group_reads_dict_key():
+    entry = {"lag_id": "lag5"}
+    assert _aggregation_group(entry) == "lag5"
+
+
+def test_aggregation_group_handles_missing_keys():
+    entry = {"aggregation_group": None}
+    assert _aggregation_group(entry) is None
+
+
+def test_aggregation_group_reads_object_attr():
+    class PortEntry:
+        aggregation_group = None
+        agg_id = "agg2"
+
+    assert _aggregation_group(PortEntry()) == "agg2"
 
 
 def test_client_uplink_mac_nested():

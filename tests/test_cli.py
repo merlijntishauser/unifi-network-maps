@@ -205,6 +205,73 @@ def test_main_mkdocs_sidebar_requires_output(monkeypatch):
     assert main(["--format", "mkdocs", "--mkdocs-sidebar-legend", "--stdout"]) == 2
 
 
+def test_main_mkdocs_sidebar_writes_assets(monkeypatch, tmp_path):
+    devices = [
+        Device(
+            name="Gateway", model_name="", model="", mac="aa:bb", ip="", type="udm", lldp_info=[]
+        )
+    ]
+
+    monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
+    monkeypatch.setattr(cli_module, "fetch_devices", lambda *args, **kwargs: devices)
+    monkeypatch.setattr(cli_module, "normalize_devices", lambda raw: raw)
+    monkeypatch.setattr(cli_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]})
+    monkeypatch.setattr(
+        cli_module,
+        "build_topology",
+        lambda *args, **kwargs: TopologyResult(
+            raw_edges=[Edge("Gateway", "Switch")],
+            tree_edges=[Edge("Gateway", "Switch")],
+        ),
+    )
+    monkeypatch.setattr(cli_module, "render_mermaid", lambda *args, **kwargs: "graph TB\n")
+    monkeypatch.setattr(cli_module, "render_legend", lambda *args, **kwargs: "graph TB\n")
+    monkeypatch.setattr(cli_module, "build_port_map", lambda *args, **kwargs: {})
+    monkeypatch.setattr(
+        cli_module, "render_device_port_overview", lambda *args, **kwargs: "PORTS\n"
+    )
+    monkeypatch.setattr(cli_module, "write_output", lambda *args, **kwargs: None)
+
+    output_path = tmp_path / "unifi-network.md"
+    assert (
+        main(["--format", "mkdocs", "--mkdocs-sidebar-legend", "--output", str(output_path)]) == 0
+    )
+    assert (tmp_path / "assets" / "legend.js").exists()
+    assert (tmp_path / "assets" / "legend.css").exists()
+
+
+def test_main_mkdocs_sidebar_disabled_does_not_write_assets(monkeypatch, tmp_path):
+    devices = [
+        Device(
+            name="Gateway", model_name="", model="", mac="aa:bb", ip="", type="udm", lldp_info=[]
+        )
+    ]
+
+    monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
+    monkeypatch.setattr(cli_module, "fetch_devices", lambda *args, **kwargs: devices)
+    monkeypatch.setattr(cli_module, "normalize_devices", lambda raw: raw)
+    monkeypatch.setattr(cli_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]})
+    monkeypatch.setattr(
+        cli_module,
+        "build_topology",
+        lambda *args, **kwargs: TopologyResult(
+            raw_edges=[Edge("Gateway", "Switch")],
+            tree_edges=[Edge("Gateway", "Switch")],
+        ),
+    )
+    monkeypatch.setattr(cli_module, "render_mermaid", lambda *args, **kwargs: "graph TB\n")
+    monkeypatch.setattr(cli_module, "render_legend", lambda *args, **kwargs: "graph TB\n")
+    monkeypatch.setattr(cli_module, "build_port_map", lambda *args, **kwargs: {})
+    monkeypatch.setattr(
+        cli_module, "render_device_port_overview", lambda *args, **kwargs: "PORTS\n"
+    )
+    monkeypatch.setattr(cli_module, "write_output", lambda *args, **kwargs: None)
+
+    output_path = tmp_path / "unifi-network.md"
+    assert main(["--format", "mkdocs", "--output", str(output_path)]) == 0
+    assert not (tmp_path / "assets" / "legend.js").exists()
+
+
 def test_main_debug_dump_uses_non_negative_sample(monkeypatch):
     captured = {}
     devices = [

@@ -34,6 +34,7 @@ smoketest:
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format mkdocs --output smoketest/mkdocs/unifi-network.md
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format mkdocs --legend-scale 0.6 --output smoketest/mkdocs/unifi-network-legend-scaled.md
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format mkdocs --legend-style diagram --output smoketest/mkdocs/unifi-network-legend-diagram.md
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format mkdocs --mkdocs-sidebar-legend --output smoketest/mkdocs/unifi-network-sidebar-legend.md
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format lldp-md --output smoketest/lldp/lldp.md
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format lldp-md --include-clients --output smoketest/lldp/lldp_clients.md
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format lldp-md --include-clients --client-scope wireless --output smoketest/lldp/lldp_clients_wireless.md

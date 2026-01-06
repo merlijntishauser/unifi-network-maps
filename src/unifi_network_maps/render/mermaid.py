@@ -221,8 +221,10 @@ def render_legend_compact(theme: MermaidTheme = DEFAULT_THEME) -> str:
         line_sample(theme.standard_link, theme.standard_link_width, dashed=True, label="Wireless"),
     ]
     lines = [
-        "| Legend |",
-        "| --- |",
+        '<table class="unifi-legend-table">',
+        "<tbody>",
     ]
-    lines.extend(f"| {style} |" for style in rows)
+    lines.extend(f"  <tr><td>{style}</td></tr>" for style in rows)
+    lines.append("</tbody>")
+    lines.append("</table>")
     return "\n".join(lines) + "\n"

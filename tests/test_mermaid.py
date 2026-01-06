@@ -69,7 +69,7 @@ def test_render_legend_class_lines_end_with_semicolon():
 
 def test_render_legend_compact_outputs_table():
     output = render_legend_compact()
-    assert "| Legend |" in output
+    assert '<table class="unifi-legend-table">' in output
     assert "background:#ffe3b3" in output
     assert "Link</span>" in output
     assert "Link</span>" in output and "⚡" not in output.split("Link</span>")[1]

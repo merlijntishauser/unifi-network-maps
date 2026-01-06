@@ -158,6 +158,7 @@ Output:
 - `--format mermaid|svg|svg-iso|lldp-md|mkdocs`: output format (default mermaid).
 - `--stdout`: write output to stdout.
 - `--markdown`: wrap Mermaid output in a code fence.
+- `--mkdocs-sidebar-legend`: write assets to place the compact legend in the MkDocs right sidebar.
 
 Debug:
 - `--debug-dump`: dump gateway + sample devices to stderr for debugging.

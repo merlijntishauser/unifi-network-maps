@@ -169,7 +169,22 @@ def test_main_mkdocs_includes_legend(monkeypatch):
     monkeypatch.setattr(cli_module, "write_output", write_output)
 
     assert main(["--format", "mkdocs", "--stdout"]) == 0
-    assert "| Legend |" in captured["content"]
+    assert "unifi-legend-table" in captured["content"]
+
+
+def test_main_mkdocs_sidebar_requires_output(monkeypatch):
+    monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
+    monkeypatch.setattr(cli_module, "fetch_devices", lambda *args, **kwargs: [])
+    monkeypatch.setattr(cli_module, "normalize_devices", lambda raw: raw)
+    monkeypatch.setattr(cli_module, "group_devices_by_type", lambda *_: {"gateway": []})
+    monkeypatch.setattr(
+        cli_module,
+        "build_topology",
+        lambda *args, **kwargs: TopologyResult(raw_edges=[], tree_edges=[]),
+    )
+    monkeypatch.setattr(cli_module, "write_output", lambda *args, **kwargs: None)
+
+    assert main(["--format", "mkdocs", "--mkdocs-sidebar-legend", "--stdout"]) == 2
 
 
 def test_main_debug_dump_uses_non_negative_sample(monkeypatch):

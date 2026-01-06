@@ -123,6 +123,11 @@ def _add_general_render_args(parser: argparse._ArgumentGroup) -> None:
     )
     parser.add_argument("--output", default=None, help="Output file path")
     parser.add_argument("--stdout", action="store_true", help="Write output to stdout")
+    parser.add_argument(
+        "--mkdocs-sidebar-legend",
+        action="store_true",
+        help="For mkdocs output, write sidebar legend assets next to the output file",
+    )
 
 
 def _add_debug_args(parser: argparse._ArgumentGroup) -> None:
@@ -280,7 +285,11 @@ def _render_mkdocs_output(
     )
     legend_style = _resolve_legend_style(args)
     if legend_style == "compact":
-        legend_block = render_legend_compact(theme=mermaid_theme)
+        legend_block = (
+            '<div class="unifi-legend" data-unifi-legend>\n'
+            + render_legend_compact(theme=mermaid_theme)
+            + "</div>"
+        )
         legend_header = ""
     else:
         legend_block = (
@@ -291,6 +300,66 @@ def _render_mkdocs_output(
         legend_header = "## Legend\n\n"
     return (
         f"# UniFi network\n\n## Map\n\n```mermaid\n{content}```\n\n{legend_header}{legend_block}\n"
+    )
+
+
+def _write_mkdocs_sidebar_assets(output_path: str) -> None:
+    from pathlib import Path
+
+    output_dir = Path(output_path).resolve().parent
+    assets_dir = output_dir / "assets"
+    assets_dir.mkdir(parents=True, exist_ok=True)
+    (assets_dir / "legend.js").write_text(
+        (
+            'document.addEventListener("DOMContentLoaded", () => {\n'
+            '  const legend = document.querySelector("[data-unifi-legend]");\n'
+            '  const sidebar = document.querySelector(".md-sidebar--secondary .md-sidebar__scrollwrap");\n'
+            "  if (!legend || !sidebar) {\n"
+            "    return;\n"
+            "  }\n"
+            '  const wrapper = document.createElement("div");\n'
+            '  wrapper.className = "unifi-legend-sidebar";\n'
+            '  const title = document.createElement("div");\n'
+            '  title.className = "unifi-legend-title";\n'
+            '  title.textContent = "Legend";\n'
+            "  wrapper.appendChild(title);\n"
+            "  wrapper.appendChild(legend.cloneNode(true));\n"
+            "  sidebar.appendChild(wrapper);\n"
+            '  legend.classList.add("unifi-legend-hidden");\n'
+            "});\n"
+        ),
+        encoding="utf-8",
+    )
+    (assets_dir / "legend.css").write_text(
+        (
+            ".unifi-legend-hidden {\n"
+            "  display: none;\n"
+            "}\n\n"
+            ".unifi-legend-sidebar {\n"
+            "  margin-top: 1rem;\n"
+            "  padding: 0.5rem 0.75rem;\n"
+            "  border: 1px solid rgba(0, 0, 0, 0.08);\n"
+            "  border-radius: 6px;\n"
+            "  font-size: 0.75rem;\n"
+            "}\n\n"
+            ".unifi-legend-title {\n"
+            "  font-weight: 600;\n"
+            "  margin-bottom: 0.5rem;\n"
+            "}\n\n"
+            ".unifi-legend-sidebar table {\n"
+            "  width: 100%;\n"
+            "  border-collapse: collapse;\n"
+            "}\n\n"
+            ".unifi-legend-sidebar td,\n"
+            ".unifi-legend-sidebar th {\n"
+            "  border: 0;\n"
+            "  padding: 0.15rem 0;\n"
+            "}\n\n"
+            ".unifi-legend-sidebar svg {\n"
+            "  display: block;\n"
+            "}\n"
+        ),
+        encoding="utf-8",
     )
 
 
@@ -365,6 +434,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.format == "mermaid":
         content = _render_mermaid_output(args, devices, topology, config, site, mermaid_theme)
     elif args.format == "mkdocs":
+        if args.mkdocs_sidebar_legend and not args.output:
+            logging.error("--mkdocs-sidebar-legend requires --output")
+            return 2
+        if args.mkdocs_sidebar_legend:
+            _write_mkdocs_sidebar_assets(args.output)
         content = _render_mkdocs_output(args, devices, topology, config, site, mermaid_theme)
     elif args.format in {"svg", "svg-iso"}:
         content = _render_svg_output(args, devices, topology, config, site, svg_theme)

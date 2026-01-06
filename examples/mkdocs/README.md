@@ -22,4 +22,16 @@ mkdocs -f examples/mkdocs/mkdocs.yml serve
 This example uses:
 - `pymdownx.superfences` with a Mermaid fence
 
+### Sidebar legend
+
+The legend is rendered as a compact table and moved into the right sidebar
+via `assets/legend.js` and `assets/legend.css`. Generate these files with:
+
+```bash
+unifi-network-maps --format mkdocs --mkdocs-sidebar-legend --output examples/mkdocs/docs/unifi-network.md
+```
+
+If the sidebar is hidden,
+the legend remains in the page content.
+
 Material renders Mermaid diagrams natively when configured this way.

@@ -6,6 +6,10 @@ theme:
     - content.code.copy
 nav:
   - unifi-network: unifi-network.md
+extra_css:
+  - assets/legend.css
+extra_javascript:
+  - assets/legend.js
 markdown_extensions:
   - pymdownx.superfences:
       custom_fences:

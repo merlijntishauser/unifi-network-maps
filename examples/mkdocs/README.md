@@ -11,6 +11,12 @@ Run these commands from the repo root:
 unifi-network-maps --format mkdocs --output examples/mkdocs/docs/unifi-network.md
 ```
 
+To include wired clients in the per-port tables:
+
+```bash
+unifi-network-maps --format mkdocs --include-clients --output examples/mkdocs/docs/unifi-network.md
+```
+
 ### 2) Build docs
 
 ```bash

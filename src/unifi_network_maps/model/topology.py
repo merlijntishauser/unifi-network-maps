@@ -74,6 +74,7 @@ class PortInfo:
     port_idx: int | None
     name: str | None
     ifname: str | None
+    speed: int | None
     port_poe: bool
     poe_enable: bool
     poe_good: bool
@@ -82,6 +83,7 @@ class PortInfo:
 
 PortMap: TypeAlias = dict[tuple[str, str], str]
 PoeMap: TypeAlias = dict[tuple[str, str], bool]
+ClientPortMap: TypeAlias = dict[str, list[tuple[int, str]]]
 
 
 def _get_attr(obj: object, name: str) -> object | None:
@@ -153,6 +155,7 @@ def _port_info_from_entry(port_entry: object) -> PortInfo:
         port_idx = port_entry.get("port_idx") or port_entry.get("portIdx")
         name = port_entry.get("name")
         ifname = port_entry.get("ifname")
+        speed = port_entry.get("speed")
         port_poe = _as_bool(port_entry.get("port_poe"))
         poe_enable = _as_bool(port_entry.get("poe_enable"))
         poe_good = _as_bool(port_entry.get("poe_good"))
@@ -161,6 +164,7 @@ def _port_info_from_entry(port_entry: object) -> PortInfo:
         port_idx = _get_attr(port_entry, "port_idx") or _get_attr(port_entry, "portIdx")
         name = _get_attr(port_entry, "name")
         ifname = _get_attr(port_entry, "ifname")
+        speed = _get_attr(port_entry, "speed")
         port_poe = _as_bool(_get_attr(port_entry, "port_poe"))
         poe_enable = _as_bool(_get_attr(port_entry, "poe_enable"))
         poe_good = _as_bool(_get_attr(port_entry, "poe_good"))
@@ -169,6 +173,7 @@ def _port_info_from_entry(port_entry: object) -> PortInfo:
         port_idx=_as_int(port_idx),
         name=str(name) if isinstance(name, str) and name.strip() else None,
         ifname=str(ifname) if isinstance(ifname, str) and ifname.strip() else None,
+        speed=_as_int(speed),
         port_poe=port_poe,
         poe_enable=poe_enable,
         poe_good=poe_good,
@@ -526,6 +531,62 @@ def build_edges(
     poe_edges = sum(1 for edge in edges if edge.poe)
     logger.info("Built %d unique edges (%d PoE)", len(edges), poe_edges)
     return edges
+
+
+def build_port_map(devices: Iterable[Device], *, only_unifi: bool = True) -> PortMap:
+    ordered_devices = sorted(devices, key=lambda item: (item.name.lower(), item.mac.lower()))
+    index = build_device_index(ordered_devices)
+    device_by_name = {device.name: device for device in ordered_devices}
+    raw_links: list[tuple[str, str]] = []
+    seen: set[frozenset[str]] = set()
+    port_map: PortMap = {}
+    poe_map: PoeMap = {}
+
+    devices_with_lldp_edges = _collect_lldp_links(
+        ordered_devices,
+        index,
+        port_map,
+        poe_map,
+        raw_links,
+        seen,
+        only_unifi=only_unifi,
+    )
+    _collect_uplink_links(
+        ordered_devices,
+        devices_with_lldp_edges,
+        index,
+        device_by_name,
+        port_map,
+        poe_map,
+        raw_links,
+        seen,
+        include_ports=True,
+        only_unifi=only_unifi,
+    )
+    return port_map
+
+
+def build_client_port_map(
+    devices: Iterable[Device],
+    clients: Iterable[object],
+    *,
+    client_mode: str,
+) -> ClientPortMap:
+    device_index = build_device_index(devices)
+    port_map: ClientPortMap = {}
+    for client in clients:
+        if not _client_matches_mode(client, client_mode):
+            continue
+        name = _client_display_name(client)
+        uplink_mac = _client_uplink_mac(client)
+        uplink_port = _client_uplink_port(client)
+        if not name or not uplink_mac or uplink_port is None:
+            continue
+        device_name = device_index.get(_normalize_mac(uplink_mac))
+        if not device_name:
+            continue
+        port_map.setdefault(device_name, []).append((uplink_port, name))
+    return port_map
 
 
 def _collect_lldp_links(

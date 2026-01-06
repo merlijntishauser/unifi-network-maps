@@ -166,10 +166,16 @@ def test_main_mkdocs_includes_legend(monkeypatch):
     )
     monkeypatch.setattr(cli_module, "render_mermaid", lambda *args, **kwargs: "graph TB\n")
     monkeypatch.setattr(cli_module, "render_legend", lambda *args, **kwargs: "graph TB\n")
+    monkeypatch.setattr(cli_module, "build_port_map", lambda *args, **kwargs: {})
+    monkeypatch.setattr(cli_module, "build_client_port_map", lambda *args, **kwargs: {})
+    monkeypatch.setattr(
+        cli_module, "render_device_port_overview", lambda *args, **kwargs: "PORTS\n"
+    )
     monkeypatch.setattr(cli_module, "write_output", write_output)
 
     assert main(["--format", "mkdocs", "--stdout"]) == 0
     assert "unifi-legend-table" in captured["content"]
+    assert "PORTS" in captured["content"]
 
 
 def test_main_mkdocs_sidebar_requires_output(monkeypatch):

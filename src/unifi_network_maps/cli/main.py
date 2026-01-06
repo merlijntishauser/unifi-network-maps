@@ -10,14 +10,19 @@ from ..adapters.unifi import fetch_clients, fetch_devices
 from ..io.debug import debug_dump_devices
 from ..io.export import write_output
 from ..model.topology import (
+    ClientPortMap,
     Device,
+    PortMap,
     build_client_edges,
+    build_client_port_map,
     build_device_index,
     build_node_type_map,
+    build_port_map,
     build_topology,
     group_devices_by_type,
     normalize_devices,
 )
+from ..render.device_ports_md import render_device_port_overview
 from ..render.lldp_md import render_lldp_md
 from ..render.mermaid import render_legend, render_legend_compact, render_mermaid
 from ..render.mermaid_theme import MermaidTheme
@@ -274,6 +279,8 @@ def _render_mkdocs_output(
     config: Config,
     site: str,
     mermaid_theme: MermaidTheme,
+    port_map: PortMap,
+    client_ports: ClientPortMap | None,
 ) -> str:
     edges, _has_tree = _select_edges(topology)
     clients = None
@@ -299,7 +306,9 @@ def _render_mkdocs_output(
         )
         legend_header = "## Legend\n\n"
     return (
-        f"# UniFi network\n\n## Map\n\n```mermaid\n{content}```\n\n{legend_header}{legend_block}\n"
+        f"# UniFi network\n\n## Map\n\n```mermaid\n{content}```\n\n"
+        f"{legend_header}{legend_block}\n\n"
+        f"{render_device_port_overview(devices, port_map, client_ports=client_ports)}"
     )
 
 
@@ -439,7 +448,14 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         if args.mkdocs_sidebar_legend:
             _write_mkdocs_sidebar_assets(args.output)
-        content = _render_mkdocs_output(args, devices, topology, config, site, mermaid_theme)
+        port_map = build_port_map(devices, only_unifi=args.only_unifi)
+        client_ports = None
+        if args.include_clients:
+            clients = list(fetch_clients(config, site=site))
+            client_ports = build_client_port_map(devices, clients, client_mode=args.client_scope)
+        content = _render_mkdocs_output(
+            args, devices, topology, config, site, mermaid_theme, port_map, client_ports
+        )
     elif args.format in {"svg", "svg-iso"}:
         content = _render_svg_output(args, devices, topology, config, site, svg_theme)
     else:

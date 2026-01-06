@@ -71,8 +71,11 @@ unifi-network-maps --format svg-iso --output ./network.svg
 # Single-page MkDocs output (ports included, no clients)
 unifi-network-maps --format mkdocs --output ./docs/unifi-network.md
 
-# MkDocs output (single page with embedded Mermaid)
+# MkDocs output (map + legend + gateway/switch port tables)
 unifi-network-maps --format mkdocs --output ./docs/unifi-network.md
+
+# Include wired clients in the port tables
+unifi-network-maps --format mkdocs --include-clients --output ./docs/unifi-network.md
 ```
 
 SVG size overrides:

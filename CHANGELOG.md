@@ -2,8 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
-- TBD.
+## v1.3.1
+- Added `lldp-md` output with per-device details tables and optional client sections.
+- Added `--client-scope wired|wireless|all` and dashed wireless client links in Mermaid/SVG.
+- Expanded smoketest outputs for wireless/all client scopes and LLDP markdown.
+- Fixed SVG icon loading paths after package reorg.
+- Tuned isometric port label placement on front tiles.
 
 ## v1.3.0
 - Reorganized package into submodules (`adapters/`, `model/`, `render/`, `io/`, `cli/`).

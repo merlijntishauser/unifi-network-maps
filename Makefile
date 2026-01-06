@@ -22,7 +22,7 @@ coverage:
 
 smoketest:
 	@rm -rf smoketest
-	@mkdir -p smoketest/lldp smoketest/mermaid smoketest/svg smoketest/svg-iso smoketest/themes
+	@mkdir -p smoketest/lldp smoketest/mermaid smoketest/mkdocs smoketest/svg smoketest/svg-iso smoketest/themes
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --stdout > smoketest/mermaid/network.mmd
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --markdown --output smoketest/mermaid/network.md
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --group-by-type --stdout > smoketest/mermaid/network_grouped.mmd
@@ -31,6 +31,9 @@ smoketest:
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-clients --client-scope all --stdout > smoketest/mermaid/network_clients_all.mmd
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-ports --stdout > smoketest/mermaid/network_ports.mmd
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --legend-only --stdout > smoketest/mermaid/legend.mmd
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format mkdocs --output smoketest/mkdocs/unifi-network.md
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format mkdocs --legend-scale 0.6 --output smoketest/mkdocs/unifi-network-legend-scaled.md
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format mkdocs --legend-style diagram --output smoketest/mkdocs/unifi-network-legend-diagram.md
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format lldp-md --output smoketest/lldp/lldp.md
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format lldp-md --include-clients --output smoketest/lldp/lldp_clients.md
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format lldp-md --include-clients --client-scope wireless --output smoketest/lldp/lldp_clients_wireless.md

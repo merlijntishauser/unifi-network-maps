@@ -145,6 +145,33 @@ def test_main_mermaid_wraps_markdown(monkeypatch):
     assert captured["content"].startswith("```mermaid")
 
 
+def test_main_mkdocs_includes_legend(monkeypatch):
+    captured = {}
+    devices = [Device(name="Gateway", model_name="", mac="aa:bb", ip="", type="udm", lldp_info=[])]
+
+    def write_output(content, *, output_path, stdout):
+        captured["content"] = content
+
+    monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
+    monkeypatch.setattr(cli_module, "fetch_devices", lambda *args, **kwargs: devices)
+    monkeypatch.setattr(cli_module, "normalize_devices", lambda raw: raw)
+    monkeypatch.setattr(cli_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]})
+    monkeypatch.setattr(
+        cli_module,
+        "build_topology",
+        lambda *args, **kwargs: TopologyResult(
+            raw_edges=[Edge("Gateway", "Switch")],
+            tree_edges=[Edge("Gateway", "Switch")],
+        ),
+    )
+    monkeypatch.setattr(cli_module, "render_mermaid", lambda *args, **kwargs: "graph TB\n")
+    monkeypatch.setattr(cli_module, "render_legend", lambda *args, **kwargs: "graph TB\n")
+    monkeypatch.setattr(cli_module, "write_output", write_output)
+
+    assert main(["--format", "mkdocs", "--stdout"]) == 0
+    assert "| Legend |" in captured["content"]
+
+
 def test_main_debug_dump_uses_non_negative_sample(monkeypatch):
     captured = {}
     devices = [Device(name="Gateway", model_name="", mac="aa:bb", ip="", type="udm", lldp_info=[])]

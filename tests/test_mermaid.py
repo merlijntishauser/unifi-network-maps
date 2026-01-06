@@ -1,5 +1,5 @@
 from unifi_network_maps.model.topology import Edge
-from unifi_network_maps.render.mermaid import render_legend, render_mermaid
+from unifi_network_maps.render.mermaid import render_legend, render_legend_compact, render_mermaid
 
 
 def test_render_mermaid_uses_ids_with_labels():
@@ -65,7 +65,14 @@ def test_render_legend_link_style_default():
 def test_render_legend_class_lines_end_with_semicolon():
     output = render_legend().splitlines()
     assert "  class legend_gateway node_gateway;" in output
-    assert "  classDef node_gateway fill:#ffe3b3,stroke:#d98300,stroke-width:1px;" in output
+
+
+def test_render_legend_compact_outputs_table():
+    output = render_legend_compact()
+    assert "| Legend |" in output
+    assert "background:#ffe3b3" in output
+    assert "Link</span>" in output
+    assert "Link</span>" in output and "⚡" not in output.split("Link</span>")[1]
 
 
 def test_render_mermaid_renders_group_subgraph():

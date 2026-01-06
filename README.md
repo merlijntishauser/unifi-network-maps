@@ -67,6 +67,12 @@ Isometric SVG output:
 
 ```bash
 unifi-network-maps --format svg-iso --output ./network.svg
+
+# Single-page MkDocs output (ports included, no clients)
+unifi-network-maps --format mkdocs --output ./docs/unifi-network.md
+
+# MkDocs output (single page with embedded Mermaid)
+unifi-network-maps --format mkdocs --output ./docs/unifi-network.md
 ```
 
 SVG size overrides:
@@ -140,6 +146,8 @@ Functional:
 Mermaid:
 - `--direction LR|TB`: diagram direction for Mermaid (default TB).
 - `--group-by-type`: group nodes by gateway/switch/AP in Mermaid subgraphs.
+- `--legend-scale`: scale legend font/link sizes for Mermaid outputs (default 1.0).
+- `--legend-style auto|compact|diagram`: legend rendering mode (auto uses compact for mkdocs).
 - `--legend-only`: render just the legend as a separate Mermaid graph (Mermaid only).
 
 SVG:
@@ -147,7 +155,7 @@ SVG:
 - `--theme-file`: load a YAML theme for Mermaid + SVG colors (see `examples/theme.yaml` and `examples/theme-dark.yaml`).
 
 Output:
-- `--format mermaid|svg|svg-iso|lldp-md`: output format (default mermaid).
+- `--format mermaid|svg|svg-iso|lldp-md|mkdocs`: output format (default mermaid).
 - `--stdout`: write output to stdout.
 - `--markdown`: wrap Mermaid output in a code fence.
 

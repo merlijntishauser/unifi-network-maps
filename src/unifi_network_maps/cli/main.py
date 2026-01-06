@@ -19,7 +19,7 @@ from ..model.topology import (
     normalize_devices,
 )
 from ..render.lldp_md import render_lldp_md
-from ..render.mermaid import render_legend, render_mermaid
+from ..render.mermaid import render_legend, render_legend_compact, render_mermaid
 from ..render.mermaid_theme import MermaidTheme
 from ..render.svg import SvgOptions, render_svg
 from ..render.svg_theme import SvgTheme
@@ -85,6 +85,18 @@ def _add_mermaid_args(parser: argparse._ArgumentGroup) -> None:
         help="Group nodes by gateway/switch/ap in Mermaid subgraphs",
     )
     parser.add_argument(
+        "--legend-scale",
+        type=float,
+        default=1.0,
+        help="Scale legend font/link sizes for Mermaid output (default: 1.0)",
+    )
+    parser.add_argument(
+        "--legend-style",
+        default="auto",
+        choices=["auto", "compact", "diagram"],
+        help="Legend style (auto uses compact for mkdocs, diagram otherwise)",
+    )
+    parser.add_argument(
         "--legend-only",
         action="store_true",
         help="Render only the legend as a separate Mermaid graph",
@@ -101,7 +113,7 @@ def _add_general_render_args(parser: argparse._ArgumentGroup) -> None:
     parser.add_argument(
         "--format",
         default="mermaid",
-        choices=["mermaid", "svg", "svg-iso", "lldp-md"],
+        choices=["mermaid", "svg", "svg-iso", "lldp-md", "mkdocs"],
         help="Output format",
     )
     parser.add_argument(
@@ -145,8 +157,18 @@ def _resolve_site(args: argparse.Namespace, config: Config) -> str:
     return args.site or config.site
 
 
+def _resolve_legend_style(args: argparse.Namespace) -> str:
+    if args.legend_style == "auto":
+        return "compact" if args.format == "mkdocs" else "diagram"
+    return args.legend_style
+
+
 def _render_legend_only(args: argparse.Namespace, mermaid_theme: MermaidTheme) -> str:
-    content = render_legend(theme=mermaid_theme)
+    legend_style = _resolve_legend_style(args)
+    if legend_style == "compact":
+        content = "# Legend\n\n" + render_legend_compact(theme=mermaid_theme)
+    else:
+        content = render_legend(theme=mermaid_theme, legend_scale=args.legend_scale)
     if args.markdown:
         content = f"""```mermaid
 {content}```
@@ -165,14 +187,18 @@ def _load_devices_data(
 
 
 def _build_topology_data(
-    args: argparse.Namespace, config: Config, site: str
+    args: argparse.Namespace,
+    config: Config,
+    site: str,
+    *,
+    include_ports: bool | None = None,
 ) -> tuple[list[Device], list[str], object]:
     _raw_devices, devices = _load_devices_data(args, config, site)
     groups_for_rank = group_devices_by_type(devices)
     gateways = groups_for_rank.get("gateway", [])
     topology = build_topology(
         devices,
-        include_ports=args.include_ports,
+        include_ports=include_ports if include_ports is not None else args.include_ports,
         only_unifi=args.only_unifi,
         gateways=gateways,
     )
@@ -236,6 +262,38 @@ def _render_mermaid_output(
     return content
 
 
+def _render_mkdocs_output(
+    args: argparse.Namespace,
+    devices: list[Device],
+    topology: object,
+    config: Config,
+    site: str,
+    mermaid_theme: MermaidTheme,
+) -> str:
+    edges, _has_tree = _select_edges(topology)
+    clients = None
+    content = render_mermaid(
+        edges,
+        direction=args.direction,
+        node_types=build_node_type_map(devices, clients, client_mode=args.client_scope),
+        theme=mermaid_theme,
+    )
+    legend_style = _resolve_legend_style(args)
+    if legend_style == "compact":
+        legend_block = render_legend_compact(theme=mermaid_theme)
+        legend_header = ""
+    else:
+        legend_block = (
+            "```mermaid\n"
+            + render_legend(theme=mermaid_theme, legend_scale=args.legend_scale)
+            + "```"
+        )
+        legend_header = "## Legend\n\n"
+    return (
+        f"# UniFi network\n\n## Map\n\n```mermaid\n{content}```\n\n{legend_header}{legend_block}\n"
+    )
+
+
 def _render_svg_output(
     args: argparse.Namespace,
     devices: list[Device],
@@ -296,13 +354,18 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     try:
-        devices, _gateways, topology = _build_topology_data(args, config, site)
+        include_ports = True if args.format == "mkdocs" else None
+        devices, _gateways, topology = _build_topology_data(
+            args, config, site, include_ports=include_ports
+        )
     except Exception as exc:
         logging.error("Failed to build topology: %s", exc)
         return 1
 
     if args.format == "mermaid":
         content = _render_mermaid_output(args, devices, topology, config, site, mermaid_theme)
+    elif args.format == "mkdocs":
+        content = _render_mkdocs_output(args, devices, topology, config, site, mermaid_theme)
     elif args.format in {"svg", "svg-iso"}:
         content = _render_svg_output(args, devices, topology, config, site, svg_theme)
     else:

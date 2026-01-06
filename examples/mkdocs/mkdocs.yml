@@ -7,7 +7,6 @@ theme:
 nav:
   - unifi-network: unifi-network.md
 markdown_extensions:
-  - pymdownx.snippets
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid

@@ -206,9 +206,10 @@ SVG:
 - `--theme-file`
 
 Output:
-- `--format mermaid|svg|svg-iso|lldp-md`
+- `--format mermaid|svg|svg-iso|lldp-md|mkdocs`
 - `--markdown`
 - `--stdout`
+- `--mkdocs-snippets`
 
 Debug:
 - `--debug-dump`

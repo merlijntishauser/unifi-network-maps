@@ -129,8 +129,19 @@ def render_mermaid(
     return "\n".join(lines) + "\n"
 
 
-def render_legend(theme: MermaidTheme = DEFAULT_THEME) -> str:
+def render_legend(theme: MermaidTheme = DEFAULT_THEME, *, legend_scale: float = 1.0) -> str:
+    scale = legend_scale if legend_scale > 0 else 1.0
+    legend_font_size = max(7, round(10 * scale))
+    poe_link_width = max(1, round(theme.poe_link_width * scale))
+    standard_link_width = max(1, round(theme.standard_link_width * scale))
+    node_spacing = max(10, round(50 * scale))
+    rank_spacing = max(10, round(50 * scale))
+    node_padding = max(4, round(12 * scale))
     lines = [
+        "%%{init: {"
+        f'"flowchart": {{"nodeSpacing": {node_spacing}, "rankSpacing": {rank_spacing}}}, '
+        f'"themeVariables": {{"fontSize": "{legend_font_size}px", "nodePadding": {node_padding}}}'
+        "}}%%",
         "graph TB",
         '  subgraph legend["Legend"];',
         '    legend_gateway["Gateway"];',
@@ -158,14 +169,60 @@ def render_legend(theme: MermaidTheme = DEFAULT_THEME) -> str:
         "  class legend_no_poe_b node_legend;",
     ]
     lines.extend(class_defs(theme))
+    lines.append(f"  classDef node_legend font-size:{legend_font_size}px;")
     lines.append(
         "  linkStyle 0 "
-        f"stroke:{theme.poe_link},stroke-width:{theme.poe_link_width}px,"
+        f"stroke:{theme.poe_link},stroke-width:{poe_link_width}px,"
         f"arrowhead:{theme.poe_link_arrow};"
     )
     lines.append(
         "  linkStyle 1 "
-        f"stroke:{theme.standard_link},stroke-width:{theme.standard_link_width}px,"
+        f"stroke:{theme.standard_link},stroke-width:{standard_link_width}px,"
         f"arrowhead:{theme.standard_link_arrow};"
     )
+    return "\n".join(lines) + "\n"
+
+
+def render_legend_compact(theme: MermaidTheme = DEFAULT_THEME) -> str:
+    def swatch(fill: str, stroke: str, label: str) -> str:
+        return (
+            f'<span style="display:inline-block;width:12px;height:12px;'
+            f"background:{fill};border:1px solid {stroke};border-radius:2px;"
+            f'margin-right:6px;"></span>{label}'
+        )
+
+    def line_sample(
+        color: str,
+        width: int,
+        *,
+        dashed: bool = False,
+        label: str = "",
+        bolt: bool = False,
+    ) -> str:
+        dash = ' stroke-dasharray="5 4"' if dashed else ""
+        bolt_suffix = " ⚡" if bolt else ""
+        return (
+            f'<span style="display:inline-flex;align-items:center;gap:6px;">'
+            f'<svg width="42" height="10" viewBox="0 0 42 10" '
+            f'xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+            f'<line x1="2" y1="5" x2="40" y2="5" stroke="{color}" '
+            f'stroke-width="{max(1, width)}"{dash} />'
+            f"</svg>{label}{bolt_suffix}</span>"
+        )
+
+    rows = [
+        swatch(theme.node_gateway[0], theme.node_gateway[1], "Gateway"),
+        swatch(theme.node_switch[0], theme.node_switch[1], "Switch"),
+        swatch(theme.node_ap[0], theme.node_ap[1], "AP"),
+        swatch(theme.node_client[0], theme.node_client[1], "Client"),
+        swatch(theme.node_other[0], theme.node_other[1], "Other"),
+        line_sample(theme.poe_link, theme.poe_link_width, label="PoE", bolt=True),
+        line_sample(theme.standard_link, theme.standard_link_width, label="Link"),
+        line_sample(theme.standard_link, theme.standard_link_width, dashed=True, label="Wireless"),
+    ]
+    lines = [
+        "| Legend |",
+        "| --- |",
+    ]
+    lines.extend(f"| {style} |" for style in rows)
     return "\n".join(lines) + "\n"

@@ -1,6 +1,7 @@
-.PHONY: venv install lint format test coverage smoketest ci version version-sync version-bump help
+.PHONY: venv install lint format test coverage smoketest smoketest-mock mock-data ci version version-sync version-bump help
 
 VERSION_FILE = VERSION
+PYTHON ?= python
 
 venv:
 	python -m venv .venv
@@ -60,6 +61,16 @@ smoketest:
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --theme-file src/unifi_network_maps/assets/themes/dark.yaml --format svg --output smoketest/themes/svg_dark.svg
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --theme-file src/unifi_network_maps/assets/themes/default.yaml --format svg-iso --output smoketest/themes/svg_iso_default.svg
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --theme-file src/unifi_network_maps/assets/themes/dark.yaml --format svg-iso --output smoketest/themes/svg_iso_dark.svg
+
+smoketest-mock:
+	@rm -rf smoketest-mock
+	@mkdir -p smoketest-mock
+	PYTHONPATH=src $(PYTHON) -m unifi_network_maps.cli --mock-data examples/mock_data.json --include-ports --stdout > smoketest-mock/network_ports.mmd
+	PYTHONPATH=src $(PYTHON) -m unifi_network_maps.cli --mock-data examples/mock_data.json --include-ports --include-clients --format svg-iso --output smoketest-mock/network_ports_clients_iso.svg
+
+mock-data:
+	PYTHONPATH=src $(PYTHON) -m unifi_network_maps.cli --generate-mock examples/mock_data.json --mock-seed 1337
+	PYTHONPATH=src $(PYTHON) -m unifi_network_maps.cli --mock-data examples/mock_data.json --include-ports --include-clients --format svg-iso --output examples/output/network_ports_clients_iso.svg
 
 version:
 	@echo $(VERSION)

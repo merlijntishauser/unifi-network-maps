@@ -17,18 +17,32 @@ class LLDPEntry:
 
 
 def coerce_lldp(entry: object) -> LLDPEntry:
-    chassis_id = getattr(entry, "chassis_id", None) or getattr(entry, "chassisId", None)
-    port_id = getattr(entry, "port_id", None) or getattr(entry, "portId", None)
-    port_desc = (
-        getattr(entry, "port_desc", None)
-        or getattr(entry, "portDesc", None)
-        or getattr(entry, "port_descr", None)
-        or getattr(entry, "portDescr", None)
-    )
-    local_port_name = getattr(entry, "local_port_name", None) or getattr(
-        entry, "localPortName", None
-    )
-    local_port_idx = getattr(entry, "local_port_idx", None) or getattr(entry, "localPortIdx", None)
+    if isinstance(entry, dict):
+        chassis_id = entry.get("chassis_id") or entry.get("chassisId")
+        port_id = entry.get("port_id") or entry.get("portId")
+        port_desc = (
+            entry.get("port_desc")
+            or entry.get("portDesc")
+            or entry.get("port_descr")
+            or entry.get("portDescr")
+        )
+        local_port_name = entry.get("local_port_name") or entry.get("localPortName")
+        local_port_idx = entry.get("local_port_idx") or entry.get("localPortIdx")
+    else:
+        chassis_id = getattr(entry, "chassis_id", None) or getattr(entry, "chassisId", None)
+        port_id = getattr(entry, "port_id", None) or getattr(entry, "portId", None)
+        port_desc = (
+            getattr(entry, "port_desc", None)
+            or getattr(entry, "portDesc", None)
+            or getattr(entry, "port_descr", None)
+            or getattr(entry, "portDescr", None)
+        )
+        local_port_name = getattr(entry, "local_port_name", None) or getattr(
+            entry, "localPortName", None
+        )
+        local_port_idx = getattr(entry, "local_port_idx", None) or getattr(
+            entry, "localPortIdx", None
+        )
     if not chassis_id or not port_id:
         raise ValueError("LLDP entry missing chassis_id or port_id")
     return LLDPEntry(

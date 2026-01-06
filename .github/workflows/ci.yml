@@ -16,16 +16,21 @@ jobs:
       - name: Install package (local check)
         run: |
           python -m pip install --upgrade pip
-          python -m pip install .
+          python -m pip install -r requirements-build.txt
+          python -m pip install -e . -c constraints.txt
       - name: Install dev dependencies
         run: |
-          python -m pip install -e ".[dev]"
+          python -m pip install -r requirements-dev.txt -c constraints.txt
       - name: Lint (ruff)
         run: |
           ruff check .
       - name: Tests (pytest)
         run: |
           pytest
+      - name: Mock smoketest
+        run: |
+          python -m unifi_network_maps.cli --mock-data examples/mock_data.json --include-ports --stdout > /tmp/network_ports.mmd
+          python -m unifi_network_maps.cli --mock-data examples/mock_data.json --include-ports --include-clients --format svg-iso --output /tmp/network_ports_clients_iso.svg
       - name: Build dist
         run: |
           python -m pip install build

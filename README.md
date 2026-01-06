@@ -94,6 +94,49 @@ Legend only:
 unifi-network-maps --legend-only --stdout
 ```
 
+## Examples (mock data)
+
+These examples are generated from `examples/mock_data.json` (safe, anonymized fixture).
+Mock generation requires dev dependencies (`pip install -r requirements-dev.txt -c constraints.txt`).
+Regenerate the fixture + SVG with `make mock-data`.
+
+Generate mock data (dev-only, uses Faker):
+
+```bash
+unifi-network-maps --generate-mock examples/mock_data.json --mock-seed 1337
+```
+
+Generate the isometric SVG:
+
+```bash
+unifi-network-maps --mock-data examples/mock_data.json \
+  --include-ports --include-clients --format svg-iso \
+  --output examples/output/network_ports_clients_iso.svg
+```
+
+![Isometric network example](examples/output/network_ports_clients_iso.svg)
+
+Mermaid example with ports:
+
+```mermaid
+graph TB
+  core_switch["Core Switch"] ---|"Core Switch: Port 7 (AP Attic) <-> AP Attic: Port 1 (Core Switch)"| ap_attic["AP Attic"];
+  core_switch["Core Switch"] ---|"Core Switch: Port 3 (AP Living Room) <-> AP Living Room: Port 1 (Core Switch)"| ap_living_room["AP Living Room"];
+  cloud_gateway["Cloud Gateway"] ---|"Cloud Gateway: Port 9 (Core Switch) <-> Core Switch: Port 1 (Cloud Gateway)"| core_switch["Core Switch"];
+  class cloud_gateway node_gateway;
+  class core_switch node_switch;
+  class ap_living_room node_ap;
+  class ap_attic node_ap;
+  classDef node_gateway fill:#ffe3b3,stroke:#d98300,stroke-width:1px;
+  classDef node_switch fill:#d6ecff,stroke:#3a7bd5,stroke-width:1px;
+  classDef node_ap fill:#d7f5e7,stroke:#27ae60,stroke-width:1px;
+  classDef node_client fill:#f2e5ff,stroke:#7f3fbf,stroke-width:1px;
+  classDef node_other fill:#eeeeee,stroke:#8f8f8f,stroke-width:1px;
+  classDef node_legend font-size:10px;
+  linkStyle 0 stroke:#1e88e5,stroke-width:2px,arrowhead:none;
+  linkStyle 1 stroke:#1e88e5,stroke-width:2px,arrowhead:none;
+```
+
 ## Local install check
 
 ```bash
@@ -146,6 +189,14 @@ The CLI groups options by category (`Source`, `Functional`, `Mermaid`, `SVG`, `O
 Source:
 - `--site`: override `UNIFI_SITE`.
 - `--env-file`: load environment variables from a specific `.env` file.
+- `--mock-data`: use mock data JSON instead of the UniFi API.
+Mock:
+- `--generate-mock`: write mock data JSON and exit.
+- `--mock-seed`: seed for deterministic mock generation.
+- `--mock-switches`: number of switches to generate.
+- `--mock-aps`: number of access points to generate.
+- `--mock-wired-clients`: number of wired clients to generate.
+- `--mock-wireless-clients`: number of wireless clients to generate.
 
 Functional:
 - `--include-ports`: show port labels (Mermaid shows both ends; SVG shows compact labels).

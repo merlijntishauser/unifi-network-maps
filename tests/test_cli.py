@@ -1,5 +1,6 @@
 import builtins
 import importlib
+import json
 import logging
 import runpy
 import sys
@@ -18,6 +19,45 @@ def test_main_returns_error_on_config_failure(monkeypatch):
 
     monkeypatch.setattr(cli_module.Config, "from_env", raise_config)
     assert main([]) == 2
+
+
+def test_main_generate_mock_skips_config(monkeypatch, tmp_path):
+    def fail_config(**_kwargs):
+        raise AssertionError("Config should not load for mock generation")
+
+    monkeypatch.setattr(cli_module.Config, "from_env", fail_config)
+    output_path = tmp_path / "mock.json"
+    assert main(["--generate-mock", str(output_path)]) == 0
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    assert "devices" in payload
+
+
+def test_main_mock_data_skips_config(monkeypatch, tmp_path):
+    payload = {
+        "devices": [
+            {
+                "name": "Gateway",
+                "model_name": "",
+                "model": "",
+                "mac": "aa:bb",
+                "ip": "",
+                "type": "udm",
+                "lldp_info": [],
+            }
+        ],
+        "clients": [],
+    }
+    mock_path = tmp_path / "mock.json"
+    mock_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    def fail_config(**_kwargs):
+        raise AssertionError("Config should not load for mock data")
+
+    monkeypatch.setattr(cli_module.Config, "from_env", fail_config)
+    monkeypatch.setattr(cli_module, "render_mermaid", lambda *args, **kwargs: "graph TB\n")
+    monkeypatch.setattr(cli_module, "write_output", lambda *args, **kwargs: None)
+
+    assert main(["--mock-data", str(mock_path), "--stdout"]) == 0
 
 
 def test_load_dotenv_logs_when_missing(monkeypatch, caplog):

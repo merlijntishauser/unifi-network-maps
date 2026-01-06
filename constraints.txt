@@ -1,6 +1,7 @@
 unifi-controller-api==0.3.2
 python-dotenv==1.2.1
 PyYAML==6.0.3
+Faker==40.1.0
 pre-commit==4.5.1
 pytest==9.0.2
 pytest-cov==7.0.0

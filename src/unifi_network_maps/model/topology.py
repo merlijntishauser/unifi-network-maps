@@ -6,7 +6,7 @@ import logging
 from collections import deque
 from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Protocol, TypeAlias
+from typing import Protocol
 
 from .labels import compose_port_label, order_edge_names
 from .lldp import LLDPEntry, coerce_lldp, local_port_label
@@ -83,12 +83,14 @@ class PortInfo:
     poe_power: float | None
 
 
-PortMap: TypeAlias = dict[tuple[str, str], str]
-PoeMap: TypeAlias = dict[tuple[str, str], bool]
-ClientPortMap: TypeAlias = dict[str, list[tuple[int, str]]]
+type PortMap = dict[tuple[str, str], str]
+type PoeMap = dict[tuple[str, str], bool]
+type ClientPortMap = dict[str, list[tuple[int, str]]]
 
 
 def _get_attr(obj: object, name: str) -> object | None:
+    if isinstance(obj, dict):
+        return obj.get(name)
     return getattr(obj, name, None)
 
 

@@ -9,6 +9,7 @@ from ..adapters.config import Config
 from ..adapters.unifi import fetch_clients, fetch_devices
 from ..io.debug import debug_dump_devices
 from ..io.export import write_output
+from ..io.mock_data import load_mock_data
 from ..model.topology import (
     ClientPortMap,
     Device,
@@ -47,6 +48,7 @@ def _build_parser() -> argparse.ArgumentParser:
         description="Generate network maps from UniFi LLDP data, as mermaid or SVG"
     )
     _add_source_args(parser.add_argument_group("Source"))
+    _add_mock_args(parser.add_argument_group("Mock"))
     _add_functional_args(parser.add_argument_group("Functional"))
     _add_mermaid_args(parser.add_argument_group("Mermaid"))
     _add_svg_args(parser.add_argument_group("SVG"))
@@ -61,6 +63,44 @@ def _add_source_args(parser: argparse._ArgumentGroup) -> None:
         "--env-file",
         default=None,
         help="Path to .env file (overrides default .env discovery)",
+    )
+    parser.add_argument(
+        "--mock-data",
+        default=None,
+        help="Path to mock data JSON (skips UniFi API calls)",
+    )
+
+
+def _add_mock_args(parser: argparse._ArgumentGroup) -> None:
+    parser.add_argument(
+        "--generate-mock",
+        default=None,
+        help="Write mock data JSON to the given path and exit",
+    )
+    parser.add_argument("--mock-seed", type=int, default=1337, help="Seed for mock generation")
+    parser.add_argument(
+        "--mock-switches",
+        type=int,
+        default=1,
+        help="Number of switches to generate (default: 1)",
+    )
+    parser.add_argument(
+        "--mock-aps",
+        type=int,
+        default=2,
+        help="Number of access points to generate (default: 2)",
+    )
+    parser.add_argument(
+        "--mock-wired-clients",
+        type=int,
+        default=2,
+        help="Number of wired clients to generate (default: 2)",
+    )
+    parser.add_argument(
+        "--mock-wireless-clients",
+        type=int,
+        default=2,
+        help="Number of wireless clients to generate (default: 2)",
     )
 
 
@@ -187,9 +227,18 @@ def _render_legend_only(args: argparse.Namespace, mermaid_theme: MermaidTheme) -
 
 
 def _load_devices_data(
-    args: argparse.Namespace, config: Config, site: str
+    args: argparse.Namespace,
+    config: Config | None,
+    site: str,
+    *,
+    raw_devices_override: list[object] | None = None,
 ) -> tuple[list[object], list[Device]]:
-    raw_devices = list(fetch_devices(config, site=site, detailed=True))
+    if raw_devices_override is None:
+        if config is None:
+            raise ValueError("Config required to fetch devices")
+        raw_devices = list(fetch_devices(config, site=site, detailed=True))
+    else:
+        raw_devices = raw_devices_override
     devices = normalize_devices(raw_devices)
     if args.debug_dump:
         debug_dump_devices(raw_devices, devices, sample_count=max(0, args.debug_sample))
@@ -198,12 +247,18 @@ def _load_devices_data(
 
 def _build_topology_data(
     args: argparse.Namespace,
-    config: Config,
+    config: Config | None,
     site: str,
     *,
     include_ports: bool | None = None,
+    raw_devices_override: list[object] | None = None,
 ) -> tuple[list[Device], list[str], object]:
-    _raw_devices, devices = _load_devices_data(args, config, site)
+    _raw_devices, devices = _load_devices_data(
+        args,
+        config,
+        site,
+        raw_devices_override=raw_devices_override,
+    )
     groups_for_rank = group_devices_by_type(devices)
     gateways = groups_for_rank.get("gateway", [])
     topology = build_topology(
@@ -219,12 +274,19 @@ def _build_edges_with_clients(
     args: argparse.Namespace,
     edges: list,
     devices: list[Device],
-    config: Config,
+    config: Config | None,
     site: str,
+    *,
+    clients_override: list[object] | None = None,
 ) -> tuple[list, list | None]:
     clients = None
     if args.include_clients:
-        clients = list(fetch_clients(config, site=site))
+        if clients_override is None:
+            if config is None:
+                raise ValueError("Config required to fetch clients")
+            clients = list(fetch_clients(config, site=site))
+        else:
+            clients = clients_override
         device_index = build_device_index(devices)
         edges = edges + build_client_edges(
             clients,
@@ -246,12 +308,21 @@ def _render_mermaid_output(
     args: argparse.Namespace,
     devices: list[Device],
     topology: object,
-    config: Config,
+    config: Config | None,
     site: str,
     mermaid_theme: MermaidTheme,
+    *,
+    clients_override: list[object] | None = None,
 ) -> str:
     edges, _has_tree = _select_edges(topology)
-    edges, clients = _build_edges_with_clients(args, edges, devices, config, site)
+    edges, clients = _build_edges_with_clients(
+        args,
+        edges,
+        devices,
+        config,
+        site,
+        clients_override=clients_override,
+    )
     groups = None
     group_order = None
     if args.group_by_type:
@@ -376,12 +447,21 @@ def _render_svg_output(
     args: argparse.Namespace,
     devices: list[Device],
     topology: object,
-    config: Config,
+    config: Config | None,
     site: str,
     svg_theme: SvgTheme,
+    *,
+    clients_override: list[object] | None = None,
 ) -> str:
     edges, _has_tree = _select_edges(topology)
-    edges, clients = _build_edges_with_clients(args, edges, devices, config, site)
+    edges, clients = _build_edges_with_clients(
+        args,
+        edges,
+        devices,
+        config,
+        site,
+        clients_override=clients_override,
+    )
     options = SvgOptions(width=args.svg_width, height=args.svg_height)
     if args.format == "svg-iso":
         from ..render.svg import render_svg_isometric
@@ -403,10 +483,37 @@ def _render_svg_output(
 def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     args = _parse_args(argv)
-    config = _load_config(args)
-    if config is None:
-        return 2
-    site = _resolve_site(args, config)
+    if args.generate_mock:
+        try:
+            from ..io.mock_generate import MockOptions, mock_payload_json
+        except ImportError as exc:
+            logging.error("Faker is required for --generate-mock: %s", exc)
+            return 2
+        options = MockOptions(
+            seed=args.mock_seed,
+            switch_count=max(1, args.mock_switches),
+            ap_count=max(0, args.mock_aps),
+            wired_client_count=max(0, args.mock_wired_clients),
+            wireless_client_count=max(0, args.mock_wireless_clients),
+        )
+        content = mock_payload_json(options)
+        write_output(content, output_path=args.generate_mock, stdout=args.stdout)
+        return 0
+    mock_devices = None
+    mock_clients: list[object] | None = None
+    if args.mock_data:
+        try:
+            mock_devices, mock_clients = load_mock_data(args.mock_data)
+        except Exception as exc:  # noqa: BLE001
+            logging.error("Failed to load mock data: %s", exc)
+            return 2
+        config = None
+        site = "mock"
+    else:
+        config = _load_config(args)
+        if config is None:
+            return 2
+        site = _resolve_site(args, config)
     mermaid_theme, svg_theme = resolve_themes(args.theme_file)
 
     if args.legend_only:
@@ -416,11 +523,22 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.format == "lldp-md":
         try:
-            _raw_devices, devices = _load_devices_data(args, config, site)
+            _raw_devices, devices = _load_devices_data(
+                args,
+                config,
+                site,
+                raw_devices_override=mock_devices,
+            )
         except Exception as exc:
             logging.error("Failed to load devices: %s", exc)
             return 1
-        clients = list(fetch_clients(config, site=site))
+        if mock_clients is None:
+            if config is None:
+                logging.error("Mock data required for client rendering")
+                return 2
+            clients = list(fetch_clients(config, site=site))
+        else:
+            clients = mock_clients
         content = render_lldp_md(
             devices,
             clients=clients,
@@ -434,14 +552,26 @@ def main(argv: list[str] | None = None) -> int:
     try:
         include_ports = True if args.format == "mkdocs" else None
         devices, _gateways, topology = _build_topology_data(
-            args, config, site, include_ports=include_ports
+            args,
+            config,
+            site,
+            include_ports=include_ports,
+            raw_devices_override=mock_devices,
         )
     except Exception as exc:
         logging.error("Failed to build topology: %s", exc)
         return 1
 
     if args.format == "mermaid":
-        content = _render_mermaid_output(args, devices, topology, config, site, mermaid_theme)
+        content = _render_mermaid_output(
+            args,
+            devices,
+            topology,
+            config,
+            site,
+            mermaid_theme,
+            clients_override=mock_clients,
+        )
     elif args.format == "mkdocs":
         if args.mkdocs_sidebar_legend and not args.output:
             logging.error("--mkdocs-sidebar-legend requires --output")
@@ -451,13 +581,27 @@ def main(argv: list[str] | None = None) -> int:
         port_map = build_port_map(devices, only_unifi=args.only_unifi)
         client_ports = None
         if args.include_clients:
-            clients = list(fetch_clients(config, site=site))
+            if mock_clients is None:
+                if config is None:
+                    logging.error("Mock data required for client rendering")
+                    return 2
+                clients = list(fetch_clients(config, site=site))
+            else:
+                clients = mock_clients
             client_ports = build_client_port_map(devices, clients, client_mode=args.client_scope)
         content = _render_mkdocs_output(
             args, devices, topology, config, site, mermaid_theme, port_map, client_ports
         )
     elif args.format in {"svg", "svg-iso"}:
-        content = _render_svg_output(args, devices, topology, config, site, svg_theme)
+        content = _render_svg_output(
+            args,
+            devices,
+            topology,
+            config,
+            site,
+            svg_theme,
+            clients_override=mock_clients,
+        )
     else:
         logging.error("Unsupported format: %s", args.format)
         return 2

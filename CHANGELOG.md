@@ -9,6 +9,11 @@ All notable changes to this project will be documented in this file.
 - LLDP markdown includes the same device details and port tables when enabled.
 - Improved uplink labeling (gateway shows Internet for WAN/unknown).
 - Aggregated ports are combined into single LAG rows.
+- Bumped minimum Python to 3.13 and aligned CI to 3.13.
+- Pinned runtime/dev/build dependencies and added `requirements*.txt` + `constraints.txt`.
+- Added `--mock-data` for safe, offline rendering from fixtures.
+- Added Faker-powered `--generate-mock` for deterministic mock fixtures (dev-only).
+- Added mock fixtures + SVG/Mermaid examples, with mock smoketest/CI steps.
 
 ## v1.3.1
 - Added `lldp-md` output with per-device details tables and optional client sections.

@@ -1,0 +1,14 @@
+site_name: UniFi Network Maps
+site_url: https://example.local/
+theme:
+  name: material
+  features:
+    - content.code.copy
+nav:
+  - unifi-network: unifi-network.md
+markdown_extensions:
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid

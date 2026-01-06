@@ -194,5 +194,10 @@ svg:
       to: "#b6dcff"
 ```
 
+## MkDocs Material example
+
+See `examples/mkdocs/` for a ready-to-use setup that renders Mermaid diagrams
+with Material for MkDocs, including a sample `unifi-network` page and legend.
+
 The built-in themes live at `src/unifi_network_maps/assets/themes/default.yaml` and
 `src/unifi_network_maps/assets/themes/dark.yaml`.

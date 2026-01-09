@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## v1.4.2 (unreleased)
 - Added static code analysis and stricter type-checking
+- Added contract tests for UniFi API wrapper with fixture-based validation.
+- Added optional live UniFi contract tests (gated by `UNIFI_CONTRACT_LIVE=1`).
+- Split CI into dedicated jobs and added a contract-test job.
+- Added mkdocs timestamp (timezone configurable via `--mkdocs-timestamp-zone`).
 
 ## v1.4.1
 - pip install was broken, fixed.

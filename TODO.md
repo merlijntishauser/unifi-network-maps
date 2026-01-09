@@ -26,5 +26,4 @@
   - Feasibility: Low; requires external QR library and decisions on what to encode (device URL/IP/name).
   - Plan: add optional `--include-qr` with opt-in dependency; render QR nodes or sidecar assets.
 
-- contract test with unifi api, make sure the api call results match our expectations
 - webinterface?!

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import argparse
 import logging
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from ..adapters.config import Config
 from ..adapters.unifi import fetch_clients, fetch_devices
@@ -173,6 +175,11 @@ def _add_general_render_args(parser: argparse._ArgumentGroup) -> None:
         "--mkdocs-sidebar-legend",
         action="store_true",
         help="For mkdocs output, write sidebar legend assets next to the output file",
+    )
+    parser.add_argument(
+        "--mkdocs-timestamp-zone",
+        default="Europe/Amsterdam",
+        help="Timezone for mkdocs generated timestamp (use 'off' to disable)",
     )
 
 
@@ -351,6 +358,7 @@ def _render_mkdocs_output(
     mermaid_theme: MermaidTheme,
     port_map: PortMap,
     client_ports: ClientPortMap | None,
+    timestamp_zone: str,
 ) -> str:
     edges, _has_tree = _select_edges(topology)
     clients = None
@@ -375,8 +383,17 @@ def _render_mkdocs_output(
             + "```"
         )
         legend_header = "## Legend\n\n"
+    timestamp_line = ""
+    if timestamp_zone.strip().lower() not in {"off", "none", "false"}:
+        try:
+            zone = ZoneInfo(timestamp_zone)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Invalid mkdocs timestamp zone '%s': %s", timestamp_zone, exc)
+        else:
+            generated_at = datetime.now(zone).strftime("%Y-%m-%d %H:%M:%S %Z")
+            timestamp_line = f"Generated: {generated_at}\n\n"
     return (
-        f"# UniFi network\n\n## Map\n\n```mermaid\n{content}```\n\n"
+        f"# UniFi network\n\n{timestamp_line}## Map\n\n```mermaid\n{content}```\n\n"
         f"{legend_header}{legend_block}\n\n"
         f"{render_device_port_overview(devices, port_map, client_ports=client_ports)}"
     )
@@ -608,6 +625,7 @@ def _render_standard_format(
             mermaid_theme,
             port_map,
             client_ports,
+            args.mkdocs_timestamp_zone,
         )
     elif args.format in {"svg", "svg-iso"}:
         content = _render_svg_output(

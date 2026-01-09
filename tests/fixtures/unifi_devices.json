@@ -1,0 +1,86 @@
+{
+  "devices": [
+    {
+      "name": "Gateway",
+      "model_name": "UXG",
+      "model": "UXG",
+      "mac": "aa:bb:cc:dd:ee:01",
+      "ip": "192.168.1.1",
+      "type": "gateway",
+      "lldp_info": [
+        {
+          "chassis_id": "aa:bb:cc:dd:ee:02",
+          "port_id": "eth0",
+          "local_port_idx": 1,
+          "local_port_name": "Port 1"
+        }
+      ],
+      "port_table": [
+        {
+          "port_idx": 1,
+          "name": "Port 1",
+          "ifname": "eth0",
+          "poe_enable": false,
+          "speed": 1000
+        }
+      ]
+    },
+    {
+      "name": "Core Switch",
+      "model_name": "USW",
+      "model": "USW",
+      "mac": "aa:bb:cc:dd:ee:02",
+      "ip": "192.168.1.2",
+      "type": "switch",
+      "lldp_info": [
+        {
+          "chassis_id": "aa:bb:cc:dd:ee:01",
+          "port_id": "eth0",
+          "local_port_idx": 9,
+          "local_port_name": "Port 9"
+        },
+        {
+          "chassis_id": "aa:bb:cc:dd:ee:03",
+          "port_id": "eth1",
+          "local_port_idx": 2,
+          "local_port_name": "Port 2",
+          "port_desc": "uplink ap"
+        }
+      ],
+      "port_table": [
+        {
+          "port_idx": 2,
+          "name": "Port 2",
+          "ifname": "eth1",
+          "poe_enable": true,
+          "poe_power": 7.1,
+          "speed": 1000
+        },
+        {
+          "port_idx": 9,
+          "name": "Port 9",
+          "ifname": "eth8",
+          "poe_enable": false,
+          "speed": 1000
+        }
+      ]
+    },
+    {
+      "name": "AP Office",
+      "model_name": "UAP",
+      "model": "UAP",
+      "mac": "aa:bb:cc:dd:ee:03",
+      "ip": "192.168.1.3",
+      "type": "ap",
+      "lldp_info": [
+        {
+          "chassis_id": "aa:bb:cc:dd:ee:02",
+          "port_id": "eth0",
+          "local_port_idx": 0,
+          "local_port_name": "eth0"
+        }
+      ],
+      "port_table": []
+    }
+  ]
+}

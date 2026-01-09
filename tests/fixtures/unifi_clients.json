@@ -1,0 +1,18 @@
+{
+  "clients": [
+    {
+      "name": "Desk PC",
+      "is_wired": true,
+      "sw_mac": "aa:bb:cc:dd:ee:02",
+      "sw_port": 5,
+      "mac": "aa:bb:cc:dd:ee:10",
+      "ip": "192.168.1.50"
+    },
+    {
+      "name": "Phone",
+      "is_wired": false,
+      "ap_mac": "aa:bb:cc:dd:ee:03",
+      "mac": "aa:bb:cc:dd:ee:11"
+    }
+  ]
+}

@@ -12,3 +12,8 @@ repos:
         entry: .venv/bin/pyright
         language: system
         pass_filenames: false
+      - id: pytest
+        name: pytest
+        entry: .venv/bin/pytest
+        language: system
+        pass_filenames: false

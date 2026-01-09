@@ -127,7 +127,9 @@ def test_fetch_devices_uses_cache(monkeypatch, tmp_path):
 
     monkeypatch.setattr(unifi, "_init_controller", fail_init)
     devices = list(unifi.fetch_devices(config))
-    assert devices[0]["name"] == "cached"
+    device = devices[0]
+    assert isinstance(device, dict)
+    assert device["name"] == "cached"
 
 
 def test_fetch_clients_cache_expired(monkeypatch, tmp_path):
@@ -150,7 +152,9 @@ def test_fetch_clients_cache_expired(monkeypatch, tmp_path):
 
     monkeypatch.setattr(unifi, "_init_controller", lambda *_a, **_k: Controller())
     clients = list(unifi.fetch_clients(config))
-    assert clients[0]["fresh"] is True
+    client = clients[0]
+    assert isinstance(client, dict)
+    assert client["fresh"] is True
 
 
 def test_fetch_devices_uses_stale_cache_on_error(monkeypatch, tmp_path):
@@ -173,7 +177,9 @@ def test_fetch_devices_uses_stale_cache_on_error(monkeypatch, tmp_path):
 
     monkeypatch.setattr(unifi, "_init_controller", lambda *_a, **_k: Controller())
     devices = list(unifi.fetch_devices(config))
-    assert devices[0]["stale"] is True
+    device = devices[0]
+    assert isinstance(device, dict)
+    assert device["stale"] is True
 
 
 def test_fetch_clients_uses_stale_cache_on_error(monkeypatch, tmp_path):
@@ -196,7 +202,9 @@ def test_fetch_clients_uses_stale_cache_on_error(monkeypatch, tmp_path):
 
     monkeypatch.setattr(unifi, "_init_controller", lambda *_a, **_k: Controller())
     clients = list(unifi.fetch_clients(config))
-    assert clients[0]["stale"] is True
+    client = clients[0]
+    assert isinstance(client, dict)
+    assert client["stale"] is True
 
 
 def test_fetch_devices_retries(monkeypatch, tmp_path):
@@ -222,4 +230,6 @@ def test_fetch_devices_retries(monkeypatch, tmp_path):
     )
     devices = list(unifi.fetch_devices(config))
     assert calls["count"] == 2
-    assert devices[0]["ok"] is True
+    device = devices[0]
+    assert isinstance(device, dict)
+    assert device["ok"] is True

@@ -54,39 +54,45 @@ def _node_ref(name: str, node_id: str) -> str:
     return f'{node_id}["{_escape(name)}"]'
 
 
-def render_mermaid(
-    edges: Iterable[Edge],
-    direction: str = "LR",
+def _group_nodes(groups: dict[str, list[str]] | None) -> list[str]:
+    if not groups:
+        return []
+    nodes: list[str] = []
+    for members in groups.values():
+        nodes.extend(members)
+    return nodes
+
+
+def _render_group_sections(
+    lines: list[str],
+    groups: dict[str, list[str]],
     *,
-    groups: dict[str, list[str]] | None = None,
-    group_order: list[str] | None = None,
-    node_types: dict[str, str] | None = None,
-    theme: MermaidTheme = DEFAULT_THEME,
-) -> str:
-    edge_list = list(edges)
-    group_nodes: list[str] = []
-    if groups:
-        for members in groups.values():
-            group_nodes.extend(members)
-    id_map = _build_id_map(edge_list, group_nodes)
-    lines = [f"graph {direction}"]
+    group_order: list[str] | None,
+    id_map: dict[str, str],
+) -> None:
+    ordered = group_order or list(groups.keys())
+    for group_name in ordered:
+        members = groups.get(group_name, [])
+        if not members:
+            continue
+        group_id = _slugify(f"group_{group_name}")
+        label = group_name.replace("_", " ").title()
+        lines.append(f'  subgraph {group_id}["{_escape(label)}"];')
+        for member in members:
+            lines.append(f"    {_node_ref(member, id_map[member])};")
+        lines.append("  end")
+
+
+def _render_edge_lines(
+    lines: list[str],
+    edges: list[Edge],
+    *,
+    id_map: dict[str, str],
+    use_node_labels: bool,
+) -> tuple[list[int], list[int]]:
     poe_links: list[int] = []
     wireless_links: list[int] = []
-    link_index = 0
-    if groups:
-        ordered = group_order or list(groups.keys())
-        for group_name in ordered:
-            members = groups.get(group_name, [])
-            if not members:
-                continue
-            group_id = _slugify(f"group_{group_name}")
-            label = group_name.replace("_", " ").title()
-            lines.append(f'  subgraph {group_id}["{_escape(label)}"];')
-            for member in members:
-                lines.append(f"    {_node_ref(member, id_map[member])};")
-            lines.append("  end")
-    use_node_labels = not groups
-    for edge in edge_list:
+    for index, edge in enumerate(edges):
         if use_node_labels:
             left = _node_ref(edge.left, id_map[edge.left])
             right = _node_ref(edge.right, id_map[edge.right])
@@ -99,25 +105,41 @@ def render_mermaid(
         else:
             lines.append(f"  {left} --- {right};")
         if edge.poe:
-            poe_links.append(link_index)
+            poe_links.append(index)
         if edge.wireless:
-            wireless_links.append(link_index)
-        link_index += 1
-    if node_types:
-        class_map = {
-            "gateway": "node_gateway",
-            "switch": "node_switch",
-            "ap": "node_ap",
-            "client": "node_client",
-            "other": "node_other",
-        }
-        if node_types:
-            for name, node_type in node_types.items():
-                class_name = class_map.get(node_type, "node_other")
-                node_id = id_map.get(name)
-                if node_id:
-                    lines.append(f"  class {node_id} {class_name};")
-        lines.extend(class_defs(theme))
+            wireless_links.append(index)
+    return poe_links, wireless_links
+
+
+def _render_node_classes(
+    lines: list[str],
+    *,
+    node_types: dict[str, str],
+    id_map: dict[str, str],
+    theme: MermaidTheme,
+) -> None:
+    class_map = {
+        "gateway": "node_gateway",
+        "switch": "node_switch",
+        "ap": "node_ap",
+        "client": "node_client",
+        "other": "node_other",
+    }
+    for name, node_type in node_types.items():
+        class_name = class_map.get(node_type, "node_other")
+        node_id = id_map.get(name)
+        if node_id:
+            lines.append(f"  class {node_id} {class_name};")
+    lines.extend(class_defs(theme))
+
+
+def _render_link_styles(
+    lines: list[str],
+    *,
+    poe_links: list[int],
+    wireless_links: list[int],
+    theme: MermaidTheme,
+) -> None:
     for index in poe_links:
         lines.append(
             "  linkStyle "
@@ -126,6 +148,29 @@ def render_mermaid(
         )
     for index in wireless_links:
         lines.append(f"  linkStyle {index} stroke-dasharray: 5 4;")
+
+
+def render_mermaid(
+    edges: Iterable[Edge],
+    direction: str = "LR",
+    *,
+    groups: dict[str, list[str]] | None = None,
+    group_order: list[str] | None = None,
+    node_types: dict[str, str] | None = None,
+    theme: MermaidTheme = DEFAULT_THEME,
+) -> str:
+    edge_list = list(edges)
+    id_map = _build_id_map(edge_list, _group_nodes(groups))
+    lines = [f"graph {direction}"]
+    if groups:
+        _render_group_sections(lines, groups, group_order=group_order, id_map=id_map)
+    use_node_labels = not groups
+    poe_links, wireless_links = _render_edge_lines(
+        lines, edge_list, id_map=id_map, use_node_labels=use_node_labels
+    )
+    if node_types:
+        _render_node_classes(lines, node_types=node_types, id_map=id_map, theme=theme)
+    _render_link_styles(lines, poe_links=poe_links, wireless_links=wireless_links, theme=theme)
     return "\n".join(lines) + "\n"
 
 

@@ -213,6 +213,80 @@ def _client_rows(
     return rows_by_device
 
 
+def _prepare_lldp_maps(
+    devices: list[Device],
+    *,
+    clients: Iterable[object] | None,
+    include_ports: bool,
+    show_clients: bool,
+    client_mode: str,
+) -> tuple[
+    dict[tuple[str, str], str],
+    dict[str, list[tuple[int, str]]] | None,
+    dict[str, list[tuple[str, str | None]]],
+]:
+    device_index = build_device_index(devices)
+    client_rows = (
+        _client_rows(clients, device_index, include_ports=include_ports, client_mode=client_mode)
+        if clients
+        else {}
+    )
+    port_map: dict[tuple[str, str], str] = {}
+    client_port_map = None
+    if include_ports:
+        port_map = build_port_map(devices, only_unifi=False)
+        if clients and show_clients:
+            client_port_map = build_client_port_map(devices, clients, client_mode=client_mode)
+    return port_map, client_port_map, client_rows
+
+
+def _render_device_lldp_section(
+    lines: list[str],
+    device: Device,
+    *,
+    device_index: dict[str, str],
+    port_map: dict[tuple[str, str], str],
+    client_port_map: dict[str, list[tuple[int, str]]] | None,
+    client_rows: dict[str, list[tuple[str, str | None]]],
+    include_ports: bool,
+    show_clients: bool,
+    client_mode: str,
+) -> None:
+    lines.extend(_device_header_lines(device))
+    lines.append("")
+    lines.extend(_details_table_lines(device, client_rows, client_mode))
+    if include_ports:
+        lines.append("### Ports")
+        lines.append("")
+        lines.append(
+            render_device_port_details(device, port_map, client_ports=client_port_map).strip()
+        )
+    if device.lldp_info:
+        lines.append("")
+        lines.append("| Local Port | Neighbor | Neighbor Port | Chassis ID | Port Description |")
+        lines.append("| --- | --- | --- | --- | --- |")
+        for row in _lldp_rows(device.lldp_info, device_index):
+            lines.append("| " + " | ".join(_escape_cell(cell) for cell in row) + " |")
+        lines.append("")
+    else:
+        lines.append("_No LLDP neighbors._")
+        lines.append("")
+    rows = client_rows.get(device.name)
+    if rows and show_clients:
+        lines.append("")
+        lines.append("### Clients")
+        if include_ports:
+            lines.append("")
+            lines.append("| Client | Port |")
+            lines.append("| --- | --- |")
+            for client_name, port_label in rows:
+                lines.append(f"| {_escape_cell(client_name)} | {_escape_cell(port_label or '-')} |")
+        else:
+            for client_name, _port_label in rows:
+                lines.append(f"- {_escape_cell(client_name)}")
+        lines.append("")
+
+
 def render_lldp_md(
     devices: list[Device],
     *,
@@ -222,54 +296,24 @@ def render_lldp_md(
     client_mode: str = "wired",
 ) -> str:
     device_index = build_device_index(devices)
-    port_map = {}
-    client_port_map = None
-    client_rows = (
-        _client_rows(clients, device_index, include_ports=include_ports, client_mode=client_mode)
-        if clients
-        else {}
+    port_map, client_port_map, client_rows = _prepare_lldp_maps(
+        devices,
+        clients=clients,
+        include_ports=include_ports,
+        show_clients=show_clients,
+        client_mode=client_mode,
     )
-    if include_ports:
-        port_map = build_port_map(devices, only_unifi=False)
-        if clients and show_clients:
-            client_port_map = build_client_port_map(devices, clients, client_mode=client_mode)
     lines: list[str] = ["# LLDP Neighbors", ""]
     for device in sorted(devices, key=lambda item: item.name.lower()):
-        lines.extend(_device_header_lines(device))
-        lines.append("")
-        lines.extend(_details_table_lines(device, client_rows, client_mode))
-        if include_ports:
-            lines.append("### Ports")
-            lines.append("")
-            lines.append(
-                render_device_port_details(device, port_map, client_ports=client_port_map).strip()
-            )
-        if device.lldp_info:
-            lines.append("")
-            lines.append(
-                "| Local Port | Neighbor | Neighbor Port | Chassis ID | Port Description |"
-            )
-            lines.append("| --- | --- | --- | --- | --- |")
-            for row in _lldp_rows(device.lldp_info, device_index):
-                lines.append("| " + " | ".join(_escape_cell(cell) for cell in row) + " |")
-            lines.append("")
-        else:
-            lines.append("_No LLDP neighbors._")
-            lines.append("")
-        rows = client_rows.get(device.name)
-        if rows and show_clients:
-            lines.append("")
-            lines.append("### Clients")
-            if include_ports:
-                lines.append("")
-                lines.append("| Client | Port |")
-                lines.append("| --- | --- |")
-                for client_name, port_label in rows:
-                    lines.append(
-                        f"| {_escape_cell(client_name)} | {_escape_cell(port_label or '-')} |"
-                    )
-            else:
-                for client_name, _port_label in rows:
-                    lines.append(f"- {_escape_cell(client_name)}")
-            lines.append("")
+        _render_device_lldp_section(
+            lines,
+            device,
+            device_index=device_index,
+            port_map=port_map,
+            client_port_map=client_port_map,
+            client_rows=client_rows,
+            include_ports=include_ports,
+            show_clients=show_clients,
+            client_mode=client_mode,
+        )
     return "\n".join(lines).rstrip() + "\n"

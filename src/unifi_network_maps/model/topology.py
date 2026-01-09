@@ -6,7 +6,6 @@ import logging
 from collections import deque
 from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Protocol
 
 from .labels import compose_port_label, order_edge_names
 from .lldp import LLDPEntry, coerce_lldp, local_port_label
@@ -40,27 +39,7 @@ class Edge:
     wireless: bool = False
 
 
-class DeviceLike(Protocol):
-    name: str | None
-    model_name: str | None
-    model: str | None
-    mac: str | None
-    ip: str | None
-    ip_address: str | None
-    type: str | None
-    device_type: str | None
-    lldp_info: object | None
-    lldp: object | None
-    port_table: object | None
-    uplink: object | None
-    last_uplink: object | None
-    uplink_mac: object | None
-    uplink_device_mac: object | None
-    last_uplink_mac: object | None
-    uplink_device_name: object | None
-    uplink_remote_port: object | None
-    version: object | None
-    displayable_version: object | None
+type DeviceSource = object
 
 
 @dataclass(frozen=True)
@@ -92,6 +71,20 @@ def _get_attr(obj: object, name: str) -> object | None:
     if isinstance(obj, dict):
         return obj.get(name)
     return getattr(obj, name, None)
+
+
+def _as_list(value: object | None) -> list[object]:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return value
+    if isinstance(value, dict):
+        return [value]
+    if isinstance(value, str | bytes):
+        return []
+    if isinstance(value, Iterable):
+        return list(value)
+    return []
 
 
 def _normalize_mac(value: str) -> str:
@@ -167,14 +160,16 @@ def _aggregation_group(port_entry: object) -> object | None:
     return None
 
 
-def _resolve_port_idx_from_lldp(lldp_entry: LLDPEntry, port_table: list[PortInfo]) -> int | None:
-    if lldp_entry.local_port_idx is not None:
-        return lldp_entry.local_port_idx
-    candidates = []
-    if lldp_entry.local_port_name:
-        candidates.append(lldp_entry.local_port_name)
-    if lldp_entry.port_id:
-        candidates.append(lldp_entry.port_id)
+def _lldp_candidates(entry: LLDPEntry) -> list[str]:
+    candidates: list[str] = []
+    if entry.local_port_name:
+        candidates.append(entry.local_port_name)
+    if entry.port_id:
+        candidates.append(entry.port_id)
+    return candidates
+
+
+def _match_port_by_name(candidates: list[str], port_table: list[PortInfo]) -> int | None:
     for candidate in candidates:
         normalized = candidate.strip().lower()
         for port in port_table:
@@ -182,6 +177,10 @@ def _resolve_port_idx_from_lldp(lldp_entry: LLDPEntry, port_table: list[PortInfo
                 return port.port_idx
             if port.name and port.name.strip().lower() == normalized:
                 return port.port_idx
+    return None
+
+
+def _match_port_by_number(candidates: list[str], port_table: list[PortInfo]) -> int | None:
     for candidate in candidates:
         number = extract_port_number(candidate)
         if number is None:
@@ -190,6 +189,16 @@ def _resolve_port_idx_from_lldp(lldp_entry: LLDPEntry, port_table: list[PortInfo
             if port.port_idx == number:
                 return port.port_idx
     return None
+
+
+def _resolve_port_idx_from_lldp(lldp_entry: LLDPEntry, port_table: list[PortInfo]) -> int | None:
+    if lldp_entry.local_port_idx is not None:
+        return lldp_entry.local_port_idx
+    candidates = _lldp_candidates(lldp_entry)
+    matched = _match_port_by_name(candidates, port_table)
+    if matched is not None:
+        return matched
+    return _match_port_by_number(candidates, port_table)
 
 
 def _port_info_from_entry(port_entry: object) -> PortInfo:
@@ -226,12 +235,12 @@ def _port_info_from_entry(port_entry: object) -> PortInfo:
     )
 
 
-def _coerce_port_table(device: DeviceLike) -> list[PortInfo]:
-    port_table = _get_attr(device, "port_table") or []
+def _coerce_port_table(device: DeviceSource) -> list[PortInfo]:
+    port_table = _as_list(_get_attr(device, "port_table"))
     return [_port_info_from_entry(port_entry) for port_entry in port_table]
 
 
-def _poe_ports_from_device(device: DeviceLike) -> dict[int, bool]:
+def _poe_ports_from_device(device: DeviceSource) -> dict[int, bool]:
     port_table = _coerce_port_table(device)
     poe_ports: dict[int, bool] = {}
     for port_entry in port_table:
@@ -271,7 +280,7 @@ def _parse_uplink(value: object | None) -> UplinkInfo | None:
     return UplinkInfo(mac=mac_value, name=name_value, port=port)
 
 
-def _uplink_info(device: DeviceLike) -> tuple[UplinkInfo | None, UplinkInfo | None]:
+def _uplink_info(device: DeviceSource) -> tuple[UplinkInfo | None, UplinkInfo | None]:
     uplink = _parse_uplink(_device_field(device, "uplink"))
     last_uplink = _parse_uplink(_device_field(device, "last_uplink"))
 
@@ -290,7 +299,7 @@ def _uplink_info(device: DeviceLike) -> tuple[UplinkInfo | None, UplinkInfo | No
     return uplink, last_uplink
 
 
-def coerce_device(device: DeviceLike) -> Device:
+def coerce_device(device: DeviceSource) -> Device:
     name = _get_attr(device, "name")
     model_name = _get_attr(device, "model_name") or _get_attr(device, "model")
     model = _get_attr(device, "model")
@@ -312,7 +321,8 @@ def coerce_device(device: DeviceLike) -> Device:
         else:
             raise ValueError(f"Device {name} missing LLDP info")
 
-    coerced_lldp = [coerce_lldp(lldp_entry) for lldp_entry in lldp_info]
+    lldp_entries = _as_list(lldp_info)
+    coerced_lldp = [coerce_lldp(lldp_entry) for lldp_entry in lldp_entries]
     port_table = _coerce_port_table(device)
     poe_ports = _poe_ports_from_device(device)
 
@@ -332,14 +342,16 @@ def coerce_device(device: DeviceLike) -> Device:
     )
 
 
-def normalize_devices(devices: Iterable[DeviceLike]) -> list[Device]:
+def normalize_devices(devices: Iterable[DeviceSource]) -> list[Device]:
     return [coerce_device(device) for device in devices]
 
 
-def classify_device_type(device: Device) -> str:
-    value = device.type.strip().lower()
+def classify_device_type(device: object) -> str:
+    raw_type = _device_field(device, "type")
+    raw_name = _device_field(device, "name")
+    value = raw_type.strip().lower() if isinstance(raw_type, str) else ""
     if not value:
-        name = device.name.strip().lower()
+        name = raw_name.strip().lower() if isinstance(raw_name, str) else ""
         if "gateway" in name or name.startswith("gw"):
             return "gateway"
         if "switch" in name:
@@ -363,19 +375,19 @@ def group_devices_by_type(devices: Iterable[Device]) -> dict[str, list[str]]:
     return groups
 
 
-def build_tree_edges_by_topology(edges: Iterable[Edge], gateways: list[str]) -> list[Edge]:
+def _build_adjacency(edges: Iterable[Edge]) -> dict[str, set[str]]:
     adjacency: dict[str, set[str]] = {}
     for edge in edges:
         adjacency.setdefault(edge.left, set()).add(edge.right)
         adjacency.setdefault(edge.right, set()).add(edge.left)
+    return adjacency
 
-    if not gateways:
-        return []
 
-    edge_map: dict[frozenset[str], Edge] = {}
-    for edge in edges:
-        edge_map[frozenset({edge.left, edge.right})] = edge
+def _build_edge_map(edges: Iterable[Edge]) -> dict[frozenset[str], Edge]:
+    return {frozenset({edge.left, edge.right}): edge for edge in edges}
 
+
+def _tree_parents(adjacency: dict[str, set[str]], gateways: list[str]) -> dict[str, str]:
     visited: set[str] = set()
     parent: dict[str, str] = {}
     queue: deque[str] = deque()
@@ -393,7 +405,12 @@ def build_tree_edges_by_topology(edges: Iterable[Edge], gateways: list[str]) -> 
             visited.add(neighbor)
             parent[neighbor] = current
             queue.append(neighbor)
+    return parent
 
+
+def _tree_edges_from_parent(
+    parent: dict[str, str], edge_map: dict[frozenset[str], Edge]
+) -> list[Edge]:
     tree_edges: list[Edge] = []
     for child in sorted(parent):
         parent_name = parent[child]
@@ -404,8 +421,16 @@ def build_tree_edges_by_topology(edges: Iterable[Edge], gateways: list[str]) -> 
             tree_edges.append(
                 Edge(left=parent_name, right=child, label=original.label, poe=original.poe)
             )
-
     return tree_edges
+
+
+def build_tree_edges_by_topology(edges: Iterable[Edge], gateways: list[str]) -> list[Edge]:
+    if not gateways:
+        return []
+    adjacency = _build_adjacency(edges)
+    edge_map = _build_edge_map(edges)
+    parent = _tree_parents(adjacency, gateways)
+    return _tree_edges_from_parent(parent, edge_map)
 
 
 def build_device_index(devices: Iterable[Device]) -> dict[str, str]:
@@ -561,7 +586,6 @@ def build_edges(
         index,
         device_by_name,
         port_map,
-        poe_map,
         raw_links,
         seen,
         include_ports=include_ports,
@@ -604,7 +628,6 @@ def build_port_map(devices: Iterable[Device], *, only_unifi: bool = True) -> Por
         index,
         device_by_name,
         port_map,
-        poe_map,
         raw_links,
         seen,
         include_ports=True,
@@ -692,13 +715,52 @@ def _collect_lldp_links(
     return devices_with_lldp_edges
 
 
+def _uplink_name(
+    uplink: UplinkInfo | None,
+    index: dict[str, str],
+    *,
+    only_unifi: bool,
+) -> str | None:
+    if not uplink:
+        return None
+    if uplink.mac:
+        resolved = index.get(_normalize_mac(uplink.mac))
+        if resolved:
+            return resolved
+    if uplink.name:
+        return uplink.name
+    if not only_unifi and uplink.mac:
+        return uplink.mac
+    return None
+
+
+def _maybe_add_uplink_link(
+    device: Device,
+    upstream_name: str,
+    *,
+    uplink: UplinkInfo | None,
+    device_by_name: dict[str, Device],
+    port_map: PortMap,
+    raw_links: list[tuple[str, str]],
+    seen: set[frozenset[str]],
+    include_ports: bool,
+) -> None:
+    key = frozenset({device.name, upstream_name})
+    if key in seen:
+        return
+    if uplink and uplink.port is not None:
+        if include_ports:
+            port_map[(upstream_name, device.name)] = f"Port {uplink.port}"
+    raw_links.append((upstream_name, device.name))
+    seen.add(key)
+
+
 def _collect_uplink_links(
     devices: list[Device],
     devices_with_lldp_edges: set[str],
     index: dict[str, str],
     device_by_name: dict[str, Device],
     port_map: PortMap,
-    poe_map: PoeMap,
     raw_links: list[tuple[str, str]],
     seen: set[frozenset[str]],
     *,
@@ -709,31 +771,21 @@ def _collect_uplink_links(
         if device.name in devices_with_lldp_edges:
             continue
         uplink = device.uplink or device.last_uplink
-        upstream_name = None
-        if uplink and uplink.mac:
-            upstream_name = index.get(_normalize_mac(uplink.mac))
-        if not upstream_name and uplink and uplink.name:
-            upstream_name = uplink.name
-        if not upstream_name and not only_unifi and uplink and uplink.mac:
-            upstream_name = uplink.mac
+        upstream_name = _uplink_name(uplink, index, only_unifi=only_unifi)
         if not upstream_name:
             continue
         if only_unifi and upstream_name not in device_by_name:
             continue
-        key = frozenset({device.name, upstream_name})
-        if key in seen:
-            continue
-        poe = False
-        if uplink and uplink.port is not None:
-            if include_ports:
-                port_map[(upstream_name, device.name)] = f"Port {uplink.port}"
-            uplink_device = device_by_name.get(upstream_name)
-            if uplink_device and uplink.port in uplink_device.poe_ports:
-                poe = uplink_device.poe_ports[uplink.port]
-        raw_links.append((upstream_name, device.name))
-        seen.add(key)
-        if poe:
-            poe_map[(upstream_name, device.name)] = poe
+        _maybe_add_uplink_link(
+            device,
+            upstream_name,
+            uplink=uplink,
+            device_by_name=device_by_name,
+            port_map=port_map,
+            raw_links=raw_links,
+            seen=seen,
+            include_ports=include_ports,
+        )
 
 
 def _build_ordered_edges(

@@ -1,4 +1,4 @@
-.PHONY: venv install lint format test coverage smoketest smoketest-mock mock-data ci version version-sync version-bump help
+.PHONY: venv install lint format typecheck test coverage smoketest smoketest-mock mock-data ci version version-sync version-bump help
 
 VERSION_FILE = VERSION
 PYTHON ?= python
@@ -14,6 +14,9 @@ lint:
 
 format:
 	.venv/bin/ruff format .
+
+typecheck:
+	.venv/bin/pyright
 
 test:
 	.venv/bin/pytest
@@ -104,7 +107,7 @@ version-bump:
 	git push origin HEAD; \
 	git push origin "v$$next"
 
-ci: lint format test
+ci: lint format typecheck test
 	.venv/bin/pre-commit run --all-files
 	$(MAKE) help
 help:

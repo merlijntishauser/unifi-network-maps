@@ -14,6 +14,7 @@ from ..model.topology import (
     ClientPortMap,
     Device,
     PortMap,
+    TopologyResult,
     build_client_edges,
     build_client_port_map,
     build_device_index,
@@ -252,7 +253,7 @@ def _build_topology_data(
     *,
     include_ports: bool | None = None,
     raw_devices_override: list[object] | None = None,
-) -> tuple[list[Device], list[str], object]:
+) -> tuple[list[Device], list[str], TopologyResult]:
     _raw_devices, devices = _load_devices_data(
         args,
         config,
@@ -297,7 +298,7 @@ def _build_edges_with_clients(
     return edges, clients
 
 
-def _select_edges(topology: object) -> tuple[list, bool]:
+def _select_edges(topology: TopologyResult) -> tuple[list, bool]:
     if topology.tree_edges:
         return topology.tree_edges, True
     logging.warning("No gateway found for hierarchy; rendering raw edges.")
@@ -307,7 +308,7 @@ def _select_edges(topology: object) -> tuple[list, bool]:
 def _render_mermaid_output(
     args: argparse.Namespace,
     devices: list[Device],
-    topology: object,
+    topology: TopologyResult,
     config: Config | None,
     site: str,
     mermaid_theme: MermaidTheme,
@@ -346,9 +347,7 @@ def _render_mermaid_output(
 def _render_mkdocs_output(
     args: argparse.Namespace,
     devices: list[Device],
-    topology: object,
-    config: Config,
-    site: str,
+    topology: TopologyResult,
     mermaid_theme: MermaidTheme,
     port_map: PortMap,
     client_ports: ClientPortMap | None,
@@ -446,7 +445,7 @@ def _write_mkdocs_sidebar_assets(output_path: str) -> None:
 def _render_svg_output(
     args: argparse.Namespace,
     devices: list[Device],
-    topology: object,
+    topology: TopologyResult,
     config: Config | None,
     site: str,
     svg_theme: SvgTheme,
@@ -480,75 +479,88 @@ def _render_svg_output(
     )
 
 
-def main(argv: list[str] | None = None) -> int:
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
-    args = _parse_args(argv)
-    if args.generate_mock:
-        try:
-            from ..io.mock_generate import MockOptions, mock_payload_json
-        except ImportError as exc:
-            logging.error("Faker is required for --generate-mock: %s", exc)
-            return 2
-        options = MockOptions(
-            seed=args.mock_seed,
-            switch_count=max(1, args.mock_switches),
-            ap_count=max(0, args.mock_aps),
-            wired_client_count=max(0, args.mock_wired_clients),
-            wireless_client_count=max(0, args.mock_wireless_clients),
-        )
-        content = mock_payload_json(options)
-        write_output(content, output_path=args.generate_mock, stdout=args.stdout)
-        return 0
-    mock_devices = None
-    mock_clients: list[object] | None = None
+def _handle_generate_mock(args: argparse.Namespace) -> int | None:
+    if not args.generate_mock:
+        return None
+    try:
+        from ..io.mock_generate import MockOptions, mock_payload_json
+    except ImportError as exc:
+        logging.error("Faker is required for --generate-mock: %s", exc)
+        return 2
+    options = MockOptions(
+        seed=args.mock_seed,
+        switch_count=max(1, args.mock_switches),
+        ap_count=max(0, args.mock_aps),
+        wired_client_count=max(0, args.mock_wired_clients),
+        wireless_client_count=max(0, args.mock_wireless_clients),
+    )
+    content = mock_payload_json(options)
+    write_output(content, output_path=args.generate_mock, stdout=args.stdout)
+    return 0
+
+
+def _load_runtime_context(
+    args: argparse.Namespace,
+) -> tuple[Config | None, str, list[object] | None, list[object] | None]:
     if args.mock_data:
         try:
             mock_devices, mock_clients = load_mock_data(args.mock_data)
         except Exception as exc:  # noqa: BLE001
-            logging.error("Failed to load mock data: %s", exc)
-            return 2
-        config = None
-        site = "mock"
-    else:
-        config = _load_config(args)
-        if config is None:
-            return 2
-        site = _resolve_site(args, config)
-    mermaid_theme, svg_theme = resolve_themes(args.theme_file)
+            raise ValueError(f"Failed to load mock data: {exc}") from exc
+        return None, "mock", mock_devices, mock_clients
+    config = _load_config(args)
+    if config is None:
+        raise ValueError("Config required to run")
+    site = _resolve_site(args, config)
+    return config, site, None, None
 
-    if args.legend_only:
-        content = _render_legend_only(args, mermaid_theme)
-        write_output(content, output_path=args.output, stdout=args.stdout)
-        return 0
 
-    if args.format == "lldp-md":
-        try:
-            _raw_devices, devices = _load_devices_data(
-                args,
-                config,
-                site,
-                raw_devices_override=mock_devices,
-            )
-        except Exception as exc:
-            logging.error("Failed to load devices: %s", exc)
-            return 1
-        if mock_clients is None:
-            if config is None:
-                logging.error("Mock data required for client rendering")
-                return 2
-            clients = list(fetch_clients(config, site=site))
-        else:
-            clients = mock_clients
-        content = render_lldp_md(
-            devices,
-            clients=clients,
-            include_ports=args.include_ports,
-            show_clients=args.include_clients,
-            client_mode=args.client_scope,
+def _render_lldp_format(
+    args: argparse.Namespace,
+    *,
+    config: Config | None,
+    site: str,
+    mock_devices: list[object] | None,
+    mock_clients: list[object] | None,
+) -> int:
+    try:
+        _raw_devices, devices = _load_devices_data(
+            args,
+            config,
+            site,
+            raw_devices_override=mock_devices,
         )
-        write_output(content, output_path=args.output, stdout=args.stdout)
-        return 0
+    except Exception as exc:
+        logging.error("Failed to load devices: %s", exc)
+        return 1
+    if mock_clients is None:
+        if config is None:
+            logging.error("Mock data required for client rendering")
+            return 2
+        clients = list(fetch_clients(config, site=site))
+    else:
+        clients = mock_clients
+    content = render_lldp_md(
+        devices,
+        clients=clients,
+        include_ports=args.include_ports,
+        show_clients=args.include_clients,
+        client_mode=args.client_scope,
+    )
+    write_output(content, output_path=args.output, stdout=args.stdout)
+    return 0
 
+
+def _render_standard_format(
+    args: argparse.Namespace,
+    *,
+    config: Config | None,
+    site: str,
+    mock_devices: list[object] | None,
+    mock_clients: list[object] | None,
+    mermaid_theme: MermaidTheme,
+    svg_theme: SvgTheme,
+) -> int:
     try:
         include_ports = True if args.format == "mkdocs" else None
         devices, _gateways, topology = _build_topology_data(
@@ -590,7 +602,12 @@ def main(argv: list[str] | None = None) -> int:
                 clients = mock_clients
             client_ports = build_client_port_map(devices, clients, client_mode=args.client_scope)
         content = _render_mkdocs_output(
-            args, devices, topology, config, site, mermaid_theme, port_map, client_ports
+            args,
+            devices,
+            topology,
+            mermaid_theme,
+            port_map,
+            client_ports,
         )
     elif args.format in {"svg", "svg-iso"}:
         content = _render_svg_output(
@@ -608,6 +625,44 @@ def main(argv: list[str] | None = None) -> int:
 
     write_output(content, output_path=args.output, stdout=args.stdout)
     return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+    args = _parse_args(argv)
+    mock_result = _handle_generate_mock(args)
+    if mock_result is not None:
+        return mock_result
+    try:
+        config, site, mock_devices, mock_clients = _load_runtime_context(args)
+    except ValueError as exc:
+        logging.error(str(exc))
+        return 2
+    mermaid_theme, svg_theme = resolve_themes(args.theme_file)
+
+    if args.legend_only:
+        content = _render_legend_only(args, mermaid_theme)
+        write_output(content, output_path=args.output, stdout=args.stdout)
+        return 0
+
+    if args.format == "lldp-md":
+        return _render_lldp_format(
+            args,
+            config=config,
+            site=site,
+            mock_devices=mock_devices,
+            mock_clients=mock_clients,
+        )
+
+    return _render_standard_format(
+        args,
+        config=config,
+        site=site,
+        mock_devices=mock_devices,
+        mock_clients=mock_clients,
+        mermaid_theme=mermaid_theme,
+        svg_theme=svg_theme,
+    )
 
 
 if __name__ == "__main__":

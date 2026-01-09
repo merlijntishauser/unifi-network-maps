@@ -4,22 +4,32 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Iterable, Sequence
 
-from ..model.topology import group_devices_by_type
+from ..model.topology import Device, group_devices_by_type
 
 logger = logging.getLogger(__name__)
 
 
-def device_to_dict(device: object) -> dict:
-    if hasattr(device, "to_dict"):
-        return device.to_dict()
+def device_to_dict(device: object) -> dict[str, object]:
+    to_dict = getattr(device, "to_dict", None)
+    if callable(to_dict):
+        result = to_dict()
+        if isinstance(result, dict):
+            return result
+        return {"repr": repr(result)}
     if hasattr(device, "__dict__"):
         return dict(device.__dict__)
+    if isinstance(device, dict):
+        return dict(device)
     return {"repr": repr(device)}
 
 
 def debug_dump_devices(
-    raw_devices: list[object], normalized: list[object], *, sample_count: int
+    raw_devices: Sequence[object],
+    normalized: Iterable[Device],
+    *,
+    sample_count: int,
 ) -> None:
     name_to_device: dict[str, object] = {}
     for device in raw_devices:

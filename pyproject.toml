@@ -41,6 +41,7 @@ dev = [
   "pytest==9.0.2",
   "pytest-cov==7.0.0",
   "ruff==0.14.11",
+  "pyright==1.1.389"
 ]
 
 [project.scripts]
@@ -51,11 +52,21 @@ line-length = 100
 target-version = "py313"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "B", "UP"]
+select = ["C90", "E", "F", "I", "UP"]
 ignore = ["E501"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
 
 [tool.ruff.format]
 line-ending = "lf"
+
+[tool.pyright]
+pythonVersion = "3.13"
+typeCheckingMode = "basic"
+include = ["src", "tests"]
+venvPath = "."
+venv = ".venv"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

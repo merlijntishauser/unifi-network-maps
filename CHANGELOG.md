@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## v1.4.2 (unreleased)
+- Added static code analysis and stricter type-checking
+
 ## v1.4.1
 - pip install was broken, fixed.
 

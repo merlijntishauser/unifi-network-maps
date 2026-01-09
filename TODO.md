@@ -16,9 +16,6 @@
 - Cable/link labeling
   - Feasibility: Medium; needs port metadata (`port_desc`, `port_overrides`) and consistent naming rules.
   - Plan: extend port label composition with optional cable-name mapping file; add tests for mixed labels.
-- Static code analysis
-  - Feasibility: High; add mypy/pyright and stricter ruff rules incrementally.
-  - Plan: introduce a `typecheck` make target and CI job; start with module-by-module typing.
 - BDD scenarios (Behave)
   - Feasibility: Medium; adds an extra test framework but can target CLI smoke flows.
   - Plan: define feature files for common CLI paths (mermaid/svg/iso), add fixtures for cached API responses.

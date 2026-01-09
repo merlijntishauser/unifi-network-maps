@@ -7,7 +7,7 @@ import logging
 import os
 import pickle
 import time
-from collections.abc import Iterable
+from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -38,7 +38,7 @@ def _cache_key(*parts: str) -> str:
     return digest[:24]
 
 
-def _load_cache(path: Path, ttl_seconds: int) -> object | None:
+def _load_cache(path: Path, ttl_seconds: int) -> Sequence[object] | None:
     data, age = _load_cache_with_age(path)
     if data is None:
         return None
@@ -49,7 +49,7 @@ def _load_cache(path: Path, ttl_seconds: int) -> object | None:
     return data
 
 
-def _load_cache_with_age(path: Path) -> tuple[object | None, float | None]:
+def _load_cache_with_age(path: Path) -> tuple[Sequence[object] | None, float | None]:
     if not path.exists():
         return None, None
     try:
@@ -67,7 +67,7 @@ def _load_cache_with_age(path: Path) -> tuple[object | None, float | None]:
     return data, time.time() - timestamp
 
 
-def _save_cache(path: Path, data: object) -> None:
+def _save_cache(path: Path, data: Sequence[object]) -> None:
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         payload = {"timestamp": time.time(), "data": data}
@@ -99,7 +99,7 @@ def _retry_backoff_seconds() -> float:
         return 0.5
 
 
-def _call_with_retries(operation: str, func) -> object:
+def _call_with_retries[T](operation: str, func: Callable[[], T]) -> T:
     attempts = _retry_attempts()
     backoff = _retry_backoff_seconds()
     last_exc: Exception | None = None
@@ -130,7 +130,7 @@ def _init_controller(config: Config, *, is_udm_pro: bool) -> UnifiController:
 
 def fetch_devices(
     config: Config, *, site: str | None = None, detailed: bool = True
-) -> Iterable[object]:
+) -> Sequence[object]:
     """Fetch devices from UniFi Controller.
 
     Uses `unifi-controller-api` to authenticate and return device objects.
@@ -155,7 +155,7 @@ def fetch_devices(
         logger.info("UDM Pro authentication failed, retrying legacy auth")
         controller = _init_controller(config, is_udm_pro=False)
 
-    def _fetch() -> list[object]:
+    def _fetch() -> Sequence[object]:
         return controller.get_unifi_site_device(site_name=site_name, detailed=detailed, raw=False)
 
     try:
@@ -174,7 +174,7 @@ def fetch_devices(
     return devices
 
 
-def fetch_clients(config: Config, *, site: str | None = None) -> Iterable[object]:
+def fetch_clients(config: Config, *, site: str | None = None) -> Sequence[object]:
     """Fetch active clients from UniFi Controller."""
     try:
         from unifi_controller_api import UnifiAuthenticationError
@@ -196,7 +196,7 @@ def fetch_clients(config: Config, *, site: str | None = None) -> Iterable[object
         logger.info("UDM Pro authentication failed, retrying legacy auth")
         controller = _init_controller(config, is_udm_pro=False)
 
-    def _fetch() -> list[object]:
+    def _fetch() -> Sequence[object]:
         return controller.get_unifi_site_client(site_name=site_name, raw=True)
 
     try:

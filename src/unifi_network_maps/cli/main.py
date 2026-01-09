@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import logging
 from datetime import datetime
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from ..adapters.config import Config
@@ -32,7 +33,7 @@ from ..render.mermaid import render_legend, render_legend_compact, render_mermai
 from ..render.mermaid_theme import MermaidTheme
 from ..render.svg import SvgOptions, render_svg
 from ..render.svg_theme import SvgTheme
-from ..render.theme import resolve_themes
+from ..render.theme import load_theme, resolve_themes
 
 logger = logging.getLogger(__name__)
 
@@ -175,6 +176,11 @@ def _add_general_render_args(parser: argparse._ArgumentGroup) -> None:
         "--mkdocs-sidebar-legend",
         action="store_true",
         help="For mkdocs output, write sidebar legend assets next to the output file",
+    )
+    parser.add_argument(
+        "--mkdocs-dual-theme",
+        action="store_true",
+        help="Render light/dark Mermaid blocks for MkDocs Material theme switching",
     )
     parser.add_argument(
         "--mkdocs-timestamp-zone",
@@ -359,30 +365,43 @@ def _render_mkdocs_output(
     port_map: PortMap,
     client_ports: ClientPortMap | None,
     timestamp_zone: str,
+    dark_mermaid_theme: MermaidTheme | None = None,
 ) -> str:
     edges, _has_tree = _select_edges(topology)
     clients = None
+    node_types = build_node_type_map(devices, clients, client_mode=args.client_scope)
     content = render_mermaid(
         edges,
         direction=args.direction,
-        node_types=build_node_type_map(devices, clients, client_mode=args.client_scope),
+        node_types=node_types,
         theme=mermaid_theme,
     )
     legend_style = _resolve_legend_style(args)
-    if legend_style == "compact":
-        legend_block = (
-            '<div class="unifi-legend" data-unifi-legend>\n'
-            + render_legend_compact(theme=mermaid_theme)
-            + "</div>"
+    dual_theme = args.mkdocs_dual_theme and dark_mermaid_theme is not None
+    legend_header = "## Legend\n\n" if legend_style != "compact" else ""
+    if dual_theme and dark_mermaid_theme is not None:
+        dark_content = render_mermaid(
+            edges,
+            direction=args.direction,
+            node_types=node_types,
+            theme=dark_mermaid_theme,
         )
-        legend_header = ""
+        map_block = _mkdocs_dual_mermaid_block(content, dark_content, base_class="unifi-mermaid")
+        legend_block = _mkdocs_dual_legend_block(
+            legend_style,
+            mermaid_theme=mermaid_theme,
+            dark_mermaid_theme=dark_mermaid_theme,
+            legend_scale=args.legend_scale,
+        )
+        dual_style = _mkdocs_dual_theme_style()
     else:
-        legend_block = (
-            "```mermaid\n"
-            + render_legend(theme=mermaid_theme, legend_scale=args.legend_scale)
-            + "```"
+        map_block = _mkdocs_mermaid_block(content, class_name="unifi-mermaid")
+        legend_block = _mkdocs_single_legend_block(
+            legend_style,
+            mermaid_theme=mermaid_theme,
+            legend_scale=args.legend_scale,
         )
-        legend_header = "## Legend\n\n"
+        dual_style = ""
     timestamp_line = ""
     if timestamp_zone.strip().lower() not in {"off", "none", "false"}:
         try:
@@ -393,9 +412,82 @@ def _render_mkdocs_output(
             generated_at = datetime.now(zone).strftime("%Y-%m-%d %H:%M:%S %Z")
             timestamp_line = f"Generated: {generated_at}\n\n"
     return (
-        f"# UniFi network\n\n{timestamp_line}## Map\n\n```mermaid\n{content}```\n\n"
+        f"# UniFi network\n\n{timestamp_line}{dual_style}## Map\n\n{map_block}\n\n"
         f"{legend_header}{legend_block}\n\n"
         f"{render_device_port_overview(devices, port_map, client_ports=client_ports)}"
+    )
+
+
+def _mkdocs_mermaid_block(content: str, *, class_name: str) -> str:
+    return f'<div class="{class_name}">\n```mermaid\n{content}```\n</div>'
+
+
+def _mkdocs_dual_mermaid_block(
+    light_content: str,
+    dark_content: str,
+    *,
+    base_class: str,
+) -> str:
+    light = _mkdocs_mermaid_block(light_content, class_name=f"{base_class} {base_class}--light")
+    dark = _mkdocs_mermaid_block(dark_content, class_name=f"{base_class} {base_class}--dark")
+    return f"{light}\n{dark}"
+
+
+def _mkdocs_single_legend_block(
+    legend_style: str,
+    *,
+    mermaid_theme: MermaidTheme,
+    legend_scale: float,
+) -> str:
+    if legend_style == "compact":
+        return (
+            '<div class="unifi-legend" data-unifi-legend>\n'
+            + render_legend_compact(theme=mermaid_theme)
+            + "</div>"
+        )
+    return "```mermaid\n" + render_legend(theme=mermaid_theme, legend_scale=legend_scale) + "```"
+
+
+def _mkdocs_dual_legend_block(
+    legend_style: str,
+    *,
+    mermaid_theme: MermaidTheme,
+    dark_mermaid_theme: MermaidTheme,
+    legend_scale: float,
+) -> str:
+    if legend_style == "compact":
+        light = (
+            '<div class="unifi-legend unifi-legend--light" data-unifi-legend>\n'
+            + render_legend_compact(theme=mermaid_theme)
+            + "</div>"
+        )
+        dark = (
+            '<div class="unifi-legend unifi-legend--dark" data-unifi-legend>\n'
+            + render_legend_compact(theme=dark_mermaid_theme)
+            + "</div>"
+        )
+        return f"{light}\n{dark}"
+    light = _mkdocs_mermaid_block(
+        render_legend(theme=mermaid_theme, legend_scale=legend_scale),
+        class_name="unifi-legend unifi-legend--light",
+    )
+    dark = _mkdocs_mermaid_block(
+        render_legend(theme=dark_mermaid_theme, legend_scale=legend_scale),
+        class_name="unifi-legend unifi-legend--dark",
+    )
+    return f"{light}\n{dark}"
+
+
+def _mkdocs_dual_theme_style() -> str:
+    return (
+        "<style>\n"
+        ".unifi-mermaid--light,.unifi-legend--light{display:none;}\n"
+        ".unifi-mermaid--dark,.unifi-legend--dark{display:none;}\n"
+        '[data-md-color-scheme="default"] .unifi-mermaid--light{display:block;}\n'
+        '[data-md-color-scheme="default"] .unifi-legend--light{display:block;}\n'
+        '[data-md-color-scheme="slate"] .unifi-mermaid--dark{display:block;}\n'
+        '[data-md-color-scheme="slate"] .unifi-legend--dark{display:block;}\n'
+        "</style>\n\n"
     )
 
 
@@ -578,18 +670,15 @@ def _render_standard_format(
     mermaid_theme: MermaidTheme,
     svg_theme: SvgTheme,
 ) -> int:
-    try:
-        include_ports = True if args.format == "mkdocs" else None
-        devices, _gateways, topology = _build_topology_data(
-            args,
-            config,
-            site,
-            include_ports=include_ports,
-            raw_devices_override=mock_devices,
-        )
-    except Exception as exc:
-        logging.error("Failed to build topology: %s", exc)
+    topology_result = _load_topology_for_render(
+        args,
+        config=config,
+        site=site,
+        mock_devices=mock_devices,
+    )
+    if topology_result is None:
         return 1
+    devices, topology = topology_result
 
     if args.format == "mermaid":
         content = _render_mermaid_output(
@@ -602,31 +691,17 @@ def _render_standard_format(
             clients_override=mock_clients,
         )
     elif args.format == "mkdocs":
-        if args.mkdocs_sidebar_legend and not args.output:
-            logging.error("--mkdocs-sidebar-legend requires --output")
-            return 2
-        if args.mkdocs_sidebar_legend:
-            _write_mkdocs_sidebar_assets(args.output)
-        port_map = build_port_map(devices, only_unifi=args.only_unifi)
-        client_ports = None
-        if args.include_clients:
-            if mock_clients is None:
-                if config is None:
-                    logging.error("Mock data required for client rendering")
-                    return 2
-                clients = list(fetch_clients(config, site=site))
-            else:
-                clients = mock_clients
-            client_ports = build_client_port_map(devices, clients, client_mode=args.client_scope)
-        content = _render_mkdocs_output(
+        content = _render_mkdocs_format(
             args,
-            devices,
-            topology,
-            mermaid_theme,
-            port_map,
-            client_ports,
-            args.mkdocs_timestamp_zone,
+            devices=devices,
+            topology=topology,
+            config=config,
+            site=site,
+            mermaid_theme=mermaid_theme,
+            mock_clients=mock_clients,
         )
+        if content is None:
+            return 2
     elif args.format in {"svg", "svg-iso"}:
         content = _render_svg_output(
             args,
@@ -643,6 +718,96 @@ def _render_standard_format(
 
     write_output(content, output_path=args.output, stdout=args.stdout)
     return 0
+
+
+def _load_topology_for_render(
+    args: argparse.Namespace,
+    *,
+    config: Config | None,
+    site: str,
+    mock_devices: list[object] | None,
+) -> tuple[list[Device], TopologyResult] | None:
+    try:
+        include_ports = True if args.format == "mkdocs" else None
+        devices, _gateways, topology = _build_topology_data(
+            args,
+            config,
+            site,
+            include_ports=include_ports,
+            raw_devices_override=mock_devices,
+        )
+    except Exception as exc:
+        logging.error("Failed to build topology: %s", exc)
+        return None
+    return devices, topology
+
+
+def _load_dark_mermaid_theme() -> MermaidTheme | None:
+    dark_theme_path = Path(__file__).resolve().parents[1] / "assets" / "themes" / "dark.yaml"
+    try:
+        dark_theme, _ = load_theme(dark_theme_path)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Failed to load dark theme: %s", exc)
+        return None
+    return dark_theme
+
+
+def _resolve_mkdocs_client_ports(
+    args: argparse.Namespace,
+    devices: list[Device],
+    config: Config | None,
+    site: str,
+    mock_clients: list[object] | None,
+) -> tuple[ClientPortMap | None, int | None]:
+    if not args.include_clients:
+        return None, None
+    if mock_clients is None:
+        if config is None:
+            return None, 2
+        clients = list(fetch_clients(config, site=site))
+    else:
+        clients = mock_clients
+    client_ports = build_client_port_map(devices, clients, client_mode=args.client_scope)
+    return client_ports, None
+
+
+def _render_mkdocs_format(
+    args: argparse.Namespace,
+    *,
+    devices: list[Device],
+    topology: TopologyResult,
+    config: Config | None,
+    site: str,
+    mermaid_theme: MermaidTheme,
+    mock_clients: list[object] | None,
+) -> str | None:
+    if args.mkdocs_sidebar_legend and not args.output:
+        logging.error("--mkdocs-sidebar-legend requires --output")
+        return None
+    if args.mkdocs_sidebar_legend:
+        _write_mkdocs_sidebar_assets(args.output)
+    port_map = build_port_map(devices, only_unifi=args.only_unifi)
+    client_ports, error_code = _resolve_mkdocs_client_ports(
+        args,
+        devices,
+        config,
+        site,
+        mock_clients,
+    )
+    if error_code is not None:
+        logging.error("Mock data required for client rendering")
+        return None
+    dark_mermaid_theme = _load_dark_mermaid_theme() if args.mkdocs_dual_theme else None
+    return _render_mkdocs_output(
+        args,
+        devices,
+        topology,
+        mermaid_theme,
+        port_map,
+        client_ports,
+        args.mkdocs_timestamp_zone,
+        dark_mermaid_theme,
+    )
 
 
 def main(argv: list[str] | None = None) -> int:

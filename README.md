@@ -77,6 +77,9 @@ unifi-network-maps --format mkdocs --output ./docs/unifi-network.md
 
 # Include wired clients in the port tables
 unifi-network-maps --format mkdocs --include-clients --output ./docs/unifi-network.md
+
+# MkDocs output with dual Mermaid blocks for Material theme switching
+unifi-network-maps --format mkdocs --mkdocs-dual-theme --output ./docs/unifi-network.md
 ```
 
 SVG size overrides:
@@ -220,6 +223,8 @@ Output:
 - `--stdout`: write output to stdout.
 - `--markdown`: wrap Mermaid output in a code fence.
 - `--mkdocs-sidebar-legend`: write assets to place the compact legend in the MkDocs right sidebar.
+- `--mkdocs-dual-theme`: render light/dark Mermaid blocks for Material theme switching.
+- `--mkdocs-timestamp-zone`: timezone for mkdocs timestamp (`Europe/Amsterdam` default; use `off` to disable).
 
 Debug:
 - `--debug-dump`: dump gateway + sample devices to stderr for debugging.

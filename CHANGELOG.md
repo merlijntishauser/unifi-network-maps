@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Added optional live UniFi contract tests (gated by `UNIFI_CONTRACT_LIVE=1`).
 - Split CI into dedicated jobs and added a contract-test job.
 - Added mkdocs timestamp (timezone configurable via `--mkdocs-timestamp-zone`).
+- Added optional dual Mermaid blocks for MkDocs Material theme switching (`--mkdocs-dual-theme`).
 
 ## v1.4.1
 - pip install was broken, fixed.

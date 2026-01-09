@@ -1,0 +1,14 @@
+name: "CodeQL config"
+
+queries:
+  - uses: security-extended
+  - uses: security-and-quality
+
+paths-ignore:
+  - "**/.venv/**"
+  - "**/__pycache__/**"
+  - "build/**"
+  - "dist/**"
+  - "smoketest/**"
+  - "smoketest-mock/**"
+  - "examples/output/**"

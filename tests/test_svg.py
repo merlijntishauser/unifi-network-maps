@@ -2,36 +2,24 @@ from pathlib import Path
 
 import unifi_network_maps.render.svg as svg_module
 from unifi_network_maps.model.topology import Edge
-from unifi_network_maps.render.svg import (
-    SvgOptions,
-    _compact_edge_label,
-    _extract_port_text,
-    _label_metrics,
-    _load_icons,
-    _load_isometric_icons,
-    _tree_layout_indices,
-    _wrap_text,
-    render_svg,
-    render_svg_isometric,
-)
 
 
 def test_render_svg_outputs_svg_root():
-    output = render_svg([Edge("A", "B")], node_types={"A": "gateway", "B": "switch"})
+    output = svg_module.render_svg([Edge("A", "B")], node_types={"A": "gateway", "B": "switch"})
     assert output.startswith("<svg")
 
 
 def test_render_svg_respects_size_override():
-    output = render_svg(
+    output = svg_module.render_svg(
         [Edge("A", "B")],
         node_types={"A": "gateway", "B": "switch"},
-        options=SvgOptions(width=800, height=600),
+        options=svg_module.SvgOptions(width=800, height=600),
     )
     assert 'width="800"' in output
 
 
 def test_render_svg_escapes_edge_labels():
-    output = render_svg(
+    output = svg_module.render_svg(
         [Edge("A", "B", label="Port 1 <-> Port 2")],
         node_types={"A": "gateway", "B": "switch"},
     )
@@ -39,7 +27,7 @@ def test_render_svg_escapes_edge_labels():
 
 
 def test_render_svg_renders_poe_icon():
-    output = render_svg(
+    output = svg_module.render_svg(
         [Edge("A", "B", poe=True)],
         node_types={"A": "gateway", "B": "switch"},
     )
@@ -47,7 +35,7 @@ def test_render_svg_renders_poe_icon():
 
 
 def test_render_svg_dashes_wireless_links():
-    output = render_svg(
+    output = svg_module.render_svg(
         [Edge("A", "B", wireless=True)],
         node_types={"A": "gateway", "B": "switch"},
     )
@@ -55,7 +43,7 @@ def test_render_svg_dashes_wireless_links():
 
 
 def test_render_svg_compacts_device_labels():
-    output = render_svg(
+    output = svg_module.render_svg(
         [Edge("A", "B", label="Switch A: Port 2 <-> Switch B: Port 5")],
         node_types={"A": "gateway", "B": "switch"},
     )
@@ -65,7 +53,7 @@ def test_render_svg_compacts_device_labels():
 
 
 def test_render_svg_orders_upstream_label():
-    output = render_svg(
+    output = svg_module.render_svg(
         [Edge("Parent", "Child", label="Child: Port 1 <-> Parent: Port 2")],
         node_types={"Parent": "switch", "Child": "switch"},
     )
@@ -73,7 +61,7 @@ def test_render_svg_orders_upstream_label():
 
 
 def test_render_svg_moves_client_label_into_node():
-    output = render_svg(
+    output = svg_module.render_svg(
         [Edge("Switch", "Client", label="Switch: Port 5 <-> Client")],
         node_types={"Switch": "switch", "Client": "client"},
     )
@@ -83,7 +71,7 @@ def test_render_svg_moves_client_label_into_node():
 
 
 def test_render_svg_wraps_client_label():
-    output = render_svg(
+    output = svg_module.render_svg(
         [Edge("Switch", "Client", label="Switch: Port 5 (very long uplink name)")],
         node_types={"Switch": "switch", "Client": "client"},
     )
@@ -91,24 +79,27 @@ def test_render_svg_wraps_client_label():
 
 
 def test_extract_port_text_non_port_prefix():
-    assert _extract_port_text("eth0") is None
+    assert svg_module._extract_port_text("eth0") is None
 
 
 def test_wrap_text_splits_without_space():
-    assert _wrap_text("ABCDEFGHI", max_len=4) == ["ABCD", "EFGHI"]
+    assert svg_module._wrap_text("ABCDEFGHI", max_len=4) == ["ABCD", "EFGHI"]
 
 
 def test_label_metrics_empty_lines():
-    assert _label_metrics([], font_size=10, padding_x=4, padding_y=3) == (8.0, 6.0)
+    assert svg_module._label_metrics([], font_size=10, padding_x=4, padding_y=3) == (8.0, 6.0)
 
 
 def test_compact_edge_label_swaps_when_nodes_reversed():
     label = "B: Port 1 <-> A: Port 2"
-    assert _compact_edge_label(label, left_node="A", right_node="B") == "A Port 2 <-> Port 1"
+    assert (
+        svg_module._compact_edge_label(label, left_node="A", right_node="B")
+        == "A Port 2 <-> Port 1"
+    )
 
 
 def test_render_svg_prefixes_upstream_for_port_only_label():
-    output = render_svg(
+    output = svg_module.render_svg(
         [Edge("Switch A", "Switch B", label="Port 1 <-> Port 2")],
         node_types={"Switch A": "switch", "Switch B": "switch"},
     )
@@ -116,7 +107,7 @@ def test_render_svg_prefixes_upstream_for_port_only_label():
 
 
 def test_render_svg_isometric_renders_label_tile():
-    output = render_svg_isometric(
+    output = svg_module.render_svg_isometric(
         [Edge("A", "B", label="A: Port 1 <-> B: Port 2")],
         node_types={"A": "switch", "B": "switch"},
     )
@@ -125,16 +116,16 @@ def test_render_svg_isometric_renders_label_tile():
 
 def test_load_icons_missing_files_returns_empty(monkeypatch):
     monkeypatch.setattr(Path, "exists", lambda _self: False)
-    assert _load_icons() == {}
+    assert svg_module._load_icons() == {}
 
 
 def test_load_isometric_icons_missing_files_returns_empty(monkeypatch):
     monkeypatch.setattr(Path, "exists", lambda _self: False)
-    assert _load_isometric_icons() == {}
+    assert svg_module._load_isometric_icons() == {}
 
 
 def test_tree_layout_indices_cycle_returns_nodes():
-    positions, _levels = _tree_layout_indices(
+    positions, _levels = svg_module._tree_layout_indices(
         [Edge("A", "B"), Edge("B", "A")],
         {"A": "switch", "B": "switch"},
     )
@@ -142,17 +133,17 @@ def test_tree_layout_indices_cycle_returns_nodes():
 
 
 def test_tree_layout_indices_empty_returns_empty():
-    positions, _levels = _tree_layout_indices([], {})
+    positions, _levels = svg_module._tree_layout_indices([], {})
     assert positions == {}
 
 
 def test_render_svg_isometric_handles_no_edges():
-    output = render_svg_isometric([], node_types={})
+    output = svg_module.render_svg_isometric([], node_types={})
     assert output.startswith("<svg")
 
 
 def test_render_svg_client_label_without_arrow():
-    output = render_svg(
+    output = svg_module.render_svg(
         [Edge("Switch", "Client", label="Switch: Port 3")],
         node_types={"Switch": "switch", "Client": "client"},
     )
@@ -160,19 +151,19 @@ def test_render_svg_client_label_without_arrow():
 
 
 def test_compact_edge_label_right_port_only():
-    assert _compact_edge_label("Switch <-> Port 2") == "Port 2"
+    assert svg_module._compact_edge_label("Switch <-> Port 2") == "Port 2"
 
 
 def test_compact_edge_label_left_port_only():
-    assert _compact_edge_label("Port 1 <-> Switch") == "Port 1"
+    assert svg_module._compact_edge_label("Port 1 <-> Switch") == "Port 1"
 
 
 def test_compact_edge_label_no_ports_returns_label():
-    assert _compact_edge_label("A <-> B") == "A <-> B"
+    assert svg_module._compact_edge_label("A <-> B") == "A <-> B"
 
 
 def test_render_svg_client_label_left_side():
-    output = render_svg(
+    output = svg_module.render_svg(
         [Edge("Client", "Switch", label="Switch: Port 4")],
         node_types={"Switch": "switch", "Client": "client"},
     )
@@ -180,7 +171,7 @@ def test_render_svg_client_label_left_side():
 
 
 def test_render_svg_isometric_client_label_without_arrow():
-    output = render_svg_isometric(
+    output = svg_module.render_svg_isometric(
         [Edge("Switch", "Client", label="Switch: Port 4")],
         node_types={"Switch": "switch", "Client": "client"},
     )
@@ -189,30 +180,34 @@ def test_render_svg_isometric_client_label_without_arrow():
 
 def test_render_svg_handles_missing_positions(monkeypatch):
     monkeypatch.setattr(svg_module, "_layout_nodes", lambda _e, _n, _o: ({}, 0, 0))
-    output = render_svg([Edge("A", "B")], node_types={"A": "switch", "B": "switch"})
+    output = svg_module.render_svg([Edge("A", "B")], node_types={"A": "switch", "B": "switch"})
     assert "<path" not in output
 
 
 def test_render_svg_without_icons(monkeypatch):
     monkeypatch.setattr(svg_module, "_load_icons", lambda: {})
-    output = render_svg([Edge("A", "B")], node_types={"A": "switch", "B": "switch"})
+    output = svg_module.render_svg([Edge("A", "B")], node_types={"A": "switch", "B": "switch"})
     assert "<image" not in output
 
 
 def test_render_svg_isometric_without_icons(monkeypatch):
     monkeypatch.setattr(svg_module, "_load_isometric_icons", lambda: {})
-    output = render_svg_isometric([Edge("A", "B")], node_types={"A": "switch", "B": "switch"})
+    output = svg_module.render_svg_isometric(
+        [Edge("A", "B")], node_types={"A": "switch", "B": "switch"}
+    )
     assert "<image" not in output
 
 
 def test_render_svg_isometric_skips_missing_positions(monkeypatch):
     monkeypatch.setattr(svg_module, "_tree_layout_indices", lambda _e, _n: ({}, {}))
-    output = render_svg_isometric([Edge("A", "B")], node_types={"A": "switch", "B": "switch"})
+    output = svg_module.render_svg_isometric(
+        [Edge("A", "B")], node_types={"A": "switch", "B": "switch"}
+    )
     assert "<path" not in output
 
 
 def test_render_svg_isometric_elbow_path():
-    output = render_svg_isometric(
+    output = svg_module.render_svg_isometric(
         [Edge("Root", "B"), Edge("Root", "C")],
         node_types={"Root": "gateway", "B": "switch", "C": "switch"},
     )
@@ -220,7 +215,7 @@ def test_render_svg_isometric_elbow_path():
 
 
 def test_render_svg_isometric_poe_icon():
-    output = render_svg_isometric(
+    output = svg_module.render_svg_isometric(
         [Edge("A", "B", poe=True)],
         node_types={"A": "switch", "B": "switch"},
     )
@@ -228,7 +223,7 @@ def test_render_svg_isometric_poe_icon():
 
 
 def test_render_svg_isometric_client_left_label():
-    output = render_svg_isometric(
+    output = svg_module.render_svg_isometric(
         [Edge("Client", "Switch", label="Switch: Port 2")],
         node_types={"Switch": "switch", "Client": "client"},
     )
@@ -236,7 +231,7 @@ def test_render_svg_isometric_client_left_label():
 
 
 def test_render_svg_isometric_port_prefixes_upstream():
-    output = render_svg_isometric(
+    output = svg_module.render_svg_isometric(
         [Edge("Switch", "AP", label="Port 1 <-> Port 2")],
         node_types={"Switch": "switch", "AP": "ap"},
     )
@@ -244,10 +239,14 @@ def test_render_svg_isometric_port_prefixes_upstream():
 
 
 def test_render_svg_isometric_defs_use_iso_node_prefix():
-    output = render_svg_isometric([Edge("A", "B")], node_types={"A": "switch", "B": "switch"})
+    output = svg_module.render_svg_isometric(
+        [Edge("A", "B")], node_types={"A": "switch", "B": "switch"}
+    )
     assert 'id="iso-node-switch"' in output
 
 
 def test_render_svg_isometric_nodes_reference_iso_node_prefix():
-    output = render_svg_isometric([Edge("A", "B")], node_types={"A": "switch", "B": "switch"})
+    output = svg_module.render_svg_isometric(
+        [Edge("A", "B")], node_types={"A": "switch", "B": "switch"}
+    )
     assert 'fill="url(#iso-node-switch)"' in output

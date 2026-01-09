@@ -124,14 +124,13 @@ def _compact_edge_label(
 ) -> str:
     if "<->" not in label:
         return label
-    left, right = (part.strip() for part in label.split("<->", 1))
-    left_name = _extract_device_name(left)
-    right_name = _extract_device_name(right)
-    left_port = _extract_port_text(left)
-    right_port = _extract_port_text(right)
+    left_segment, right_segment = (part.strip() for part in label.split("<->", 1))
+    left_name = _extract_device_name(left_segment)
+    right_name = _extract_device_name(right_segment)
+    left_port = _extract_port_text(left_segment)
+    right_port = _extract_port_text(right_segment)
     if left_node and right_node:
         if right_name and right_name == left_node and left_name == right_node:
-            left, right = right, left
             left_name, right_name = right_name, left_name
             left_port, right_port = right_port, left_port
     if left_port and right_port:

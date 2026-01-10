@@ -1,4 +1,4 @@
-.PHONY: venv install lint format typecheck test coverage smoketest smoketest-mock mock-data ci version version-sync version-bump help
+.PHONY: venv install lint format typecheck test bdd coverage smoketest smoketest-mock mock-data ci version version-sync version-bump help
 
 VERSION_FILE = VERSION
 PYTHON ?= python
@@ -20,6 +20,9 @@ typecheck:
 
 test:
 	.venv/bin/pytest
+
+bdd:
+	.venv/bin/behave
 
 coverage:
 	.venv/bin/pytest --cov=unifi_network_maps --cov-report=term-missing
@@ -108,7 +111,7 @@ version-bump:
 	git push origin HEAD; \
 	git push origin "v$$next"
 
-ci: lint format typecheck test
+ci: lint format typecheck test bdd
 	.venv/bin/pre-commit run --all-files
 	$(MAKE) help
 help:

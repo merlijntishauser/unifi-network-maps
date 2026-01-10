@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - Added contract tests for UniFi API wrapper with fixture-based validation.
 - Added optional live UniFi contract tests (gated by `UNIFI_CONTRACT_LIVE=1`).
 - Split CI into dedicated jobs and added a contract-test job.
+- Added Behave-based BDD tests covering CLI outputs, mkdocs assets, and error handling.
 - Added mkdocs timestamp (timezone configurable via `--mkdocs-timestamp-zone`).
 - Added optional dual Mermaid blocks for MkDocs Material theme switching (`--mkdocs-dual-theme`).
 

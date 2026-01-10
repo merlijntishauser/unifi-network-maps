@@ -29,6 +29,18 @@ def _coerce_color(value: object, default: str) -> str:
     return value if isinstance(value, str) else default
 
 
+def _coerce_optional_color(value: object, default: str | None) -> str | None:
+    return value if isinstance(value, str) else default
+
+
+def _coerce_optional_int(value: object, default: int | None) -> int | None:
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    return default
+
+
 def _mermaid_theme_from_dict(data: dict, base: MermaidTheme) -> MermaidTheme:
     nodes = data.get("nodes", {}) if isinstance(data.get("nodes"), dict) else {}
 
@@ -51,6 +63,13 @@ def _mermaid_theme_from_dict(data: dict, base: MermaidTheme) -> MermaidTheme:
         standard_link_width=int(data.get("standard_link_width", base.standard_link_width)),
         standard_link_arrow=_coerce_color(
             data.get("standard_link_arrow"), base.standard_link_arrow
+        ),
+        node_text=_coerce_optional_color(data.get("node_text"), base.node_text),
+        edge_label_border=_coerce_optional_color(
+            data.get("edge_label_border"), base.edge_label_border
+        ),
+        edge_label_border_width=_coerce_optional_int(
+            data.get("edge_label_border_width"), base.edge_label_border_width
         ),
     )
 

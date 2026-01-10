@@ -18,6 +18,9 @@ class MermaidTheme:
     standard_link: str
     standard_link_width: int
     standard_link_arrow: str
+    node_text: str | None = None
+    edge_label_border: str | None = None
+    edge_label_border_width: int | None = None
 
 
 DEFAULT_THEME = MermaidTheme(
@@ -32,15 +35,22 @@ DEFAULT_THEME = MermaidTheme(
     standard_link="#2ecc71",
     standard_link_width=2,
     standard_link_arrow="none",
+    node_text=None,
+    edge_label_border=None,
+    edge_label_border_width=None,
 )
 
 
 def class_defs(theme: MermaidTheme = DEFAULT_THEME) -> list[str]:
+    def node_def(name: str, fill: str, stroke: str) -> str:
+        color = f",color:{theme.node_text}" if theme.node_text else ""
+        return f"  classDef {name} fill:{fill},stroke:{stroke},stroke-width:1px{color};"
+
     return [
-        f"  classDef node_gateway fill:{theme.node_gateway[0]},stroke:{theme.node_gateway[1]},stroke-width:1px;",
-        f"  classDef node_switch fill:{theme.node_switch[0]},stroke:{theme.node_switch[1]},stroke-width:1px;",
-        f"  classDef node_ap fill:{theme.node_ap[0]},stroke:{theme.node_ap[1]},stroke-width:1px;",
-        f"  classDef node_client fill:{theme.node_client[0]},stroke:{theme.node_client[1]},stroke-width:1px;",
-        f"  classDef node_other fill:{theme.node_other[0]},stroke:{theme.node_other[1]},stroke-width:1px;",
+        node_def("node_gateway", theme.node_gateway[0], theme.node_gateway[1]),
+        node_def("node_switch", theme.node_switch[0], theme.node_switch[1]),
+        node_def("node_ap", theme.node_ap[0], theme.node_ap[1]),
+        node_def("node_client", theme.node_client[0], theme.node_client[1]),
+        node_def("node_other", theme.node_other[0], theme.node_other[1]),
         "  classDef node_legend font-size:10px;",
     ]

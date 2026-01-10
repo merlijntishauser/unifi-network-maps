@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Iterable
 
 from ..model.topology import Edge
@@ -163,7 +164,15 @@ def render_mermaid(
 ) -> str:
     edge_list = list(edges)
     id_map = _build_id_map(edge_list, _group_nodes(groups))
-    lines = [f"graph {direction}"]
+    theme_vars: dict[str, object] = {}
+    if theme.edge_label_border:
+        theme_vars["edgeLabelBorderColor"] = theme.edge_label_border
+    if theme.edge_label_border_width:
+        theme_vars["edgeLabelBorderWidth"] = theme.edge_label_border_width
+    lines = []
+    if theme_vars:
+        lines.append(f'%%{{init: {{"themeVariables": {json.dumps(theme_vars)}}}}}%%')
+    lines.append(f"graph {direction}")
     if groups:
         _render_group_sections(lines, groups, group_order=group_order, id_map=id_map)
     use_node_labels = not groups

@@ -7,7 +7,7 @@
 - no current (known) robustness concerns.
 
 ## P2 - Stability/UX
-- no current stability/UX concerns.
+- no current (known) stability/UX concerns.
 
 ## P3 - Features
 - Home Assistant export/integration
@@ -22,4 +22,14 @@
 - QR codes
   - Feasibility: Low; requires external QR library and decisions on what to encode (device URL/IP/name).
   - Plan: add optional `--include-qr` with opt-in dependency; render QR nodes or sidecar assets.
-- Web interface?
+- Web interface (POC Option A with path to Option B)
+  - Feasibility: Medium; local-only FastAPI + static UI that wraps existing render pipeline.
+  - Pros: quick POC, no CLI breaking changes, easy preview/export, minimal ops/security risk.
+  - Cons: extra dependencies, UI/CLI drift risk, packaging story for future embedded `--web`.
+  - Scope: choose data source (mock with sliders + generate, or real UniFi controller selection).
+  - Option B details: embed server behind `--web` flag, run in-process using shared render functions.
+    - Pros: “one binary/one package”; great UX.
+    - Packaging: keep UI assets under `assets/web/`, serve via FastAPI/Starlette `StaticFiles`.
+    - UX: same form as Option A, but ships with package and requires no external setup.
+    - Safety: explicit local bind (127.0.0.1), optional `--web-host/--web-port`, no creds stored.
+    - Extensibility: add controller profiles in config file later without changing UI routes.

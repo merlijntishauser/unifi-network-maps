@@ -174,6 +174,7 @@ Functional:
 - `--include-clients`: add active wired clients as leaf nodes.
 - `--client-scope wired|wireless|all`: which client types to include (default wired).
 - `--only-unifi`: only include neighbors that are UniFi devices.
+- `--no-cache`: disable UniFi API cache reads and writes.
 
 Mermaid:
 - `--direction LR|TB`: diagram direction for Mermaid (default TB).

@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Added optional dual Mermaid blocks for MkDocs Material theme switching (`--mkdocs-dual-theme`).
 - Switched UniFi API cache payloads to JSON for safer local storage.
 - Skips cache usage when the cache directory is group/world-writable.
+- Added `--no-cache` to bypass UniFi API cache reads/writes.
 
 ## v1.4.1
 - pip install was broken, fixed.

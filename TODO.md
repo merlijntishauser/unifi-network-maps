@@ -1,9 +1,7 @@
 # TODO (Code Review Findings)
 
 ## P0 - Security
-- Add cache directory permission checks (warn/disable cache if group/world-writable).
-  - Risk: shared cache path can be poisoned.
-  - Plan: verify permissions on `_cache_dir()` and skip cache on unsafe paths.
+- no current security concerns.
 
 ## P1 - Robustness
 - Add timeouts for UniFi API calls (if supported by `unifi-controller-api`) or implement a wrapper timeout.
@@ -20,9 +18,6 @@
 - Make output writes atomic when `--output` is set.
   - Risk: interrupted runs can leave partial files.
   - Plan: write to temp file in same dir and replace on success.
-- Add a `--no-cache` CLI flag.
-  - Risk: users want deterministic runs and may need to bypass stale caches.
-  - Plan: bypass cache in `fetch_devices`/`fetch_clients` when set.
 
 ## P3 - Features
 - Home Assistant export/integration

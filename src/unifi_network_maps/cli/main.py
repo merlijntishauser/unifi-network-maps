@@ -124,6 +124,11 @@ def _add_functional_args(parser: argparse._ArgumentGroup) -> None:
     parser.add_argument(
         "--only-unifi", action="store_true", help="Only include neighbors that are UniFi devices"
     )
+    parser.add_argument(
+        "--no-cache",
+        action="store_true",
+        help="Disable UniFi API cache reads and writes",
+    )
 
 
 def _add_mermaid_args(parser: argparse._ArgumentGroup) -> None:
@@ -250,7 +255,9 @@ def _load_devices_data(
     if raw_devices_override is None:
         if config is None:
             raise ValueError("Config required to fetch devices")
-        raw_devices = list(fetch_devices(config, site=site, detailed=True))
+        raw_devices = list(
+            fetch_devices(config, site=site, detailed=True, use_cache=not args.no_cache)
+        )
     else:
         raw_devices = raw_devices_override
     devices = normalize_devices(raw_devices)
@@ -298,7 +305,7 @@ def _build_edges_with_clients(
         if clients_override is None:
             if config is None:
                 raise ValueError("Config required to fetch clients")
-            clients = list(fetch_clients(config, site=site))
+            clients = list(fetch_clients(config, site=site, use_cache=not args.no_cache))
         else:
             clients = clients_override
         device_index = build_device_index(devices)

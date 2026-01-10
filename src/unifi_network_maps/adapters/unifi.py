@@ -149,7 +149,11 @@ def _init_controller(config: Config, *, is_udm_pro: bool) -> UnifiController:
 
 
 def fetch_devices(
-    config: Config, *, site: str | None = None, detailed: bool = True
+    config: Config,
+    *,
+    site: str | None = None,
+    detailed: bool = True,
+    use_cache: bool = True,
 ) -> Sequence[object]:
     """Fetch devices from UniFi Controller.
 
@@ -163,7 +167,7 @@ def fetch_devices(
     site_name = site or config.site
     ttl_seconds = _cache_ttl_seconds()
     cache_path = _cache_dir() / f"devices_{_cache_key(config.url, site_name, str(detailed))}.json"
-    if _is_cache_dir_safe(cache_path.parent):
+    if use_cache and _is_cache_dir_safe(cache_path.parent):
         cached = _load_cache(cache_path, ttl_seconds)
         stale_cached, cache_age = _load_cache_with_age(cache_path)
     else:
@@ -193,12 +197,18 @@ def fetch_devices(
             )
             return stale_cached
         raise
-    _save_cache(cache_path, devices)
+    if use_cache:
+        _save_cache(cache_path, devices)
     logger.info("Fetched %d devices", len(devices))
     return devices
 
 
-def fetch_clients(config: Config, *, site: str | None = None) -> Sequence[object]:
+def fetch_clients(
+    config: Config,
+    *,
+    site: str | None = None,
+    use_cache: bool = True,
+) -> Sequence[object]:
     """Fetch active clients from UniFi Controller."""
     try:
         from unifi_controller_api import UnifiAuthenticationError
@@ -208,7 +218,7 @@ def fetch_clients(config: Config, *, site: str | None = None) -> Sequence[object
     site_name = site or config.site
     ttl_seconds = _cache_ttl_seconds()
     cache_path = _cache_dir() / f"clients_{_cache_key(config.url, site_name)}.json"
-    if _is_cache_dir_safe(cache_path.parent):
+    if use_cache and _is_cache_dir_safe(cache_path.parent):
         cached = _load_cache(cache_path, ttl_seconds)
         stale_cached, cache_age = _load_cache_with_age(cache_path)
     else:
@@ -238,6 +248,7 @@ def fetch_clients(config: Config, *, site: str | None = None) -> Sequence[object
             )
             return stale_cached
         raise
-    _save_cache(cache_path, clients)
+    if use_cache:
+        _save_cache(cache_path, clients)
     logger.info("Fetched %d clients", len(clients))
     return clients

@@ -132,6 +132,34 @@ def test_fetch_devices_uses_cache(monkeypatch, tmp_path):
     assert device["name"] == "cached"
 
 
+def test_fetch_devices_skips_cache_when_disabled(monkeypatch, tmp_path):
+    fake_module = SimpleNamespace(UnifiAuthenticationError=RuntimeError)
+    monkeypatch.setitem(sys.modules, "unifi_controller_api", fake_module)
+    monkeypatch.setenv("UNIFI_CACHE_DIR", str(tmp_path))
+    monkeypatch.setenv("UNIFI_CACHE_TTL_SECONDS", "3600")
+
+    cache_path = tmp_path / f"devices_{unifi._cache_key('url', 'default', 'True')}.json"
+    cache_path.write_text(
+        json.dumps({"timestamp": time.time(), "data": [{"name": "cached"}]}),
+        encoding="utf-8",
+    )
+
+    calls = {"count": 0}
+
+    class Controller:
+        def get_unifi_site_device(self, site_name, detailed, raw):
+            calls["count"] += 1
+            return [{"name": "fresh"}]
+
+    monkeypatch.setattr(unifi, "_init_controller", lambda *_a, **_k: Controller())
+    config = Config(url="url", site="default", user="user", password="pass", verify_ssl=True)
+    devices = list(unifi.fetch_devices(config, use_cache=False))
+    device = devices[0]
+    assert calls["count"] == 1
+    assert isinstance(device, dict)
+    assert device["name"] == "fresh"
+
+
 def test_fetch_clients_cache_expired(monkeypatch, tmp_path):
     fake_module = SimpleNamespace(UnifiAuthenticationError=RuntimeError)
     monkeypatch.setitem(sys.modules, "unifi_controller_api", fake_module)

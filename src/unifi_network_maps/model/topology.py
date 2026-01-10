@@ -310,6 +310,8 @@ def coerce_device(device: DeviceSource) -> Device:
     lldp_info = _get_attr(device, "lldp_info")
     if lldp_info is None:
         lldp_info = _get_attr(device, "lldp")
+    if lldp_info is None:
+        lldp_info = _get_attr(device, "lldp_table")
 
     if not name or not mac:
         raise ValueError("Device missing name or mac")

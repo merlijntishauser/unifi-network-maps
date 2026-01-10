@@ -196,6 +196,22 @@ def test_coerce_device_uses_lldp_fallback():
     assert device.lldp_info[0].chassis_id == "bb"
 
 
+def test_coerce_device_uses_lldp_table_fallback():
+    class DeviceWithLldpTable:
+        name = "Device"
+        model_name = ""
+        mac = "aa"
+        ip = ""
+        type = ""
+        lldp_info = None
+        lldp = None
+        lldp_table = [LLDPEntry("bb", "1")]
+        port_table = []
+
+    device = coerce_device(DeviceWithLldpTable())
+    assert device.lldp_info[0].chassis_id == "bb"
+
+
 def test_coerce_device_requires_name():
     class MissingName:
         name = ""

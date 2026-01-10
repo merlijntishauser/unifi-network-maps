@@ -25,6 +25,139 @@ def _cache_dir() -> Path:
     return Path(os.environ.get("UNIFI_CACHE_DIR", ".cache/unifi_network_maps"))
 
 
+def _device_attr(device: object, name: str) -> object | None:
+    if isinstance(device, dict):
+        return device.get(name)
+    return getattr(device, name, None)
+
+
+def _first_attr(device: object, *names: str) -> object | None:
+    for name in names:
+        value = _device_attr(device, name)
+        if value is not None:
+            return value
+    return None
+
+
+def _as_list(value: object | None) -> list[object]:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return value
+    if isinstance(value, dict):
+        return [value]
+    if isinstance(value, str | bytes):
+        return []
+    try:
+        return list(value)  # type: ignore[arg-type]
+    except TypeError:
+        return []
+
+
+def _serialize_lldp_entry(entry: object) -> dict[str, object]:
+    return {
+        "chassis_id": _first_attr(entry, "chassis_id", "chassisId"),
+        "port_id": _first_attr(entry, "port_id", "portId"),
+        "port_desc": _first_attr(entry, "port_desc", "portDesc", "port_descr", "portDescr"),
+        "local_port_name": _first_attr(entry, "local_port_name", "localPortName"),
+        "local_port_idx": _first_attr(entry, "local_port_idx", "localPortIdx"),
+    }
+
+
+def _serialize_lldp_entries(value: object | None) -> list[dict[str, object]]:
+    entries = _as_list(value)
+    serialized: list[dict[str, object]] = []
+    for entry in entries:
+        data = _serialize_lldp_entry(entry)
+        if data.get("chassis_id") and data.get("port_id"):
+            serialized.append(data)
+    return serialized
+
+
+def _serialize_port_entry(entry: object) -> dict[str, object]:
+    aggregation_group = _first_attr(
+        entry,
+        "aggregation_group",
+        "aggregation_id",
+        "aggregate_id",
+        "agg_id",
+        "lag_id",
+        "lag_group",
+        "link_aggregation_group",
+        "link_aggregation_id",
+        "aggregate",
+        "aggregated_by",
+    )
+    return {
+        "port_idx": _first_attr(entry, "port_idx", "portIdx"),
+        "name": _first_attr(entry, "name"),
+        "ifname": _first_attr(entry, "ifname"),
+        "speed": _first_attr(entry, "speed"),
+        "aggregation_group": aggregation_group,
+        "port_poe": _first_attr(entry, "port_poe"),
+        "poe_enable": _first_attr(entry, "poe_enable"),
+        "poe_good": _first_attr(entry, "poe_good"),
+        "poe_power": _first_attr(entry, "poe_power"),
+    }
+
+
+def _serialize_port_table(value: object | None) -> list[dict[str, object]]:
+    return [_serialize_port_entry(entry) for entry in _as_list(value)]
+
+
+def _serialize_uplink(value: object | None) -> dict[str, object] | None:
+    if value is None:
+        return None
+    data = {
+        "uplink_mac": _first_attr(value, "uplink_mac", "uplink_device_mac"),
+        "uplink_device_name": _first_attr(value, "uplink_device_name", "uplink_name"),
+        "uplink_remote_port": _first_attr(value, "uplink_remote_port", "port_idx"),
+    }
+    if any(item is not None for item in data.values()):
+        return data
+    return None
+
+
+def _device_lldp_value(device: object) -> object | None:
+    lldp_info = _device_attr(device, "lldp_info")
+    if lldp_info is None:
+        lldp_info = _device_attr(device, "lldp")
+    if lldp_info is None:
+        lldp_info = _device_attr(device, "lldp_table")
+    return lldp_info
+
+
+def _device_uplink_fields(device: object) -> dict[str, object | None]:
+    return {
+        "uplink": _serialize_uplink(_device_attr(device, "uplink")),
+        "last_uplink": _serialize_uplink(_device_attr(device, "last_uplink")),
+        "uplink_mac": _first_attr(device, "uplink_mac", "uplink_device_mac"),
+        "uplink_device_name": _device_attr(device, "uplink_device_name"),
+        "uplink_remote_port": _device_attr(device, "uplink_remote_port"),
+        "last_uplink_mac": _device_attr(device, "last_uplink_mac"),
+    }
+
+
+def _serialize_device_for_cache(device: object) -> dict[str, object]:
+    payload = {
+        "name": _device_attr(device, "name"),
+        "model_name": _device_attr(device, "model_name"),
+        "model": _device_attr(device, "model"),
+        "mac": _device_attr(device, "mac"),
+        "ip": _first_attr(device, "ip", "ip_address"),
+        "type": _first_attr(device, "type", "device_type"),
+        "displayable_version": _first_attr(device, "displayable_version", "version"),
+        "lldp_info": _serialize_lldp_entries(_device_lldp_value(device)),
+        "port_table": _serialize_port_table(_device_attr(device, "port_table")),
+    }
+    payload.update(_device_uplink_fields(device))
+    return payload
+
+
+def _serialize_devices_for_cache(devices: Sequence[object]) -> list[dict[str, object]]:
+    return [_serialize_device_for_cache(device) for device in devices]
+
+
 def _cache_lock_path(path: Path) -> Path:
     return path.with_suffix(path.suffix + ".lock")
 
@@ -228,7 +361,7 @@ def fetch_devices(
         controller = _init_controller(config, is_udm_pro=False)
 
     def _fetch() -> Sequence[object]:
-        return controller.get_unifi_site_device(site_name=site_name, detailed=detailed, raw=True)
+        return controller.get_unifi_site_device(site_name=site_name, detailed=detailed, raw=False)
 
     try:
         devices = _call_with_retries("device fetch", _fetch)
@@ -242,7 +375,7 @@ def fetch_devices(
             return stale_cached
         raise
     if use_cache:
-        _save_cache(cache_path, devices)
+        _save_cache(cache_path, _serialize_devices_for_cache(devices))
     logger.info("Fetched %d devices", len(devices))
     return devices
 

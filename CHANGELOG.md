@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - Added `--no-cache` to bypass UniFi API cache reads/writes.
 - Added file locking around cache read/write operations to avoid concurrent corruption.
 - Hardened Mermaid label escaping for newlines and backslashes.
+- Fixed device cache serialization to preserve LLDP data when caching.
 
 ## v1.4.1
 - pip install was broken, fixed.

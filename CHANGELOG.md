@@ -2,7 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
-## v1.4.2 (unreleased)
+## v1.4.3 - (unreleased)
+- planned: POC for HA integration
+
+## v1.4.2 - 2026-01-10
 - Added static code analysis and stricter type-checking
 - Added contract tests for UniFi API wrapper with fixture-based validation.
 - Added optional live UniFi contract tests (gated by `UNIFI_CONTRACT_LIVE=1`).
@@ -19,10 +22,10 @@ All notable changes to this project will be documented in this file.
 - Added optional UniFi API request timeouts via `UNIFI_REQUEST_TIMEOUT_SECONDS`.
 - Made `--output` writes atomic to avoid partial files on interruption.
 
-## v1.4.1
+## v1.4.1 - 2026-01-06
 - pip install was broken, fixed.
 
-## v1.4.0
+## v1.4.0 - 2026-01-06
 - Added MkDocs output, which includes gateway/switch details and per-port tables.
 - Port tables show speed, PoE status, power, and wired clients per port.
 - Added compact legend with sidebar injection (`--mkdocs-sidebar-legend`).
@@ -35,14 +38,14 @@ All notable changes to this project will be documented in this file.
 - Added Faker-powered `--generate-mock` for deterministic mock fixtures (dev-only).
 - Added mock fixtures + SVG/Mermaid examples, with mock smoketest/CI steps.
 
-## v1.3.1
+## v1.3.1 - 2026-01-04
 - Added `lldp-md` output with per-device details tables and optional client sections.
 - Added `--client-scope wired|wireless|all` and dashed wireless client links in Mermaid/SVG.
 - Expanded smoketest outputs for wireless/all client scopes and LLDP markdown.
 - Fixed SVG icon loading paths after package reorg.
 - Tuned isometric port label placement on front tiles.
 
-## v1.3.0
+## v1.3.0 - 2026-01-04
 - Reorganized package into submodules (`adapters/`, `model/`, `render/`, `io/`, `cli/`).
 - YAML-based theming with default + dark themes and `--theme-file`.
 - CLI help now grouped by category; CLI logic split into focused helpers.
@@ -51,13 +54,13 @@ All notable changes to this project will be documented in this file.
 - Added PoE/edge/device count logging and improved label ordering helpers.
 - Coverage excludes asset packages; docs updated (options/groups + AI disclosure).
 
-## v1.2.4
+## v1.2.4 - 2026-01-03
 - Added typed `UplinkInfo`/`PortInfo` and uplink fallback for LLDP gaps.
 - Deterministic edge ordering for repeatable output.
 - CI publish workflow (trusted publishing) and release docs.
 - Project metadata and packaging updated for OSS readiness.
 
-## v1.1.0
+## v1.1.0 - 2026-01-03
 - Added isometric SVG output with grid-aligned links and isometric icon set.
 - Improved port label placement and client labeling in SVG outputs.
 - Added smoketest target with multiple outputs (ports/clients/legend).
@@ -65,14 +68,14 @@ All notable changes to this project will be documented in this file.
 - Fixed Mermaid legend/grouped output parsing errors.
 - Refined visuals: link gradients, tile gradients, icon placement tweaks.
 
-## v1.0.0
+## v1.0.0 - 2025-12-30
 - Mermaid legend can render as a separate graph.
 - Straight Mermaid links with node type coloring.
 - Added wired client leaf nodes and uplink port labels.
 - Expanded PoE detection tests and LLDP helpers.
 - CLI loads `.env` automatically.
 
-## v0.2.0
+## v0.2.0 - 2026-01-02 - Initial public release
 - Added versioning workflow and bump tooling.
 - Introduced SVG renderer and tree layout fixes.
 - Increased test coverage and added coverage tooling.

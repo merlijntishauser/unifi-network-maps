@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Skips cache usage when the cache directory is group/world-writable.
 - Added `--no-cache` to bypass UniFi API cache reads/writes.
 - Added file locking around cache read/write operations to avoid concurrent corruption.
+- Hardened Mermaid label escaping for newlines and backslashes.
 
 ## v1.4.1
 - pip install was broken, fixed.

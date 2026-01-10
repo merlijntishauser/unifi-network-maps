@@ -7,9 +7,6 @@
 - Add timeouts for UniFi API calls (if supported by `unifi-controller-api`) or implement a wrapper timeout.
   - Risk: calls can hang indefinitely, blocking CLI.
   - Plan: expose `UNIFI_REQUEST_TIMEOUT_SECONDS` and pass into controller init if supported.
-- Harden Mermaid label escaping for newlines/backslashes.
-  - Risk: device names/port labels with control characters can break Mermaid output.
-  - Plan: escape `\n`, `\r`, `\\` in `_escape` and normalize whitespace.
 
 ## P2 - Stability/UX
 - Make output writes atomic when `--output` is set.

@@ -88,3 +88,13 @@ def test_render_mermaid_assigns_class_for_node_types():
 def test_render_mermaid_escapes_quotes():
     output = render_mermaid([Edge('A "1"', "B")])
     assert '\\"' in output
+
+
+def test_render_mermaid_escapes_backslashes():
+    output = render_mermaid([Edge("A \\ 1", "B")])
+    assert "\\\\" in output
+
+
+def test_render_mermaid_escapes_newlines():
+    output = render_mermaid([Edge("Line 1\nLine 2", "B")])
+    assert "\\n" in output

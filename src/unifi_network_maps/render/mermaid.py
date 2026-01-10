@@ -9,7 +9,9 @@ from .mermaid_theme import DEFAULT_THEME, MermaidTheme, class_defs
 
 
 def _escape(label: str) -> str:
-    return label.replace('"', '\\"')
+    normalized = label.replace("\r\n", "\n").replace("\r", "\n")
+    escaped = normalized.replace("\\", "\\\\").replace("\n", "\\n")
+    return escaped.replace('"', '\\"')
 
 
 def _slugify(value: str) -> str:

@@ -10,6 +10,8 @@ All notable changes to this project will be documented in this file.
 - Added Behave-based BDD tests covering CLI outputs, mkdocs assets, and error handling.
 - Added mkdocs timestamp (timezone configurable via `--mkdocs-timestamp-zone`).
 - Added optional dual Mermaid blocks for MkDocs Material theme switching (`--mkdocs-dual-theme`).
+- Switched UniFi API cache payloads to JSON for safer local storage.
+- Skips cache usage when the cache directory is group/world-writable.
 
 ## v1.4.1
 - pip install was broken, fixed.

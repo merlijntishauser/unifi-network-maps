@@ -10,16 +10,21 @@
 - no current (known) stability/UX concerns.
 
 ## P3 - Features
-- Home Assistant export/integration
-  - Feasibility: Medium; export layer already exists, needs HA-specific examples.
-  - Plan: add HA export presets (markdown card + include), document `/config/www` flow, keep core logic unchanged.
+- Home Assistant integration (Lovelace cards + SVG/ports drilldown)
+  - Approach choice: separate HA integration repo vs in-repo POC.
+  - Pros (separate): independent release cadence, HA-specific UX freedom, easier HACS path.
+  - Cons (separate): versioning boundary + compatibility overhead, more setup up front.
+  - POC scope: render SVG + metadata JSON to `/config/www/unifi-network-maps/`.
+  - UI ideas: isometric SVG card with pan/zoom + hover tooltips; device/port panel; PoE status badges.
+  - Data model: stable JSON schema for devices/ports/links so UI can evolve without core changes.
+  - Packaging options: pip in HA container, bundled wheel, or external renderer + file-based assets.
 - Cable/link labeling
   - Feasibility: Medium; needs port metadata (`port_desc`, `port_overrides`) and consistent naming rules.
   - Plan: extend port label composition with optional cable-name mapping file; add tests for mixed labels.
 - GUI tests for SVG outputs
   - Feasibility: Low/Medium; rendering comparison is brittle but doable with snapshot diffs.
   - Plan: add optional visual regression tests using generated SVGs + a baseline comparison step.
-- QR codes
+- QR codes for devices
   - Feasibility: Low; requires external QR library and decisions on what to encode (device URL/IP/name).
   - Plan: add optional `--include-qr` with opt-in dependency; render QR nodes or sidecar assets.
 - Web interface (POC Option A with path to Option B)

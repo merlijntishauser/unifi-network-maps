@@ -49,7 +49,7 @@ Source → Model → Diagram → Export
 ## Technology choices
 
 ### Python
-- Python ≥ 3.10
+- Python ≥ 3.13
 - Virtualenv required
 
 ### UniFi API
@@ -166,6 +166,8 @@ unifi-network-map/
 │   │   │   └── theme.py
 │   │   ├── io/
 │   │   │   ├── debug.py
+│   │   │   ├── mock_data.py
+│   │   │   ├── mock_generate.py
 │   │   │   └── export.py
 │   │   └── assets/
 │   │       └── icons/
@@ -190,6 +192,15 @@ Options:
 Source:
 - `--site`
 - `--env-file`
+- `--mock-data`
+
+Mock:
+- `--generate-mock`
+- `--mock-seed`
+- `--mock-switches`
+- `--mock-aps`
+- `--mock-wired-clients`
+- `--mock-wireless-clients`
 
 Functional:
 - `--include-ports`
@@ -209,7 +220,9 @@ Output:
 - `--format mermaid|svg|svg-iso|lldp-md|mkdocs`
 - `--markdown`
 - `--stdout`
-- `--mkdocs-snippets`
+- `--mkdocs-sidebar-legend`
+- `--mkdocs-dual-theme`
+- `--mkdocs-timestamp-zone`
 
 Debug:
 - `--debug-dump`
@@ -254,6 +267,8 @@ No HA-specific logic in core code; the export layer abstracts this.
 - Pure functions where possible
 - Logging via `logging`
 - Fail fast on missing LLDP
+- BDD tests live in `features/` and run via `behave`.
+- Contract tests live in `tests/test_contract_unifi.py` with optional live tests gated by `UNIFI_CONTRACT_LIVE=1`.
 
 ---
 

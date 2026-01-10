@@ -2,8 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
-## v1.4.3 - (2026-01-10)
-- improved dark theme for mermaid graphs
+## v1.4.4 - (2026-01-10)
+- Improved dark theme Mermaid readability (labels + link borders).
+- Fixed MkDocs sidebar legend duplication with dual-theme output.
+- Added smoke tests for dual-theme MkDocs sidebar legend output.
 
 ## v1.4.2 - 2026-01-10
 - Added static code analysis and stricter type-checking

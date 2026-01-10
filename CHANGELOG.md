@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - Added file locking around cache read/write operations to avoid concurrent corruption.
 - Hardened Mermaid label escaping for newlines and backslashes.
 - Fixed device cache serialization to preserve LLDP data when caching.
+- Added optional UniFi API request timeouts via `UNIFI_REQUEST_TIMEOUT_SECONDS`.
 
 ## v1.4.1
 - pip install was broken, fixed.

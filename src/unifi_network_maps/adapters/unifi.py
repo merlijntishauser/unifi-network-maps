@@ -9,6 +9,8 @@ import os
 import stat
 import time
 from collections.abc import Callable, Iterator, Sequence
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FutureTimeoutError
 from contextlib import contextmanager
 from pathlib import Path
 from typing import IO, TYPE_CHECKING
@@ -296,13 +298,37 @@ def _retry_backoff_seconds() -> float:
         return 0.5
 
 
+def _request_timeout_seconds() -> float | None:
+    value = os.environ.get("UNIFI_REQUEST_TIMEOUT_SECONDS", "").strip()
+    if not value:
+        return None
+    try:
+        return max(0.0, float(value))
+    except ValueError:
+        logger.warning("Invalid UNIFI_REQUEST_TIMEOUT_SECONDS value: %s", value)
+        return None
+
+
+def _call_with_timeout[T](operation: str, func: Callable[[], T], timeout: float | None) -> T:
+    if timeout is None or timeout <= 0:
+        return func()
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(func)
+        try:
+            return future.result(timeout=timeout)
+        except FutureTimeoutError as exc:
+            future.cancel()
+            raise TimeoutError(f"{operation} timed out after {timeout:.2f}s") from exc
+
+
 def _call_with_retries[T](operation: str, func: Callable[[], T]) -> T:
     attempts = _retry_attempts()
     backoff = _retry_backoff_seconds()
+    timeout = _request_timeout_seconds()
     last_exc: Exception | None = None
     for attempt in range(1, attempts + 1):
         try:
-            return func()
+            return _call_with_timeout(operation, func, timeout)
         except Exception as exc:  # noqa: BLE001 - surface full error after retries
             last_exc = exc
             logger.warning("Failed %s attempt %d/%d: %s", operation, attempt, attempts, exc)

@@ -1,12 +1,10 @@
 # TODO (Code Review Findings)
 
 ## P0 - Security
-- no current security concerns.
+- no current (known) security concerns.
 
 ## P1 - Robustness
-- Add timeouts for UniFi API calls (if supported by `unifi-controller-api`) or implement a wrapper timeout.
-  - Risk: calls can hang indefinitely, blocking CLI.
-  - Plan: expose `UNIFI_REQUEST_TIMEOUT_SECONDS` and pass into controller init if supported.
+- no current (known) robustness concerns.
 
 ## P2 - Stability/UX
 - Make output writes atomic when `--output` is set.

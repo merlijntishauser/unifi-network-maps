@@ -30,6 +30,7 @@ export UNIFI_SITE=default
 export UNIFI_USER=local_admin
 export UNIFI_PASS=********
 export UNIFI_VERIFY_SSL=false
+export UNIFI_REQUEST_TIMEOUT_SECONDS=10
 ```
 
 Use a custom env file:

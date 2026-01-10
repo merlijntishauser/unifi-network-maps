@@ -236,3 +236,33 @@ def test_fetch_devices_retries(monkeypatch, tmp_path):
     device = devices[0]
     assert isinstance(device, dict)
     assert device["ok"] is True
+
+
+def test_fetch_devices_skips_cache_when_dir_is_world_writable(monkeypatch, tmp_path):
+    fake_module = SimpleNamespace(UnifiAuthenticationError=RuntimeError)
+    monkeypatch.setitem(sys.modules, "unifi_controller_api", fake_module)
+    monkeypatch.setenv("UNIFI_CACHE_DIR", str(tmp_path))
+    monkeypatch.setenv("UNIFI_CACHE_TTL_SECONDS", "3600")
+
+    cache_path = tmp_path / f"devices_{unifi._cache_key('url', 'default', 'True')}.json"
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    cache_path.write_text(
+        json.dumps({"timestamp": time.time(), "data": [{"name": "cached"}]}),
+        encoding="utf-8",
+    )
+    tmp_path.chmod(0o777)
+
+    called = {"count": 0}
+
+    class Controller:
+        def get_unifi_site_device(self, site_name, detailed, raw):
+            called["count"] += 1
+            return [{"name": "fresh"}]
+
+    monkeypatch.setattr(unifi, "_init_controller", lambda *_a, **_k: Controller())
+    config = Config(url="url", site="default", user="user", password="pass", verify_ssl=True)
+    devices = list(unifi.fetch_devices(config))
+    device = devices[0]
+    assert called["count"] == 1
+    assert isinstance(device, dict)
+    assert device["name"] == "fresh"

@@ -6,6 +6,7 @@ import hashlib
 import json
 import logging
 import os
+import stat
 import time
 from collections.abc import Callable, Sequence
 from pathlib import Path
@@ -21,6 +22,20 @@ logger = logging.getLogger(__name__)
 
 def _cache_dir() -> Path:
     return Path(os.environ.get("UNIFI_CACHE_DIR", ".cache/unifi_network_maps"))
+
+
+def _is_cache_dir_safe(path: Path) -> bool:
+    if not path.exists():
+        return True
+    try:
+        mode = stat.S_IMODE(path.stat().st_mode)
+    except OSError as exc:
+        logger.warning("Failed to stat cache dir %s: %s", path, exc)
+        return False
+    if mode & (stat.S_IWGRP | stat.S_IWOTH):
+        logger.warning("Cache dir %s is group/world-writable; skipping cache", path)
+        return False
+    return True
 
 
 def _cache_ttl_seconds() -> int:
@@ -73,6 +88,8 @@ def _load_cache_with_age(path: Path) -> tuple[Sequence[object] | None, float | N
 def _save_cache(path: Path, data: Sequence[object]) -> None:
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
+        if not _is_cache_dir_safe(path.parent):
+            return
         payload = {"timestamp": time.time(), "data": data}
         tmp_path = path.with_suffix(path.suffix + ".tmp")
         tmp_path.write_text(json.dumps(payload, ensure_ascii=True), encoding="utf-8")
@@ -146,8 +163,12 @@ def fetch_devices(
     site_name = site or config.site
     ttl_seconds = _cache_ttl_seconds()
     cache_path = _cache_dir() / f"devices_{_cache_key(config.url, site_name, str(detailed))}.json"
-    cached = _load_cache(cache_path, ttl_seconds)
-    stale_cached, cache_age = _load_cache_with_age(cache_path)
+    if _is_cache_dir_safe(cache_path.parent):
+        cached = _load_cache(cache_path, ttl_seconds)
+        stale_cached, cache_age = _load_cache_with_age(cache_path)
+    else:
+        cached = None
+        stale_cached, cache_age = None, None
     if cached is not None:
         logger.info("Using cached devices (%d)", len(cached))
         return cached
@@ -187,8 +208,12 @@ def fetch_clients(config: Config, *, site: str | None = None) -> Sequence[object
     site_name = site or config.site
     ttl_seconds = _cache_ttl_seconds()
     cache_path = _cache_dir() / f"clients_{_cache_key(config.url, site_name)}.json"
-    cached = _load_cache(cache_path, ttl_seconds)
-    stale_cached, cache_age = _load_cache_with_age(cache_path)
+    if _is_cache_dir_safe(cache_path.parent):
+        cached = _load_cache(cache_path, ttl_seconds)
+        stale_cached, cache_age = _load_cache_with_age(cache_path)
+    else:
+        cached = None
+        stale_cached, cache_age = None, None
     if cached is not None:
         logger.info("Using cached clients (%d)", len(cached))
         return cached

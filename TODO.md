@@ -7,9 +7,7 @@
 - no current (known) robustness concerns.
 
 ## P2 - Stability/UX
-- Make output writes atomic when `--output` is set.
-  - Risk: interrupted runs can leave partial files.
-  - Plan: write to temp file in same dir and replace on success.
+- no current stability/UX concerns.
 
 ## P3 - Features
 - Home Assistant export/integration

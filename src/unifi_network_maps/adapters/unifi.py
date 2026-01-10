@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import logging
 import os
-import pickle
 import time
 from collections.abc import Callable, Sequence
 from pathlib import Path
@@ -53,9 +53,12 @@ def _load_cache_with_age(path: Path) -> tuple[Sequence[object] | None, float | N
     if not path.exists():
         return None, None
     try:
-        payload = pickle.loads(path.read_bytes())
+        payload = json.loads(path.read_text(encoding="utf-8"))
     except Exception as exc:
         logger.debug("Failed to read cache %s: %s", path, exc)
+        return None, None
+    if not isinstance(payload, dict):
+        logger.debug("Cached payload at %s is not a dict", path)
         return None, None
     timestamp = payload.get("timestamp")
     if not isinstance(timestamp, int | float):
@@ -72,7 +75,7 @@ def _save_cache(path: Path, data: Sequence[object]) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         payload = {"timestamp": time.time(), "data": data}
         tmp_path = path.with_suffix(path.suffix + ".tmp")
-        tmp_path.write_bytes(pickle.dumps(payload))
+        tmp_path.write_text(json.dumps(payload, ensure_ascii=True), encoding="utf-8")
         tmp_path.replace(path)
     except Exception as exc:
         logger.debug("Failed to write cache %s: %s", path, exc)
@@ -142,7 +145,7 @@ def fetch_devices(
 
     site_name = site or config.site
     ttl_seconds = _cache_ttl_seconds()
-    cache_path = _cache_dir() / f"devices_{_cache_key(config.url, site_name, str(detailed))}.pkl"
+    cache_path = _cache_dir() / f"devices_{_cache_key(config.url, site_name, str(detailed))}.json"
     cached = _load_cache(cache_path, ttl_seconds)
     stale_cached, cache_age = _load_cache_with_age(cache_path)
     if cached is not None:
@@ -156,7 +159,7 @@ def fetch_devices(
         controller = _init_controller(config, is_udm_pro=False)
 
     def _fetch() -> Sequence[object]:
-        return controller.get_unifi_site_device(site_name=site_name, detailed=detailed, raw=False)
+        return controller.get_unifi_site_device(site_name=site_name, detailed=detailed, raw=True)
 
     try:
         devices = _call_with_retries("device fetch", _fetch)
@@ -183,7 +186,7 @@ def fetch_clients(config: Config, *, site: str | None = None) -> Sequence[object
 
     site_name = site or config.site
     ttl_seconds = _cache_ttl_seconds()
-    cache_path = _cache_dir() / f"clients_{_cache_key(config.url, site_name)}.pkl"
+    cache_path = _cache_dir() / f"clients_{_cache_key(config.url, site_name)}.json"
     cached = _load_cache(cache_path, ttl_seconds)
     stale_cached, cache_age = _load_cache_with_age(cache_path)
     if cached is not None:

@@ -1,5 +1,5 @@
 import builtins
-import pickle
+import json
 import sys
 import time
 from types import SimpleNamespace
@@ -119,7 +119,7 @@ def test_fetch_devices_uses_cache(monkeypatch, tmp_path):
     config = Config(
         url="https://example", site="default", user="user", password="pass", verify_ssl=True
     )
-    cache_path = tmp_path / f"devices_{unifi._cache_key(config.url, config.site, 'True')}.pkl"
+    cache_path = tmp_path / f"devices_{unifi._cache_key(config.url, config.site, 'True')}.json"
     unifi._save_cache(cache_path, [{"name": "cached"}])
 
     def fail_init(*_args, **_kwargs):
@@ -141,9 +141,10 @@ def test_fetch_clients_cache_expired(monkeypatch, tmp_path):
     config = Config(
         url="https://example", site="default", user="user", password="pass", verify_ssl=True
     )
-    cache_path = tmp_path / f"clients_{unifi._cache_key(config.url, config.site)}.pkl"
-    cache_path.write_bytes(
-        pickle.dumps({"timestamp": time.time() - 3600, "data": [{"stale": True}]})
+    cache_path = tmp_path / f"clients_{unifi._cache_key(config.url, config.site)}.json"
+    cache_path.write_text(
+        json.dumps({"timestamp": time.time() - 3600, "data": [{"stale": True}]}),
+        encoding="utf-8",
     )
 
     class Controller:
@@ -166,9 +167,10 @@ def test_fetch_devices_uses_stale_cache_on_error(monkeypatch, tmp_path):
     config = Config(
         url="https://example", site="default", user="user", password="pass", verify_ssl=True
     )
-    cache_path = tmp_path / f"devices_{unifi._cache_key(config.url, config.site, 'True')}.pkl"
-    cache_path.write_bytes(
-        pickle.dumps({"timestamp": time.time() - 3600, "data": [{"stale": True}]})
+    cache_path = tmp_path / f"devices_{unifi._cache_key(config.url, config.site, 'True')}.json"
+    cache_path.write_text(
+        json.dumps({"timestamp": time.time() - 3600, "data": [{"stale": True}]}),
+        encoding="utf-8",
     )
 
     class Controller:
@@ -191,9 +193,10 @@ def test_fetch_clients_uses_stale_cache_on_error(monkeypatch, tmp_path):
     config = Config(
         url="https://example", site="default", user="user", password="pass", verify_ssl=True
     )
-    cache_path = tmp_path / f"clients_{unifi._cache_key(config.url, config.site)}.pkl"
-    cache_path.write_bytes(
-        pickle.dumps({"timestamp": time.time() - 3600, "data": [{"stale": True}]})
+    cache_path = tmp_path / f"clients_{unifi._cache_key(config.url, config.site)}.json"
+    cache_path.write_text(
+        json.dumps({"timestamp": time.time() - 3600, "data": [{"stale": True}]}),
+        encoding="utf-8",
     )
 
     class Controller:

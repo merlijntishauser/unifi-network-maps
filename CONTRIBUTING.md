@@ -68,3 +68,22 @@ See `LICENSES.md` for third-party license info.
 - Keep changes focused and small.
 - Add or update tests where behavior changes.
 - Run `make ci` before opening a PR.
+
+## Is there value in this project?
+
+  What exists today:
+
+  - UniFi UI topology view: great live map, but not exportable, not automatable, and not Mermaid/SVG.
+  - Mermaid/Graphviz tools: diagramming, but no UniFi data ingestion or LLDP/topology logic.
+  - UniFi API wrappers: data access only, no rendering/export pipelines.
+  - NetBox/Grafana/HA cards: broader infra tooling, but not focused on UniFi LLDP + publishable diagrams.
+
+  What’s distinctive here:
+
+  - Automated UniFi → Mermaid/SVG (incl. isometric) output, with ports/PoE/clients.
+  - Deterministic CLI + cache + mock generator for CI and docs.
+  - MkDocs/Markdown output plus planned HA‑friendly artifacts.
+  - A clean render pipeline that can power multiple export targets.
+
+  So we’re not duplicating a packaged workflow; we’re combining data + topology modeling + diagram output + documentation/export in a way I haven’t seen in one place.
+  

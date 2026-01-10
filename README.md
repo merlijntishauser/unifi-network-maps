@@ -1,5 +1,10 @@
 # unifi-network-maps
 
+[![CI](https://github.com/merlijntishauser/unifi-network-maps/actions/workflows/ci.yml/badge.svg)](https://github.com/merlijntishauser/unifi-network-maps/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/merlijntishauser/unifi-network-maps/actions/workflows/codeql.yml/badge.svg)](https://github.com/merlijntishauser/unifi-network-maps/actions/workflows/codeql.yml)
+[![Publish](https://github.com/merlijntishauser/unifi-network-maps/actions/workflows/publish.yml/badge.svg)](https://github.com/merlijntishauser/unifi-network-maps/actions/workflows/publish.yml)
+[![PyPI](https://img.shields.io/pypi/v/unifi-network-maps.svg)](https://pypi.org/project/unifi-network-maps/)
+
 Dynamic UniFi network maps generated from LLDP topology. Output can be a range of options including Markdown,
 Mermaid, SVG (including an Isometric view), and MkDocs.
 

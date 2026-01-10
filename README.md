@@ -1,22 +1,22 @@
 # unifi-network-maps
 
-Dynamic UniFi -> Mermaid network maps generated from LLDP topology.
+Dynamic UniFi network maps generated from LLDP topology. Output can be a range of options including Markdown,
+Mermaid, SVG (including an Isometric view), and MkDocs.
 
-## Setup
+## Installation
 
-- Python >= 3.13
-- Virtualenv required
+PyPI:
+
+```bash
+pip install unifi-network-maps
+```
+
+From source:
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements-build.txt
-pip install -e . -c constraints.txt
-```
-
-Local install (non-editable):
-
-```bash
 pip install .
 ```
 
@@ -38,7 +38,7 @@ Use a custom env file:
 unifi-network-maps --env-file ./site.env --stdout
 ```
 
-## Usage
+## Quickstart
 
 Basic map (tree layout by LLDP hops):
 
@@ -51,6 +51,8 @@ Write Markdown for notes tools:
 ```bash
 unifi-network-maps --markdown --output ./network.md
 ```
+
+## Usage
 
 Show ports + clients:
 
@@ -68,26 +70,29 @@ Isometric SVG output:
 
 ```bash
 unifi-network-maps --format svg-iso --output ./network.svg
+```
 
-# Single-page MkDocs output (ports included, no clients)
+MkDocs output (ports included, no clients):
+
+```bash
 unifi-network-maps --format mkdocs --output ./docs/unifi-network.md
+```
 
-# MkDocs output (map + legend + gateway/switch port tables)
-unifi-network-maps --format mkdocs --output ./docs/unifi-network.md
+MkDocs output with clients:
 
-# Include wired clients in the port tables
+```bash
 unifi-network-maps --format mkdocs --include-clients --output ./docs/unifi-network.md
+```
 
-# MkDocs output with dual Mermaid blocks for Material theme switching
+MkDocs output with dual Mermaid blocks for Material theme switching:
+
+```bash
 unifi-network-maps --format mkdocs --mkdocs-dual-theme --output ./docs/unifi-network.md
 ```
 
-SVG size overrides:
+LLDP tables for troubleshooting:
 
 ```bash
-unifi-network-maps --format svg --svg-width 1400 --svg-height 900 --output ./network.svg
-
-# LLDP tables for troubleshooting
 unifi-network-maps --format lldp-md --output ./lldp.md
 ```
 
@@ -112,9 +117,7 @@ unifi-network-maps --generate-mock examples/mock_data.json --mock-seed 1337
 Generate the isometric SVG:
 
 ```bash
-unifi-network-maps --mock-data examples/mock_data.json \
-  --include-ports --include-clients --format svg-iso \
-  --output examples/output/network_ports_clients_iso.svg
+unifi-network-maps --mock-data examples/mock_data.json   --include-ports --include-clients --format svg-iso   --output examples/output/network_ports_clients_iso.svg
 ```
 
 ![Isometric network example](examples/output/network_ports_clients_iso.svg)
@@ -140,50 +143,14 @@ graph TB
   linkStyle 1 stroke:#1e88e5,stroke-width:2px,arrowhead:none;
 ```
 
-## Local install check
+## MkDocs Material example
 
-```bash
-pip install .
-```
+See `examples/mkdocs/` for a ready-to-use setup that renders Mermaid diagrams
+with Material for MkDocs, including a sample `unifi-network` page and legend.
 
-## Dev
+The built-in themes live at `src/unifi_network_maps/assets/themes/default.yaml` and
+`src/unifi_network_maps/assets/themes/dark.yaml`.
 
-```bash
-pip install -r requirements-dev.txt -c constraints.txt
-```
-
-## Release
-
-Build and upload to PyPI:
-
-```bash
-python -m pip install build twine
-python -m build
-twine upload dist/*
-```
-
-Tagging is recommended before release:
-
-```bash
-git tag -a vX.Y.Z -m "vX.Y.Z"
-git push origin vX.Y.Z
-```
-
-See `LICENSES.md` for third-party license info.
-
-## Installation
-
-PyPI: https://pypi.org/project/unifi-network-maps/
-
-```bash
-pip install unifi-network-maps
-```
-
-Then run:
-
-```bash
-unifi-network-maps --help
-```
 
 ## Options
 
@@ -193,6 +160,7 @@ Source:
 - `--site`: override `UNIFI_SITE`.
 - `--env-file`: load environment variables from a specific `.env` file.
 - `--mock-data`: use mock data JSON instead of the UniFi API.
+
 Mock:
 - `--generate-mock`: write mock data JSON and exit.
 - `--mock-seed`: seed for deterministic mock generation.
@@ -230,20 +198,6 @@ Debug:
 - `--debug-dump`: dump gateway + sample devices to stderr for debugging.
 - `--debug-sample N`: number of non-gateway devices in debug dump (default 2).
 
-## Notes
-
-- Default output is top-to-bottom (TB) and rendered as a hop-based tree from the gateway(s).
-- Nodes are color-coded by type (gateway/switch/AP/client) with a sensible default palette.
-- PoE links are highlighted in blue and annotated with a power icon when detected from `port_table`.
-- Wireless client links render as dashed lines to indicate the last-known upstream.
-- SVG output uses vendored device glyphs from `src/unifi_network_maps/assets/icons`.
-- Isometric SVG output uses MIT-licensed icons from `markmanx/isopacks`.
-- SVG port labels render inside child nodes for readability.
-
-## AI Disclosure
-
-This project used OpenAI Codex as a coding assistant for portions of the implementation and documentation.
-
 ## Theme file
 
 Example theme YAML (override only the values you want):
@@ -269,10 +223,17 @@ svg:
       to: "#b6dcff"
 ```
 
-## MkDocs Material example
+## Notes
 
-See `examples/mkdocs/` for a ready-to-use setup that renders Mermaid diagrams
-with Material for MkDocs, including a sample `unifi-network` page and legend.
+- Default output is top-to-bottom (TB) and rendered as a hop-based tree from the gateway(s).
+- Nodes are color-coded by type (gateway/switch/AP/client) with a sensible default palette.
+- PoE links are highlighted in blue and annotated with a power icon when detected from `port_table`.
+- Wireless client links render as dashed lines to indicate the last-known upstream.
+- SVG output uses vendored device glyphs from `src/unifi_network_maps/assets/icons`.
+- Isometric SVG output uses MIT-licensed icons from `markmanx/isopacks`.
+- SVG port labels render inside child nodes for readability.
 
-The built-in themes live at `src/unifi_network_maps/assets/themes/default.yaml` and
-`src/unifi_network_maps/assets/themes/dark.yaml`.
+
+## AI Disclosure
+
+This project used OpenAI Codex as a coding assistant for portions of the implementation and documentation.

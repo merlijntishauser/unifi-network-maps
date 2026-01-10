@@ -155,6 +155,25 @@ jobs:
         run: |
           python -m unifi_network_maps.cli --mock-data examples/mock_data.json --include-ports --stdout > /tmp/network_ports.mmd
           python -m unifi_network_maps.cli --mock-data examples/mock_data.json --include-ports --include-clients --format svg-iso --output /tmp/network_ports_clients_iso.svg
+          python -m unifi_network_maps.cli --mock-data examples/mock_data.json --format mkdocs --include-clients --mkdocs-dual-theme --mkdocs-sidebar-legend --output /tmp/unifi-network-dual-theme-and-clients.md
+          python - <<'PY'
+          from pathlib import Path
+
+          md = Path("/tmp/unifi-network-dual-theme-and-clients.md").read_text(encoding="utf-8")
+          required = [
+              "unifi-mermaid--light",
+              "unifi-mermaid--dark",
+              "unifi-legend--light",
+              "unifi-legend--dark",
+          ]
+          missing = [entry for entry in required if entry not in md]
+          if missing:
+              raise SystemExit(f"Missing mkdocs dual-theme sections: {missing}")
+
+          legend_js = Path("/tmp/assets/legend.js").read_text(encoding="utf-8")
+          if 'querySelectorAll("[data-unifi-legend]")' not in legend_js:
+              raise SystemExit("Sidebar legend script should use querySelectorAll.")
+          PY
 
   entrypoints:
     runs-on: ubuntu-latest

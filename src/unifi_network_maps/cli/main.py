@@ -507,9 +507,9 @@ def _write_mkdocs_sidebar_assets(output_path: str) -> None:
     (assets_dir / "legend.js").write_text(
         (
             'document.addEventListener("DOMContentLoaded", () => {\n'
-            '  const legend = document.querySelector("[data-unifi-legend]");\n'
+            '  const legends = document.querySelectorAll("[data-unifi-legend]");\n'
             '  const sidebar = document.querySelector(".md-sidebar--secondary .md-sidebar__scrollwrap");\n'
-            "  if (!legend || !sidebar) {\n"
+            "  if (!legends.length || !sidebar) {\n"
             "    return;\n"
             "  }\n"
             '  const wrapper = document.createElement("div");\n'
@@ -518,17 +518,22 @@ def _write_mkdocs_sidebar_assets(output_path: str) -> None:
             '  title.className = "unifi-legend-title";\n'
             '  title.textContent = "Legend";\n'
             "  wrapper.appendChild(title);\n"
-            "  wrapper.appendChild(legend.cloneNode(true));\n"
+            "  legends.forEach((legend) => {\n"
+            "    wrapper.appendChild(legend.cloneNode(true));\n"
+            '    legend.classList.add("unifi-legend-hidden");\n'
+            "  });\n"
             "  sidebar.appendChild(wrapper);\n"
-            '  legend.classList.add("unifi-legend-hidden");\n'
             "});\n"
         ),
         encoding="utf-8",
     )
     (assets_dir / "legend.css").write_text(
         (
-            ".unifi-legend-hidden {\n"
-            "  display: none;\n"
+            ".unifi-legend-hidden,\n"
+            ".unifi-legend-hidden.unifi-legend,\n"
+            ".unifi-legend-hidden.unifi-legend--light,\n"
+            ".unifi-legend-hidden.unifi-legend--dark {\n"
+            "  display: none !important;\n"
             "}\n\n"
             ".unifi-legend-sidebar {\n"
             "  margin-top: 1rem;\n"

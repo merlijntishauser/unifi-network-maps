@@ -43,7 +43,7 @@ smoketest:
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format mkdocs --legend-scale 0.6 --output smoketest/mkdocs/unifi-network-legend-scaled.md
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format mkdocs --legend-style diagram --output smoketest/mkdocs/unifi-network-legend-diagram.md
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format mkdocs --mkdocs-sidebar-legend --output smoketest/mkdocs/unifi-network-sidebar-legend.md
-	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format mkdocs --mkdocs-dual-theme --output smoketest/mkdocs/unifi-network-dual-theme.md
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format mkdocs --include-clients --mkdocs-dual-theme --mkdocs-sidebar-legend --output smoketest/mkdocs/unifi-network-dual-theme-and-clients.md
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format lldp-md --output smoketest/lldp/lldp.md
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format lldp-md --include-clients --output smoketest/lldp/lldp_clients.md
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format lldp-md --include-clients --client-scope wireless --output smoketest/lldp/lldp_clients_wireless.md
@@ -74,6 +74,27 @@ smoketest-mock:
 	@mkdir -p smoketest-mock
 	PYTHONPATH=src $(PYTHON) -m unifi_network_maps.cli --mock-data examples/mock_data.json --include-ports --stdout > smoketest-mock/network_ports.mmd
 	PYTHONPATH=src $(PYTHON) -m unifi_network_maps.cli --mock-data examples/mock_data.json --include-ports --include-clients --format svg-iso --output smoketest-mock/network_ports_clients_iso.svg
+	PYTHONPATH=src $(PYTHON) -m unifi_network_maps.cli --mock-data examples/mock_data.json --format mkdocs --include-clients --mkdocs-dual-theme --mkdocs-sidebar-legend --output smoketest-mock/unifi-network-dual-theme-and-clients.md
+	@cat <<-'PY' | $(PYTHON) -
+	from pathlib import Path
+
+	md = Path("smoketest-mock/unifi-network-dual-theme-and-clients.md").read_text(
+	    encoding="utf-8"
+	)
+	required = [
+	    "unifi-mermaid--light",
+	    "unifi-mermaid--dark",
+	    "unifi-legend--light",
+	    "unifi-legend--dark",
+	]
+	missing = [entry for entry in required if entry not in md]
+	if missing:
+	    raise SystemExit(f"Missing mkdocs dual-theme sections: {missing}")
+
+	legend_js = Path("smoketest-mock/assets/legend.js").read_text(encoding="utf-8")
+	if 'querySelectorAll("[data-unifi-legend]")' not in legend_js:
+	    raise SystemExit("Sidebar legend script should use querySelectorAll.")
+	PY
 
 mock-data:
 	PYTHONPATH=src $(PYTHON) -m unifi_network_maps.cli --generate-mock examples/mock_data.json --mock-seed 1337

@@ -2,8 +2,8 @@
 
 All notable changes to this project will be documented in this file.
 
-## v1.4.3 - (unreleased)
-- planned: POC for HA integration
+## v1.4.3 - (2026-01-10)
+- improved dark theme for mermaid graphs
 
 ## v1.4.2 - 2026-01-10
 - Added static code analysis and stricter type-checking

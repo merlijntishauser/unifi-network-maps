@@ -7,9 +7,6 @@
 - Add timeouts for UniFi API calls (if supported by `unifi-controller-api`) or implement a wrapper timeout.
   - Risk: calls can hang indefinitely, blocking CLI.
   - Plan: expose `UNIFI_REQUEST_TIMEOUT_SECONDS` and pass into controller init if supported.
-- Add file locking for cache read/write to prevent concurrent corruption.
-  - Risk: multiple runs can collide and produce partial cache data.
-  - Plan: use a simple lock file or `portalocker`-style opt-in.
 - Harden Mermaid label escaping for newlines/backslashes.
   - Risk: device names/port labels with control characters can break Mermaid output.
   - Plan: escape `\n`, `\r`, `\\` in `_escape` and normalize whitespace.

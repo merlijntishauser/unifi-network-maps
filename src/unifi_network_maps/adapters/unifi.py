@@ -8,9 +8,10 @@ import logging
 import os
 import stat
 import time
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterator, Sequence
+from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import IO, TYPE_CHECKING
 
 from .config import Config
 
@@ -22,6 +23,47 @@ logger = logging.getLogger(__name__)
 
 def _cache_dir() -> Path:
     return Path(os.environ.get("UNIFI_CACHE_DIR", ".cache/unifi_network_maps"))
+
+
+def _cache_lock_path(path: Path) -> Path:
+    return path.with_suffix(path.suffix + ".lock")
+
+
+def _acquire_cache_lock(lock_file: IO[str]) -> None:
+    if os.name == "nt":
+        import msvcrt
+
+        msvcrt.locking(lock_file.fileno(), msvcrt.LK_LOCK, 1)
+    else:
+        import fcntl
+
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+
+
+def _release_cache_lock(lock_file: IO[str]) -> None:
+    if os.name == "nt":
+        import msvcrt
+
+        msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
+    else:
+        import fcntl
+
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+
+
+@contextmanager
+def _cache_lock(path: Path) -> Iterator[None]:
+    lock_path = _cache_lock_path(path)
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with lock_path.open("a+", encoding="utf-8") as lock_file:
+        try:
+            _acquire_cache_lock(lock_file)
+            yield
+        finally:
+            try:
+                _release_cache_lock(lock_file)
+            except OSError:
+                logger.debug("Failed to release cache lock %s", lock_path)
 
 
 def _is_cache_dir_safe(path: Path) -> bool:
@@ -68,7 +110,8 @@ def _load_cache_with_age(path: Path) -> tuple[Sequence[object] | None, float | N
     if not path.exists():
         return None, None
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
+        with _cache_lock(path):
+            payload = json.loads(path.read_text(encoding="utf-8"))
     except Exception as exc:
         logger.debug("Failed to read cache %s: %s", path, exc)
         return None, None
@@ -92,8 +135,9 @@ def _save_cache(path: Path, data: Sequence[object]) -> None:
             return
         payload = {"timestamp": time.time(), "data": data}
         tmp_path = path.with_suffix(path.suffix + ".tmp")
-        tmp_path.write_text(json.dumps(payload, ensure_ascii=True), encoding="utf-8")
-        tmp_path.replace(path)
+        with _cache_lock(path):
+            tmp_path.write_text(json.dumps(payload, ensure_ascii=True), encoding="utf-8")
+            tmp_path.replace(path)
     except Exception as exc:
         logger.debug("Failed to write cache %s: %s", path, exc)
 

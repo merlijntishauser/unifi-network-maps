@@ -6,14 +6,18 @@
 {% endif -%}
 {% if dual_style -%}
 {{ dual_style }}{% endif -%}
-## Map
+{% set title = "Map" %}
+{% set body = map_block %}
+{% include "mkdocs_section.md.j2" %}
 
-{{ map_block }}
+{% if legend_title -%}
+{% set title = legend_title %}
+{% set body = legend_block %}
+{% include "mkdocs_section.md.j2" %}
 
-{% if legend_heading -%}
-{{ legend_heading }}
+{% else -%}
+{{ legend_block }}
 
 {% endif -%}
-{{ legend_block }}
 
 {{ device_overview }}

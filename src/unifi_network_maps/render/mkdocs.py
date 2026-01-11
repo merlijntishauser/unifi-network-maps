@@ -45,7 +45,7 @@ def render_mkdocs(
         theme=mermaid_theme,
     )
     dual_theme = options.dual_theme and dark_mermaid_theme is not None
-    legend_heading = "## Legend" if options.legend_style != "compact" else ""
+    legend_title = "Legend" if options.legend_style != "compact" else ""
     if dual_theme and dark_mermaid_theme is not None:
         dark_content = render_mermaid(
             edges,
@@ -75,7 +75,7 @@ def render_mkdocs(
         timestamp_line=_timestamp_line(options.timestamp_zone),
         dual_style=dual_style,
         map_block=map_block,
-        legend_heading=legend_heading,
+        legend_title=legend_title,
         legend_block=legend_block,
         device_overview=render_device_port_overview(
             devices, port_map, client_ports=client_ports

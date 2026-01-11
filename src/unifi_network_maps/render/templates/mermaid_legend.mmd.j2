@@ -1,0 +1,30 @@
+%%{init: {"flowchart": {"nodeSpacing": {{ node_spacing }}, "rankSpacing": {{ rank_spacing }}}, "themeVariables": {"fontSize": "{{ legend_font_size }}px", "nodePadding": {{ node_padding }}}}}%%
+graph TB
+  subgraph legend["Legend"];
+    legend_gateway["Gateway"];
+    legend_switch["Switch"];
+    legend_ap["AP"];
+    legend_client["Client"];
+    legend_other["Other"];
+    legend_poe_a["PoE Link A"];
+    legend_poe_b["PoE Link B"];
+    legend_no_poe_a["Link A"];
+    legend_no_poe_b["Link B"];
+    legend_poe_a ---|⚡| legend_poe_b;
+    legend_no_poe_a --- legend_no_poe_b;
+    linkStyle 0 arrowhead:none;
+    linkStyle 1 arrowhead:none;
+  end
+  class legend_gateway node_gateway;
+  class legend_switch node_switch;
+  class legend_ap node_ap;
+  class legend_client node_client;
+  class legend_other node_other;
+  class legend_poe_a node_legend;
+  class legend_poe_b node_legend;
+  class legend_no_poe_a node_legend;
+  class legend_no_poe_b node_legend;
+{{ class_defs }}
+  classDef node_legend font-size:{{ legend_font_size }}px;
+  linkStyle 0 stroke:{{ poe_link }},stroke-width:{{ poe_link_width }}px,arrowhead:{{ poe_link_arrow }};
+  linkStyle 1 stroke:{{ standard_link }},stroke-width:{{ standard_link_width }}px,arrowhead:{{ standard_link_arrow }};

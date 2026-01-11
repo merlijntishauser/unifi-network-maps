@@ -194,50 +194,23 @@ def render_legend(theme: MermaidTheme = DEFAULT_THEME, *, legend_scale: float = 
     node_spacing = max(10, round(50 * scale))
     rank_spacing = max(10, round(50 * scale))
     node_padding = max(4, round(12 * scale))
-    lines = [
-        "%%{init: {"
-        f'"flowchart": {{"nodeSpacing": {node_spacing}, "rankSpacing": {rank_spacing}}}, '
-        f'"themeVariables": {{"fontSize": "{legend_font_size}px", "nodePadding": {node_padding}}}'
-        "}}%%",
-        "graph TB",
-        '  subgraph legend["Legend"];',
-        '    legend_gateway["Gateway"];',
-        '    legend_switch["Switch"];',
-        '    legend_ap["AP"];',
-        '    legend_client["Client"];',
-        '    legend_other["Other"];',
-        '    legend_poe_a["PoE Link A"];',
-        '    legend_poe_b["PoE Link B"];',
-        '    legend_no_poe_a["Link A"];',
-        '    legend_no_poe_b["Link B"];',
-        "    legend_poe_a ---|⚡| legend_poe_b;",
-        "    legend_no_poe_a --- legend_no_poe_b;",
-        "    linkStyle 0 arrowhead:none;",
-        "    linkStyle 1 arrowhead:none;",
-        "  end",
-        "  class legend_gateway node_gateway;",
-        "  class legend_switch node_switch;",
-        "  class legend_ap node_ap;",
-        "  class legend_client node_client;",
-        "  class legend_other node_other;",
-        "  class legend_poe_a node_legend;",
-        "  class legend_poe_b node_legend;",
-        "  class legend_no_poe_a node_legend;",
-        "  class legend_no_poe_b node_legend;",
-    ]
-    lines.extend(class_defs(theme))
-    lines.append(f"  classDef node_legend font-size:{legend_font_size}px;")
-    lines.append(
-        "  linkStyle 0 "
-        f"stroke:{theme.poe_link},stroke-width:{poe_link_width}px,"
-        f"arrowhead:{theme.poe_link_arrow};"
+    return (
+        render_template(
+            "mermaid_legend.mmd.j2",
+            node_spacing=node_spacing,
+            rank_spacing=rank_spacing,
+            legend_font_size=legend_font_size,
+            node_padding=node_padding,
+            class_defs="\n".join(class_defs(theme)),
+            poe_link=theme.poe_link,
+            poe_link_width=poe_link_width,
+            poe_link_arrow=theme.poe_link_arrow,
+            standard_link=theme.standard_link,
+            standard_link_width=standard_link_width,
+            standard_link_arrow=theme.standard_link_arrow,
+        ).rstrip()
+        + "\n"
     )
-    lines.append(
-        "  linkStyle 1 "
-        f"stroke:{theme.standard_link},stroke-width:{standard_link_width}px,"
-        f"arrowhead:{theme.standard_link_arrow};"
-    )
-    return "\n".join(lines) + "\n"
 
 
 def render_legend_compact(theme: MermaidTheme = DEFAULT_THEME) -> str:

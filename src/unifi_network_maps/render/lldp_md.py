@@ -8,6 +8,7 @@ from ..model.lldp import LLDPEntry, local_port_label
 from ..model.topology import Device, build_client_port_map, build_device_index, build_port_map
 from .device_ports_md import render_device_port_details
 from .markdown_tables import markdown_table_lines
+from .templating import render_template
 
 
 def _normalize_mac(value: str) -> str:
@@ -77,10 +78,6 @@ def _lldp_sort_key(entry: LLDPEntry) -> tuple[int, str, str]:
     port_label = local_port_label(entry) or ""
     port_number = "".join(ch for ch in port_label if ch.isdigit())
     return (int(port_number or 0), port_label, entry.port_id)
-
-
-def _device_header_lines(device: Device) -> list[str]:
-    return [f"## {device.name}"]
 
 
 def _port_summary(device: Device) -> str:
@@ -155,7 +152,6 @@ def _details_table_lines(
     ]
     lines = ["### Details", ""]
     lines.extend(markdown_table_lines(["Field", "Value"], rows))
-    lines.append("")
     return lines
 
 
@@ -240,7 +236,6 @@ def _prepare_lldp_maps(
 
 
 def _render_device_lldp_section(
-    lines: list[str],
     device: Device,
     *,
     device_index: dict[str, str],
@@ -250,48 +245,58 @@ def _render_device_lldp_section(
     include_ports: bool,
     show_clients: bool,
     client_mode: str,
-) -> None:
-    lines.extend(_device_header_lines(device))
-    lines.append("")
-    lines.extend(_details_table_lines(device, client_rows, client_mode))
+) -> str:
+    details = "\n".join(_details_table_lines(device, client_rows, client_mode)).rstrip()
+    ports_section = ""
     if include_ports:
-        lines.append("### Ports")
-        lines.append("")
-        lines.append(
-            render_device_port_details(device, port_map, client_ports=client_port_map).strip()
-        )
+        ports_section = "\n".join(
+            [
+                "### Ports",
+                "",
+                render_device_port_details(device, port_map, client_ports=client_port_map).strip(),
+            ]
+        ).rstrip()
     if device.lldp_info:
-        lines.append("")
-        lines.extend(
+        lldp_section = "\n".join(
             markdown_table_lines(
                 ["Local Port", "Neighbor", "Neighbor Port", "Chassis ID", "Port Description"],
                 _lldp_rows(device.lldp_info, device_index),
                 escape=_escape_cell,
             )
-        )
-        lines.append("")
+        ).rstrip()
     else:
-        lines.append("_No LLDP neighbors._")
-        lines.append("")
+        lldp_section = "_No LLDP neighbors._"
+    clients_section = ""
     rows = client_rows.get(device.name)
     if rows and show_clients:
-        lines.append("")
-        lines.append("### Clients")
         if include_ports:
-            lines.append("")
-            lines.extend(
-                markdown_table_lines(
-                    ["Client", "Port"],
-                    [
-                        [_escape_cell(client_name), _escape_cell(port_label or "-")]
-                        for client_name, port_label in rows
-                    ],
-                )
-            )
+            clients_section = "\n".join(
+                [
+                    "### Clients",
+                    "",
+                    "\n".join(
+                        markdown_table_lines(
+                            ["Client", "Port"],
+                            [
+                                [_escape_cell(client_name), _escape_cell(port_label or "-")]
+                                for client_name, port_label in rows
+                            ],
+                        )
+                    ),
+                ]
+            ).rstrip()
         else:
-            for client_name, _port_label in rows:
-                lines.append(f"- {_escape_cell(client_name)}")
-        lines.append("")
+            clients_section = "\n".join(
+                ["### Clients", *[f"- {_escape_cell(name)}" for name, _ in rows]]
+            ).rstrip()
+    return render_template(
+        "lldp_device_section.md.j2",
+        device_name=device.name,
+        details=details,
+        ports_section=ports_section,
+        lldp_section=lldp_section,
+        clients_section=clients_section,
+    ).rstrip()
 
 
 def render_lldp_md(
@@ -310,17 +315,26 @@ def render_lldp_md(
         show_clients=show_clients,
         client_mode=client_mode,
     )
-    lines: list[str] = ["# LLDP Neighbors", ""]
+    sections: list[str] = []
     for device in sorted(devices, key=lambda item: item.name.lower()):
-        _render_device_lldp_section(
-            lines,
-            device,
-            device_index=device_index,
-            port_map=port_map,
-            client_port_map=client_port_map,
-            client_rows=client_rows,
-            include_ports=include_ports,
-            show_clients=show_clients,
-            client_mode=client_mode,
+        sections.append(
+            _render_device_lldp_section(
+                device,
+                device_index=device_index,
+                port_map=port_map,
+                client_port_map=client_port_map,
+                client_rows=client_rows,
+                include_ports=include_ports,
+                show_clients=show_clients,
+                client_mode=client_mode,
+            )
         )
-    return "\n".join(lines).rstrip() + "\n"
+    body = "\n\n".join(section for section in sections if section).rstrip()
+    return (
+        render_template(
+            "markdown_section.md.j2",
+            title="LLDP Neighbors",
+            body=body,
+        ).rstrip()
+        + "\n"
+    )

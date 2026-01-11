@@ -10,6 +10,9 @@ import pytest
 from unifi_network_maps.model.topology import Device, Edge, TopologyResult
 
 cli_module = importlib.import_module("unifi_network_maps.cli.main")
+runtime_module = importlib.import_module("unifi_network_maps.cli.runtime")
+render_module = importlib.import_module("unifi_network_maps.cli.render")
+mkdocs_module = importlib.import_module("unifi_network_maps.render.mkdocs")
 main = cli_module.main
 
 
@@ -54,8 +57,8 @@ def test_main_mock_data_skips_config(monkeypatch, tmp_path):
         raise AssertionError("Config should not load for mock data")
 
     monkeypatch.setattr(cli_module.Config, "from_env", fail_config)
-    monkeypatch.setattr(cli_module, "render_mermaid", lambda *args, **kwargs: "graph TB\n")
-    monkeypatch.setattr(cli_module, "write_output", lambda *args, **kwargs: None)
+    monkeypatch.setattr(render_module, "render_mermaid", lambda *args, **kwargs: "graph TB\n")
+    monkeypatch.setattr(render_module, "write_output", lambda *args, **kwargs: None)
 
     assert main(["--mock-data", str(mock_path), "--stdout"]) == 0
 
@@ -95,7 +98,7 @@ def test_main_passes_env_file_to_config(monkeypatch):
         return _dummy_config()
 
     monkeypatch.setattr(cli_module.Config, "from_env", fake_from_env)
-    monkeypatch.setattr(cli_module, "render_legend", lambda **_kwargs: "graph TB\n")
+    monkeypatch.setattr(render_module, "render_legend", lambda **_kwargs: "graph TB\n")
     monkeypatch.setattr(cli_module, "write_output", lambda *args, **kwargs: None)
 
     assert main(["--env-file", "custom.env", "--legend-only", "--stdout"]) == 0
@@ -109,7 +112,7 @@ def test_main_legend_outputs_markdown(monkeypatch):
         captured["content"] = content
 
     monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
-    monkeypatch.setattr(cli_module, "render_legend", lambda **_kwargs: "graph TB\n")
+    monkeypatch.setattr(render_module, "render_legend", lambda **_kwargs: "graph TB\n")
     monkeypatch.setattr(cli_module, "write_output", write_output)
 
     main(["--legend-only", "--markdown", "--stdout"])
@@ -130,20 +133,22 @@ def test_main_mermaid_includes_wired_clients(monkeypatch):
         return "graph TB\n"
 
     monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
-    monkeypatch.setattr(cli_module, "fetch_devices", lambda *args, **kwargs: devices)
-    monkeypatch.setattr(cli_module, "normalize_devices", lambda raw: raw)
-    monkeypatch.setattr(cli_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]})
+    monkeypatch.setattr(runtime_module, "fetch_devices", lambda *args, **kwargs: devices)
+    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw: raw)
     monkeypatch.setattr(
-        cli_module,
+        runtime_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]}
+    )
+    monkeypatch.setattr(
+        runtime_module,
         "build_topology",
         lambda *args, **kwargs: TopologyResult(
             raw_edges=[Edge("Gateway", "Switch")],
             tree_edges=[Edge("Gateway", "Switch")],
         ),
     )
-    monkeypatch.setattr(cli_module, "fetch_clients", lambda *args, **kwargs: clients)
-    monkeypatch.setattr(cli_module, "render_mermaid", fake_render_mermaid)
-    monkeypatch.setattr(cli_module, "write_output", lambda *args, **kwargs: None)
+    monkeypatch.setattr(runtime_module, "fetch_clients", lambda *args, **kwargs: clients)
+    monkeypatch.setattr(render_module, "render_mermaid", fake_render_mermaid)
+    monkeypatch.setattr(render_module, "write_output", lambda *args, **kwargs: None)
 
     main(["--include-clients", "--stdout"])
     assert captured["node_types"]["Client"] == "client"
@@ -151,13 +156,13 @@ def test_main_mermaid_includes_wired_clients(monkeypatch):
 
 def test_main_logs_topology_errors(monkeypatch, caplog):
     monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
-    monkeypatch.setattr(cli_module, "fetch_devices", lambda *args, **kwargs: [])
-    monkeypatch.setattr(cli_module, "normalize_devices", lambda raw: raw)
+    monkeypatch.setattr(runtime_module, "fetch_devices", lambda *args, **kwargs: [])
+    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw: raw)
 
     def raise_topology(*args, **kwargs):
         raise RuntimeError("bad topology")
 
-    monkeypatch.setattr(cli_module, "build_topology", raise_topology)
+    monkeypatch.setattr(runtime_module, "build_topology", raise_topology)
     caplog.set_level(logging.ERROR)
     exit_code = main(["--stdout"])
     assert exit_code == 1
@@ -175,19 +180,21 @@ def test_main_mermaid_wraps_markdown(monkeypatch):
         captured["content"] = content
 
     monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
-    monkeypatch.setattr(cli_module, "fetch_devices", lambda *args, **kwargs: devices)
-    monkeypatch.setattr(cli_module, "normalize_devices", lambda raw: raw)
-    monkeypatch.setattr(cli_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]})
+    monkeypatch.setattr(runtime_module, "fetch_devices", lambda *args, **kwargs: devices)
+    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw: raw)
     monkeypatch.setattr(
-        cli_module,
+        runtime_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]}
+    )
+    monkeypatch.setattr(
+        runtime_module,
         "build_topology",
         lambda *args, **kwargs: TopologyResult(
             raw_edges=[Edge("Gateway", "Switch")],
             tree_edges=[Edge("Gateway", "Switch")],
         ),
     )
-    monkeypatch.setattr(cli_module, "render_mermaid", lambda *args, **kwargs: "graph TB\n")
-    monkeypatch.setattr(cli_module, "write_output", write_output)
+    monkeypatch.setattr(render_module, "render_mermaid", lambda *args, **kwargs: "graph TB\n")
+    monkeypatch.setattr(render_module, "write_output", write_output)
 
     main(["--markdown", "--stdout"])
     assert captured["content"].startswith("```mermaid")
@@ -205,25 +212,27 @@ def test_main_mkdocs_includes_legend(monkeypatch):
         captured["content"] = content
 
     monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
-    monkeypatch.setattr(cli_module, "fetch_devices", lambda *args, **kwargs: devices)
-    monkeypatch.setattr(cli_module, "normalize_devices", lambda raw: raw)
-    monkeypatch.setattr(cli_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]})
+    monkeypatch.setattr(runtime_module, "fetch_devices", lambda *args, **kwargs: devices)
+    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw: raw)
     monkeypatch.setattr(
-        cli_module,
+        runtime_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]}
+    )
+    monkeypatch.setattr(
+        runtime_module,
         "build_topology",
         lambda *args, **kwargs: TopologyResult(
             raw_edges=[Edge("Gateway", "Switch")],
             tree_edges=[Edge("Gateway", "Switch")],
         ),
     )
-    monkeypatch.setattr(cli_module, "render_mermaid", lambda *args, **kwargs: "graph TB\n")
-    monkeypatch.setattr(cli_module, "render_legend", lambda *args, **kwargs: "graph TB\n")
-    monkeypatch.setattr(cli_module, "build_port_map", lambda *args, **kwargs: {})
-    monkeypatch.setattr(cli_module, "build_client_port_map", lambda *args, **kwargs: {})
+    monkeypatch.setattr(mkdocs_module, "render_mermaid", lambda *args, **kwargs: "graph TB\n")
+    monkeypatch.setattr(mkdocs_module, "render_legend", lambda *args, **kwargs: "graph TB\n")
+    monkeypatch.setattr(render_module, "build_port_map", lambda *args, **kwargs: {})
+    monkeypatch.setattr(runtime_module, "build_client_port_map", lambda *args, **kwargs: {})
     monkeypatch.setattr(
-        cli_module, "render_device_port_overview", lambda *args, **kwargs: "PORTS\n"
+        mkdocs_module, "render_device_port_overview", lambda *args, **kwargs: "PORTS\n"
     )
-    monkeypatch.setattr(cli_module, "write_output", write_output)
+    monkeypatch.setattr(render_module, "write_output", write_output)
 
     assert main(["--format", "mkdocs", "--stdout"]) == 0
     assert "unifi-legend-table" in captured["content"]
@@ -232,15 +241,15 @@ def test_main_mkdocs_includes_legend(monkeypatch):
 
 def test_main_mkdocs_sidebar_requires_output(monkeypatch):
     monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
-    monkeypatch.setattr(cli_module, "fetch_devices", lambda *args, **kwargs: [])
-    monkeypatch.setattr(cli_module, "normalize_devices", lambda raw: raw)
-    monkeypatch.setattr(cli_module, "group_devices_by_type", lambda *_: {"gateway": []})
+    monkeypatch.setattr(runtime_module, "fetch_devices", lambda *args, **kwargs: [])
+    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw: raw)
+    monkeypatch.setattr(runtime_module, "group_devices_by_type", lambda *_: {"gateway": []})
     monkeypatch.setattr(
-        cli_module,
+        runtime_module,
         "build_topology",
         lambda *args, **kwargs: TopologyResult(raw_edges=[], tree_edges=[]),
     )
-    monkeypatch.setattr(cli_module, "write_output", lambda *args, **kwargs: None)
+    monkeypatch.setattr(render_module, "write_output", lambda *args, **kwargs: None)
 
     assert main(["--format", "mkdocs", "--mkdocs-sidebar-legend", "--stdout"]) == 2
 
@@ -253,24 +262,26 @@ def test_main_mkdocs_sidebar_writes_assets(monkeypatch, tmp_path):
     ]
 
     monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
-    monkeypatch.setattr(cli_module, "fetch_devices", lambda *args, **kwargs: devices)
-    monkeypatch.setattr(cli_module, "normalize_devices", lambda raw: raw)
-    monkeypatch.setattr(cli_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]})
+    monkeypatch.setattr(runtime_module, "fetch_devices", lambda *args, **kwargs: devices)
+    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw: raw)
     monkeypatch.setattr(
-        cli_module,
+        runtime_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]}
+    )
+    monkeypatch.setattr(
+        runtime_module,
         "build_topology",
         lambda *args, **kwargs: TopologyResult(
             raw_edges=[Edge("Gateway", "Switch")],
             tree_edges=[Edge("Gateway", "Switch")],
         ),
     )
-    monkeypatch.setattr(cli_module, "render_mermaid", lambda *args, **kwargs: "graph TB\n")
-    monkeypatch.setattr(cli_module, "render_legend", lambda *args, **kwargs: "graph TB\n")
-    monkeypatch.setattr(cli_module, "build_port_map", lambda *args, **kwargs: {})
+    monkeypatch.setattr(mkdocs_module, "render_mermaid", lambda *args, **kwargs: "graph TB\n")
+    monkeypatch.setattr(mkdocs_module, "render_legend", lambda *args, **kwargs: "graph TB\n")
+    monkeypatch.setattr(render_module, "build_port_map", lambda *args, **kwargs: {})
     monkeypatch.setattr(
-        cli_module, "render_device_port_overview", lambda *args, **kwargs: "PORTS\n"
+        mkdocs_module, "render_device_port_overview", lambda *args, **kwargs: "PORTS\n"
     )
-    monkeypatch.setattr(cli_module, "write_output", lambda *args, **kwargs: None)
+    monkeypatch.setattr(render_module, "write_output", lambda *args, **kwargs: None)
 
     output_path = tmp_path / "unifi-network.md"
     assert (
@@ -288,24 +299,26 @@ def test_main_mkdocs_sidebar_disabled_does_not_write_assets(monkeypatch, tmp_pat
     ]
 
     monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
-    monkeypatch.setattr(cli_module, "fetch_devices", lambda *args, **kwargs: devices)
-    monkeypatch.setattr(cli_module, "normalize_devices", lambda raw: raw)
-    monkeypatch.setattr(cli_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]})
+    monkeypatch.setattr(runtime_module, "fetch_devices", lambda *args, **kwargs: devices)
+    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw: raw)
     monkeypatch.setattr(
-        cli_module,
+        runtime_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]}
+    )
+    monkeypatch.setattr(
+        runtime_module,
         "build_topology",
         lambda *args, **kwargs: TopologyResult(
             raw_edges=[Edge("Gateway", "Switch")],
             tree_edges=[Edge("Gateway", "Switch")],
         ),
     )
-    monkeypatch.setattr(cli_module, "render_mermaid", lambda *args, **kwargs: "graph TB\n")
-    monkeypatch.setattr(cli_module, "render_legend", lambda *args, **kwargs: "graph TB\n")
-    monkeypatch.setattr(cli_module, "build_port_map", lambda *args, **kwargs: {})
+    monkeypatch.setattr(mkdocs_module, "render_mermaid", lambda *args, **kwargs: "graph TB\n")
+    monkeypatch.setattr(mkdocs_module, "render_legend", lambda *args, **kwargs: "graph TB\n")
+    monkeypatch.setattr(render_module, "build_port_map", lambda *args, **kwargs: {})
     monkeypatch.setattr(
-        cli_module, "render_device_port_overview", lambda *args, **kwargs: "PORTS\n"
+        mkdocs_module, "render_device_port_overview", lambda *args, **kwargs: "PORTS\n"
     )
-    monkeypatch.setattr(cli_module, "write_output", lambda *args, **kwargs: None)
+    monkeypatch.setattr(render_module, "write_output", lambda *args, **kwargs: None)
 
     output_path = tmp_path / "unifi-network.md"
     assert main(["--format", "mkdocs", "--output", str(output_path)]) == 0
@@ -324,20 +337,22 @@ def test_main_debug_dump_uses_non_negative_sample(monkeypatch):
         captured["sample_count"] = sample_count
 
     monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
-    monkeypatch.setattr(cli_module, "fetch_devices", lambda *args, **kwargs: devices)
-    monkeypatch.setattr(cli_module, "normalize_devices", lambda raw: raw)
-    monkeypatch.setattr(cli_module, "debug_dump_devices", debug_dump)
-    monkeypatch.setattr(cli_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]})
+    monkeypatch.setattr(runtime_module, "fetch_devices", lambda *args, **kwargs: devices)
+    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw: raw)
+    monkeypatch.setattr(runtime_module, "debug_dump_devices", debug_dump)
     monkeypatch.setattr(
-        cli_module,
+        runtime_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]}
+    )
+    monkeypatch.setattr(
+        runtime_module,
         "build_topology",
         lambda *args, **kwargs: TopologyResult(
             raw_edges=[Edge("Gateway", "Switch")],
             tree_edges=[Edge("Gateway", "Switch")],
         ),
     )
-    monkeypatch.setattr(cli_module, "render_mermaid", lambda *args, **kwargs: "graph TB\n")
-    monkeypatch.setattr(cli_module, "write_output", lambda *args, **kwargs: None)
+    monkeypatch.setattr(render_module, "render_mermaid", lambda *args, **kwargs: "graph TB\n")
+    monkeypatch.setattr(render_module, "write_output", lambda *args, **kwargs: None)
 
     main(["--debug-dump", "--debug-sample", "-5", "--stdout"])
     assert captured["sample_count"] == 0
@@ -357,19 +372,21 @@ def test_main_svg_uses_size_overrides(monkeypatch):
         return "<svg></svg>"
 
     monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
-    monkeypatch.setattr(cli_module, "fetch_devices", lambda *args, **kwargs: devices)
-    monkeypatch.setattr(cli_module, "normalize_devices", lambda raw: raw)
-    monkeypatch.setattr(cli_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]})
+    monkeypatch.setattr(runtime_module, "fetch_devices", lambda *args, **kwargs: devices)
+    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw: raw)
     monkeypatch.setattr(
-        cli_module,
+        runtime_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]}
+    )
+    monkeypatch.setattr(
+        runtime_module,
         "build_topology",
         lambda *args, **kwargs: TopologyResult(
             raw_edges=[Edge("Gateway", "Switch")],
             tree_edges=[Edge("Gateway", "Switch")],
         ),
     )
-    monkeypatch.setattr(cli_module, "render_svg", fake_render_svg)
-    monkeypatch.setattr(cli_module, "write_output", lambda *args, **kwargs: None)
+    monkeypatch.setattr(render_module, "render_svg", fake_render_svg)
+    monkeypatch.setattr(render_module, "write_output", lambda *args, **kwargs: None)
 
     main(["--format", "svg", "--svg-width", "800", "--svg-height", "600", "--stdout"])
     assert captured["width"] == 800
@@ -386,12 +403,12 @@ def test_main_lldp_md_skips_topology(monkeypatch):
         raise RuntimeError("unexpected topology build")
 
     monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
-    monkeypatch.setattr(cli_module, "fetch_devices", lambda *args, **kwargs: devices)
-    monkeypatch.setattr(cli_module, "fetch_clients", lambda *args, **kwargs: [])
-    monkeypatch.setattr(cli_module, "normalize_devices", lambda raw: raw)
-    monkeypatch.setattr(cli_module, "build_topology", explode)
-    monkeypatch.setattr(cli_module, "render_lldp_md", lambda *_args, **_kwargs: "# LLDP\n")
-    monkeypatch.setattr(cli_module, "write_output", lambda *args, **kwargs: None)
+    monkeypatch.setattr(runtime_module, "fetch_devices", lambda *args, **kwargs: devices)
+    monkeypatch.setattr(render_module, "fetch_clients", lambda *args, **kwargs: [])
+    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw: raw)
+    monkeypatch.setattr(runtime_module, "build_topology", explode)
+    monkeypatch.setattr(render_module, "render_lldp_md", lambda *_args, **_kwargs: "# LLDP\n")
+    monkeypatch.setattr(render_module, "write_output", lambda *args, **kwargs: None)
 
     assert main(["--format", "lldp-md", "--stdout"]) == 0
 
@@ -411,11 +428,11 @@ def test_main_lldp_md_includes_clients(monkeypatch):
         return "# LLDP\n"
 
     monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
-    monkeypatch.setattr(cli_module, "fetch_devices", lambda *args, **kwargs: devices)
-    monkeypatch.setattr(cli_module, "normalize_devices", lambda raw: raw)
-    monkeypatch.setattr(cli_module, "fetch_clients", lambda *args, **kwargs: [{"name": "TV"}])
-    monkeypatch.setattr(cli_module, "render_lldp_md", fake_render_lldp_md)
-    monkeypatch.setattr(cli_module, "write_output", lambda *args, **kwargs: None)
+    monkeypatch.setattr(runtime_module, "fetch_devices", lambda *args, **kwargs: devices)
+    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw: raw)
+    monkeypatch.setattr(render_module, "fetch_clients", lambda *args, **kwargs: [{"name": "TV"}])
+    monkeypatch.setattr(render_module, "render_lldp_md", fake_render_lldp_md)
+    monkeypatch.setattr(render_module, "write_output", lambda *args, **kwargs: None)
 
     assert main(["--format", "lldp-md", "--include-clients", "--stdout"]) == 0
     assert captured["clients"] is not None

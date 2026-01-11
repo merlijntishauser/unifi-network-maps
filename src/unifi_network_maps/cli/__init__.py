@@ -1,41 +1,5 @@
 """CLI package facade."""
 
-from .main import (
-    Config,
-    SvgOptions,
-    build_client_edges,
-    build_device_index,
-    build_node_type_map,
-    build_topology,
-    debug_dump_devices,
-    fetch_clients,
-    fetch_devices,
-    group_devices_by_type,
-    main,
-    normalize_devices,
-    render_legend,
-    render_mermaid,
-    render_svg,
-    resolve_themes,
-    write_output,
-)
+from .main import main
 
-__all__ = [
-    "Config",
-    "SvgOptions",
-    "build_client_edges",
-    "build_device_index",
-    "build_node_type_map",
-    "build_topology",
-    "debug_dump_devices",
-    "fetch_clients",
-    "fetch_devices",
-    "group_devices_by_type",
-    "main",
-    "normalize_devices",
-    "render_legend",
-    "render_mermaid",
-    "render_svg",
-    "resolve_themes",
-    "write_output",
-]
+__all__ = ["main"]

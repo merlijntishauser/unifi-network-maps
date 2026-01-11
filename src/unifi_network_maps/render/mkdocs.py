@@ -1,0 +1,161 @@
+"""MkDocs-specific rendering helpers."""
+
+from __future__ import annotations
+
+import logging
+from dataclasses import dataclass
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+from ..model.topology import ClientPortMap, Device, PortMap, build_node_type_map
+from .device_ports_md import render_device_port_overview
+from .mermaid import render_legend, render_legend_compact, render_mermaid
+from .mermaid_theme import MermaidTheme
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class MkdocsRenderOptions:
+    direction: str
+    legend_style: str
+    legend_scale: float
+    timestamp_zone: str
+    client_scope: str
+    dual_theme: bool
+
+
+def render_mkdocs(
+    edges: list,
+    devices: list[Device],
+    *,
+    mermaid_theme: MermaidTheme,
+    port_map: PortMap,
+    client_ports: ClientPortMap | None,
+    options: MkdocsRenderOptions,
+    dark_mermaid_theme: MermaidTheme | None = None,
+) -> str:
+    clients = None
+    node_types = build_node_type_map(devices, clients, client_mode=options.client_scope)
+    content = render_mermaid(
+        edges,
+        direction=options.direction,
+        node_types=node_types,
+        theme=mermaid_theme,
+    )
+    dual_theme = options.dual_theme and dark_mermaid_theme is not None
+    legend_header = "## Legend\n\n" if options.legend_style != "compact" else ""
+    if dual_theme and dark_mermaid_theme is not None:
+        dark_content = render_mermaid(
+            edges,
+            direction=options.direction,
+            node_types=node_types,
+            theme=dark_mermaid_theme,
+        )
+        map_block = _mkdocs_dual_mermaid_block(content, dark_content, base_class="unifi-mermaid")
+        legend_block = _mkdocs_dual_legend_block(
+            options.legend_style,
+            mermaid_theme=mermaid_theme,
+            dark_mermaid_theme=dark_mermaid_theme,
+            legend_scale=options.legend_scale,
+        )
+        dual_style = _mkdocs_dual_theme_style()
+    else:
+        map_block = _mkdocs_mermaid_block(content, class_name="unifi-mermaid")
+        legend_block = _mkdocs_single_legend_block(
+            options.legend_style,
+            mermaid_theme=mermaid_theme,
+            legend_scale=options.legend_scale,
+        )
+        dual_style = ""
+    timestamp_line = _timestamp_line(options.timestamp_zone)
+    return (
+        f"# UniFi network\n\n{timestamp_line}{dual_style}## Map\n\n{map_block}\n\n"
+        f"{legend_header}{legend_block}\n\n"
+        f"{render_device_port_overview(devices, port_map, client_ports=client_ports)}"
+    )
+
+
+def _timestamp_line(timestamp_zone: str) -> str:
+    if timestamp_zone.strip().lower() in {"off", "none", "false"}:
+        return ""
+    try:
+        zone = ZoneInfo(timestamp_zone)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Invalid mkdocs timestamp zone '%s': %s", timestamp_zone, exc)
+        return ""
+    generated_at = datetime.now(zone).strftime("%Y-%m-%d %H:%M:%S %Z")
+    return f"Generated: {generated_at}\n\n"
+
+
+def _mkdocs_mermaid_block(content: str, *, class_name: str) -> str:
+    return f'<div class="{class_name}">\n```mermaid\n{content}```\n</div>'
+
+
+def _mkdocs_dual_mermaid_block(
+    light_content: str,
+    dark_content: str,
+    *,
+    base_class: str,
+) -> str:
+    light = _mkdocs_mermaid_block(light_content, class_name=f"{base_class} {base_class}--light")
+    dark = _mkdocs_mermaid_block(dark_content, class_name=f"{base_class} {base_class}--dark")
+    return f"{light}\n{dark}"
+
+
+def _mkdocs_single_legend_block(
+    legend_style: str,
+    *,
+    mermaid_theme: MermaidTheme,
+    legend_scale: float,
+) -> str:
+    if legend_style == "compact":
+        return (
+            '<div class="unifi-legend" data-unifi-legend>\n'
+            + render_legend_compact(theme=mermaid_theme)
+            + "</div>"
+        )
+    return "```mermaid\n" + render_legend(theme=mermaid_theme, legend_scale=legend_scale) + "```"
+
+
+def _mkdocs_dual_legend_block(
+    legend_style: str,
+    *,
+    mermaid_theme: MermaidTheme,
+    dark_mermaid_theme: MermaidTheme,
+    legend_scale: float,
+) -> str:
+    if legend_style == "compact":
+        light = (
+            '<div class="unifi-legend unifi-legend--light" data-unifi-legend>\n'
+            + render_legend_compact(theme=mermaid_theme)
+            + "</div>"
+        )
+        dark = (
+            '<div class="unifi-legend unifi-legend--dark" data-unifi-legend>\n'
+            + render_legend_compact(theme=dark_mermaid_theme)
+            + "</div>"
+        )
+        return f"{light}\n{dark}"
+    light = _mkdocs_mermaid_block(
+        render_legend(theme=mermaid_theme, legend_scale=legend_scale),
+        class_name="unifi-legend unifi-legend--light",
+    )
+    dark = _mkdocs_mermaid_block(
+        render_legend(theme=dark_mermaid_theme, legend_scale=legend_scale),
+        class_name="unifi-legend unifi-legend--dark",
+    )
+    return f"{light}\n{dark}"
+
+
+def _mkdocs_dual_theme_style() -> str:
+    return (
+        "<style>\n"
+        ".unifi-mermaid--light,.unifi-legend--light{display:none;}\n"
+        ".unifi-mermaid--dark,.unifi-legend--dark{display:none;}\n"
+        '[data-md-color-scheme="default"] .unifi-mermaid--light{display:block;}\n'
+        '[data-md-color-scheme="default"] .unifi-legend--light{display:block;}\n'
+        '[data-md-color-scheme="slate"] .unifi-mermaid--dark{display:block;}\n'
+        '[data-md-color-scheme="slate"] .unifi-legend--dark{display:block;}\n'
+        "</style>\n\n"
+    )

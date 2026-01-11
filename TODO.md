@@ -38,3 +38,4 @@
     - UX: same form as Option A, but ships with package and requires no external setup.
     - Safety: explicit local bind (127.0.0.1), optional `--web-host/--web-port`, no creds stored.
     - Extensibility: add controller profiles in config file later without changing UI routes.
+

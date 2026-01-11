@@ -43,6 +43,7 @@ Notes:
 - Contract tests use fixtures in `tests/test_contract_unifi.py` and run in CI.
 - Live contract tests require `UNIFI_CONTRACT_LIVE=1` plus UniFi env vars.
 - BDD tests live in `features/` and run via `behave` (included in `make ci`).
+- Render helper structure is documented in `src/unifi_network_maps/render/README.md`.
 
 ## Release
 

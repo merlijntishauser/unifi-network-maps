@@ -11,6 +11,7 @@ from ..model.topology import ClientPortMap, Device, PortMap, build_node_type_map
 from .device_ports_md import render_device_port_overview
 from .mermaid import render_legend, render_legend_compact, render_mermaid
 from .mermaid_theme import MermaidTheme
+from .templating import render_template
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +45,7 @@ def render_mkdocs(
         theme=mermaid_theme,
     )
     dual_theme = options.dual_theme and dark_mermaid_theme is not None
-    legend_header = "## Legend\n\n" if options.legend_style != "compact" else ""
+    legend_heading = "## Legend" if options.legend_style != "compact" else ""
     if dual_theme and dark_mermaid_theme is not None:
         dark_content = render_mermaid(
             edges,
@@ -68,11 +69,18 @@ def render_mkdocs(
             legend_scale=options.legend_scale,
         )
         dual_style = ""
-    timestamp_line = _timestamp_line(options.timestamp_zone)
-    return (
-        f"# UniFi network\n\n{timestamp_line}{dual_style}## Map\n\n{map_block}\n\n"
-        f"{legend_header}{legend_block}\n\n"
-        f"{render_device_port_overview(devices, port_map, client_ports=client_ports)}"
+    return render_template(
+        "mkdocs_document.md.j2",
+        title="UniFi network",
+        timestamp_line=_timestamp_line(options.timestamp_zone),
+        dual_style=dual_style,
+        map_block=map_block,
+        legend_heading=legend_heading,
+        legend_block=legend_block,
+        device_overview=render_device_port_overview(
+            devices, port_map, client_ports=client_ports
+        ).rstrip()
+        + "\n",
     )
 
 
@@ -85,7 +93,7 @@ def _timestamp_line(timestamp_zone: str) -> str:
         logger.warning("Invalid mkdocs timestamp zone '%s': %s", timestamp_zone, exc)
         return ""
     generated_at = datetime.now(zone).strftime("%Y-%m-%d %H:%M:%S %Z")
-    return f"Generated: {generated_at}\n\n"
+    return f"Generated: {generated_at}"
 
 
 def _mkdocs_mermaid_block(content: str, *, class_name: str) -> str:

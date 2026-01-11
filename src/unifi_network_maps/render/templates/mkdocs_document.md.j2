@@ -1,0 +1,19 @@
+# {{ title }}
+
+{% if timestamp_line -%}
+{{ timestamp_line }}
+
+{% endif -%}
+{% if dual_style -%}
+{{ dual_style }}{% endif -%}
+## Map
+
+{{ map_block }}
+
+{% if legend_heading -%}
+{{ legend_heading }}
+
+{% endif -%}
+{{ legend_block }}
+
+{{ device_overview }}

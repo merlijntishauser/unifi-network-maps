@@ -26,6 +26,7 @@ dependencies = [
   "unifi-controller-api==0.3.2",
   "python-dotenv==1.2.1",
   "PyYAML==6.0.3",
+  "Jinja2==3.1.6",
 ]
 
 [project.urls]
@@ -96,6 +97,7 @@ package-dir = {"" = "src"}
   "assets/icons/*.svg",
   "assets/icons/isometric/*.svg",
   "assets/icons/isometric/ISOPACKS_LICENSE",
+  "render/templates/*.j2",
 ]
 
 [tool.setuptools.packages.find]

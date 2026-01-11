@@ -16,8 +16,9 @@ from ..model.topology import (
     build_port_map,
     group_devices_by_type,
 )
+from ..render.legend import resolve_legend_style
 from ..render.lldp_md import render_lldp_md
-from ..render.mermaid import render_legend, render_legend_compact, render_mermaid
+from ..render.mermaid import render_mermaid
 from ..render.mermaid_theme import MermaidTheme
 from ..render.mkdocs import MkdocsRenderOptions, render_mkdocs
 from ..render.svg import SvgOptions, render_svg
@@ -30,25 +31,6 @@ from .runtime import (
     resolve_mkdocs_client_ports,
     select_edges,
 )
-
-
-def resolve_legend_style(args: argparse.Namespace) -> str:
-    if args.legend_style == "auto":
-        return "compact" if args.format == "mkdocs" else "diagram"
-    return args.legend_style
-
-
-def render_legend_only(args: argparse.Namespace, mermaid_theme: MermaidTheme) -> str:
-    legend_style = resolve_legend_style(args)
-    if legend_style == "compact":
-        content = "# Legend\n\n" + render_legend_compact(theme=mermaid_theme)
-    else:
-        content = render_legend(theme=mermaid_theme, legend_scale=args.legend_scale)
-    if args.markdown:
-        content = f"""```mermaid
-{content}```
-"""
-    return content
 
 
 def render_mermaid_output(
@@ -157,7 +139,10 @@ def render_mkdocs_format(
     edges, _has_tree = select_edges(topology)
     options = MkdocsRenderOptions(
         direction=args.direction,
-        legend_style=resolve_legend_style(args),
+        legend_style=resolve_legend_style(
+            format_name=args.format,
+            legend_style=args.legend_style,
+        ),
         legend_scale=args.legend_scale,
         timestamp_zone=args.mkdocs_timestamp_zone,
         client_scope=args.client_scope,

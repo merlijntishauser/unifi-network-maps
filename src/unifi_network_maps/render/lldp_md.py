@@ -7,6 +7,7 @@ from collections.abc import Iterable
 from ..model.lldp import LLDPEntry, local_port_label
 from ..model.topology import Device, build_client_port_map, build_device_index, build_port_map
 from .device_ports_md import render_device_port_details
+from .markdown_tables import markdown_table_lines
 
 
 def _normalize_mac(value: str) -> str:
@@ -140,23 +141,21 @@ def _details_table_lines(
 ) -> list[str]:
     wired_count, client_sample = _client_summary(device, client_rows)
     client_label = f"Clients ({client_mode})"
-    lines = [
-        "### Details",
-        "",
-        "| Field | Value |",
-        "| --- | --- |",
-        f"| Model | {_escape_cell(device.model_name or device.type or '-')} |",
-        f"| Type | {_escape_cell(device.type or '-')} |",
-        f"| IP | {_escape_cell(device.ip or '-')} |",
-        f"| MAC | {_escape_cell(device.mac or '-')} |",
-        f"| Firmware | {_escape_cell(device.version or '-')} |",
-        f"| Uplink | {_escape_cell(_uplink_summary(device))} |",
-        f"| Ports | {_escape_cell(_port_summary(device))} |",
-        f"| PoE | {_escape_cell(_poe_summary(device))} |",
-        f"| {client_label} | {_escape_cell(wired_count)} |",
-        f"| Client examples | {_escape_cell(client_sample)} |",
-        "",
+    rows = [
+        ["Model", _escape_cell(device.model_name or device.type or "-")],
+        ["Type", _escape_cell(device.type or "-")],
+        ["IP", _escape_cell(device.ip or "-")],
+        ["MAC", _escape_cell(device.mac or "-")],
+        ["Firmware", _escape_cell(device.version or "-")],
+        ["Uplink", _escape_cell(_uplink_summary(device))],
+        ["Ports", _escape_cell(_port_summary(device))],
+        ["PoE", _escape_cell(_poe_summary(device))],
+        [client_label, _escape_cell(wired_count)],
+        ["Client examples", _escape_cell(client_sample)],
     ]
+    lines = ["### Details", ""]
+    lines.extend(markdown_table_lines(["Field", "Value"], rows))
+    lines.append("")
     return lines
 
 
@@ -263,10 +262,13 @@ def _render_device_lldp_section(
         )
     if device.lldp_info:
         lines.append("")
-        lines.append("| Local Port | Neighbor | Neighbor Port | Chassis ID | Port Description |")
-        lines.append("| --- | --- | --- | --- | --- |")
-        for row in _lldp_rows(device.lldp_info, device_index):
-            lines.append("| " + " | ".join(_escape_cell(cell) for cell in row) + " |")
+        lines.extend(
+            markdown_table_lines(
+                ["Local Port", "Neighbor", "Neighbor Port", "Chassis ID", "Port Description"],
+                _lldp_rows(device.lldp_info, device_index),
+                escape=_escape_cell,
+            )
+        )
         lines.append("")
     else:
         lines.append("_No LLDP neighbors._")
@@ -277,10 +279,15 @@ def _render_device_lldp_section(
         lines.append("### Clients")
         if include_ports:
             lines.append("")
-            lines.append("| Client | Port |")
-            lines.append("| --- | --- |")
-            for client_name, port_label in rows:
-                lines.append(f"| {_escape_cell(client_name)} | {_escape_cell(port_label or '-')} |")
+            lines.extend(
+                markdown_table_lines(
+                    ["Client", "Port"],
+                    [
+                        [_escape_cell(client_name), _escape_cell(port_label or "-")]
+                        for client_name, port_label in rows
+                    ],
+                )
+            )
         else:
             for client_name, _port_label in rows:
                 lines.append(f"- {_escape_cell(client_name)}")

@@ -8,9 +8,10 @@ import logging
 from ..adapters.config import Config
 from ..io.export import write_output
 from ..io.mock_data import load_mock_data
+from ..render.legend import render_legend_only, resolve_legend_style
 from ..render.theme import resolve_themes
 from .args import build_parser
-from .render import render_legend_only, render_lldp_format, render_standard_format
+from .render import render_lldp_format, render_standard_format
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +47,7 @@ def _handle_generate_mock(args: argparse.Namespace) -> int | None:
     if not args.generate_mock:
         return None
     try:
-        from ..io.mock_generate import MockOptions, mock_payload_json
+        from ..model.mock import MockOptions, mock_payload_json
     except ImportError as exc:
         logging.error("Faker is required for --generate-mock: %s", exc)
         return 2
@@ -92,7 +93,16 @@ def main(argv: list[str] | None = None) -> int:
     mermaid_theme, svg_theme = resolve_themes(args.theme_file)
 
     if args.legend_only:
-        content = render_legend_only(args, mermaid_theme)
+        legend_style = resolve_legend_style(
+            format_name=args.format,
+            legend_style=args.legend_style,
+        )
+        content = render_legend_only(
+            legend_style=legend_style,
+            legend_scale=args.legend_scale,
+            markdown=args.markdown,
+            theme=mermaid_theme,
+        )
         write_output(content, output_path=args.output, stdout=args.stdout)
         return 0
 

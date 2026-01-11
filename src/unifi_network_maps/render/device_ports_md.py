@@ -7,6 +7,7 @@ from html import escape as _escape_html
 
 from ..model.ports import extract_port_number
 from ..model.topology import ClientPortMap, Device, PortInfo, PortMap, classify_device_type
+from .markdown_tables import markdown_table_lines
 
 
 def render_device_port_overview(
@@ -70,17 +71,23 @@ def _render_device_ports(
     client_ports: ClientPortMap | None,
 ) -> list[str]:
     rows = _build_port_rows(device, port_map, client_ports)
-    lines = [
-        "#### Ports",
-        "",
-        "| Port | Connected | Speed | PoE | Power |",
-        "| --- | --- | --- | --- | --- |",
+    table_rows = [
+        [
+            _escape_cell(port_label),
+            _escape_cell(connected or "-"),
+            _escape_cell(speed),
+            _escape_cell(poe_state),
+            _escape_cell(power),
+        ]
+        for port_label, connected, speed, poe_state, power in rows
     ]
-    for port_label, connected, speed, poe_state, power in rows:
-        lines.append(
-            f"| {_escape_cell(port_label)} | {_escape_cell(connected or '-')} | "
-            f"{_escape_cell(speed)} | {_escape_cell(poe_state)} | {_escape_cell(power)} |"
+    lines = ["#### Ports", ""]
+    lines.extend(
+        markdown_table_lines(
+            ["Port", "Connected", "Speed", "PoE", "Power"],
+            table_rows,
         )
+    )
     return lines
 
 

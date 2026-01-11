@@ -13,6 +13,7 @@ cli_module = importlib.import_module("unifi_network_maps.cli.main")
 runtime_module = importlib.import_module("unifi_network_maps.cli.runtime")
 render_module = importlib.import_module("unifi_network_maps.cli.render")
 mkdocs_module = importlib.import_module("unifi_network_maps.render.mkdocs")
+legend_module = importlib.import_module("unifi_network_maps.render.legend")
 main = cli_module.main
 
 
@@ -98,7 +99,7 @@ def test_main_passes_env_file_to_config(monkeypatch):
         return _dummy_config()
 
     monkeypatch.setattr(cli_module.Config, "from_env", fake_from_env)
-    monkeypatch.setattr(render_module, "render_legend", lambda **_kwargs: "graph TB\n")
+    monkeypatch.setattr(legend_module, "render_legend", lambda **_kwargs: "graph TB\n")
     monkeypatch.setattr(cli_module, "write_output", lambda *args, **kwargs: None)
 
     assert main(["--env-file", "custom.env", "--legend-only", "--stdout"]) == 0
@@ -112,7 +113,7 @@ def test_main_legend_outputs_markdown(monkeypatch):
         captured["content"] = content
 
     monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
-    monkeypatch.setattr(render_module, "render_legend", lambda **_kwargs: "graph TB\n")
+    monkeypatch.setattr(legend_module, "render_legend", lambda **_kwargs: "graph TB\n")
     monkeypatch.setattr(cli_module, "write_output", write_output)
 
     main(["--legend-only", "--markdown", "--stdout"])

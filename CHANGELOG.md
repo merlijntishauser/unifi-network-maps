@@ -3,7 +3,7 @@
 All notable changes to this project will be documented in this file.
 
 
-## 1.4.5 - (unreleased)
+## 1.4.5 - (2026-01-11)
 - Refactored CLI orchestration into focused CLI/render/runtime modules.
 - Extracted MkDocs rendering and sidebar asset output into dedicated modules.
 - Moved mock generation into the model layer with a thin IO facade.

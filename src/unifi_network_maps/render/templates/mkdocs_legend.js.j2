@@ -1,0 +1,18 @@
+document.addEventListener("DOMContentLoaded", () => {
+  const legends = document.querySelectorAll("[data-unifi-legend]");
+  const sidebar = document.querySelector(".md-sidebar--secondary .md-sidebar__scrollwrap");
+  if (!legends.length || !sidebar) {
+    return;
+  }
+  const wrapper = document.createElement("div");
+  wrapper.className = "unifi-legend-sidebar";
+  const title = document.createElement("div");
+  title.className = "unifi-legend-title";
+  title.textContent = "Legend";
+  wrapper.appendChild(title);
+  legends.forEach((legend) => {
+    wrapper.appendChild(legend.cloneNode(true));
+    legend.classList.add("unifi-legend-hidden");
+  });
+  sidebar.appendChild(wrapper);
+});

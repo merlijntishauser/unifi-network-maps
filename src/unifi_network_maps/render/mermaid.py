@@ -7,6 +7,7 @@ from collections.abc import Iterable
 
 from ..model.topology import Edge
 from .mermaid_theme import DEFAULT_THEME, MermaidTheme, class_defs
+from .templating import render_template
 
 
 def _escape(label: str) -> str:
@@ -240,47 +241,60 @@ def render_legend(theme: MermaidTheme = DEFAULT_THEME, *, legend_scale: float = 
 
 
 def render_legend_compact(theme: MermaidTheme = DEFAULT_THEME) -> str:
-    def swatch(fill: str, stroke: str, label: str) -> str:
-        return (
-            f'<span style="display:inline-block;width:12px;height:12px;'
-            f"background:{fill};border:1px solid {stroke};border-radius:2px;"
-            f'margin-right:6px;"></span>{label}'
-        )
-
-    def line_sample(
-        color: str,
-        width: int,
-        *,
-        dashed: bool = False,
-        label: str = "",
-        bolt: bool = False,
-    ) -> str:
-        dash = ' stroke-dasharray="5 4"' if dashed else ""
-        bolt_suffix = " ⚡" if bolt else ""
-        return (
-            f'<span style="display:inline-flex;align-items:center;gap:6px;">'
-            f'<svg width="42" height="10" viewBox="0 0 42 10" '
-            f'xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
-            f'<line x1="2" y1="5" x2="40" y2="5" stroke="{color}" '
-            f'stroke-width="{max(1, width)}"{dash} />'
-            f"</svg>{label}{bolt_suffix}</span>"
-        )
-
     rows = [
-        swatch(theme.node_gateway[0], theme.node_gateway[1], "Gateway"),
-        swatch(theme.node_switch[0], theme.node_switch[1], "Switch"),
-        swatch(theme.node_ap[0], theme.node_ap[1], "AP"),
-        swatch(theme.node_client[0], theme.node_client[1], "Client"),
-        swatch(theme.node_other[0], theme.node_other[1], "Other"),
-        line_sample(theme.poe_link, theme.poe_link_width, label="PoE", bolt=True),
-        line_sample(theme.standard_link, theme.standard_link_width, label="Link"),
-        line_sample(theme.standard_link, theme.standard_link_width, dashed=True, label="Wireless"),
+        {
+            "kind": "swatch",
+            "fill": theme.node_gateway[0],
+            "stroke": theme.node_gateway[1],
+            "label": "Gateway",
+        },
+        {
+            "kind": "swatch",
+            "fill": theme.node_switch[0],
+            "stroke": theme.node_switch[1],
+            "label": "Switch",
+        },
+        {
+            "kind": "swatch",
+            "fill": theme.node_ap[0],
+            "stroke": theme.node_ap[1],
+            "label": "AP",
+        },
+        {
+            "kind": "swatch",
+            "fill": theme.node_client[0],
+            "stroke": theme.node_client[1],
+            "label": "Client",
+        },
+        {
+            "kind": "swatch",
+            "fill": theme.node_other[0],
+            "stroke": theme.node_other[1],
+            "label": "Other",
+        },
+        {
+            "kind": "line",
+            "color": theme.poe_link,
+            "width": max(1, theme.poe_link_width),
+            "dashed": False,
+            "label": "PoE",
+            "bolt": True,
+        },
+        {
+            "kind": "line",
+            "color": theme.standard_link,
+            "width": max(1, theme.standard_link_width),
+            "dashed": False,
+            "label": "Link",
+            "bolt": False,
+        },
+        {
+            "kind": "line",
+            "color": theme.standard_link,
+            "width": max(1, theme.standard_link_width),
+            "dashed": True,
+            "label": "Wireless",
+            "bolt": False,
+        },
     ]
-    lines = [
-        '<table class="unifi-legend-table">',
-        "<tbody>",
-    ]
-    lines.extend(f"  <tr><td>{style}</td></tr>" for style in rows)
-    lines.append("</tbody>")
-    lines.append("</table>")
-    return "\n".join(lines) + "\n"
+    return render_template("legend_compact.html.j2", rows=rows)

@@ -157,13 +157,4 @@ def _mkdocs_dual_legend_block(
 
 
 def _mkdocs_dual_theme_style() -> str:
-    return (
-        "<style>\n"
-        ".unifi-mermaid--light,.unifi-legend--light{display:none;}\n"
-        ".unifi-mermaid--dark,.unifi-legend--dark{display:none;}\n"
-        '[data-md-color-scheme="default"] .unifi-mermaid--light{display:block;}\n'
-        '[data-md-color-scheme="default"] .unifi-legend--light{display:block;}\n'
-        '[data-md-color-scheme="slate"] .unifi-mermaid--dark{display:block;}\n'
-        '[data-md-color-scheme="slate"] .unifi-legend--dark{display:block;}\n'
-        "</style>\n\n"
-    )
+    return render_template("mkdocs_dual_theme_style.html.j2") + "\n"

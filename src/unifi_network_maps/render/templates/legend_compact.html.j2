@@ -1,0 +1,14 @@
+<table class="unifi-legend-table">
+<tbody>
+{% for row in rows %}
+  <tr><td>
+{% if row.kind == "swatch" %}
+    <span style="display:inline-block;width:12px;height:12px;background:{{ row.fill }};border:1px solid {{ row.stroke }};border-radius:2px;margin-right:6px;"></span>{{ row.label }}
+{% else %}
+    <span style="display:inline-flex;align-items:center;gap:6px;">
+      <svg width="42" height="10" viewBox="0 0 42 10" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><line x1="2" y1="5" x2="40" y2="5" stroke="{{ row.color }}" stroke-width="{{ row.width }}"{% if row.dashed %} stroke-dasharray="5 4"{% endif %} /></svg>{{ row.label }}{%- if row.bolt %} ⚡{%- endif %}</span>
+{% endif %}
+  </td></tr>
+{% endfor %}
+</tbody>
+</table>

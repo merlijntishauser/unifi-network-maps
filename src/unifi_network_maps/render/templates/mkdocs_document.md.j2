@@ -8,12 +8,12 @@
 {{ dual_style }}{% endif -%}
 {% set title = "Map" %}
 {% set body = map_block %}
-{% include "mkdocs_section.md.j2" %}
+{% include "markdown_section.md.j2" %}
 
 {% if legend_title -%}
 {% set title = legend_title %}
 {% set body = legend_block %}
-{% include "mkdocs_section.md.j2" %}
+{% include "markdown_section.md.j2" %}
 
 {% else -%}
 {{ legend_block }}

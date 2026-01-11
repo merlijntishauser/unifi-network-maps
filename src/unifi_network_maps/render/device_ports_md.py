@@ -8,6 +8,7 @@ from html import escape as _escape_html
 from ..model.ports import extract_port_number
 from ..model.topology import ClientPortMap, Device, PortInfo, PortMap, classify_device_type
 from .markdown_tables import markdown_table_lines
+from .templating import render_template
 
 
 def render_device_port_overview(
@@ -18,18 +19,24 @@ def render_device_port_overview(
 ) -> str:
     gateways = _collect_devices_by_type(devices, "gateway")
     switches = _collect_devices_by_type(devices, "switch")
-    lines: list[str] = []
+    sections: list[str] = []
     if gateways:
-        lines.append("## Gateways")
-        lines.append("")
-        lines.extend(_render_device_group(gateways, port_map, client_ports))
+        sections.append(
+            render_template(
+                "markdown_section.md.j2",
+                title="Gateways",
+                body=_render_device_group(gateways, port_map, client_ports),
+            ).rstrip()
+        )
     if switches:
-        if lines:
-            lines.append("")
-        lines.append("## Switches")
-        lines.append("")
-        lines.extend(_render_device_group(switches, port_map, client_ports))
-    return "\n".join(lines).rstrip() + "\n"
+        sections.append(
+            render_template(
+                "markdown_section.md.j2",
+                title="Switches",
+                body=_render_device_group(switches, port_map, client_ports),
+            ).rstrip()
+        )
+    return "\n\n".join(section for section in sections if section).rstrip() + "\n"
 
 
 def _collect_devices_by_type(devices: list[Device], desired_type: str) -> list[Device]:
@@ -43,15 +50,18 @@ def _render_device_group(
     devices: list[Device],
     port_map: PortMap,
     client_ports: ClientPortMap | None,
-) -> list[str]:
-    lines: list[str] = []
+) -> str:
+    blocks: list[str] = []
     for device in devices:
-        lines.append(f"### {device.name}")
-        lines.append("")
-        lines.extend(_render_device_details(device))
-        lines.extend(_render_device_ports(device, port_map, client_ports))
-        lines.append("")
-    return lines
+        blocks.append(
+            render_template(
+                "device_port_block.md.j2",
+                device_name=device.name,
+                details="\n".join(_render_device_details(device)).rstrip(),
+                ports="\n".join(_render_device_ports(device, port_map, client_ports)).rstrip(),
+            ).rstrip()
+        )
+    return "\n\n".join(block for block in blocks if block)
 
 
 def render_device_port_details(

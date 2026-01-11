@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Centralized legend rendering helpers and shared markdown table utilities.
 - Added Jinja2 templating for MkDocs output, Mermaid legend blocks, and Markdown sections.
 - Moved MkDocs sidebar assets and legend HTML blocks into reusable templates.
+- Enabled Jinja2 autoescaping for HTML templates and marked trusted HTML blocks safe.
 
 ## v1.4.4 - (2026-01-10)
 - Improved dark theme Mermaid readability (labels + link borders).

@@ -97,7 +97,11 @@ def _timestamp_line(timestamp_zone: str) -> str:
 
 
 def _mkdocs_mermaid_block(content: str, *, class_name: str) -> str:
-    return f'<div class="{class_name}">\n```mermaid\n{content}```\n</div>'
+    return render_template(
+        "mkdocs_mermaid_block.md.j2",
+        class_name=class_name,
+        content=content,
+    )
 
 
 def _mkdocs_dual_mermaid_block(
@@ -118,10 +122,11 @@ def _mkdocs_single_legend_block(
     legend_scale: float,
 ) -> str:
     if legend_style == "compact":
-        return (
-            '<div class="unifi-legend" data-unifi-legend>\n'
-            + render_legend_compact(theme=mermaid_theme)
-            + "</div>"
+        return render_template(
+            "mkdocs_html_block.html.j2",
+            class_name="unifi-legend",
+            data_unifi_legend=True,
+            content=render_legend_compact(theme=mermaid_theme),
         )
     return "```mermaid\n" + render_legend(theme=mermaid_theme, legend_scale=legend_scale) + "```"
 
@@ -134,15 +139,17 @@ def _mkdocs_dual_legend_block(
     legend_scale: float,
 ) -> str:
     if legend_style == "compact":
-        light = (
-            '<div class="unifi-legend unifi-legend--light" data-unifi-legend>\n'
-            + render_legend_compact(theme=mermaid_theme)
-            + "</div>"
+        light = render_template(
+            "mkdocs_html_block.html.j2",
+            class_name="unifi-legend unifi-legend--light",
+            data_unifi_legend=True,
+            content=render_legend_compact(theme=mermaid_theme),
         )
-        dark = (
-            '<div class="unifi-legend unifi-legend--dark" data-unifi-legend>\n'
-            + render_legend_compact(theme=dark_mermaid_theme)
-            + "</div>"
+        dark = render_template(
+            "mkdocs_html_block.html.j2",
+            class_name="unifi-legend unifi-legend--dark",
+            data_unifi_legend=True,
+            content=render_legend_compact(theme=dark_mermaid_theme),
         )
         return f"{light}\n{dark}"
     light = _mkdocs_mermaid_block(

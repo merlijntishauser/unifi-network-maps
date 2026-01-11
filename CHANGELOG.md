@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+
+## 1.4.5 - (unreleased)
+- Refactored CLI orchestration into focused CLI/render/runtime modules.
+- Extracted MkDocs rendering and sidebar asset output into dedicated modules.
+- Moved mock generation into the model layer with a thin IO facade.
+- Centralized legend rendering helpers and shared markdown table utilities.
+
 ## v1.4.4 - (2026-01-10)
 - Improved dark theme Mermaid readability (labels + link borders).
 - Fixed MkDocs sidebar legend duplication with dual-theme output.

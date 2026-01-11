@@ -1,9 +1,9 @@
 name: Publish
 
 on:
-  push:
-    tags:
-      - "v*"
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
 
 permissions:
   contents: read
@@ -11,16 +11,31 @@ permissions:
 
 jobs:
   build-and-publish:
+    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     environment: pypi
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+      - name: Detect release tag
+        id: tag
+        run: |
+          tag=$(git tag --points-at "${{ github.event.workflow_run.head_sha }}" | grep '^v' | head -n1)
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+      - name: Skip publish (no tag)
+        if: steps.tag.outputs.tag == ''
+        run: echo "No v* tag found for this commit; skipping publish."
       - uses: actions/setup-python@v6
+        if: steps.tag.outputs.tag != ''
         with:
           python-version: "3.13"
       - name: Build
+        if: steps.tag.outputs.tag != ''
         run: |
           python -m pip install --upgrade pip build
           python -m build
       - name: Publish to PyPI
+        if: steps.tag.outputs.tag != ''
         uses: pypa/gh-action-pypi-publish@release/v1

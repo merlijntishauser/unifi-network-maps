@@ -14,6 +14,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_functional_args(parser.add_argument_group("Functional"))
     add_mermaid_args(parser.add_argument_group("Mermaid"))
     add_svg_args(parser.add_argument_group("SVG"))
+    add_ha_args(parser.add_argument_group("Home Assistant"))
     add_general_render_args(parser.add_argument_group("Output"))
     add_debug_args(parser.add_argument_group("Debug"))
     return parser
@@ -119,6 +120,14 @@ def add_svg_args(parser: argparse._ArgumentGroup) -> None:
     parser.add_argument("--svg-width", type=int, default=None, help="SVG width override")
     parser.add_argument("--svg-height", type=int, default=None, help="SVG height override")
     parser.add_argument("--theme-file", default=None, help="Path to theme YAML file")
+
+
+def add_ha_args(parser: argparse._ArgumentGroup) -> None:
+    parser.add_argument(
+        "--ha-output",
+        default=None,
+        help="Write Home Assistant POC assets to the given directory",
+    )
 
 
 def add_general_render_args(parser: argparse._ArgumentGroup) -> None:

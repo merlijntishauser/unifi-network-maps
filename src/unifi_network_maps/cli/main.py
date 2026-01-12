@@ -90,7 +90,11 @@ def main(argv: list[str] | None = None) -> int:
     except ValueError as exc:
         logging.error(str(exc))
         return 2
-    mermaid_theme, svg_theme = resolve_themes(args.theme_file)
+    try:
+        mermaid_theme, svg_theme = resolve_themes(args.theme_file)
+    except Exception as exc:  # noqa: BLE001
+        logging.error("Failed to load theme file: %s", exc)
+        return 2
 
     if args.legend_only:
         legend_style = resolve_legend_style(

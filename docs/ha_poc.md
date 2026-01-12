@@ -9,6 +9,7 @@ Goal: a quick, low-risk proof of concept for a Lovelace UI card + export pipelin
   - `lovelace.yaml` (example card config)
 - No HA-specific runtime code in core renderer; just export assets and a schema.
 - Keep everything in a separate module (ex: `src/unifi_network_maps/ha/`) to allow easy extraction.
+- `--include-clients` should control whether clients appear in `network.json`.
 
 ## POC Constraints
 - Avoid storing secrets in exported JSON.
@@ -73,3 +74,21 @@ SVG drilldown hooks:
 3. Implement minimal exporter behind `--ha-output`.
 4. Make BDD scenarios pass with mock data.
 5. Extract to standalone repo when ready.
+
+## Manual test drive (Home Assistant)
+1. Generate assets to an HA-accessible folder (example for HA OS):
+   ```bash
+   unifi-network-maps \\
+     --mock-data examples/mock_data.json \\
+     --ha-output /config/www/unifi-network-maps \\
+     --include-clients
+   ```
+2. In Home Assistant, add a Lovelace card and paste the example config:
+   ```yaml
+   type: custom:unifi-network-map
+   svg_url: /local/unifi-network-maps/network.svg
+   data_url: /local/unifi-network-maps/network.json
+   ```
+3. Validate that the SVG renders and drilldown data loads:
+   - Hover/selection should show device + port info.
+   - If `--include-clients` was used, client drilldowns should appear.

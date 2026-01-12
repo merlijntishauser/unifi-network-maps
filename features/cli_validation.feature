@@ -32,6 +32,7 @@ Feature: CLI validation and error handling
     And stderr contains "invalid choice"
 
   Scenario: Invalid theme file is reported
+    Given the mock data file "examples/mock_data.json"
     When I run the CLI expecting failure with args "--theme-file does-not-exist.yaml"
     Then the command fails with exit code "2"
     And stderr contains "No such file"

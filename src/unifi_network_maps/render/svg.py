@@ -522,6 +522,8 @@ def _render_svg_edges(
     node_port_labels: dict[str, str] = {}
     node_port_prefix: dict[str, str] = {}
     for edge in edges:
+        _record_edge_labels(edge, node_types, node_port_labels, node_port_prefix)
+    for edge in sorted(edges, key=lambda item: item.poe):
         if edge.left not in positions or edge.right not in positions:
             continue
         src_x, src_y = positions[edge.left]
@@ -533,7 +535,17 @@ def _render_svg_edges(
         mid_y = (src_bottom + dst_top) / 2
         color = "url(#link-poe)" if edge.poe else "url(#link-standard)"
         width_px = 2 if edge.poe else 1
-        path = f"M {src_cx} {src_bottom} L {src_cx} {mid_y} L {dst_cx} {mid_y} L {dst_cx} {dst_top}"
+        if math.isclose(src_cx, dst_cx, abs_tol=0.01):
+            elbow_x = src_cx + 0.5
+            path = (
+                f"M {src_cx} {src_bottom} L {src_cx} {mid_y} "
+                f"L {elbow_x} {mid_y} L {dst_cx} {mid_y} L {dst_cx} {dst_top}"
+            )
+        else:
+            path = (
+                f"M {src_cx} {src_bottom} L {src_cx} {mid_y} "
+                f"L {dst_cx} {mid_y} L {dst_cx} {dst_top}"
+            )
         dash = ' stroke-dasharray="6 4"' if edge.wireless else ""
         lines.append(
             f'<path d="{path}" stroke="{color}" stroke-width="{width_px}" fill="none"{dash}/>'
@@ -545,7 +557,6 @@ def _render_svg_edges(
                 f'<text x="{icon_x}" y="{icon_y}" text-anchor="middle" fill="#1e88e5" '
                 f'font-size="{max(options.font_size, 10)}">⚡</text>'
             )
-        _record_edge_labels(edge, node_types, node_port_labels, node_port_prefix)
     return node_port_labels, node_port_prefix
 
 
@@ -778,6 +789,8 @@ def _render_iso_edges(
     node_port_prefix: dict[str, str],
 ) -> None:
     for edge in edges:
+        _record_iso_edge_label(edge, node_types, node_port_labels, node_port_prefix)
+    for edge in sorted(edges, key=lambda item: item.poe):
         if edge.left not in positions or edge.right not in positions:
             continue
         src_grid = grid_positions.get(edge.left)
@@ -819,7 +832,6 @@ def _render_iso_edges(
                 f'<text x="{icon_x}" y="{icon_y}" text-anchor="middle" fill="#1e88e5" '
                 f'font-size="{max(options.font_size, 10)}">⚡</text>'
             )
-        _record_iso_edge_label(edge, node_types, node_port_labels, node_port_prefix)
 
 
 def _iso_edge_path(

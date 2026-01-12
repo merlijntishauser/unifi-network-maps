@@ -24,6 +24,7 @@
 - GUI tests for SVG outputs
   - Feasibility: Low/Medium; rendering comparison is brittle but doable with snapshot diffs.
   - Plan: add optional visual regression tests using generated SVGs + a baseline comparison step.
+  - Note: include a vertical-link snapshot to catch zero-width path regressions.
 - QR codes for devices
   - Feasibility: Low; requires external QR library and decisions on what to encode (device URL/IP/name).
   - Plan: add optional `--include-qr` with opt-in dependency; render QR nodes or sidecar assets.
@@ -38,4 +39,3 @@
     - UX: same form as Option A, but ships with package and requires no external setup.
     - Safety: explicit local bind (127.0.0.1), optional `--web-host/--web-port`, no creds stored.
     - Extensibility: add controller profiles in config file later without changing UI routes.
-

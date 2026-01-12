@@ -23,3 +23,7 @@ Feature: CLI output variants
     When I run the CLI to generate mock data
     Then the output file contains "devices"
     And the output file contains "clients"
+
+  Scenario: Module entrypoint renders help
+    When I run the module entrypoint with "--help"
+    Then stdout contains "usage:"

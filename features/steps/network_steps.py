@@ -134,6 +134,15 @@ def _run_cli(
     context.output_path = output_path
 
 
+@when('I run the module entrypoint with "{args}"')
+def when_run_module_entrypoint(context, args: str) -> None:
+    cmd = [sys.executable, "-m", "unifi_network_maps"] + shlex.split(args)
+    result = _run_command(cmd)
+    _record_result(context, result)
+    if result.returncode != 0:
+        raise AssertionError(f"Entrypoint failed: {result.stderr.strip() or result.stdout.strip()}")
+
+
 @given('the mock data file "{relative_path}"')
 def given_mock_data_file(context, relative_path: str) -> None:
     path = _resolve_mock_path(relative_path)
@@ -259,6 +268,11 @@ def then_command_fails_with_code(context, code: str) -> None:
 @then('stderr contains "{content}"')
 def then_stderr_contains(context, content: str) -> None:
     assert content in context.last_stderr
+
+
+@then('stdout contains "{content}"')
+def then_stdout_contains(context, content: str) -> None:
+    assert content in context.last_stdout
 
 
 @then('the output file starts with "{prefix}"')

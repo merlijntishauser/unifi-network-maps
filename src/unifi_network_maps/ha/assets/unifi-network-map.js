@@ -30,7 +30,7 @@ class UnifiNetworkMapCard extends HTMLElement {
       <style>
         .container { font-family: var(--mdc-typography-body1-font-family, sans-serif); }
         .map { width: 100%; overflow: auto; }
-        img { width: 100%; height: auto; display: block; }
+        img, svg { width: 100%; height: auto; display: block; }
         .meta { font-size: 0.85rem; color: var(--secondary-text-color, #666); margin-top: 0.5rem; }
         .details { font-size: 0.85rem; margin-top: 0.5rem; }
         .details strong { display: block; margin-bottom: 0.2rem; }

@@ -35,6 +35,7 @@ def export_ha_assets(
     (target / "network.svg").write_text(svg, encoding="utf-8")
     (target / "network.json").write_text(_schema_json(schema), encoding="utf-8")
     (target / "lovelace.yaml").write_text(_lovelace_config(), encoding="utf-8")
+    _write_card_stub(target)
 
 
 def _schema_json(schema: HaSchema) -> str:
@@ -55,6 +56,14 @@ def _lovelace_config() -> str:
     )
 
 
+def _write_card_stub(target: Path) -> None:
+    assets_dir = target
+    assets_dir.mkdir(parents=True, exist_ok=True)
+    stub_path = Path(__file__).parent / "assets" / "unifi-network-map.js"
+    stub = stub_path.read_text(encoding="utf-8")
+    (assets_dir / "unifi-network-map.js").write_text(stub, encoding="utf-8")
+
+
 def _inject_svg_hooks(svg: str, schema: HaSchema) -> str:
     if "</svg>" not in svg:
         logger.warning("SVG output missing closing tag; skipping HA hooks")
@@ -63,11 +72,13 @@ def _inject_svg_hooks(svg: str, schema: HaSchema) -> str:
     for device in schema.devices:
         device_id = _escape_html(str(device.get("id", "")))
         if device_id:
-            hook_lines.append(f'<g data-device-id="{device_id}" />')
+            hook_lines.append(
+                f'<rect data-device-id="{device_id}" width="0" height="0" fill="none" />'
+            )
     for port in schema.ports:
         port_id = _escape_html(str(port.get("id", "")))
         if port_id:
-            hook_lines.append(f'<g data-port-id="{port_id}" />')
+            hook_lines.append(f'<rect data-port-id="{port_id}" width="0" height="0" fill="none" />')
     hook_lines.append("</g>")
     hooks = "\n".join(hook_lines)
     return svg.replace("</svg>", f"{hooks}\n</svg>")

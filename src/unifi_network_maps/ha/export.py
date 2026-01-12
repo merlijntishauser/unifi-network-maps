@@ -28,7 +28,14 @@ def export_ha_assets(
     target.mkdir(parents=True, exist_ok=True)
 
     node_types = build_node_type_map(devices, None, client_mode=client_mode)
-    svg = render_svg(edges, node_types=node_types, options=SvgOptions(), theme=svg_theme)
+    node_data = _build_node_data(devices)
+    svg = render_svg(
+        edges,
+        node_types=node_types,
+        node_data=node_data,
+        options=SvgOptions(),
+        theme=svg_theme,
+    )
     schema = build_ha_schema(devices, edges, clients=clients, client_mode=client_mode)
 
     svg = _inject_svg_hooks(svg, schema)
@@ -82,3 +89,12 @@ def _inject_svg_hooks(svg: str, schema: HaSchema) -> str:
     hook_lines.append("</g>")
     hooks = "\n".join(hook_lines)
     return svg.replace("</svg>", f"{hooks}\n</svg>")
+
+
+def _build_node_data(devices: list[Device]) -> dict[str, dict[str, str]]:
+    data: dict[str, dict[str, str]] = {}
+    for device in devices:
+        device_id = device.mac or device.name
+        if device_id:
+            data[device.name] = {"data-device-id": device_id}
+    return data

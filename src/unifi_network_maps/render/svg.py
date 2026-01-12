@@ -6,6 +6,7 @@ import base64
 import math
 from collections.abc import Callable
 from dataclasses import dataclass
+from html import escape as _escape_attr
 from pathlib import Path
 
 from ..model.topology import Edge
@@ -472,6 +473,7 @@ def render_svg(
     edges: list[Edge],
     *,
     node_types: dict[str, str],
+    node_data: dict[str, dict[str, str]] | None = None,
     options: SvgOptions | None = None,
     theme: SvgTheme = DEFAULT_THEME,
 ) -> str:
@@ -503,6 +505,7 @@ def render_svg(
         node_port_prefix,
         icons,
         options,
+        node_data,
     )
 
     lines.append("</svg>")
@@ -589,14 +592,16 @@ def _render_svg_nodes(
     node_port_prefix: dict[str, str],
     icons: dict[str, str],
     options: SvgOptions,
+    node_data: dict[str, dict[str, str]] | None,
 ) -> None:
     for name, (x, y) in positions.items():
         node_type = node_types.get(name, "other")
         fill, stroke = _TYPE_COLORS.get(node_type, _TYPE_COLORS["other"])
         fill = f"url(#node-{node_type})"
+        extra_attrs = _svg_node_attrs(node_data, name)
         lines.append(
             f'<rect x="{x}" y="{y}" width="{options.node_width}" height="{options.node_height}" '
-            f'rx="6" ry="6" fill="{fill}" stroke="{stroke}" stroke-width="1"/>'
+            f'rx="6" ry="6" fill="{fill}" stroke="{stroke}" stroke-width="1"{extra_attrs}/>'
         )
         icon_href = icons.get(node_type, icons.get("other"))
         if icon_href:
@@ -631,6 +636,16 @@ def _render_svg_nodes(
         lines.append(
             f'<text x="{text_x}" y="{text_y}" fill="#1f1f1f" text-anchor="start">{safe_name}</text>'
         )
+
+
+def _svg_node_attrs(node_data: dict[str, dict[str, str]] | None, name: str) -> str:
+    if not node_data:
+        return ""
+    attrs = node_data.get(name)
+    if not attrs:
+        return ""
+    rendered = [f' {key}="{_escape_attr(value, quote=True)}"' for key, value in attrs.items()]
+    return "".join(rendered)
 
 
 def _iso_project(layout: IsoLayout, gx: float, gy: float) -> tuple[float, float]:

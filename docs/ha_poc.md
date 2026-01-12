@@ -86,7 +86,7 @@ SVG drilldown hooks:
    - Settings → Dashboards → Resources → Add resource
    - URL: `/local/unifi-network-maps/unifi-network-map.js`
    - Type: `JavaScript Module`
-4. Add a Lovelace card with the custom card config:
+4. Add a Lovelace card with the custom card config (adjust the `/local/...` path to match your output dir):
    ```yaml
    type: custom:unifi-network-map
    svg_url: /local/unifi-network-maps/network.svg

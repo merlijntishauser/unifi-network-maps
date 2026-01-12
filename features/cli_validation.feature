@@ -25,3 +25,13 @@ Feature: CLI validation and error handling
     When I run the CLI expecting failure with args "--client-scope not-a-scope"
     Then the command fails with exit code "2"
     And stderr contains "invalid choice"
+
+  Scenario: Invalid direction is rejected by argparse
+    When I run the CLI expecting failure with args "--direction not-a-direction"
+    Then the command fails with exit code "2"
+    And stderr contains "invalid choice"
+
+  Scenario: Invalid theme file is reported
+    When I run the CLI expecting failure with args "--theme-file does-not-exist.yaml"
+    Then the command fails with exit code "2"
+    And stderr contains "No such file"

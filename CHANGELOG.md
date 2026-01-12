@@ -2,92 +2,153 @@
 
 All notable changes to this project will be documented in this file.
 
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 1.4.5 - (2026-01-11)
+## [Unreleased]
+### Fixed
+- CLI error handling for invalid theme file paths.
+
+## [1.4.5] - 2026-01-11
+### Added
+- Jinja2 templating for MkDocs output, Mermaid legend blocks, and Markdown sections.
+- MkDocs sidebar assets and legend HTML blocks moved into reusable templates.
+- BDD scenarios for module/console entrypoints plus additional CLI validation errors.
+
+### Changed
 - Refactored CLI orchestration into focused CLI/render/runtime modules.
 - Extracted MkDocs rendering and sidebar asset output into dedicated modules.
 - Moved mock generation into the model layer with a thin IO facade.
 - Centralized legend rendering helpers and shared markdown table utilities.
-- Added Jinja2 templating for MkDocs output, Mermaid legend blocks, and Markdown sections.
-- Moved MkDocs sidebar assets and legend HTML blocks into reusable templates.
+- Publish workflow now runs only after successful tagged CI.
+- Added explicit workflow permissions to CI/CodeQL workflows.
+
+### Fixed
+- CLI error handling for invalid theme file paths.
+
+### Security
 - Enabled Jinja2 autoescaping for HTML templates and marked trusted HTML blocks safe.
 
-## v1.4.4 - (2026-01-10)
-- Improved dark theme Mermaid readability (labels + link borders).
-- Fixed MkDocs sidebar legend duplication with dual-theme output.
+## [1.4.4] - 2026-01-11
+### Added
 - Added smoke tests for dual-theme MkDocs sidebar legend output.
 
-## v1.4.2 - 2026-01-10
-- Added static code analysis and stricter type-checking
-- Added contract tests for UniFi API wrapper with fixture-based validation.
-- Added optional live UniFi contract tests (gated by `UNIFI_CONTRACT_LIVE=1`).
+### Changed
+- Improved dark theme Mermaid readability (labels + link borders).
+
+### Fixed
+- MkDocs sidebar legend duplication with dual-theme output.
+
+## [1.4.2] - 2026-01-10
+### Added
+- Static code analysis and stricter type-checking.
+- Contract tests for UniFi API wrapper with fixture-based validation.
+- Optional live UniFi contract tests (gated by `UNIFI_CONTRACT_LIVE=1`).
 - Split CI into dedicated jobs and added a contract-test job.
-- Added Behave-based BDD tests covering CLI outputs, mkdocs assets, and error handling.
-- Added mkdocs timestamp (timezone configurable via `--mkdocs-timestamp-zone`).
-- Added optional dual Mermaid blocks for MkDocs Material theme switching (`--mkdocs-dual-theme`).
-- Switched UniFi API cache payloads to JSON for safer local storage.
-- Skips cache usage when the cache directory is group/world-writable.
-- Added `--no-cache` to bypass UniFi API cache reads/writes.
-- Added file locking around cache read/write operations to avoid concurrent corruption.
-- Hardened Mermaid label escaping for newlines and backslashes.
-- Fixed device cache serialization to preserve LLDP data when caching.
-- Added optional UniFi API request timeouts via `UNIFI_REQUEST_TIMEOUT_SECONDS`.
+- Behave-based BDD tests covering CLI outputs, mkdocs assets, and error handling.
+- Mkdocs timestamp (timezone configurable via `--mkdocs-timestamp-zone`).
+- Optional dual Mermaid blocks for MkDocs Material theme switching (`--mkdocs-dual-theme`).
+- `--no-cache` to bypass UniFi API cache reads/writes.
+- File locking around cache read/write operations to avoid concurrent corruption.
+- Optional UniFi API request timeouts via `UNIFI_REQUEST_TIMEOUT_SECONDS`.
 - Made `--output` writes atomic to avoid partial files on interruption.
 
-## v1.4.1 - 2026-01-06
-- pip install was broken, fixed.
+### Changed
+- Switched UniFi API cache payloads to JSON for safer local storage.
+- Skips cache usage when the cache directory is group/world-writable.
 
-## v1.4.0 - 2026-01-06
-- Added MkDocs output, which includes gateway/switch details and per-port tables.
+### Fixed
+- Hardened Mermaid label escaping for newlines and backslashes.
+- Device cache serialization to preserve LLDP data when caching.
+
+## [1.4.1] - 2026-01-06
+### Fixed
+- Fixed pip install failure.
+
+## [1.4.0] - 2026-01-06
+### Added
+- MkDocs output with gateway/switch details and per-port tables.
 - Port tables show speed, PoE status, power, and wired clients per port.
-- Added compact legend with sidebar injection (`--mkdocs-sidebar-legend`).
+- Compact legend with sidebar injection (`--mkdocs-sidebar-legend`).
 - LLDP markdown includes the same device details and port tables when enabled.
+- `--mock-data` for safe, offline rendering from fixtures.
+- Faker-powered `--generate-mock` for deterministic mock fixtures (dev-only).
+- Mock fixtures + SVG/Mermaid examples, with mock smoketest/CI steps.
+
+### Changed
 - Improved uplink labeling (gateway shows Internet for WAN/unknown).
 - Aggregated ports are combined into single LAG rows.
 - Bumped minimum Python to 3.13 and aligned CI to 3.13.
 - Pinned runtime/dev/build dependencies and added `requirements*.txt` + `constraints.txt`.
-- Added `--mock-data` for safe, offline rendering from fixtures.
-- Added Faker-powered `--generate-mock` for deterministic mock fixtures (dev-only).
-- Added mock fixtures + SVG/Mermaid examples, with mock smoketest/CI steps.
 
-## v1.3.1 - 2026-01-04
-- Added `lldp-md` output with per-device details tables and optional client sections.
-- Added `--client-scope wired|wireless|all` and dashed wireless client links in Mermaid/SVG.
+## [1.3.1] - 2026-01-04
+### Added
+- `lldp-md` output with per-device details tables and optional client sections.
+- `--client-scope wired|wireless|all` and dashed wireless client links in Mermaid/SVG.
 - Expanded smoketest outputs for wireless/all client scopes and LLDP markdown.
-- Fixed SVG icon loading paths after package reorg.
-- Tuned isometric port label placement on front tiles.
 
-## v1.3.0 - 2026-01-04
-- Reorganized package into submodules (`adapters/`, `model/`, `render/`, `io/`, `cli/`).
+### Fixed
+- Fixed SVG icon loading paths after package reorg.
+
+### Changed
+- Isometric port label placement on front tiles.
+
+## [1.3.0] - 2026-01-04
+### Added
 - YAML-based theming with default + dark themes and `--theme-file`.
+
+### Changed
+- Reorganized package into submodules (`adapters/`, `model/`, `render/`, `io/`, `cli/`).
 - CLI help now grouped by category; CLI logic split into focused helpers.
 - Isometric SVG layout constants centralized; extra viewBox padding to avoid clipping.
 - LLDP port index fallback matches `port_table` `ifname`/`name`.
 - Added PoE/edge/device count logging and improved label ordering helpers.
 - Coverage excludes asset packages; docs updated (options/groups + AI disclosure).
 
-## v1.2.4 - 2026-01-03
-- Added typed `UplinkInfo`/`PortInfo` and uplink fallback for LLDP gaps.
-- Deterministic edge ordering for repeatable output.
+## [1.2.4] - 2026-01-03
+### Added
+- Typed `UplinkInfo`/`PortInfo` and uplink fallback for LLDP gaps.
 - CI publish workflow (trusted publishing) and release docs.
 - Project metadata and packaging updated for OSS readiness.
 
-## v1.1.0 - 2026-01-03
-- Added isometric SVG output with grid-aligned links and isometric icon set.
+### Changed
+- Deterministic edge ordering for repeatable output.
+
+## [1.1.0] - 2026-01-03
+### Added
+- Isometric SVG output with grid-aligned links and isometric icon set.
+- Smoketest target with multiple outputs (ports/clients/legend).
+- UniFi API response caching with TTL.
+
+### Changed
 - Improved port label placement and client labeling in SVG outputs.
-- Added smoketest target with multiple outputs (ports/clients/legend).
-- Added UniFi API response caching with TTL.
-- Fixed Mermaid legend/grouped output parsing errors.
 - Refined visuals: link gradients, tile gradients, icon placement tweaks.
 
-## v1.0.0 - 2025-12-30
+### Fixed
+- Mermaid legend/grouped output parsing errors.
+
+## [1.0.0] - 2025-12-30
+### Added
 - Mermaid legend can render as a separate graph.
 - Straight Mermaid links with node type coloring.
-- Added wired client leaf nodes and uplink port labels.
-- Expanded PoE detection tests and LLDP helpers.
+- Wired client leaf nodes and uplink port labels.
 - CLI loads `.env` automatically.
 
-## v0.2.0 - 2026-01-02 - Initial public release
-- Added versioning workflow and bump tooling.
+## [0.2.0] - 2026-01-02
+### Added
+- Versioning workflow and bump tooling.
 - Introduced SVG renderer and tree layout fixes.
 - Increased test coverage and added coverage tooling.
+
+[Unreleased]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.5...HEAD
+[1.4.5]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.4...v1.4.5
+[1.4.4]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.2...v1.4.4
+[1.4.2]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.1...v1.4.2
+[1.4.1]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.0...v1.4.1
+[1.4.0]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.3.1...v1.4.0
+[1.3.1]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.3.0...v1.3.1
+[1.3.0]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.2.4...v1.3.0
+[1.2.4]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.1.0...v1.2.4
+[1.1.0]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/merlijntishauser/unifi-network-maps/compare/v0.2.0...v1.0.0
+[0.2.0]: https://github.com/merlijntishauser/unifi-network-maps/releases/tag/v0.2.0

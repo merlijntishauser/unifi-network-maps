@@ -43,11 +43,9 @@ SVG drilldown hooks:
 - Device and port nodes include `data-device-id` and `data-port-id`.
 
 ## Lovelace Card (POC)
-- `type: custom:unifi-network-map`
-- Inputs:
-  - `svg_url` (points to `/local/unifi-network-maps/network.svg`)
-  - `data_url` (points to `/local/unifi-network-maps/network.json`)
-- UX goals:
+- Current state: no custom card shipped yet; use built-in cards to view the SVG.
+- Future card goal: `type: custom:unifi-network-map` with SVG + JSON-driven drilldown.
+- UX goals (future):
   - Pan/zoom SVG.
   - Hover/selection panel showing device + port details.
   - PoE badge(s) for PoE ports and links.
@@ -83,12 +81,23 @@ SVG drilldown hooks:
      --ha-output /config/www/unifi-network-maps \\
      --include-clients
    ```
-2. In Home Assistant, add a Lovelace card and paste the example config:
+2. In Home Assistant, add a Lovelace card using a built-in card (POC):
+   ```yaml
+   type: picture
+   image: /local/unifi-network-maps/network.svg
+   ```
+   Or:
+   ```yaml
+   type: markdown
+   content: |
+     ![](/local/unifi-network-maps/network.svg)
+   ```
+3. (Optional) Keep the future custom-card config for later:
    ```yaml
    type: custom:unifi-network-map
    svg_url: /local/unifi-network-maps/network.svg
    data_url: /local/unifi-network-maps/network.json
    ```
-3. Validate that the SVG renders and drilldown data loads:
-   - Hover/selection should show device + port info.
-   - If `--include-clients` was used, client drilldowns should appear.
+4. Validate that the SVG renders and drilldown data loads (future custom card):
+  - Hover/selection should show device + port info.
+  - If `--include-clients` was used, client drilldowns should appear.

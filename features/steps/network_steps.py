@@ -143,6 +143,15 @@ def when_run_module_entrypoint(context, args: str) -> None:
         raise AssertionError(f"Entrypoint failed: {result.stderr.strip() or result.stdout.strip()}")
 
 
+@when('I run the console entrypoint with "{args}"')
+def when_run_console_entrypoint(context, args: str) -> None:
+    cmd = [sys.executable, "-m", "unifi_network_maps.cli"] + shlex.split(args)
+    result = _run_command(cmd)
+    _record_result(context, result)
+    if result.returncode != 0:
+        raise AssertionError(f"Entrypoint failed: {result.stderr.strip() or result.stdout.strip()}")
+
+
 @given('the mock data file "{relative_path}"')
 def given_mock_data_file(context, relative_path: str) -> None:
     path = _resolve_mock_path(relative_path)

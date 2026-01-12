@@ -27,3 +27,7 @@ Feature: CLI output variants
   Scenario: Module entrypoint renders help
     When I run the module entrypoint with "--help"
     Then stdout contains "usage:"
+
+  Scenario: Console script entrypoint renders help
+    When I run the console entrypoint with "--help"
+    Then stdout contains "usage:"

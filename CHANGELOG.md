@@ -6,8 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- New HA module (src/unifi_network_maps/ha/) with JSON schema builder and asset export.
+- `--ha-output` CLI flag wired to export SVG/JSON/Lovelace assets.
+- HA BDD steps now execute CLI and validate outputs.
+
 ### Fixed
 - CLI error handling for invalid theme file paths.
+- BDD theme-file scenario
 
 ## [1.4.5] - 2026-01-11
 ### Added

@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - HA POC export module, CLI flag, BDD scenarios, and smoketest outputs (now in the HA repo).
 
 ### Fixed
+- BDD theme-file scenario
 - SVG links render correctly for vertically stacked nodes.
 
 ## [1.4.5] - 2026-01-11

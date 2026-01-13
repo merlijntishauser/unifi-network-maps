@@ -1,6 +1,6 @@
 # Home Assistant Integration POC
 
-Goal: a quick, low-risk proof of concept for a Lovelace UI card + export pipeline, while keeping code separable for a future standalone repo.
+Goal: a quick, low-risk proof of concept for a Lovelace UI card + export pipeline, while keeping code separable for a future standalone repo. Updated direction: the HA integration should be a separate repo (TypeScript card + Python integration) that live-queries UniFi data, with credentials managed in the HA UI.
 
 ## Scope (POC)
 - Export assets to a target HA directory (ex: `/config/www/unifi-network-maps/`):
@@ -10,6 +10,12 @@ Goal: a quick, low-risk proof of concept for a Lovelace UI card + export pipelin
 - No HA-specific runtime code in core renderer; just export assets and a schema.
 - Keep everything in a separate module (ex: `src/unifi_network_maps/ha/`) to allow easy extraction.
 - `--include-clients` should control whether clients appear in `network.json`.
+## Future direction (live HA integration)
+- Separate repo for the HA integration to align with HA tooling and TS card development.
+- Use HA Config Flow to collect UniFi credentials in the UI (no `.env` in HA).
+- Store credentials in HA’s config entries/secrets storage.
+- Use a `DataUpdateCoordinator` to poll the UniFi API for LLDP + clients and refresh the card.
+- Expose rendered SVG + JSON via HA endpoints or cached files, but updated by the integration.
 
 ## POC Constraints
 - Avoid storing secrets in exported JSON.
@@ -56,6 +62,15 @@ SVG drilldown hooks:
   - `schema.py`: JSON schema helpers
   - `render.py`: svg hooks (if needed), or wrappers over existing renderers
 - Keep CLI flags isolated (ex: `--ha-output`) to avoid mixing with core flows.
+## HA Integration Architecture (target)
+- HA integration repo (Python):
+  - `config_flow.py`: UniFi URL, site, user/pass, verify SSL.
+  - `coordinator.py`: periodic refresh, error handling, last-success timestamps.
+  - `api.py`: thin wrapper around `unifi-controller-api` (or core helpers reused from this repo).
+  - `sensor`/`diagnostics`: optional, but keep core logic in coordinator.
+- HA custom card repo (TypeScript):
+  - Fetch SVG/JSON from HA endpoints (or `/local/` cache).
+  - Render SVG with clickable nodes; drilldown panel for device/port/client.
 
 ## BDD Scenarios (current)
 - Export writes `network.svg` + `network.json`.
@@ -71,7 +86,8 @@ SVG drilldown hooks:
 2. Decide location of HA module for easy extraction.
 3. Implement minimal exporter behind `--ha-output`.
 4. Make BDD scenarios pass with mock data.
-5. Extract to standalone repo when ready.
+5. Create HA integration repo skeleton (config flow + coordinator) and TS card stub.
+6. Extract to standalone repo when ready.
 
 ## Manual test drive (Home Assistant)
 1. Generate assets to an HA-accessible folder (example for HA OS):

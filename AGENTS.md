@@ -8,11 +8,11 @@
 
 
 ## Project
-Dynamic UniFi → Mermaid Network Maps
+UniFi Network Maps (core renderer + exporters)
 
 This project automatically generates network diagrams (Mermaid) from UniFi Network data (LLDP/topology).
 The output is intended for:
-- Home Assistant (Markdown / Lovelace / filesensor)
+- Home Assistant (POC export assets; live integration lives in separate repo)
 - Notes / documentation (Markdown, Obsidian, GitHub, etc.)
 
 Goal: a single source of truth, always up-to-date network maps, without manual drawing.
@@ -42,6 +42,7 @@ Source → Model → Diagram → Export
 4. **Export**
    - `.md` file (notes project)
    - `.mermaid` or `.md` for Home Assistant
+   - HA POC assets (SVG + JSON + lovelace.yaml)
    - STDOUT (for piping / automation)
 
 ---
@@ -141,7 +142,7 @@ Guidelines:
 
 ---
 
-## File structure (proposed)
+## File structure (overview)
 
 ```text
 unifi-network-map/
@@ -207,9 +208,13 @@ Functional:
 - `--include-clients`
 - `--client-scope wired|wireless|all`
 - `--only-unifi`
+- `--no-cache`
 
 Mermaid:
 - `--direction LR|TB`
+- `--group-by-type`
+- `--legend-style`
+- `--legend-scale`
 - `--legend-only`
 
 SVG:
@@ -223,6 +228,7 @@ Output:
 - `--mkdocs-sidebar-legend`
 - `--mkdocs-dual-theme`
 - `--mkdocs-timestamp-zone`
+- `--ha-output`
 
 Debug:
 - `--debug-dump`
@@ -232,21 +238,21 @@ Debug:
 
 ## Home Assistant integration
 
-Support one or more of:
-- Write file to `/config/www/`
-- Markdown card with `!include`
-- Command-line sensor that fetches Mermaid Markdown
-- Git pull from notes repo
+Current scope here is export assets only (POC):
+- Write SVG + JSON + lovelace.yaml to `/config/www/` or a target folder.
 
-No HA-specific logic in core code; the export layer abstracts this.
+Live updates + credentials via HA UI are planned for a separate HA repo:
+- Config Flow collects UniFi credentials.
+- DataUpdateCoordinator polls UniFi for LLDP + clients.
+- Custom TS card consumes HA endpoints or cached assets.
 
 ---
 
-## Non-goals (intentional)
+## Non-goals (intentional, for core renderer)
 
 - No SNMP discovery
-- No realtime updates
-- No realtime interactive updates
+- No realtime updates (handled in HA integration repo)
+- No realtime interactive updates (handled by UI consumers)
 
 ---
 

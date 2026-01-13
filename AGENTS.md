@@ -12,7 +12,7 @@ UniFi Network Maps (core renderer + exporters)
 
 This project automatically generates network diagrams (Mermaid) from UniFi Network data (LLDP/topology).
 The output is intended for:
-- Home Assistant (POC export assets; live integration lives in separate repo)
+- Home Assistant (integration lives in a separate repo)
 - Notes / documentation (Markdown, Obsidian, GitHub, etc.)
 
 Goal: a single source of truth, always up-to-date network maps, without manual drawing.
@@ -42,7 +42,6 @@ Source → Model → Diagram → Export
 4. **Export**
    - `.md` file (notes project)
    - `.mermaid` or `.md` for Home Assistant
-   - HA POC assets (SVG + JSON + lovelace.yaml)
    - STDOUT (for piping / automation)
 
 ---
@@ -228,7 +227,6 @@ Output:
 - `--mkdocs-sidebar-legend`
 - `--mkdocs-dual-theme`
 - `--mkdocs-timestamp-zone`
-- `--ha-output`
 
 Debug:
 - `--debug-dump`
@@ -238,13 +236,8 @@ Debug:
 
 ## Home Assistant integration
 
-Current scope here is export assets only (POC):
-- Write SVG + JSON + lovelace.yaml to `/config/www/` or a target folder.
-
-Live updates + credentials via HA UI are planned for a separate HA repo:
-- Config Flow collects UniFi credentials.
-- DataUpdateCoordinator polls UniFi for LLDP + clients.
-- Custom TS card consumes HA endpoints or cached assets.
+The live Home Assistant integration is maintained in a separate repo:
+- https://github.com/merlijntishauser/unifi-network-maps-ha
 
 ---
 

@@ -7,13 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- New HA module (src/unifi_network_maps/ha/) with JSON schema builder and asset export.
-- `--ha-output` CLI flag wired to export SVG/JSON/Lovelace assets.
-- HA BDD steps now execute CLI and validate outputs.
+- Home Assistant docs pointing to the standalone integration repo.
+
+### Changed
+- Home Assistant integration work moved to `unifi-network-maps-ha`; core repo focuses on renderer + CLI.
+
+### Removed
+- HA POC export module, CLI flag, BDD scenarios, and smoketest outputs (now in the HA repo).
 
 ### Fixed
-- CLI error handling for invalid theme file paths.
-- BDD theme-file scenario
+- SVG links render correctly for vertically stacked nodes.
 
 ## [1.4.5] - 2026-01-11
 ### Added

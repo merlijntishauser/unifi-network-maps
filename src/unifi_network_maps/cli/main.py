@@ -6,15 +6,12 @@ import argparse
 import logging
 
 from ..adapters.config import Config
-from ..adapters.unifi import fetch_clients
-from ..ha import export_ha_assets
 from ..io.export import write_output
 from ..io.mock_data import load_mock_data
 from ..render.legend import render_legend_only, resolve_legend_style
 from ..render.theme import resolve_themes
 from .args import build_parser
 from .render import render_lldp_format, render_standard_format
-from .runtime import build_topology_data, select_edges
 
 logger = logging.getLogger(__name__)
 
@@ -111,36 +108,6 @@ def main(argv: list[str] | None = None) -> int:
             theme=mermaid_theme,
         )
         write_output(content, output_path=args.output, stdout=args.stdout)
-        return 0
-
-    if args.ha_output:
-        try:
-            devices, _gateways, topology = build_topology_data(
-                args,
-                config,
-                site,
-                include_ports=True,
-                raw_devices_override=mock_devices,
-            )
-        except Exception as exc:  # noqa: BLE001
-            logging.error("Failed to build topology: %s", exc)
-            return 2
-        edges, _uses_tree = select_edges(topology)
-        if mock_clients is not None:
-            clients = mock_clients
-        else:
-            if config is None:
-                logging.error("Config required to fetch clients")
-                return 2
-            clients = list(fetch_clients(config, site=site, use_cache=not args.no_cache))
-        export_ha_assets(
-            args.ha_output,
-            devices=devices,
-            edges=edges,
-            clients=clients,
-            svg_theme=svg_theme,
-            client_mode=args.client_scope,
-        )
         return 0
 
     if args.format == "lldp-md":

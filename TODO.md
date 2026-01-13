@@ -10,13 +10,11 @@
 - no current (known) stability/UX concerns.
 
 ## P3 - Features
-- Home Assistant integration (Lovelace cards + SVG/ports drilldown)
-  - Approach choice: separate HA integration repo vs in-repo POC.
-  - Pros (separate): independent release cadence, HA-specific UX freedom, easier HACS path.
-  - Cons (separate): versioning boundary + compatibility overhead, more setup up front.
-  - POC scope: render SVG + metadata JSON to `/config/www/unifi-network-maps/`.
-  - UI ideas: isometric SVG card with pan/zoom + hover tooltips; device/port panel; PoE status badges.
+- Home Assistant integration (separate repo)
+  - Repo: https://github.com/merlijntishauser/unifi-network-maps-ha
+  - Scope: live updates + Config Flow + TS card; this repo stays core renderer/CLI.
   - Data model: stable JSON schema for devices/ports/links so UI can evolve without core changes.
+  - UI ideas: isometric SVG card with pan/zoom + hover tooltips; device/port panel; PoE status badges.
   - Packaging options: pip in HA container, bundled wheel, or external renderer + file-based assets.
 - Cable/link labeling
   - Feasibility: Medium; needs port metadata (`port_desc`, `port_overrides`) and consistent naming rules.

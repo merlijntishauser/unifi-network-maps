@@ -83,7 +83,7 @@ See `LICENSES.md` for third-party license info.
 
   - Automated UniFi → Mermaid/SVG (incl. isometric) output, with ports/PoE/clients.
   - Deterministic CLI + cache + mock generator for CI and docs.
-  - MkDocs/Markdown output plus planned HA‑friendly artifacts.
+  - MkDocs/Markdown output plus a separate HA integration repo for live updates.
   - A clean render pipeline that can power multiple export targets.
 
   So we’re not duplicating a packaged workflow; we’re combining data + topology modeling + diagram output + documentation/export in a way I haven’t seen in one place.

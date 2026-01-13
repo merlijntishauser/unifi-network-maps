@@ -108,6 +108,11 @@ Legend only:
 unifi-network-maps --legend-only --stdout
 ```
 
+## Home Assistant integration
+
+The live Home Assistant integration (Config Flow + coordinator + custom card) lives in a separate repo:
+- https://github.com/merlijntishauser/unifi-network-maps-ha
+
 ## Examples (mock data)
 
 These examples are generated from `examples/mock_data.json` (safe, anonymized fixture).

@@ -609,9 +609,13 @@ def _render_svg_nodes(
         node_type = node_types.get(name, "other")
         fill, stroke = _TYPE_COLORS.get(node_type, _TYPE_COLORS["other"])
         fill = f"url(#node-{node_type})"
-        extra_attrs = _svg_node_attrs(node_data, name)
-        if extra_attrs:
-            lines.append(f"<g{extra_attrs}>")
+        group_attrs = _svg_node_group_attrs(node_data, name, node_type)
+        lines.append(f"<g{group_attrs}>")
+        lines.append(f"<title>{_escape_text(name)}</title>")
+        lines.append(
+            f'<rect x="{x}" y="{y}" width="{options.node_width}" height="{options.node_height}" '
+            'fill="transparent" pointer-events="all" class="node-hitbox"/>'
+        )
         lines.append(
             f'<rect x="{x}" y="{y}" width="{options.node_width}" height="{options.node_height}" '
             f'rx="6" ry="6" fill="{fill}" stroke="{stroke}" stroke-width="1"/>'
@@ -649,16 +653,25 @@ def _render_svg_nodes(
         lines.append(
             f'<text x="{text_x}" y="{text_y}" fill="#1f1f1f" text-anchor="start">{safe_name}</text>'
         )
-        if extra_attrs:
-            lines.append("</g>")
+        lines.append("</g>")
 
 
-def _svg_node_attrs(node_data: dict[str, dict[str, str]] | None, name: str) -> str:
-    if not node_data:
-        return ""
-    attrs = node_data.get(name)
-    if not attrs:
-        return ""
+def _svg_node_group_attrs(
+    node_data: dict[str, dict[str, str]] | None,
+    name: str,
+    node_type: str,
+) -> str:
+    attrs: dict[str, str] = {
+        "class": "unm-node",
+        "data-node-id": name,
+        "data-node-type": node_type,
+    }
+    if node_data and (extra := node_data.get(name)):
+        for key, value in extra.items():
+            if key == "class":
+                attrs["class"] = f"{attrs['class']} {value}".strip()
+            else:
+                attrs[key] = value
     rendered = [f' {key}="{_escape_attr(value, quote=True)}"' for key, value in attrs.items()]
     return "".join(rendered)
 
@@ -1050,7 +1063,14 @@ def _render_iso_node(
     node_depth = 0.0
     tile_w = layout.tile_width
     tile_h = layout.tile_height
+    group_attrs = _svg_node_group_attrs(None, name, node_type)
+    lines.append(f"<g{group_attrs}>")
+    lines.append(f"<title>{_escape_text(name)}</title>")
     top, left, right = _iso_node_polygons(x, y, tile_w, tile_h, node_depth)
+    lines.append(
+        f'<polygon points="{_points_to_svg(top)}" fill="transparent" '
+        'pointer-events="all" class="node-hitbox"/>'
+    )
     left_fill = "#d0d0d0" if node_type == "other" else "#dcdcdc"
     right_fill = "#c2c2c2" if node_type == "other" else "#c8c8c8"
     _iso_render_faces(
@@ -1116,6 +1136,7 @@ def _render_iso_node(
         f'<text x="{name_x}" y="{name_y}" text-anchor="middle" fill="#1f1f1f" '
         f'font-size="{name_font_size}" transform="{name_transform}">{_escape_text(name)}</text>'
     )
+    lines.append("</g>")
 
 
 def _render_iso_nodes(

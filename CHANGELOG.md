@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.4.7] - 2026-01-15
 ### Changed
 - Merged PR #8: https://github.com/merlijntishauser/unifi-network-maps/pull/8
+- Declared support for Python 3.12+ (3.13 preferred) and added CI coverage for 3.12.
 
 ## [1.4.6] - 2026-01-15
 ### Added

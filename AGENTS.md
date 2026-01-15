@@ -49,7 +49,7 @@ Source → Model → Diagram → Export
 ## Technology choices
 
 ### Python
-- Python ≥ 3.13
+- Python ≥ 3.12 (3.13 preferred)
 - Virtualenv required
 
 ### UniFi API

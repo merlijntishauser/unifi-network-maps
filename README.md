@@ -8,6 +8,8 @@
 Dynamic UniFi network maps generated from LLDP topology. Output can be a range of options including Markdown,
 Mermaid, SVG (including an Isometric view), and MkDocs.
 
+Python 3.12+ is supported (3.13 preferred).
+
 ## Installation
 
 PyPI:

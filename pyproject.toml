@@ -7,7 +7,7 @@ name = "unifi-network-maps"
 version = "1.4.7"
 description = "Dynamic UniFi -> network maps in mermaid or svg"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Merlijn" }]
@@ -18,6 +18,7 @@ classifiers = [
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Topic :: Documentation",
   "Topic :: System :: Networking",

@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.7] - 2026-01-15
+### Changed
+- Merged PR #8: https://github.com/merlijntishauser/unifi-network-maps/pull/8
+
 ## [1.4.6] - 2026-01-15
 ### Added
 - Home Assistant docs pointing to the standalone integration repo.

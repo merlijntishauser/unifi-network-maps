@@ -1,40 +1,21 @@
 name: Publish
 
 on:
-  workflow_run:
-    workflows: ["CI"]
-    types: [completed]
+  push:
+    tags: ["v*"]
 
 permissions:
   contents: read
   id-token: write
 
 jobs:
-  detect-tag:
-    if: github.event.workflow_run.conclusion == 'success'
-    runs-on: ubuntu-latest
-    outputs:
-      tag: ${{ steps.tag.outputs.tag }}
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
-          fetch-depth: 0
-      - name: Detect release tag
-        id: tag
-        run: |
-          tag=$(git tag --points-at "${{ github.event.workflow_run.head_sha }}" | grep '^v' | head -n1)
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
-
   build-and-publish:
-    if: needs.detect-tag.outputs.tag != ''
-    needs: [detect-tag]
     runs-on: ubuntu-latest
     environment: pypi
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ needs.detect-tag.outputs.tag }}
+          fetch-depth: 0
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"

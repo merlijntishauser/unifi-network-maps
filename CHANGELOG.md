@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.4.8] - 2026-01-15
 ### Changed
 - Declared support for Python 3.12+ (3.13 preferred) and added CI coverage for 3.12.
+- CI now runs on version tags to unblock publish workflow.
+- Publish now runs directly on tag pushes; CI runs on all branch pushes.
 
 ## [1.4.7] - 2026-01-15
 ### Changed

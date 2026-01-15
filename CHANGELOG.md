@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - BDD theme-file scenario
 - SVG links render correctly for vertically stacked nodes.
+- Publish workflow now checks out the tagged source before building.
 
 ## [1.4.5] - 2026-01-11
 ### Added

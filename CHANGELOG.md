@@ -5,10 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.8] - 2026-01-15
+### Changed
+- Declared support for Python 3.12+ (3.13 preferred) and added CI coverage for 3.12.
+
 ## [1.4.7] - 2026-01-15
 ### Changed
 - Merged PR #8: https://github.com/merlijntishauser/unifi-network-maps/pull/8
-- Declared support for Python 3.12+ (3.13 preferred) and added CI coverage for 3.12.
 
 ## [1.4.6] - 2026-01-15
 ### Added
@@ -156,7 +159,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Introduced SVG renderer and tree layout fixes.
 - Increased test coverage and added coverage tooling.
 
-[Unreleased]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.5...HEAD
+[Unreleased]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.8...HEAD
+[1.4.8]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.7...v1.4.8
+[1.4.7]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.6...v1.4.7
+[1.4.6]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.5...v1.4.6
 [1.4.5]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.4...v1.4.5
 [1.4.4]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.2...v1.4.4
 [1.4.2]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.1...v1.4.2

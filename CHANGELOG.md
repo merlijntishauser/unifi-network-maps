@@ -5,11 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.4.8] - 2026-01-15
+## [1.4.9] - 2026-01-15
 ### Changed
 - Declared support for Python 3.12+ (3.13 preferred) and added CI coverage for 3.12.
 - CI now runs on version tags to unblock publish workflow.
 - Publish now runs directly on tag pushes; CI runs on all branch pushes.
+
+## [1.4.8] - 2026-01-15
+### Yanked
+- Release tag repointed after PyPI artifacts were already published.
 
 ## [1.4.7] - 2026-01-15
 ### Changed
@@ -161,7 +165,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Introduced SVG renderer and tree layout fixes.
 - Increased test coverage and added coverage tooling.
 
-[Unreleased]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.8...HEAD
+[Unreleased]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.9...HEAD
+[1.4.9]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.8...v1.4.9
 [1.4.8]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.7...v1.4.8
 [1.4.7]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.6...v1.4.7
 [1.4.6]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.5...v1.4.6

@@ -37,6 +37,8 @@ class Edge:
     label: str | None = None
     poe: bool = False
     wireless: bool = False
+    speed: int | None = None
+    channel: int | None = None
 
 
 type DeviceSource = object
@@ -64,6 +66,7 @@ class PortInfo:
 
 type PortMap = dict[tuple[str, str], str]
 type PoeMap = dict[tuple[str, str], bool]
+type SpeedMap = dict[tuple[str, str], int]
 type ClientPortMap = dict[str, list[tuple[int, str]]]
 
 
@@ -421,7 +424,15 @@ def _tree_edges_from_parent(
             tree_edges.append(Edge(left=parent_name, right=child))
         else:
             tree_edges.append(
-                Edge(left=parent_name, right=child, label=original.label, poe=original.poe)
+                Edge(
+                    left=parent_name,
+                    right=child,
+                    label=original.label,
+                    poe=original.poe,
+                    wireless=original.wireless,
+                    speed=original.speed,
+                    channel=original.channel,
+                )
             )
     return tree_edges
 
@@ -492,6 +503,16 @@ def _client_is_wired(client: object) -> bool:
     return bool(_client_field(client, "is_wired"))
 
 
+def _client_channel(client: object) -> int | None:
+    for key in ("channel", "radio_channel", "wifi_channel"):
+        value = _client_field(client, key)
+        if isinstance(value, int):
+            return value
+        if isinstance(value, str) and value.isdigit():
+            return int(value)
+    return None
+
+
 def _client_matches_mode(client: object, mode: str) -> bool:
     wired = _client_is_wired(client)
     if mode == "all":
@@ -528,12 +549,15 @@ def build_client_edges(
         key = (device_name, name)
         if key in seen:
             continue
+        is_wireless = not _client_is_wired(client)
+        channel = _client_channel(client) if is_wireless else None
         edges.append(
             Edge(
                 left=device_name,
                 right=name,
                 label=label,
-                wireless=not _client_is_wired(client),
+                wireless=is_wireless,
+                channel=channel,
             )
         )
         seen.add(key)
@@ -572,12 +596,14 @@ def build_edges(
     seen: set[frozenset[str]] = set()
     port_map: PortMap = {}
     poe_map: PoeMap = {}
+    speed_map: SpeedMap = {}
 
     devices_with_lldp_edges = _collect_lldp_links(
         ordered_devices,
         index,
         port_map,
         poe_map,
+        speed_map,
         raw_links,
         seen,
         only_unifi=only_unifi,
@@ -597,6 +623,7 @@ def build_edges(
         raw_links,
         port_map,
         poe_map,
+        speed_map,
         device_by_name,
         include_ports=include_ports,
     )
@@ -614,12 +641,14 @@ def build_port_map(devices: Iterable[Device], *, only_unifi: bool = True) -> Por
     seen: set[frozenset[str]] = set()
     port_map: PortMap = {}
     poe_map: PoeMap = {}
+    speed_map: SpeedMap = {}
 
     devices_with_lldp_edges = _collect_lldp_links(
         ordered_devices,
         index,
         port_map,
         poe_map,
+        speed_map,
         raw_links,
         seen,
         only_unifi=only_unifi,
@@ -661,11 +690,19 @@ def build_client_port_map(
     return port_map
 
 
+def _port_speed_by_idx(port_table: list[PortInfo], port_idx: int) -> int | None:
+    for port in port_table:
+        if port.port_idx == port_idx:
+            return port.speed
+    return None
+
+
 def _collect_lldp_links(
     devices: list[Device],
     index: dict[str, str],
     port_map: PortMap,
     poe_map: PoeMap,
+    speed_map: SpeedMap,
     raw_links: list[tuple[str, str]],
     seen: set[frozenset[str]],
     *,
@@ -704,8 +741,12 @@ def _collect_lldp_links(
             label = local_port_label(entry_for_label)
             if label:
                 port_map[(device.name, peer_name)] = label
-            if resolved_port_idx is not None and resolved_port_idx in poe_ports:
-                poe_map[(device.name, peer_name)] = poe_ports[resolved_port_idx]
+            if resolved_port_idx is not None:
+                if resolved_port_idx in poe_ports:
+                    poe_map[(device.name, peer_name)] = poe_ports[resolved_port_idx]
+                port_speed = _port_speed_by_idx(device.port_table, resolved_port_idx)
+                if port_speed is not None:
+                    speed_map[(device.name, peer_name)] = port_speed
 
             key = frozenset({device.name, peer_name})
             if key in seen:
@@ -794,6 +835,7 @@ def _build_ordered_edges(
     raw_links: list[tuple[str, str]],
     port_map: PortMap,
     poe_map: PoeMap,
+    speed_map: SpeedMap,
     device_by_name: dict[str, Device],
     *,
     include_ports: bool,
@@ -820,8 +862,9 @@ def _build_ordered_edges(
         poe = poe_map.get((left_name, right_name), False) or poe_map.get(
             (right_name, left_name), False
         )
+        speed = speed_map.get((left_name, right_name)) or speed_map.get((right_name, left_name))
         label = compose_port_label(left_name, right_name, port_map) if include_ports else None
-        edges.append(Edge(left=left_name, right=right_name, label=label, poe=poe))
+        edges.append(Edge(left=left_name, right=right_name, label=label, poe=poe, speed=speed))
     return edges
 
 

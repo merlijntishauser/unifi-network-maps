@@ -181,6 +181,22 @@ def test_build_edges_sets_poe_with_port_poe():
     assert edges[0].poe is True
 
 
+def test_build_edges_sets_speed_from_port():
+    dev_switch = DummyDevice(
+        "Switch A",
+        "aa:bb:cc:dd:ee:01",
+        [LLDPEntry("aa:bb:cc:dd:ee:02", "eth1", local_port_idx=1)],
+        port_table=[{"port_idx": 1, "speed": 1000}],
+    )
+    dev_ap = DummyDevice(
+        "AP One",
+        "aa:bb:cc:dd:ee:02",
+        [LLDPEntry("aa:bb:cc:dd:ee:01", "eth0")],
+    )
+    edges = build_edges(normalize_devices([dev_switch, dev_ap]))
+    assert edges[0].speed == 1000
+
+
 def test_coerce_device_uses_lldp_fallback():
     class DeviceWithLldp:
         name = "Device"

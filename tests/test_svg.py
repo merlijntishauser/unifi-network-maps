@@ -263,3 +263,30 @@ def test_render_svg_isometric_nodes_reference_iso_node_prefix():
         [Edge("A", "B")], node_types={"A": "switch", "B": "switch"}
     )
     assert 'fill="url(#iso-node-switch)"' in output
+
+
+def test_render_svg_adds_edge_data_attributes():
+    output = svg_module.render_svg(
+        [Edge("Gateway", "Switch")],
+        node_types={"Gateway": "gateway", "Switch": "switch"},
+    )
+    assert 'data-edge-left="Gateway"' in output
+    assert 'data-edge-right="Switch"' in output
+
+
+def test_render_svg_escapes_edge_data_attributes():
+    output = svg_module.render_svg(
+        [Edge('Node "A"', "Node <B>")],
+        node_types={'Node "A"': "gateway", "Node <B>": "switch"},
+    )
+    assert 'data-edge-left="Node &quot;A&quot;"' in output
+    assert 'data-edge-right="Node &lt;B&gt;"' in output
+
+
+def test_render_svg_isometric_adds_edge_data_attributes():
+    output = svg_module.render_svg_isometric(
+        [Edge("Gateway", "Switch")],
+        node_types={"Gateway": "gateway", "Switch": "switch"},
+    )
+    assert 'data-edge-left="Gateway"' in output
+    assert 'data-edge-right="Switch"' in output

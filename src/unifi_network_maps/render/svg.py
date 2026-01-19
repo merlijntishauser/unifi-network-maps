@@ -547,8 +547,11 @@ def _render_svg_edges(
                 f"L {dst_cx} {mid_y} L {dst_cx} {dst_top}"
             )
         dash = ' stroke-dasharray="6 4"' if edge.wireless else ""
+        left_attr = _escape_attr(edge.left, quote=True)
+        right_attr = _escape_attr(edge.right, quote=True)
         lines.append(
-            f'<path d="{path}" stroke="{color}" stroke-width="{width_px}" fill="none"{dash}/>'
+            f'<path d="{path}" stroke="{color}" stroke-width="{width_px}" fill="none"{dash} '
+            f'data-edge-left="{left_attr}" data-edge-right="{right_attr}"/>'
         )
         if edge.poe:
             icon_x = dst_cx
@@ -834,9 +837,12 @@ def _render_iso_edges(
             dst_cy,
         )
         dash = ' stroke-dasharray="8 6"' if edge.wireless else ""
+        left_attr = _escape_attr(edge.left, quote=True)
+        right_attr = _escape_attr(edge.right, quote=True)
         lines.append(
             f'<path d="{" ".join(path_cmds)}" stroke="{color}" stroke-width="{width_px}" '
-            f'fill="none" stroke-linecap="round" stroke-linejoin="round"{dash}/>'
+            f'fill="none" stroke-linecap="round" stroke-linejoin="round"{dash} '
+            f'data-edge-left="{left_attr}" data-edge-right="{right_attr}"/>'
         )
         if edge.poe:
             icon_x = dst_cx

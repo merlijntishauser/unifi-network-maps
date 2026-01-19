@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 
 from ..model.lldp import LLDPEntry, local_port_label
+from ..model.ports import extract_port_number
 from ..model.topology import Device, build_client_port_map, build_device_index, build_port_map
 from .device_ports_md import render_device_port_details
 from .markdown_tables import markdown_table_lines
@@ -44,20 +45,31 @@ def _client_uplink_mac(client: object) -> str | None:
 
 
 def _client_uplink_port(client: object) -> int | None:
-    for key in ("uplink_remote_port", "sw_port", "ap_port"):
-        value = _client_field(client, key)
-        if isinstance(value, int):
-            return value
-        if isinstance(value, str) and value.isdigit():
-            return int(value)
+    for value in _client_port_values(client):
+        parsed = _parse_port_value(value)
+        if parsed is not None:
+            return parsed
+    return None
+
+
+def _client_port_values(client: object) -> Iterable[object | None]:
+    for key in ("uplink_remote_port", "sw_port", "ap_port", "port_idx"):
+        yield _client_field(client, key)
     for key in ("uplink", "last_uplink"):
         nested = _client_field(client, key)
         if isinstance(nested, dict):
-            value = nested.get("uplink_remote_port")
-            if isinstance(value, int):
-                return value
-            if isinstance(value, str) and value.isdigit():
-                return int(value)
+            for nested_key in ("uplink_remote_port", "port_idx"):
+                yield nested.get(nested_key)
+
+
+def _parse_port_value(value: object | None) -> int | None:
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str):
+        stripped = value.strip()
+        if stripped.isdigit():
+            return int(stripped)
+        return extract_port_number(stripped)
     return None
 
 

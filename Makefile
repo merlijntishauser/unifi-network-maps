@@ -60,6 +60,7 @@ smoketest:
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-ports --format svg-iso --output smoketest/svg-iso/network_ports_iso.svg
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-ports --include-clients --format svg --output smoketest/svg/network_ports_clients.svg
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-ports --include-clients --format svg-iso --output smoketest/svg-iso/network_ports_clients_iso.svg
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-ports --include-clients --client-scope all --format svg-iso --output smoketest/svg-iso/network_ports_clients_all_iso.svg
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --theme-file src/unifi_network_maps/assets/themes/default.yaml --stdout > smoketest/themes/mermaid_default.mmd
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --theme-file src/unifi_network_maps/assets/themes/dark.yaml --stdout > smoketest/themes/mermaid_dark.mmd
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --theme-file src/unifi_network_maps/assets/themes/default.yaml --legend-only --stdout > smoketest/themes/legend_default.mmd

@@ -502,6 +502,11 @@ def test_client_uplink_port_direct_str_digit():
     assert _client_uplink_port(client) == 7
 
 
+def test_client_uplink_port_parses_port_label():
+    client = {"uplink_remote_port": "Port 9"}
+    assert _client_uplink_port(client) == 9
+
+
 def test_client_uplink_port_nested_int():
     client = {"uplink": {"uplink_remote_port": 8}}
     assert _client_uplink_port(client) == 8

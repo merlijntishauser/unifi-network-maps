@@ -10,12 +10,6 @@
 - no current (known) stability/UX concerns.
 
 ## P3 - Features
-- Home Assistant integration (separate repo)
-  - Repo: https://github.com/merlijntishauser/unifi-network-maps-ha
-  - Scope: live updates + Config Flow + TS card; this repo stays core renderer/CLI.
-  - Data model: stable JSON schema for devices/ports/links so UI can evolve without core changes.
-  - UI ideas: isometric SVG card with pan/zoom + hover tooltips; device/port panel; PoE status badges.
-  - Packaging options: pip in HA container, bundled wheel, or external renderer + file-based assets.
 - Cable/link labeling
   - Feasibility: Medium; needs port metadata (`port_desc`, `port_overrides`) and consistent naming rules.
   - Plan: extend port label composition with optional cable-name mapping file; add tests for mixed labels.

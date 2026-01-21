@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.12] - 2026-01-21
+### Added
+- Filter UniFi clients with --only-unifi, and not only neighbors
+
+### Fixed
+- inconsistencies in --only-unifi
+
 ## [1.4.11] - 2026-01-19
 ### Added
 - Add data-edge-left/right attributes to SVG paths
@@ -176,8 +183,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Introduced SVG renderer and tree layout fixes.
 - Increased test coverage and added coverage tooling.
 
-[Unreleased]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.11...HEAD
-[1.4.11]:https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.10...v1.4.111
+[Unreleased]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.12...HEAD
+[1.4.12]:https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.11...v1.4.12
+[1.4.11]:https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.10...v1.4.11
 [1.4.10]:https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.9...v1.4.10
 [1.4.9]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.8...v1.4.9
 [1.4.8]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.7...v1.4.8

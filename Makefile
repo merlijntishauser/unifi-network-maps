@@ -36,6 +36,7 @@ smoketest:
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-ports --include-clients --stdout > smoketest/mermaid/network_ports_clients.mmd
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-clients --client-scope wireless --stdout > smoketest/mermaid/network_clients_wireless.mmd
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-clients --client-scope all --stdout > smoketest/mermaid/network_clients_all.mmd
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-clients --only-unifi --stdout > smoketest/mermaid/network_clients_only_unifi.mmd
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-ports --stdout > smoketest/mermaid/network_ports.mmd
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --legend-only --stdout > smoketest/mermaid/legend.mmd
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format mkdocs --output smoketest/mkdocs/unifi-network.md
@@ -52,6 +53,8 @@ smoketest:
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format svg-iso --output smoketest/svg-iso/network_iso.svg
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-clients --format svg --output smoketest/svg/network_clients.svg
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-clients --format svg-iso --output smoketest/svg-iso/network_clients_iso.svg
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-clients --only-unifi --format svg --output smoketest/svg/network_clients_only_unifi.svg
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-clients --only-unifi --format svg-iso --output smoketest/svg-iso/network_clients_only_unifi_iso.svg
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-clients --client-scope wireless --format svg --output smoketest/svg/network_clients_wireless.svg
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-clients --client-scope wireless --format svg-iso --output smoketest/svg-iso/network_clients_wireless_iso.svg
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-clients --client-scope all --format svg --output smoketest/svg/network_clients_all.svg

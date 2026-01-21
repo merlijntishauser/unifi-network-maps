@@ -186,7 +186,7 @@ Functional:
 - `--include-ports`: show port labels (Mermaid shows both ends; SVG shows compact labels).
 - `--include-clients`: add active wired clients as leaf nodes.
 - `--client-scope wired|wireless|all`: which client types to include (default wired).
-- `--only-unifi`: only include neighbors that are UniFi devices.
+- `--only-unifi`: only include neighbors that are UniFi devices; when clients are included, filters to UniFi-managed clients (by explicit UniFi flags or vendor/OUI).
 - `--no-cache`: disable UniFi API cache reads and writes.
 
 Mermaid:

@@ -67,6 +67,61 @@ def test_render_lldp_md_includes_clients_when_requested():
     assert "| TV | Port 3 |" in output
 
 
+def test_render_lldp_md_only_unifi_filters_clients():
+    devices = [
+        Device(
+            name="Switch A", model_name="", model="", mac="aa:bb", ip="", type="usw", lldp_info=[]
+        )
+    ]
+    clients = [
+        {"name": "Desk PC", "is_wired": True, "sw_mac": "aa:bb", "sw_port": 1},
+        {
+            "name": "Protect Cam",
+            "is_wired": True,
+            "sw_mac": "aa:bb",
+            "sw_port": 2,
+            "is_unifi": True,
+        },
+    ]
+    output = render_lldp_md(
+        devices,
+        clients=clients,
+        include_ports=True,
+        show_clients=True,
+        client_mode="wired",
+        only_unifi=True,
+    )
+    assert "| Protect Cam | Port 2 |" in output
+    assert "Desk PC" not in output
+
+
+def test_render_lldp_md_uses_ucore_name_for_clients():
+    devices = [
+        Device(
+            name="Switch A", model_name="", model="", mac="aa:bb", ip="", type="usw", lldp_info=[]
+        )
+    ]
+    clients = [
+        {
+            "hostname": "espressif",
+            "is_wired": True,
+            "sw_mac": "aa:bb",
+            "sw_port": 4,
+            "unifi_device_info_from_ucore": {"name": "Smart PoE Chime"},
+        }
+    ]
+    output = render_lldp_md(
+        devices,
+        clients=clients,
+        include_ports=True,
+        show_clients=True,
+        client_mode="wired",
+        only_unifi=True,
+    )
+    assert "| Smart PoE Chime | Port 4 |" in output
+    assert "espressif" not in output
+
+
 def test_render_lldp_md_includes_ports_only_when_enabled():
     devices = [
         Device(

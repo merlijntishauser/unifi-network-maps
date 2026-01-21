@@ -460,7 +460,13 @@ def _client_field(client: object, name: str) -> object | None:
 
 
 def _client_display_name(client: object) -> str | None:
-    for key in ("name", "hostname", "mac"):
+    raw_name = _client_field(client, "name")
+    if isinstance(raw_name, str) and raw_name.strip():
+        return raw_name.strip()
+    preferred = _client_ucore_display_name(client)
+    if preferred:
+        return preferred
+    for key in ("hostname", "mac"):
         value = _client_field(client, key)
         if isinstance(value, str) and value.strip():
             return value.strip()
@@ -514,6 +520,73 @@ def _client_is_wired(client: object) -> bool:
     return bool(_client_field(client, "is_wired"))
 
 
+def _client_unifi_flag(client: object) -> bool | None:
+    for key in ("is_unifi", "is_unifi_device", "is_ubnt", "is_uap", "is_managed"):
+        value = _client_field(client, key)
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, int):
+            return value != 0
+    return None
+
+
+def _client_vendor(client: object) -> str | None:
+    for key in ("oui", "vendor", "vendor_name", "manufacturer", "manufacturer_name"):
+        value = _client_field(client, key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return None
+
+
+def _client_ucore_info(client: object) -> dict[str, object] | None:
+    info = _client_field(client, "unifi_device_info_from_ucore")
+    if isinstance(info, dict):
+        return info
+    return None
+
+
+def _client_ucore_display_name(client: object) -> str | None:
+    ucore = _client_ucore_info(client)
+    if not ucore:
+        return None
+    for key in ("name", "computed_model", "product_model", "product_shortname"):
+        value = ucore.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return None
+
+
+def _client_hostname_source(client: object) -> str | None:
+    value = _client_field(client, "hostname_source")
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    return None
+
+
+def _client_is_unifi(client: object) -> bool:
+    flag = _client_unifi_flag(client)
+    if flag is not None:
+        return flag
+    ucore = _client_ucore_info(client)
+    if ucore:
+        managed = ucore.get("managed")
+        if isinstance(managed, bool) and managed:
+            return True
+        if isinstance(ucore.get("product_line"), str) and ucore.get("product_line"):
+            return True
+        if isinstance(ucore.get("product_shortname"), str) and ucore.get("product_shortname"):
+            return True
+        for key in ("name", "computed_model", "product_model"):
+            value = ucore.get(key)
+            if isinstance(value, str) and value.strip():
+                return True
+    vendor = _client_vendor(client)
+    if not vendor:
+        return False
+    normalized = vendor.lower()
+    return "ubiquiti" in normalized or "unifi" in normalized
+
+
 def _client_channel(client: object) -> int | None:
     for key in ("channel", "radio_channel", "wifi_channel"):
         value = _client_field(client, key)
@@ -533,17 +606,26 @@ def _client_matches_mode(client: object, mode: str) -> bool:
     return wired
 
 
+def _client_matches_filters(client: object, *, client_mode: str, only_unifi: bool) -> bool:
+    if not _client_matches_mode(client, client_mode):
+        return False
+    if only_unifi and not _client_is_unifi(client):
+        return False
+    return True
+
+
 def build_client_edges(
     clients: Iterable[object],
     device_index: dict[str, str],
     *,
     include_ports: bool = False,
     client_mode: str = "wired",
+    only_unifi: bool = False,
 ) -> list[Edge]:
     edges: list[Edge] = []
     seen: set[tuple[str, str]] = set()
     for client in clients:
-        if not _client_matches_mode(client, client_mode):
+        if not _client_matches_filters(client, client_mode=client_mode, only_unifi=only_unifi):
             continue
         name = _client_display_name(client)
         uplink_mac = _client_uplink_mac(client)
@@ -580,13 +662,14 @@ def build_node_type_map(
     clients: Iterable[object] | None = None,
     *,
     client_mode: str = "wired",
+    only_unifi: bool = False,
 ) -> dict[str, str]:
     node_types: dict[str, str] = {}
     for device in devices:
         node_types[device.name] = classify_device_type(device)
     if clients:
         for client in clients:
-            if not _client_matches_mode(client, client_mode):
+            if not _client_matches_filters(client, client_mode=client_mode, only_unifi=only_unifi):
                 continue
             name = _client_display_name(client)
             if name:
@@ -683,11 +766,12 @@ def build_client_port_map(
     clients: Iterable[object],
     *,
     client_mode: str,
+    only_unifi: bool = False,
 ) -> ClientPortMap:
     device_index = build_device_index(devices)
     port_map: ClientPortMap = {}
     for client in clients:
-        if not _client_matches_mode(client, client_mode):
+        if not _client_matches_filters(client, client_mode=client_mode, only_unifi=only_unifi):
             continue
         name = _client_display_name(client)
         uplink_mac = _client_uplink_mac(client)

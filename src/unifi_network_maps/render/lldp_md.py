@@ -23,7 +23,13 @@ def _client_field(client: object, name: str) -> object | None:
 
 
 def _client_display_name(client: object) -> str | None:
-    for key in ("name", "hostname", "mac"):
+    raw_name = _client_field(client, "name")
+    if isinstance(raw_name, str) and raw_name.strip():
+        return raw_name.strip()
+    preferred = _client_ucore_display_name(client)
+    if preferred:
+        return preferred
+    for key in ("hostname", "mac"):
         value = _client_field(client, key)
         if isinstance(value, str) and value.strip():
             return value.strip()
@@ -77,6 +83,73 @@ def _client_is_wired(client: object) -> bool:
     return bool(_client_field(client, "is_wired"))
 
 
+def _client_unifi_flag(client: object) -> bool | None:
+    for key in ("is_unifi", "is_unifi_device", "is_ubnt", "is_uap", "is_managed"):
+        value = _client_field(client, key)
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, int):
+            return value != 0
+    return None
+
+
+def _client_vendor(client: object) -> str | None:
+    for key in ("oui", "vendor", "vendor_name", "manufacturer", "manufacturer_name"):
+        value = _client_field(client, key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return None
+
+
+def _client_ucore_info(client: object) -> dict[str, object] | None:
+    info = _client_field(client, "unifi_device_info_from_ucore")
+    if isinstance(info, dict):
+        return info
+    return None
+
+
+def _client_ucore_display_name(client: object) -> str | None:
+    ucore = _client_ucore_info(client)
+    if not ucore:
+        return None
+    for key in ("name", "computed_model", "product_model", "product_shortname"):
+        value = ucore.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return None
+
+
+def _client_hostname_source(client: object) -> str | None:
+    value = _client_field(client, "hostname_source")
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    return None
+
+
+def _client_is_unifi(client: object) -> bool:
+    flag = _client_unifi_flag(client)
+    if flag is not None:
+        return flag
+    ucore = _client_ucore_info(client)
+    if ucore:
+        managed = ucore.get("managed")
+        if isinstance(managed, bool) and managed:
+            return True
+        if isinstance(ucore.get("product_line"), str) and ucore.get("product_line"):
+            return True
+        if isinstance(ucore.get("product_shortname"), str) and ucore.get("product_shortname"):
+            return True
+        for key in ("name", "computed_model", "product_model"):
+            value = ucore.get(key)
+            if isinstance(value, str) and value.strip():
+                return True
+    vendor = _client_vendor(client)
+    if not vendor:
+        return False
+    normalized = vendor.lower()
+    return "ubiquiti" in normalized or "unifi" in normalized
+
+
 def _client_matches_mode(client: object, mode: str) -> bool:
     wired = _client_is_wired(client)
     if mode == "all":
@@ -84,6 +157,14 @@ def _client_matches_mode(client: object, mode: str) -> bool:
     if mode == "wireless":
         return not wired
     return wired
+
+
+def _client_matches_filters(client: object, *, client_mode: str, only_unifi: bool) -> bool:
+    if not _client_matches_mode(client, client_mode):
+        return False
+    if only_unifi and not _client_is_unifi(client):
+        return False
+    return True
 
 
 def _lldp_sort_key(entry: LLDPEntry) -> tuple[int, str, str]:
@@ -199,10 +280,11 @@ def _client_rows(
     *,
     include_ports: bool,
     client_mode: str,
+    only_unifi: bool,
 ) -> dict[str, list[tuple[str, str | None]]]:
     rows_by_device: dict[str, list[tuple[str, str | None]]] = {}
     for client in clients:
-        if not _client_matches_mode(client, client_mode):
+        if not _client_matches_filters(client, client_mode=client_mode, only_unifi=only_unifi):
             continue
         name = _client_display_name(client)
         uplink_mac = _client_uplink_mac(client)
@@ -227,6 +309,7 @@ def _prepare_lldp_maps(
     include_ports: bool,
     show_clients: bool,
     client_mode: str,
+    only_unifi: bool,
 ) -> tuple[
     dict[tuple[str, str], str],
     dict[str, list[tuple[int, str]]] | None,
@@ -234,7 +317,13 @@ def _prepare_lldp_maps(
 ]:
     device_index = build_device_index(devices)
     client_rows = (
-        _client_rows(clients, device_index, include_ports=include_ports, client_mode=client_mode)
+        _client_rows(
+            clients,
+            device_index,
+            include_ports=include_ports,
+            client_mode=client_mode,
+            only_unifi=only_unifi,
+        )
         if clients
         else {}
     )
@@ -243,7 +332,12 @@ def _prepare_lldp_maps(
     if include_ports:
         port_map = build_port_map(devices, only_unifi=False)
         if clients and show_clients:
-            client_port_map = build_client_port_map(devices, clients, client_mode=client_mode)
+            client_port_map = build_client_port_map(
+                devices,
+                clients,
+                client_mode=client_mode,
+                only_unifi=only_unifi,
+            )
     return port_map, client_port_map, client_rows
 
 
@@ -318,6 +412,7 @@ def render_lldp_md(
     include_ports: bool = False,
     show_clients: bool = False,
     client_mode: str = "wired",
+    only_unifi: bool = False,
 ) -> str:
     device_index = build_device_index(devices)
     port_map, client_port_map, client_rows = _prepare_lldp_maps(
@@ -326,6 +421,7 @@ def render_lldp_md(
         include_ports=include_ports,
         show_clients=show_clients,
         client_mode=client_mode,
+        only_unifi=only_unifi,
     )
     sections: list[str] = []
     for device in sorted(devices, key=lambda item: item.name.lower()):

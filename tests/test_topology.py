@@ -422,6 +422,38 @@ def test_build_edges_only_unifi_false_uses_chassis_id():
     assert edges[0].right == "bb"
 
 
+def test_build_edges_only_unifi_skips_unknown_uplink():
+    device = SimpleNamespace(
+        name="Switch",
+        model_name="",
+        model="",
+        mac="aa",
+        ip="",
+        type="switch",
+        lldp_info=[],
+        port_table=[],
+        uplink_mac="cc",
+    )
+    edges = build_edges([coerce_device(device)], only_unifi=True)
+    assert edges == []
+
+
+def test_build_edges_only_unifi_false_includes_unknown_uplink():
+    device = SimpleNamespace(
+        name="Switch",
+        model_name="",
+        model="",
+        mac="aa",
+        ip="",
+        type="switch",
+        lldp_info=[],
+        port_table=[],
+        uplink_mac="cc",
+    )
+    edges = build_edges([coerce_device(device)], only_unifi=False)
+    assert (edges[0].left, edges[0].right) == ("cc", "Switch")
+
+
 def test_build_edges_resolves_port_idx_from_ifname():
     lldp = SimpleNamespace(
         chassis_id="bb",

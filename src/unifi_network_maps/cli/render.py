@@ -62,7 +62,12 @@ def render_mermaid_output(
         direction=args.direction,
         groups=groups,
         group_order=group_order,
-        node_types=build_node_type_map(devices, clients, client_mode=args.client_scope),
+        node_types=build_node_type_map(
+            devices,
+            clients,
+            client_mode=args.client_scope,
+            only_unifi=args.only_unifi,
+        ),
         theme=mermaid_theme,
     )
     if args.markdown:
@@ -97,13 +102,23 @@ def render_svg_output(
 
         return render_svg_isometric(
             edges,
-            node_types=build_node_type_map(devices, clients, client_mode=args.client_scope),
+            node_types=build_node_type_map(
+                devices,
+                clients,
+                client_mode=args.client_scope,
+                only_unifi=args.only_unifi,
+            ),
             options=options,
             theme=svg_theme,
         )
     return render_svg(
         edges,
-        node_types=build_node_type_map(devices, clients, client_mode=args.client_scope),
+        node_types=build_node_type_map(
+            devices,
+            clients,
+            client_mode=args.client_scope,
+            only_unifi=args.only_unifi,
+        ),
         options=options,
         theme=svg_theme,
     )
@@ -190,6 +205,7 @@ def render_lldp_format(
         include_ports=args.include_ports,
         show_clients=args.include_clients,
         client_mode=args.client_scope,
+        only_unifi=args.only_unifi,
     )
     write_output(content, output_path=args.output, stdout=args.stdout)
     return 0

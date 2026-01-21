@@ -95,6 +95,7 @@ def build_edges_with_clients(
             device_index,
             include_ports=args.include_ports,
             client_mode=args.client_scope,
+            only_unifi=args.only_unifi,
         )
     return edges, clients
 
@@ -153,5 +154,10 @@ def resolve_mkdocs_client_ports(
         clients = list(fetch_clients(config, site=site))
     else:
         clients = mock_clients
-    client_ports = build_client_port_map(devices, clients, client_mode=args.client_scope)
+    client_ports = build_client_port_map(
+        devices,
+        clients,
+        client_mode=args.client_scope,
+        only_unifi=args.only_unifi,
+    )
     return client_ports, None

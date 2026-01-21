@@ -1,5 +1,6 @@
 from unifi_network_maps.model.lldp import LLDPEntry
-from unifi_network_maps.model.topology import Device, PortInfo
+from unifi_network_maps.model.topology import Device, PortInfo, UplinkInfo
+from unifi_network_maps.render import lldp_md
 from unifi_network_maps.render.lldp_md import render_lldp_md
 
 
@@ -120,6 +121,93 @@ def test_render_lldp_md_uses_ucore_name_for_clients():
     )
     assert "| Smart PoE Chime | Port 4 |" in output
     assert "espressif" not in output
+
+
+def test_client_display_name_falls_back_to_hostname():
+    client = {"name": " ", "hostname": "Phone"}
+    assert lldp_md._client_display_name(client) == "Phone"
+
+
+def test_client_display_name_falls_back_to_mac():
+    client = {"name": "", "hostname": "", "mac": "aa:bb"}
+    assert lldp_md._client_display_name(client) == "aa:bb"
+
+
+def test_client_uplink_mac_reads_nested():
+    client = {"uplink": {"uplink_device_mac": "aa:bb"}}
+    assert lldp_md._client_uplink_mac(client) == "aa:bb"
+
+
+def test_client_uplink_port_parses_port_label():
+    client = {"uplink_remote_port": "Port 9"}
+    assert lldp_md._client_uplink_port(client) == 9
+
+
+def test_client_unifi_flag_reads_int():
+    client = {"is_unifi": 1}
+    assert lldp_md._client_unifi_flag(client) is True
+
+
+def test_client_is_unifi_uses_vendor():
+    client = {"vendor": "Ubiquiti Networks"}
+    assert lldp_md._client_is_unifi(client) is True
+
+
+def test_client_ucore_display_name_uses_product_shortname():
+    client = {"unifi_device_info_from_ucore": {"product_shortname": "UP Chime PoE"}}
+    assert lldp_md._client_ucore_display_name(client) == "UP Chime PoE"
+
+
+def test_uplink_summary_formats_port():
+    device = Device(
+        name="Switch A",
+        model_name="",
+        model="",
+        mac="aa:bb",
+        ip="",
+        type="usw",
+        lldp_info=[],
+        uplink=UplinkInfo(mac=None, name="Core", port=3),
+    )
+    assert lldp_md._uplink_summary(device) == "Core (Port 3)"
+
+
+def test_client_summary_truncates_samples():
+    device = Device(
+        name="Switch A",
+        model_name="",
+        model="",
+        mac="aa:bb",
+        ip="",
+        type="usw",
+        lldp_info=[],
+    )
+    rows = {"Switch A": [("A", None), ("B", "Port 1"), ("C", None), ("D", "Port 2")]}
+    count, sample = lldp_md._client_summary(device, rows)
+    assert count == "4"
+    assert sample == "A, B, C, ..."
+
+
+def test_client_rows_filters_only_unifi_and_includes_ports():
+    device_index = {"aa:bb": "Switch A"}
+    clients = [
+        {"name": "TV", "is_wired": True, "sw_mac": "aa:bb", "sw_port": 1, "vendor": "LG"},
+        {
+            "name": "Camera",
+            "is_wired": True,
+            "sw_mac": "aa:bb",
+            "sw_port": 2,
+            "vendor": "Ubiquiti",
+        },
+    ]
+    rows = lldp_md._client_rows(
+        clients,
+        device_index,
+        include_ports=True,
+        client_mode="wired",
+        only_unifi=True,
+    )
+    assert rows["Switch A"] == [("Camera", "Port 2")]
 
 
 def test_render_lldp_md_includes_ports_only_when_enabled():

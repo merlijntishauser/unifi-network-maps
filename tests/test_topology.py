@@ -6,17 +6,29 @@ from unifi_network_maps.model.topology import (
     Device,
     Edge,
     LLDPEntry,
+    PortInfo,
     UplinkInfo,
     _aggregation_group,
     _as_bool,
     _as_float,
     _as_group_id,
+    _as_int,
+    _as_list,
+    _client_channel,
     _client_display_name,
     _client_field,
+    _client_unifi_flag,
     _client_uplink_mac,
     _client_uplink_port,
+    _parse_uplink,
     _poe_ports_from_device,
+    _port_speed_by_idx,
+    _resolve_port_idx_from_lldp,
+    _tree_edges_from_parent,
+    _uplink_info,
+    _uplink_name,
     build_client_edges,
+    build_client_port_map,
     build_edges,
     build_node_type_map,
     build_topology,
@@ -605,3 +617,121 @@ def test_build_topology_returns_edges():
         [coerce_device(device)], include_ports=False, only_unifi=False, gateways=[]
     )
     assert result.raw_edges
+
+
+def test_as_list_coerces_iterable():
+    assert _as_list(("a", "b")) == ["a", "b"]
+
+
+def test_as_int_parses_digit_string():
+    assert _as_int("7") == 7
+
+
+def test_client_unifi_flag_reads_int():
+    client = {"is_unifi": 1}
+    assert _client_unifi_flag(client) is True
+
+
+def test_client_channel_reads_string():
+    client = {"wifi_channel": "36"}
+    assert _client_channel(client) == 36
+
+
+def test_resolve_port_idx_matches_port_name():
+    lldp = LLDPEntry(chassis_id="bb", port_id="Port 3", local_port_name="Port 3")
+    port_table = [
+        PortInfo(
+            port_idx=3,
+            name="Port 3",
+            ifname=None,
+            speed=None,
+            aggregation_group=None,
+            port_poe=False,
+            poe_enable=False,
+            poe_good=False,
+            poe_power=None,
+        )
+    ]
+    assert _resolve_port_idx_from_lldp(lldp, port_table) == 3
+
+
+def test_resolve_port_idx_matches_port_number():
+    lldp = LLDPEntry(chassis_id="bb", port_id="Port 9", local_port_name="Port 9")
+    port_table = [
+        PortInfo(
+            port_idx=9,
+            name="Uplink",
+            ifname=None,
+            speed=None,
+            aggregation_group=None,
+            port_poe=False,
+            poe_enable=False,
+            poe_good=False,
+            poe_power=None,
+        )
+    ]
+    assert _resolve_port_idx_from_lldp(lldp, port_table) == 9
+
+
+def test_parse_uplink_reads_object_fields():
+    uplink = SimpleNamespace(uplink_device_mac="aa", uplink_device_name="Core", port_idx=3)
+    parsed = _parse_uplink(uplink)
+    assert parsed == UplinkInfo(mac="aa", name="Core", port=3)
+
+
+def test_uplink_info_falls_back_to_last_uplink_mac():
+    device = SimpleNamespace(
+        name="Switch",
+        model_name="",
+        model="",
+        mac="aa",
+        ip="",
+        type="switch",
+        lldp_info=[],
+        port_table=[],
+        last_uplink_mac="bb",
+    )
+    uplink, last_uplink = _uplink_info(device)
+    assert uplink is None
+    assert last_uplink == UplinkInfo(mac="bb", name=None, port=None)
+
+
+def test_uplink_name_prefers_name_over_mac():
+    uplink = UplinkInfo(mac="aa", name="Core Switch", port=None)
+    assert _uplink_name(uplink, {}, only_unifi=True) == "Core Switch"
+
+
+def test_tree_edges_from_parent_missing_original():
+    parent = {"Switch A": "Gateway"}
+    edges = _tree_edges_from_parent(parent, {})
+    assert edges == [Edge(left="Gateway", right="Switch A")]
+
+
+def test_build_client_port_map_skips_unknown_device():
+    devices = [
+        Device(name="Switch", model_name="", model="", mac="aa", ip="", type="usw", lldp_info=[])
+    ]
+    clients = [{"name": "Client", "is_wired": True, "sw_mac": "cc", "sw_port": 3}]
+    assert build_client_port_map(devices, clients, client_mode="wired") == {}
+
+
+def test_port_speed_by_idx_reads_speed():
+    ports = [
+        PortInfo(
+            port_idx=1,
+            name=None,
+            ifname=None,
+            speed=1000,
+            aggregation_group=None,
+            port_poe=False,
+            poe_enable=False,
+            poe_good=False,
+            poe_power=None,
+        )
+    ]
+    assert _port_speed_by_idx(ports, 1) == 1000
+
+
+def test_classify_device_type_from_name():
+    device = SimpleNamespace(type="", name="Gateway Main")
+    assert classify_device_type(device) == "gateway"

@@ -38,3 +38,9 @@ Feature: Render outputs from mock data
     Given the mock data file "examples/mock_data.json"
     When I run the CLI to render "mkdocs" with mkdocs timestamp off
     Then the output file does not contain "Generated:"
+
+  Scenario: MkDocs output includes device overview sections
+    Given the mock data file "examples/mock_data.json"
+    When I run the CLI to render "mkdocs" with defaults
+    Then the output file contains "## Gateways"
+    And the output file contains "## Switches"

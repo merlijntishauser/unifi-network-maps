@@ -14,6 +14,31 @@ Feature: CLI output variants
     When I run the CLI with args "--format lldp-md" and output file
     Then the output file contains "# LLDP Neighbors"
 
+  Scenario: LLDP output includes client sections when requested
+    Given the mock data file "examples/mock_data.json"
+    When I run the CLI with args "--format lldp-md --include-clients --include-ports" and output file
+    Then the output file contains "### Clients"
+
+  Scenario: Mermaid output can render left-to-right direction
+    Given the mock data file "examples/mock_data.json"
+    When I run the CLI with args "--direction LR" and output file
+    Then the output file contains "graph LR"
+
+  Scenario: Mermaid group-by-type includes subgraphs
+    Given the mock data file "examples/mock_data.json"
+    When I run the CLI with args "--group-by-type" and output file
+    Then the output file contains "subgraph"
+
+  Scenario: MkDocs compact legend uses HTML legend block
+    Given the mock data file "examples/mock_data.json"
+    When I run the CLI with args "--format mkdocs --legend-style compact" and output file
+    Then the output file contains "data-unifi-legend"
+
+  Scenario: MkDocs diagram legend renders a legend section
+    Given the mock data file "examples/mock_data.json"
+    When I run the CLI with args "--format mkdocs --legend-style diagram" and output file
+    Then the output file contains "## Legend"
+
   Scenario: MkDocs sidebar legend writes assets
     Given the mock data file "examples/mock_data.json"
     When I run the CLI with args "--format mkdocs --mkdocs-sidebar-legend" and output file

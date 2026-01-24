@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
+
+from .paths import resolve_mock_data_path
 
 
 def _as_list(value: object, name: str) -> list[object]:
@@ -15,7 +16,8 @@ def _as_list(value: object, name: str) -> list[object]:
 
 
 def load_mock_data(path: str) -> tuple[list[object], list[object]]:
-    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    resolved = resolve_mock_data_path(path)
+    payload = json.loads(resolved.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
         raise ValueError("Mock data must be a JSON object")
     devices = _as_list(payload.get("devices"), "devices")

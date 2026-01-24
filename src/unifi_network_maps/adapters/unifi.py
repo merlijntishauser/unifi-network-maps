@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import stat
+import tempfile
 import time
 from collections.abc import Callable, Iterator, Sequence
 from concurrent.futures import ThreadPoolExecutor
@@ -15,6 +16,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import IO, TYPE_CHECKING
 
+from ..io.paths import resolve_cache_dir
 from .config import Config
 
 if TYPE_CHECKING:
@@ -24,7 +26,15 @@ logger = logging.getLogger(__name__)
 
 
 def _cache_dir() -> Path:
-    return Path(os.environ.get("UNIFI_CACHE_DIR", ".cache/unifi_network_maps"))
+    default_dir = ".cache/unifi_network_maps"
+    if os.environ.get("PYTEST_CURRENT_TEST"):
+        default_dir = str(Path(tempfile.gettempdir()) / f"unifi_network_maps_pytest_{os.getpid()}")
+    value = os.environ.get("UNIFI_CACHE_DIR", default_dir)
+    try:
+        return resolve_cache_dir(value)
+    except ValueError as exc:
+        logger.warning("Invalid UNIFI_CACHE_DIR (%s); using default: %s", value, exc)
+        return resolve_cache_dir(".cache/unifi_network_maps")
 
 
 def _device_attr(device: object, name: str) -> object | None:

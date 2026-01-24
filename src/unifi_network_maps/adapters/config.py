@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from pathlib import Path
+
+from ..io.paths import resolve_env_file
 
 
 def _parse_bool(value: str | None, default: bool = True) -> bool:
@@ -26,13 +29,14 @@ class Config:
     verify_ssl: bool
 
     @classmethod
-    def from_env(cls, *, env_file: str | None = None) -> Config:
+    def from_env(cls, *, env_file: str | Path | None = None) -> Config:
         if env_file:
             try:
                 from dotenv import load_dotenv
             except ImportError:
                 raise ValueError("python-dotenv required for --env-file") from None
-            load_dotenv(dotenv_path=env_file)
+            env_path = resolve_env_file(env_file)
+            load_dotenv(dotenv_path=env_path)
         url = os.environ.get("UNIFI_URL", "").strip()
         site = os.environ.get("UNIFI_SITE", "default").strip()
         user = os.environ.get("UNIFI_USER", "").strip()

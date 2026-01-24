@@ -7,10 +7,19 @@ import sys
 import tempfile
 from pathlib import Path
 
+from .paths import resolve_output_path
 
-def write_output(content: str, *, output_path: str | None, stdout: bool) -> None:
+
+def write_output(
+    content: str,
+    *,
+    output_path: str | Path | None,
+    stdout: bool,
+    format_name: str | None = None,
+) -> None:
     if output_path:
-        _write_atomic(Path(output_path), content)
+        resolved = resolve_output_path(output_path, format_name=format_name)
+        _write_atomic(resolved, content)
     if stdout or not output_path:
         sys.stdout.write(content)
 

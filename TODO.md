@@ -1,10 +1,55 @@
 # TODO (Code Review Findings)
 
 ## P0 - Security
-- no current (known) security concerns.
+- **Cache Directory Symlink Attack** (CRITICAL)
+  - File: `src/unifi_network_maps/adapters/unifi.py:27,192,268`
+  - `UNIFI_CACHE_DIR` not validated; attacker could set symlink to sensitive directories
+  - Fix: Check path is not symlink before creating cache directory
+- **Insufficient Escaping in Markdown Output** (HIGH)
+  - Files: `src/unifi_network_maps/render/lldp_md.py:274`, `src/unifi_network_maps/render/device_ports_md.py:296`
+  - `_escape_cell()` only escapes pipe chars; device names with `[text](javascript:...)`, `<script>`, backticks bypass
+  - Fix: Escape all markdown special chars: `\`, `|`, `[`, `]`, `*`, `_`, `` ` ``, `<`, `>`
+- **Race Condition in Cache File Operations** (HIGH)
+  - File: `src/unifi_network_maps/adapters/unifi.py:272-275`
+  - Window between `tmp_path.write_text()` and `tmp_path.replace()` allows file modification
+  - Fix: Use `os.O_EXCL`, set restrictive permissions immediately on temp file
+- **Incomplete XSS Protection in SVG Output** (MEDIUM)
+  - File: `src/unifi_network_maps/render/svg.py:106`
+  - Custom `_escape_text()` only escapes `&<>`; should use `html.escape()` for consistency
+- **Potential Exception Leak of Sensitive Information** (MEDIUM)
+  - Files: `src/unifi_network_maps/cli/main.py:72,90,95`, `src/unifi_network_maps/cli/runtime.py:126,136`
+  - Broad exception handlers log exception details; may leak credentials/tokens
+  - Fix: Sanitize exception messages before logging
+- **Insecure Temporary File Creation** (MEDIUM)
+  - File: `src/unifi_network_maps/io/export.py:20-31`
+  - `NamedTemporaryFile(delete=False)` may not cleanup on error; predictable naming
+  - Fix: Use `os.O_EXCL`, ensure cleanup in finally block
 
 ## P1 - Robustness
-- no current (known) robustness concerns.
+- **Denial of Service via Unbounded Mock Generation** (HIGH)
+  - File: `src/unifi_network_maps/cli/main.py:54-60`
+  - `--mock-switches/aps/clients` accept arbitrary integers; `--mock-switches=999999999` causes memory exhaustion
+  - Fix: Add reasonable upper limits (e.g., max 10000 devices per type)
+- **Missing Size Validation for SVG Dimensions** (MEDIUM)
+  - File: `src/unifi_network_maps/cli/args.py:119-120`
+  - `--svg-width/height` accept any integer; negative or extremely large values cause issues
+  - Fix: Validate range (e.g., 100-50000)
+- **Insufficient Input Validation on Legend Scale** (MEDIUM)
+  - File: `src/unifi_network_maps/cli/args.py:101`
+  - `--legend-scale` accepts any float; negative or large values cause rendering issues
+  - Fix: Validate range (e.g., 0.1-10.0)
+- **No Maximum File Size Check** (LOW)
+  - Multiple files reading user-supplied files
+  - Very large mock data or theme files cause memory exhaustion
+  - Fix: Check file size before reading (e.g., max 10MB)
+- **Unvalidated Environment Variable Integers** (LOW)
+  - File: `src/unifi_network_maps/adapters/unifi.py:219-225,281-287,291-298,302-309`
+  - Env vars (`UNIFI_CACHE_TTL_SECONDS`, `UNIFI_RETRY_ATTEMPTS`, etc.) use `.isdigit()` but no range validation
+  - Fix: Add reasonable bounds checks after conversion
+- **Missing Validation on Timezone String** (LOW)
+  - File: `src/unifi_network_maps/cli/args.py:150`
+  - `--mkdocs-timestamp-zone` accepts arbitrary strings; invalid timezones cause runtime errors
+  - Fix: Validate against known timezone database
 
 ## P2 - Stability/UX
 - no current (known) stability/UX concerns.

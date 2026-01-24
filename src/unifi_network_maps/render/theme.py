@@ -6,6 +6,7 @@ from pathlib import Path
 
 import yaml
 
+from ..io.paths import resolve_theme_path
 from .mermaid_theme import DEFAULT_THEME as DEFAULT_MERMAID_THEME
 from .mermaid_theme import MermaidTheme
 from .svg_theme import DEFAULT_THEME as DEFAULT_SVG_THEME
@@ -90,7 +91,7 @@ def _svg_theme_from_dict(data: dict, base: SvgTheme) -> SvgTheme:
 
 
 def load_theme(path: str | Path) -> tuple[MermaidTheme, SvgTheme]:
-    theme_path = Path(path)
+    theme_path = resolve_theme_path(path, require_exists=False)
     payload = yaml.safe_load(theme_path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
         raise ValueError("Theme file must contain a YAML mapping")

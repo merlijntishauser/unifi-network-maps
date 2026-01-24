@@ -207,7 +207,8 @@ def render_lldp_format(
         client_mode=args.client_scope,
         only_unifi=args.only_unifi,
     )
-    write_output(content, output_path=args.output, stdout=args.stdout)
+    output_kwargs = {"format_name": args.format} if args.output else {}
+    write_output(content, output_path=args.output, stdout=args.stdout, **output_kwargs)
     return 0
 
 
@@ -267,5 +268,6 @@ def render_standard_format(
         logging.error("Unsupported format: %s", args.format)
         return 2
 
-    write_output(content, output_path=args.output, stdout=args.stdout)
+    output_kwargs = {"format_name": args.format} if args.output else {}
+    write_output(content, output_path=args.output, stdout=args.stdout, **output_kwargs)
     return 0

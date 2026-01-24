@@ -1,5 +1,6 @@
 import builtins
 import json
+import os
 import sys
 import time
 from types import SimpleNamespace
@@ -108,6 +109,19 @@ def test_fetch_clients_requires_dependency(monkeypatch):
     with pytest.raises(RuntimeError) as excinfo:
         unifi.fetch_clients(config)
     assert "Missing dependency" in str(excinfo.value)
+
+
+def test_cache_dir_rejects_symlink(monkeypatch, tmp_path):
+    if not hasattr(os, "symlink"):
+        pytest.skip("OS does not support symlinks")
+    real_dir = tmp_path / "real"
+    real_dir.mkdir()
+    link_dir = tmp_path / "link"
+    os.symlink(real_dir, link_dir)
+    monkeypatch.setenv("UNIFI_CACHE_DIR", str(link_dir))
+    cache_dir = unifi._cache_dir()
+    assert cache_dir != link_dir
+    assert not cache_dir.is_symlink()
 
 
 def test_fetch_devices_uses_cache(monkeypatch, tmp_path):

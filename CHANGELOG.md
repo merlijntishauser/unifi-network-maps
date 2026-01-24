@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Fixed
 - Path Traversal Vulnerability in File Operations
+- Cache Directory Symlink Attack vector
 
 ## [1.4.12] - 2026-01-21
 ### Added

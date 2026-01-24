@@ -1,10 +1,6 @@
 # TODO (Code Review Findings)
 
 ## P0 - Security
-- **Cache Directory Symlink Attack** (CRITICAL)
-  - File: `src/unifi_network_maps/adapters/unifi.py:27,192,268`
-  - `UNIFI_CACHE_DIR` not validated; attacker could set symlink to sensitive directories
-  - Fix: Check path is not symlink before creating cache directory
 - **Insufficient Escaping in Markdown Output** (HIGH)
   - Files: `src/unifi_network_maps/render/lldp_md.py:274`, `src/unifi_network_maps/render/device_ports_md.py:296`
   - `_escape_cell()` only escapes pipe chars; device names with `[text](javascript:...)`, `<script>`, backticks bypass

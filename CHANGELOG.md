@@ -5,13 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.4.13] - 2026-01-25
 ### Fixed
 - Path Traversal Vulnerability in File Operations
 - Cache Directory Symlink Attack vector
 
 ### Changed
 - Improved escaping in Markdown Output
+- Made logging less chatty, moved messages to debug level
 
 ## [1.4.12] - 2026-01-21
 ### Added
@@ -191,7 +192,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Introduced SVG renderer and tree layout fixes.
 - Increased test coverage and added coverage tooling.
 
-[Unreleased]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.12...HEAD
+[Unreleased]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.13...HEAD
+[1.4.13]:https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.11...v1.4.13
 [1.4.12]:https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.11...v1.4.12
 [1.4.11]:https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.10...v1.4.11
 [1.4.10]:https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.9...v1.4.10

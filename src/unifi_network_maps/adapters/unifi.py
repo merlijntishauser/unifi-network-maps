@@ -387,13 +387,13 @@ def fetch_devices(
         cached = None
         stale_cached, cache_age = None, None
     if cached is not None:
-        logger.info("Using cached devices (%d)", len(cached))
+        logger.debug("Using cached devices (%d)", len(cached))
         return cached
 
     try:
         controller = _init_controller(config, is_udm_pro=True)
     except UnifiAuthenticationError:
-        logger.info("UDM Pro authentication failed, retrying legacy auth")
+        logger.debug("UDM Pro authentication failed, retrying legacy auth")
         controller = _init_controller(config, is_udm_pro=False)
 
     def _fetch() -> Sequence[object]:
@@ -412,7 +412,7 @@ def fetch_devices(
         raise
     if use_cache:
         _save_cache(cache_path, _serialize_devices_for_cache(devices))
-    logger.info("Fetched %d devices", len(devices))
+    logger.debug("Fetched %d devices", len(devices))
     return devices
 
 
@@ -438,13 +438,13 @@ def fetch_clients(
         cached = None
         stale_cached, cache_age = None, None
     if cached is not None:
-        logger.info("Using cached clients (%d)", len(cached))
+        logger.debug("Using cached clients (%d)", len(cached))
         return cached
 
     try:
         controller = _init_controller(config, is_udm_pro=True)
     except UnifiAuthenticationError:
-        logger.info("UDM Pro authentication failed, retrying legacy auth")
+        logger.debug("UDM Pro authentication failed, retrying legacy auth")
         controller = _init_controller(config, is_udm_pro=False)
 
     def _fetch() -> Sequence[object]:
@@ -463,5 +463,5 @@ def fetch_clients(
         raise
     if use_cache:
         _save_cache(cache_path, clients)
-    logger.info("Fetched %d clients", len(clients))
+    logger.debug("Fetched %d clients", len(clients))
     return clients

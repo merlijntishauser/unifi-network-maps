@@ -83,11 +83,11 @@ def _render_device_ports(
     rows = _build_port_rows(device, port_map, client_ports)
     table_rows = [
         [
-            _escape_cell(port_label),
-            _escape_cell(connected or "-"),
-            _escape_cell(speed),
-            _escape_cell(poe_state),
-            _escape_cell(power),
+            _escape_markdown_text(port_label),
+            _escape_connected_cell(connected or "-"),
+            _escape_markdown_text(speed),
+            _escape_markdown_text(poe_state),
+            _escape_markdown_text(power),
         ]
         for port_label, connected, speed, poe_state, power in rows
     ]
@@ -224,9 +224,11 @@ def _format_connections(
     for peer in sorted(peers, key=str.lower):
         peer_label = port_map.get((peer, device_name))
         if peer_label:
-            peer_entries.append(f"{peer} ({peer_label})")
+            peer_entries.append(
+                f"{_escape_markdown_text(peer)} ({_escape_markdown_text(peer_label)})"
+            )
         else:
-            peer_entries.append(peer)
+            peer_entries.append(_escape_markdown_text(peer))
     peer_text = ", ".join(peer_entries)
     client_text = _format_client_connections(clients)
     if peer_text and client_text:
@@ -292,8 +294,15 @@ def _port_sort_key(port: object) -> tuple[int, str]:
     return (1, name.lower())
 
 
-def _escape_cell(value: str) -> str:
-    return value.replace("|", "\\|")
+def _escape_markdown_text(value: str) -> str:
+    escaped = value.replace("\\", "\\\\")
+    for char in ("|", "[", "]", "*", "_", "`", "<", ">"):
+        escaped = escaped.replace(char, f"\\{char}")
+    return escaped
+
+
+def _escape_connected_cell(value: str) -> str:
+    return value
 
 
 def _render_device_details(device: Device) -> list[str]:
@@ -302,14 +311,14 @@ def _render_device_details(device: Device) -> list[str]:
         "",
         "| Field | Value |",
         "| --- | --- |",
-        f"| Model | {_escape_cell(_device_model_label(device))} |",
-        f"| Type | {_escape_cell(device.type or '-')} |",
-        f"| IP | {_escape_cell(device.ip or '-')} |",
-        f"| MAC | {_escape_cell(device.mac or '-')} |",
-        f"| Firmware | {_escape_cell(device.version or '-')} |",
-        f"| Uplink | {_escape_cell(_uplink_summary(device))} |",
-        f"| Ports | {_escape_cell(_port_summary(device))} |",
-        f"| PoE | {_escape_cell(_poe_summary(device))} |",
+        f"| Model | {_escape_markdown_text(_device_model_label(device))} |",
+        f"| Type | {_escape_markdown_text(device.type or '-')} |",
+        f"| IP | {_escape_markdown_text(device.ip or '-')} |",
+        f"| MAC | {_escape_markdown_text(device.mac or '-')} |",
+        f"| Firmware | {_escape_markdown_text(device.version or '-')} |",
+        f"| Uplink | {_escape_markdown_text(_uplink_summary(device))} |",
+        f"| Ports | {_escape_markdown_text(_port_summary(device))} |",
+        f"| PoE | {_escape_markdown_text(_poe_summary(device))} |",
         "",
     ]
     return lines
@@ -367,7 +376,7 @@ def _format_client_connections(clients: list[str]) -> str:
     if not clients:
         return ""
     if len(clients) == 1:
-        return f"{clients[0]} (client)"
+        return f"{_escape_markdown_text(clients[0])} (client)"
     items = "".join(f"<li>{_escape_html(name)}</li>" for name in clients)
     return f'<ul class="unifi-port-clients">{items}</ul>'
 

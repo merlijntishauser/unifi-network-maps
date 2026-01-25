@@ -723,7 +723,7 @@ def build_edges(
     )
 
     poe_edges = sum(1 for edge in edges if edge.poe)
-    logger.info("Built %d unique edges (%d PoE)", len(edges), poe_edges)
+    logger.debug("Built %d unique edges (%d PoE)", len(edges), poe_edges)
     return edges
 
 
@@ -978,14 +978,14 @@ def build_topology(
 ) -> TopologyResult:
     normalized_devices = list(devices)
     lldp_entries = sum(len(device.lldp_info) for device in normalized_devices)
-    logger.info(
+    logger.debug(
         "Normalized %d devices (%d LLDP entries)",
         len(normalized_devices),
         lldp_entries,
     )
     raw_edges = build_edges(normalized_devices, include_ports=include_ports, only_unifi=only_unifi)
     tree_edges = build_tree_edges_by_topology(raw_edges, gateways)
-    logger.info(
+    logger.debug(
         "Built %d hierarchy edges (gateways=%d)",
         len(tree_edges),
         len(gateways),

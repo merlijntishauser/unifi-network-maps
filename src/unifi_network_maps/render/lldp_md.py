@@ -271,7 +271,10 @@ def _lldp_rows(
 
 
 def _escape_cell(value: str) -> str:
-    return value.replace("|", "\\|")
+    escaped = value.replace("\\", "\\\\")
+    for char in ("|", "[", "]", "*", "_", "`", "<", ">"):
+        escaped = escaped.replace(char, f"\\{char}")
+    return escaped
 
 
 def _client_rows(

@@ -164,6 +164,24 @@ def test_single_client_uses_inline_label():
     assert "Client Solo (client)" in output
 
 
+def test_single_client_escapes_markdown_specials():
+    port = PortInfo(
+        port_idx=13,
+        name="Port 13",
+        ifname="eth13",
+        speed=1000,
+        aggregation_group=None,
+        port_poe=False,
+        poe_enable=False,
+        poe_good=False,
+        poe_power=0.0,
+    )
+    device = _device_with_ports("Switch", ports=[port])
+    client_ports = {"Switch": [(13, "Bad[link]*_`<script>`")]}
+    output = render_device_port_overview([device], {}, client_ports=client_ports)
+    assert r"Bad\[link\]\*\_\`\<script\>\` (client)" in output
+
+
 def test_speed_formats_megabit():
     port = PortInfo(
         port_idx=11,
@@ -179,6 +197,24 @@ def test_speed_formats_megabit():
     device = _device_with_ports("Switch", ports=[port])
     output = render_device_port_overview([device], {})
     assert "| 100M |" in output
+
+
+def test_peer_name_escapes_markdown_specials():
+    port = PortInfo(
+        port_idx=14,
+        name="Port 14",
+        ifname="eth14",
+        speed=1000,
+        aggregation_group=None,
+        port_poe=False,
+        poe_enable=False,
+        poe_good=False,
+        poe_power=0.0,
+    )
+    device = _device_with_ports("Switch", ports=[port])
+    port_map = {("Switch", "Peer[bad]"): "Port 14", ("Peer[bad]", "Switch"): "Port 1"}
+    output = render_device_port_overview([device], port_map)
+    assert r"Peer\[bad\] (Port 1)" in output
 
 
 def test_poe_state_active_when_power_present():

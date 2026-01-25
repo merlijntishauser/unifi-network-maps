@@ -318,6 +318,29 @@ def test_render_lldp_md_escapes_pipe_in_port_desc():
     assert "Up\\|link" in output
 
 
+def test_render_lldp_md_escapes_markdown_specials():
+    devices = [
+        Device(
+            name="Switch A",
+            model_name="",
+            model="",
+            mac="aa:bb",
+            ip="",
+            type="usw",
+            lldp_info=[
+                LLDPEntry(
+                    chassis_id="cc:dd",
+                    port_id="Port 2",
+                    local_port_idx=1,
+                    port_desc="Bad[link]*_`<script>`",
+                )
+            ],
+        ),
+    ]
+    output = render_lldp_md(devices)
+    assert r"Bad\[link\]\*\_\`\<script\>\`" in output
+
+
 def test_render_lldp_md_reads_client_from_object():
     class Client:
         hostname = "Console"

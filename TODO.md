@@ -1,10 +1,7 @@
 # TODO (Code Review Findings)
 
 ## P0 - Security
-- **Insufficient Escaping in Markdown Output** (HIGH)
-  - Files: `src/unifi_network_maps/render/lldp_md.py:274`, `src/unifi_network_maps/render/device_ports_md.py:296`
-  - `_escape_cell()` only escapes pipe chars; device names with `[text](javascript:...)`, `<script>`, backticks bypass
-  - Fix: Escape all markdown special chars: `\`, `|`, `[`, `]`, `*`, `_`, `` ` ``, `<`, `>`
+- 
 - **Race Condition in Cache File Operations** (HIGH)
   - File: `src/unifi_network_maps/adapters/unifi.py:272-275`
   - Window between `tmp_path.write_text()` and `tmp_path.replace()` allows file modification
@@ -51,6 +48,8 @@
 - no current (known) stability/UX concerns.
 
 ## P3 - Features
+- Unifi 2D theme, matching Ubiquiti's 2D theme.
+- Clients not only placed horizontally on one row, but multiple rows to keep SVG more square
 - Cable/link labeling
   - Feasibility: Medium; needs port metadata (`port_desc`, `port_overrides`) and consistent naming rules.
   - Plan: extend port label composition with optional cable-name mapping file; add tests for mixed labels.

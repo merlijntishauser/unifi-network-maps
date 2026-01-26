@@ -28,7 +28,6 @@ def _base_roots() -> list[Path]:
     except OSError as exc:
         # Best-effort temp dir; resolution can fail in restricted environments.
         logger.debug("Failed to resolve temp directory: %s", exc)
-        pass
     return roots
 
 

@@ -3,18 +3,21 @@
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 from pathlib import Path
 
 from ..adapters.config import Config
+from ..adapters.unifi import fetch_payload
 from ..io.export import write_output
-from ..io.mock_data import load_mock_data
+from ..io.mock_data import load_mock_data, load_mock_payload
 from ..io.paths import (
     resolve_env_file,
     resolve_mock_data_path,
     resolve_output_path,
     resolve_theme_path,
 )
+from ..model.vlans import build_vlan_info, normalize_networks
 from ..render.legend import render_legend_only, resolve_legend_style
 from ..render.theme import resolve_themes
 from .args import build_parser
@@ -117,6 +120,38 @@ def _load_runtime_context(
     return config, site, None, None
 
 
+def _handle_payload_format(
+    args: argparse.Namespace,
+    *,
+    config: Config | None,
+    site: str,
+) -> int | None:
+    if args.format != "payload":
+        return None
+    payload: dict[str, list[object] | list[dict[str, object]]]
+    if args.mock_data:
+        payload = load_mock_payload(args.mock_data)
+        if not args.include_clients:
+            payload["clients"] = []
+        networks = normalize_networks(payload.get("networks", []))
+        payload["networks"] = networks
+        payload["vlan_info"] = build_vlan_info(payload.get("clients", []), networks)
+    else:
+        if config is None:
+            logging.error("Config required to run")
+            return 2
+        payload = fetch_payload(
+            config,
+            site=site,
+            include_clients=args.include_clients,
+            use_cache=not args.no_cache,
+        )
+    content = json.dumps(payload, indent=2, sort_keys=True)
+    output_kwargs = {"format_name": args.format} if args.output else {}
+    write_output(content, output_path=args.output, stdout=args.stdout, **output_kwargs)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     for handler in logging.getLogger().handlers:
@@ -132,6 +167,9 @@ def main(argv: list[str] | None = None) -> int:
     except ValueError as exc:
         logging.error(str(exc))
         return 2
+    payload_result = _handle_payload_format(args, config=config, site=site)
+    if payload_result is not None:
+        return payload_result
     try:
         mermaid_theme, svg_theme = resolve_themes(args.theme_file)
     except Exception as exc:  # noqa: BLE001

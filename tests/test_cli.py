@@ -155,6 +155,92 @@ def test_main_mermaid_includes_wired_clients(monkeypatch):
     assert captured["node_types"]["Client"] == "client"
 
 
+def test_main_payload_from_mock_includes_vlan_info(monkeypatch, tmp_path):
+    captured = {}
+    payload = {
+        "devices": [
+            {
+                "name": "Gateway",
+                "model_name": "",
+                "model": "",
+                "mac": "aa:bb",
+                "ip": "",
+                "type": "udm",
+                "lldp_info": [],
+            }
+        ],
+        "clients": [{"name": "Client A", "is_wired": True, "sw_mac": "aa:bb", "vlan": 20}],
+        "networks": [
+            {"name": "LAN", "vlan_enabled": False},
+            {"name": "Guest", "vlan": 20, "vlan_enabled": True},
+        ],
+    }
+    mock_path = tmp_path / "mock.json"
+    mock_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    def write_output(content, *, output_path, stdout, **_kwargs):
+        captured["content"] = content
+
+    monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
+    monkeypatch.setattr(cli_module, "write_output", write_output)
+
+    assert (
+        main(
+            [
+                "--mock-data",
+                str(mock_path),
+                "--format",
+                "payload",
+                "--include-clients",
+                "--stdout",
+            ]
+        )
+        == 0
+    )
+    output = json.loads(captured["content"])
+    assert "networks" in output
+    assert "vlan_info" in output
+    vlan_map = {entry["id"]: entry for entry in output["vlan_info"]}
+    assert vlan_map[1]["client_count"] == 0
+    assert vlan_map[20]["client_count"] == 1
+
+
+def test_main_payload_from_mock_excludes_clients_by_default(monkeypatch, tmp_path):
+    captured = {}
+    payload = {
+        "devices": [
+            {
+                "name": "Gateway",
+                "model_name": "",
+                "model": "",
+                "mac": "aa:bb",
+                "ip": "",
+                "type": "udm",
+                "lldp_info": [],
+            }
+        ],
+        "clients": [{"name": "Client A", "is_wired": True, "sw_mac": "aa:bb", "vlan": 20}],
+        "networks": [
+            {"name": "LAN", "vlan_enabled": False},
+            {"name": "Guest", "vlan": 20, "vlan_enabled": True},
+        ],
+    }
+    mock_path = tmp_path / "mock.json"
+    mock_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    def write_output(content, *, output_path, stdout, **_kwargs):
+        captured["content"] = content
+
+    monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
+    monkeypatch.setattr(cli_module, "write_output", write_output)
+
+    assert main(["--mock-data", str(mock_path), "--format", "payload", "--stdout"]) == 0
+    output = json.loads(captured["content"])
+    vlan_map = {entry["id"]: entry for entry in output["vlan_info"]}
+    assert vlan_map[1]["client_count"] == 0
+    assert vlan_map[20]["client_count"] == 0
+
+
 def test_main_logs_topology_errors(monkeypatch, caplog):
     monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
     monkeypatch.setattr(runtime_module, "fetch_devices", lambda *args, **kwargs: [])

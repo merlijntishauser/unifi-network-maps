@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import IO, TYPE_CHECKING
 
 from ..io.paths import resolve_cache_dir
+from ..model.vlans import build_vlan_info, normalize_networks
 from .config import Config
 
 if TYPE_CHECKING:
@@ -168,6 +169,19 @@ def _serialize_device_for_cache(device: object) -> dict[str, object]:
 
 def _serialize_devices_for_cache(devices: Sequence[object]) -> list[dict[str, object]]:
     return [_serialize_device_for_cache(device) for device in devices]
+
+
+def _serialize_network_for_cache(network: object) -> dict[str, object]:
+    return {
+        "name": _first_attr(network, "name", "network_name", "networkName"),
+        "vlan": _first_attr(network, "vlan", "vlan_id", "vlanId", "vlanid"),
+        "vlan_enabled": _first_attr(network, "vlan_enabled", "vlanEnabled"),
+        "purpose": _first_attr(network, "purpose"),
+    }
+
+
+def _serialize_networks_for_cache(networks: Sequence[object]) -> list[dict[str, object]]:
+    return [_serialize_network_for_cache(network) for network in networks]
 
 
 def _cache_lock_path(path: Path) -> Path:
@@ -465,3 +479,92 @@ def fetch_clients(
         _save_cache(cache_path, clients)
     logger.debug("Fetched %d clients", len(clients))
     return clients
+
+
+def fetch_networks(
+    config: Config,
+    *,
+    site: str | None = None,
+    use_cache: bool = True,
+) -> Sequence[object]:
+    """Fetch network inventory from UniFi Controller."""
+    try:
+        from unifi_controller_api import UnifiAuthenticationError
+    except ImportError as exc:
+        raise RuntimeError("Missing dependency: unifi-controller-api") from exc
+
+    site_name = site or config.site
+    ttl_seconds = _cache_ttl_seconds()
+    cache_path = _cache_dir() / f"networks_{_cache_key(config.url, site_name)}.json"
+    if use_cache and _is_cache_dir_safe(cache_path.parent):
+        cached = _load_cache(cache_path, ttl_seconds)
+        stale_cached, cache_age = _load_cache_with_age(cache_path)
+    else:
+        cached = None
+        stale_cached, cache_age = None, None
+    if cached is not None:
+        logger.debug("Using cached networks (%d)", len(cached))
+        return cached
+
+    try:
+        controller = _init_controller(config, is_udm_pro=True)
+    except UnifiAuthenticationError:
+        logger.debug("UDM Pro authentication failed, retrying legacy auth")
+        controller = _init_controller(config, is_udm_pro=False)
+
+    def _fetch() -> Sequence[object]:
+        return controller.get_unifi_site_networkconf(site_name=site_name, raw=False)
+
+    try:
+        networks = _call_with_retries("network fetch", _fetch)
+    except Exception as exc:  # noqa: BLE001 - fallback to cache
+        if stale_cached is not None:
+            logger.warning(
+                "Network fetch failed; using stale cache (%ds old): %s",
+                int(cache_age or 0),
+                exc,
+            )
+            return stale_cached
+        raise
+    if use_cache:
+        _save_cache(cache_path, _serialize_networks_for_cache(networks))
+    logger.debug("Fetched %d networks", len(networks))
+    return networks
+
+
+def fetch_payload(
+    config: Config,
+    *,
+    site: str | None = None,
+    include_clients: bool = True,
+    use_cache: bool = True,
+) -> dict[str, list[object] | list[dict[str, object]]]:
+    """Fetch devices, clients, and VLAN inventory for payload output."""
+    devices = list(fetch_devices(config, site=site, detailed=True, use_cache=use_cache))
+    clients = _fetch_payload_clients(
+        config,
+        site=site,
+        include_clients=include_clients,
+        use_cache=use_cache,
+    )
+    networks = list(fetch_networks(config, site=site, use_cache=use_cache))
+    normalized_networks = normalize_networks(networks)
+    vlan_info = build_vlan_info(clients, normalized_networks)
+    return {
+        "devices": devices,
+        "clients": clients,
+        "networks": normalized_networks,
+        "vlan_info": vlan_info,
+    }
+
+
+def _fetch_payload_clients(
+    config: Config,
+    *,
+    site: str | None,
+    include_clients: bool,
+    use_cache: bool,
+) -> list[object]:
+    if not include_clients:
+        return []
+    return list(fetch_clients(config, site=site, use_cache=use_cache))

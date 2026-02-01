@@ -26,3 +26,5 @@ def test_mock_payload_json_is_valid():
     payload = json.loads(mock_payload_json(options))
     assert "devices" in payload
     assert "clients" in payload
+    assert "networks" in payload
+    assert "vlan_info" in payload

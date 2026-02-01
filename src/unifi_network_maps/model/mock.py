@@ -9,6 +9,8 @@ from typing import Any
 
 from faker import Faker
 
+from .vlans import build_vlan_info, normalize_networks
+
 
 @dataclass(frozen=True)
 class MockOptions:
@@ -34,7 +36,14 @@ def generate_mock_payload(options: MockOptions) -> dict[str, list[dict[str, Any]
     state = _build_state(options.seed)
     devices, core_switch, aps = _build_devices(options, state)
     clients = _build_clients(options, state, core_switch, aps)
-    return {"devices": devices, "clients": clients}
+    networks = _build_networks()
+    vlan_info = build_vlan_info(clients, networks)
+    return {
+        "devices": devices,
+        "clients": clients,
+        "networks": normalize_networks(networks),
+        "vlan_info": vlan_info,
+    }
 
 
 def mock_payload_json(options: MockOptions) -> str:
@@ -106,6 +115,13 @@ def _build_clients(
     clients.extend(_build_wired_clients(options.wired_client_count, state, core_switch))
     clients.extend(_build_wireless_clients(options.wireless_client_count, state, aps))
     return clients
+
+
+def _build_networks() -> list[dict[str, Any]]:
+    return [
+        {"name": "LAN", "vlan_enabled": False, "purpose": "corporate"},
+        {"name": "Guest", "vlan": 20, "vlan_enabled": True, "purpose": "guest"},
+    ]
 
 
 def _build_wired_clients(

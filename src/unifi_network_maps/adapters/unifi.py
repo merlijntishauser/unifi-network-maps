@@ -513,11 +513,9 @@ def fetch_networks(
         controller = _init_controller(config, is_udm_pro=False)
 
     def _fetch() -> Sequence[object]:
-        try:
-            return controller.get_unifi_site_networkconf(site_name=site_name, raw=False)
-        except Exception as exc:  # noqa: BLE001 - fallback to raw network data
-            logger.warning("Networkconf model parse failed; retrying raw fetch: %s", exc)
-            return controller.get_unifi_site_networkconf(site_name=site_name, raw=True)
+        # Always use raw=True to avoid model parsing issues with disabled WAN interfaces
+        # (the UnifiNetworkConf model requires an 'enabled' field that may be absent)
+        return controller.get_unifi_site_networkconf(site_name=site_name, raw=True)
 
     try:
         networks = _call_with_retries("network fetch", _fetch)

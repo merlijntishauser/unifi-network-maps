@@ -29,7 +29,7 @@ coverage:
 
 smoketest:
 	@rm -rf smoketest
-	@mkdir -p smoketest/lldp smoketest/mermaid smoketest/mkdocs smoketest/svg smoketest/svg-iso smoketest/themes
+	@mkdir -p smoketest/json smoketest/lldp smoketest/mermaid smoketest/mkdocs smoketest/svg smoketest/svg-iso smoketest/themes
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --stdout > smoketest/mermaid/network.mmd
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --markdown --output smoketest/mermaid/network.md
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --group-by-type --stdout > smoketest/mermaid/network_grouped.mmd
@@ -64,6 +64,8 @@ smoketest:
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-ports --include-clients --format svg --output smoketest/svg/network_ports_clients.svg
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-ports --include-clients --format svg-iso --output smoketest/svg-iso/network_ports_clients_iso.svg
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-ports --include-clients --client-scope all --format svg-iso --output smoketest/svg-iso/network_ports_clients_all_iso.svg
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format json --output smoketest/json/payload.json
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format json --include-clients --output smoketest/json/payload_clients.json
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --theme-file src/unifi_network_maps/assets/themes/default.yaml --stdout > smoketest/themes/mermaid_default.mmd
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --theme-file src/unifi_network_maps/assets/themes/dark.yaml --stdout > smoketest/themes/mermaid_dark.mmd
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --theme-file src/unifi_network_maps/assets/themes/default.yaml --legend-only --stdout > smoketest/themes/legend_default.mmd

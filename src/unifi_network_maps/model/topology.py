@@ -302,9 +302,29 @@ def _uplink_info(device: DeviceSource) -> tuple[UplinkInfo | None, UplinkInfo | 
     return uplink, last_uplink
 
 
+def _get_model_display_name(device: DeviceSource) -> str | None:
+    """Extract the human-readable model name from device data.
+
+    UniFi stores the friendly model name (e.g., 'USW Flex 2.5G 8 PoE') in various
+    fields depending on controller version. This function checks multiple candidates
+    and returns the first non-empty value found.
+    """
+    candidates = (
+        "model_in_lts",
+        "model_in_eol",
+        "shortname",
+        "model_name",
+    )
+    for key in candidates:
+        value = _get_attr(device, key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return None
+
+
 def coerce_device(device: DeviceSource) -> Device:
     name = _get_attr(device, "name")
-    model_name = _get_attr(device, "model_name") or _get_attr(device, "model")
+    model_name = _get_model_display_name(device) or _get_attr(device, "model")
     model = _get_attr(device, "model")
     mac = _get_attr(device, "mac")
     ip = _get_attr(device, "ip") or _get_attr(device, "ip_address")

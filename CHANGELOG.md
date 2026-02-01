@@ -5,7 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.4.14] - 2026-02-01
+### Added
+- JSON output with VLAN inventory
+
 ### Changed
 - Added log message when /tmp can't be resolved
 
@@ -196,7 +199,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Introduced SVG renderer and tree layout fixes.
 - Increased test coverage and added coverage tooling.
 
-[Unreleased]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.13...HEAD
+[Unreleased]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.14...HEAD
+[1.4.14]:https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.11...v1.4.14
 [1.4.13]:https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.11...v1.4.13
 [1.4.12]:https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.11...v1.4.12
 [1.4.11]:https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.10...v1.4.11

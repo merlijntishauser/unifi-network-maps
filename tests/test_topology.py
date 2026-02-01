@@ -20,6 +20,7 @@ from unifi_network_maps.model.topology import (
     _client_unifi_flag,
     _client_uplink_mac,
     _client_uplink_port,
+    _get_model_display_name,
     _parse_uplink,
     _poe_ports_from_device,
     _port_speed_by_idx,
@@ -735,3 +736,48 @@ def test_port_speed_by_idx_reads_speed():
 def test_classify_device_type_from_name():
     device = SimpleNamespace(type="", name="Gateway Main")
     assert classify_device_type(device) == "gateway"
+
+
+def test_get_model_display_name_prefers_model_in_lts():
+    device = SimpleNamespace(
+        model_in_lts="USW Flex 2.5G 8 PoE",
+        model_name="USW-Flex-2.5G-8-PoE",
+        model="USWFLEXPOE8",
+    )
+    assert _get_model_display_name(device) == "USW Flex 2.5G 8 PoE"
+
+
+def test_get_model_display_name_uses_model_in_eol():
+    device = SimpleNamespace(model_in_eol="USW Pro 24", model="USWPRO24")
+    assert _get_model_display_name(device) == "USW Pro 24"
+
+
+def test_get_model_display_name_uses_shortname():
+    device = SimpleNamespace(shortname="USW Mini", model="USWMINI")
+    assert _get_model_display_name(device) == "USW Mini"
+
+
+def test_get_model_display_name_falls_back_to_model_name():
+    device = SimpleNamespace(model_name="Dream Machine", model="UDM")
+    assert _get_model_display_name(device) == "Dream Machine"
+
+
+def test_get_model_display_name_returns_none_without_candidates():
+    device = SimpleNamespace(model="USWFLEX")
+    assert _get_model_display_name(device) is None
+
+
+def test_coerce_device_uses_model_in_lts_for_model_name():
+    device = SimpleNamespace(
+        name="Switch",
+        mac="aa:bb:cc:dd:ee:ff",
+        model_in_lts="USW Flex 2.5G 8 PoE",
+        model="USWFLEXPOE8",
+        ip="",
+        type="usw",
+        lldp_info=[],
+        port_table=[],
+    )
+    result = coerce_device(device)
+    assert result.model_name == "USW Flex 2.5G 8 PoE"
+    assert result.model == "USWFLEXPOE8"

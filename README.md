@@ -110,10 +110,10 @@ Legend only:
 unifi-network-maps --legend-only --stdout
 ```
 
-Payload JSON (devices + clients + VLAN inventory):
+JSON payload (devices + clients + VLAN inventory):
 
 ```bash
-unifi-network-maps --format payload --output ./payload.json
+unifi-network-maps --format json --output ./payload.json
 ```
 
 ## Home Assistant integration
@@ -207,7 +207,7 @@ SVG:
 - `--theme-file`: load a YAML theme for Mermaid + SVG colors (see `examples/theme.yaml` and `examples/theme-dark.yaml`).
 
 Output:
-- `--format mermaid|svg|svg-iso|lldp-md|mkdocs|payload`: output format (default mermaid).
+- `--format mermaid|svg|svg-iso|lldp-md|mkdocs|json`: output format (default mermaid).
 - `--stdout`: write output to stdout.
 - `--markdown`: wrap Mermaid output in a code fence.
 - `--mkdocs-sidebar-legend`: write assets to place the compact legend in the MkDocs right sidebar.

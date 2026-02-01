@@ -190,7 +190,7 @@ def test_main_payload_from_mock_includes_vlan_info(monkeypatch, tmp_path):
                 "--mock-data",
                 str(mock_path),
                 "--format",
-                "payload",
+                "json",
                 "--include-clients",
                 "--stdout",
             ]
@@ -234,7 +234,7 @@ def test_main_payload_from_mock_excludes_clients_by_default(monkeypatch, tmp_pat
     monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
     monkeypatch.setattr(cli_module, "write_output", write_output)
 
-    assert main(["--mock-data", str(mock_path), "--format", "payload", "--stdout"]) == 0
+    assert main(["--mock-data", str(mock_path), "--format", "json", "--stdout"]) == 0
     output = json.loads(captured["content"])
     vlan_map = {entry["id"]: entry for entry in output["vlan_info"]}
     assert vlan_map[1]["client_count"] == 0

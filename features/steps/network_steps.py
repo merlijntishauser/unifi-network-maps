@@ -24,7 +24,7 @@ def _output_suffix(format_name: str) -> str:
         return "md"
     if format_name == "lldp-md":
         return "md"
-    if format_name == "payload":
+    if format_name == "json":
         return "json"
     return "svg"
 

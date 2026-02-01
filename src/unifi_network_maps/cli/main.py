@@ -120,13 +120,13 @@ def _load_runtime_context(
     return config, site, None, None
 
 
-def _handle_payload_format(
+def _handle_json_format(
     args: argparse.Namespace,
     *,
     config: Config | None,
     site: str,
 ) -> int | None:
-    if args.format != "payload":
+    if args.format != "json":
         return None
     payload: dict[str, list[object] | list[dict[str, object]]]
     if args.mock_data:
@@ -167,7 +167,7 @@ def main(argv: list[str] | None = None) -> int:
     except ValueError as exc:
         logging.error(str(exc))
         return 2
-    payload_result = _handle_payload_format(args, config=config, site=site)
+    payload_result = _handle_json_format(args, config=config, site=site)
     if payload_result is not None:
         return payload_result
     try:

@@ -180,7 +180,7 @@ def resolve_output_path(path: str | Path, *, format_name: str | None) -> Path:
     extensions: set[str] | None
     if format_name == "svg" or format_name == "svg-iso":
         extensions = {".svg"}
-    elif format_name in {"mock", "payload"}:
+    elif format_name in {"mock", "json"}:
         extensions = {".json"}
     elif format_name == "mermaid":
         extensions = {".md", ".mermaid", ".mmd"}

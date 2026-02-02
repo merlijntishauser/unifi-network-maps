@@ -67,6 +67,12 @@ eval $CLI --theme-file src/unifi_network_maps/assets/themes/dark.yaml --format s
 eval $CLI --theme-file src/unifi_network_maps/assets/themes/default.yaml --format svg-iso --output smoketest/themes/svg_iso_default.svg
 eval $CLI --theme-file src/unifi_network_maps/assets/themes/dark.yaml --format svg-iso --output smoketest/themes/svg_iso_dark.svg
 
+# WAN variants
+mkdir -p smoketest/wan
+eval $CLI --format svg --wan-label Odido --wan-speed 1Gbps --output smoketest/wan/network_wan.svg
+eval $CLI --format svg-iso --wan-label Odido --wan-speed 1Gbps --output smoketest/wan/network_wan_iso.svg
+eval $CLI --format svg-iso --wan-label Odido --wan-speed 1Gbps --wan2-label Backup --output smoketest/wan/network_wan_dual_iso.svg
+
 # VLAN variants (requires --include-clients for active VLAN visualization)
 mkdir -p smoketest/vlan
 eval $CLI --include-clients --format svg --output smoketest/vlan/network_vlan.svg

@@ -1496,13 +1496,13 @@ def _render_iso_node(
     tile_w = layout.tile_width
     tile_h = layout.tile_height
 
-    # Determine node depth based on node type and port label
+    # Determine node depth based on port label presence
     is_client = node_type in ("client", "client_cluster")
-    if is_client and port_label:
-        # Clients with port labels: no 3D box, only the port label tile
+    if port_label:
+        # Nodes with port labels: no 3D base box, only the port label tile
         node_depth = 0.0
     else:
-        # All other nodes: consistent 3D depth
+        # Nodes without port labels: consistent 3D depth
         node_depth = layout.tile_height * 0.15
 
     group_attrs = _svg_node_group_attrs(None, name, node_type)

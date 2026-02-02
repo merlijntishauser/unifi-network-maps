@@ -20,6 +20,7 @@ from unifi_network_maps.model.topology import (
     _client_unifi_flag,
     _client_uplink_mac,
     _client_uplink_port,
+    _find_wan_port_by_assignment,
     _get_model_display_name,
     _parse_uplink,
     _poe_ports_from_device,
@@ -36,6 +37,7 @@ from unifi_network_maps.model.topology import (
     build_tree_edges_by_topology,
     classify_device_type,
     coerce_device,
+    extract_wan_info,
     normalize_devices,
 )
 
@@ -781,3 +783,175 @@ def test_coerce_device_uses_model_in_lts_for_model_name():
     result = coerce_device(device)
     assert result.model_name == "USW Flex 2.5G 8 PoE"
     assert result.model == "USWFLEXPOE8"
+
+
+# --- WAN detection tests ---
+
+
+def test_find_wan_port_by_assignment_finds_wan():
+    port_table = [
+        PortInfo(
+            port_idx=1,
+            name="Port 1",
+            ifname="eth0",
+            speed=1000,
+            aggregation_group=None,
+            port_poe=False,
+            poe_enable=False,
+            poe_good=False,
+            poe_power=None,
+        ),
+        PortInfo(
+            port_idx=5,
+            name="Port 5",
+            ifname="eth4",
+            speed=10000,
+            aggregation_group=None,
+            port_poe=False,
+            poe_enable=False,
+            poe_good=False,
+            poe_power=None,
+            wan_networkconf_id="WAN",
+        ),
+    ]
+    result = _find_wan_port_by_assignment(port_table, "WAN")
+    assert result is not None
+    assert result.port_idx == 5
+
+
+def test_find_wan_port_by_assignment_finds_wan2():
+    port_table = [
+        PortInfo(
+            port_idx=5,
+            name="Port 5",
+            ifname="eth4",
+            speed=10000,
+            aggregation_group=None,
+            port_poe=False,
+            poe_enable=False,
+            poe_good=False,
+            poe_power=None,
+            wan_networkconf_id="WAN",
+        ),
+        PortInfo(
+            port_idx=7,
+            name="SFP+ 2",
+            ifname="eth6",
+            speed=None,
+            aggregation_group=None,
+            port_poe=False,
+            poe_enable=False,
+            poe_good=False,
+            poe_power=None,
+            wan_networkconf_id="WAN2",
+        ),
+    ]
+    result = _find_wan_port_by_assignment(port_table, "WAN2")
+    assert result is not None
+    assert result.port_idx == 7
+
+
+def test_find_wan_port_by_assignment_returns_none_when_not_found():
+    port_table = [
+        PortInfo(
+            port_idx=1,
+            name="Port 1",
+            ifname="eth0",
+            speed=1000,
+            aggregation_group=None,
+            port_poe=False,
+            poe_enable=False,
+            poe_good=False,
+            poe_power=None,
+        ),
+    ]
+    result = _find_wan_port_by_assignment(port_table, "WAN")
+    assert result is None
+
+
+def test_extract_wan_info_uses_assignment():
+    device = Device(
+        name="Gateway",
+        model_name="UDM Pro",
+        model="UDMPRO",
+        mac="aa:bb:cc:dd:ee:ff",
+        ip="85.145.111.204",
+        type="udm",
+        lldp_info=[],
+        port_table=[
+            PortInfo(
+                port_idx=1,
+                name="Port 1",
+                ifname="eth0",
+                speed=1000,
+                aggregation_group=None,
+                port_poe=False,
+                poe_enable=False,
+                poe_good=False,
+                poe_power=None,
+            ),
+            PortInfo(
+                port_idx=5,
+                name="Port 5",
+                ifname="eth4",
+                speed=10000,
+                aggregation_group=None,
+                port_poe=False,
+                poe_enable=False,
+                poe_good=False,
+                poe_power=None,
+                wan_networkconf_id="WAN",
+            ),
+            PortInfo(
+                port_idx=7,
+                name="SFP+ 2",
+                ifname="eth6",
+                speed=None,
+                aggregation_group=None,
+                port_poe=False,
+                poe_enable=False,
+                poe_good=False,
+                poe_power=None,
+                wan_networkconf_id="WAN2",
+            ),
+        ],
+    )
+    result = extract_wan_info(device, wan1_label="Odido")
+    assert result is not None
+    assert result.wan1 is not None
+    assert result.wan1.port_idx == 5
+    assert result.wan1.link_speed == 10000
+    assert result.wan1.label == "Odido"
+    assert result.wan2 is not None
+    assert result.wan2.port_idx == 7
+    assert result.wan2.enabled is False
+
+
+def test_extract_wan_info_fallback_to_port_idx():
+    device = Device(
+        name="Gateway",
+        model_name="UDM",
+        model="UDM",
+        mac="aa:bb:cc:dd:ee:ff",
+        ip="192.168.1.1",
+        type="udm",
+        lldp_info=[],
+        port_table=[
+            PortInfo(
+                port_idx=1,
+                name="WAN 1",
+                ifname="eth0",
+                speed=2500,
+                aggregation_group=None,
+                port_poe=False,
+                poe_enable=False,
+                poe_good=False,
+                poe_power=None,
+            ),
+        ],
+    )
+    result = extract_wan_info(device)
+    assert result is not None
+    assert result.wan1 is not None
+    assert result.wan1.port_idx == 1
+    assert result.wan1.link_speed == 2500

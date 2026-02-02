@@ -54,7 +54,8 @@
           "port_poe": false,
           "poe_enable": false,
           "poe_good": false,
-          "poe_power": 0.0
+          "poe_power": 0.0,
+          "wan_networkconf_id": "WAN"
         },
         {
           "ifname": "eth9",
@@ -69,7 +70,8 @@
           "poe_voltage": 0.0,
           "port_idx": 9,
           "port_poe": false,
-          "tagged_vlans": []
+          "tagged_vlans": [],
+          "wan_networkconf_id": "WAN2"
         }
       ],
       "type": "udm",

@@ -67,6 +67,7 @@ class PortInfo:
     poe_power: float | None
     native_vlan: int | None = None
     tagged_vlans: tuple[int, ...] = ()
+    wan_networkconf_id: str | None = None  # WAN assignment: "WAN", "WAN2", or network ID
 
 
 @dataclass(frozen=True)
@@ -283,6 +284,17 @@ def _resolve_vlan_id(value: object, network_vlan_map: dict[str, int] | None = No
     return None
 
 
+def _extract_wan_networkconf_id(port_entry: object) -> str | None:
+    """Extract WAN network configuration ID from a port entry."""
+    if isinstance(port_entry, dict):
+        value = port_entry.get("wan_networkconf_id")
+    else:
+        value = _get_attr(port_entry, "wan_networkconf_id")
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    return None
+
+
 def _port_info_from_entry(
     port_entry: object, network_vlan_map: dict[str, int] | None = None
 ) -> PortInfo:
@@ -322,6 +334,7 @@ def _port_info_from_entry(
         poe_power=poe_power,
         native_vlan=_resolve_vlan_id(native_vlan, network_vlan_map),
         tagged_vlans=_coerce_vlan_list(tagged_vlans, network_vlan_map),
+        wan_networkconf_id=_extract_wan_networkconf_id(port_entry),
     )
 
 
@@ -1274,34 +1287,32 @@ def build_topology(
     return TopologyResult(raw_edges=raw_edges, tree_edges=tree_edges)
 
 
-def _is_wan_port(port: PortInfo, port_idx: int) -> bool:
-    """Check if a port is likely a WAN port."""
-    # WAN ports are typically eth0/Port 1 or named "WAN"
-    if port.port_idx == port_idx:
-        return True
-    name = (port.name or "").lower()
-    ifname = (port.ifname or "").lower()
-    return "wan" in name or "wan" in ifname
+def _find_wan_port_by_assignment(port_table: list[PortInfo], wan_id: str) -> PortInfo | None:
+    """Find a WAN port by its wan_networkconf_id assignment.
 
+    Args:
+        port_table: List of port info from device.
+        wan_id: WAN identifier to match (e.g., "WAN", "WAN2").
 
-def _find_wan_port(port_table: list[PortInfo], wan_idx: int) -> PortInfo | None:
-    """Find a WAN port in the port table."""
+    Returns:
+        PortInfo for the matching WAN port, or None if not found.
+    """
+    wan_id_lower = wan_id.lower()
     for port in port_table:
-        if port.port_idx == wan_idx:
-            return port
+        if port.wan_networkconf_id:
+            conf_id = port.wan_networkconf_id.lower()
+            # Match exact WAN/WAN2 or network ID containing the WAN identifier
+            if conf_id == wan_id_lower or wan_id_lower in conf_id:
+                return port
     return None
 
 
-def _format_speed(speed_mbps: int | None) -> str | None:
-    """Format speed in Mbps to human-readable string."""
-    if speed_mbps is None or speed_mbps == 0:
-        return None
-    if speed_mbps >= 1000:
-        gbps = speed_mbps / 1000
-        if gbps == int(gbps):
-            return f"{int(gbps)} Gbps"
-        return f"{gbps:.1f} Gbps"
-    return f"{speed_mbps} Mbps"
+def _find_wan_port_by_idx(port_table: list[PortInfo], port_idx: int) -> PortInfo | None:
+    """Find a port by index (fallback for legacy detection)."""
+    for port in port_table:
+        if port.port_idx == port_idx:
+            return port
+    return None
 
 
 def extract_wan_info(
@@ -1313,6 +1324,10 @@ def extract_wan_info(
     wan2_isp_speed: str | None = None,
 ) -> WanInfo | None:
     """Extract WAN interface information from a gateway device.
+
+    Detects WAN ports by their wan_networkconf_id assignment field. Falls back
+    to legacy port number detection (port 1 for WAN1, port 9/2 for WAN2) if
+    no WAN assignment is found.
 
     Args:
         device: The gateway device to extract WAN info from.
@@ -1332,12 +1347,17 @@ def extract_wan_info(
     if not port_table:
         return None
 
-    # WAN1 is typically port 1 (eth0)
-    wan1_port = _find_wan_port(port_table, 1)
+    # Find WAN1 port - first by assignment, then fallback to port 1
+    wan1_port = _find_wan_port_by_assignment(port_table, "WAN")
+    if not wan1_port:
+        wan1_port = _find_wan_port_by_assignment(port_table, "WAN1")
+    if not wan1_port:
+        wan1_port = _find_wan_port_by_idx(port_table, 1)
+
     wan1 = None
     if wan1_port:
         wan1 = WanInterface(
-            port_idx=1,
+            port_idx=wan1_port.port_idx or 1,
             link_speed=wan1_port.speed,
             ip_address=device.ip if device.ip else None,
             enabled=wan1_port.speed is not None and wan1_port.speed > 0,
@@ -1345,12 +1365,19 @@ def extract_wan_info(
             isp_speed=wan1_isp_speed,
         )
 
-    # WAN2 is typically port 9 (eth8) on UDM Pro, or port 2 on other models
-    # Try port 9 first, then port 2
-    wan2_port = _find_wan_port(port_table, 9) or _find_wan_port(port_table, 2)
+    # Find WAN2 port - first by assignment, then fallback to port 9 or 2
+    wan2_port = _find_wan_port_by_assignment(port_table, "WAN2")
+    if not wan2_port:
+        wan2_port = _find_wan_port_by_idx(port_table, 9)
+    if not wan2_port:
+        wan2_port = _find_wan_port_by_idx(port_table, 2)
+
     wan2 = None
-    # Only include WAN2 if there's a label/speed specified or if it appears active
-    if wan2_port and (wan2_label or wan2_isp_speed or (wan2_port.speed and wan2_port.speed > 0)):
+    # Only include WAN2 if it has WAN assignment, or if label/speed specified, or active
+    has_wan2_assignment = wan2_port and wan2_port.wan_networkconf_id
+    has_wan2_cli_config = wan2_label or wan2_isp_speed
+    is_wan2_active = wan2_port and wan2_port.speed and wan2_port.speed > 0
+    if wan2_port and (has_wan2_assignment or has_wan2_cli_config or is_wan2_active):
         wan2 = WanInterface(
             port_idx=wan2_port.port_idx or 9,
             link_speed=wan2_port.speed,

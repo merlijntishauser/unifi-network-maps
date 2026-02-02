@@ -45,3 +45,10 @@ svg:
     other:
       from: "#eeeeee"
       to: "#d7d7d7"
+  # VLAN color overrides (auto-generated colors used for unlisted VLANs)
+  vlan_colors:
+    1: "#6c757d"      # Default/management - gray
+    10: "#e74c3c"     # IoT - red
+    20: "#3498db"     # Guest - blue
+    30: "#f1c40f"     # Trusted - yellow
+    100: "#9b59b6"    # Security/cameras - purple

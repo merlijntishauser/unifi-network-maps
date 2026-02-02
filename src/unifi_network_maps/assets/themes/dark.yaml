@@ -48,3 +48,10 @@ svg:
     other:
       from: "#2a2a2a"
       to: "#1f1f1f"
+  # VLAN color overrides (brighter for dark mode)
+  vlan_colors:
+    1: "#95a5a6"      # Default/management - light gray
+    10: "#ff6b6b"     # IoT - bright red
+    20: "#5dade2"     # Guest - bright blue
+    30: "#f7dc6f"     # Trusted - bright yellow
+    100: "#bb8fce"    # Security/cameras - bright purple

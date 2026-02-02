@@ -1413,11 +1413,23 @@ def _iso_group_parallelogram(
     gxs = [gx for gx, _ in group_grid.values()]
     gys = [gy for _, gy in group_grid.values()]
 
-    # Extend bounds: padding before min, cell size (grid_spacing) + padding after max
-    min_gx = min(gxs) - padding
-    max_gx = max(gxs) + layout.grid_spacing_x + padding
-    min_gy = min(gys) - padding
-    max_gy = max(gys) + layout.grid_spacing_y + padding
+    is_single_node = len(group_grid) == 1
+    if is_single_node:
+        # For single-node groups: boundary centered around the node
+        # Shift to align with node's visual center
+        node_half = 0.8  # Half-size of boundary in grid units
+        center_gx = min(gxs) + 1.45  # Tuned for visual centering
+        center_gy = min(gys) + 0.45
+        min_gx = center_gx - node_half
+        max_gx = center_gx + node_half
+        min_gy = center_gy - node_half
+        max_gy = center_gy + node_half
+    else:
+        # For multi-node groups: use grid spacing with padding
+        min_gx = min(gxs) - padding
+        max_gx = max(gxs) + layout.grid_spacing_x + padding
+        min_gy = min(gys) - padding
+        max_gy = max(gys) + layout.grid_spacing_y + padding
 
     # Project grid corners to screen coordinates
     corners_grid = [
@@ -1434,11 +1446,11 @@ def _iso_group_parallelogram(
         for gx, gy in corners_grid
     ]
 
-    # Position label at the top corner, offset inward
+    # Position label at the top corner, offset inward along the right edge
     top_x, top_y = points[0]
     right_x, right_y = points[1]
-    label_x = top_x + (right_x - top_x) * 0.1 + 10
-    label_y = top_y + (right_y - top_y) * 0.1 + 20
+    label_x = top_x + (right_x - top_x) * 0.15 + 15
+    label_y = top_y + (right_y - top_y) * 0.15 + 10
     return IsoGroupBounds(name=name, points=points, label_x=label_x, label_y=label_y)
 
 
@@ -1449,7 +1461,8 @@ def _render_iso_group_boundaries(
     font_size: int = 10,
 ) -> None:
     """Render isometric group boundaries as parallelograms."""
-    label_size = font_size + 6
+    label_size = 48  # Large labels for visibility
+    iso_angle = 30  # Match isometric perspective
     for bounds in bounds_list:
         group_attr = _escape_attr(bounds.name, quote=True)
         fill, stroke = theme.group_colors(bounds.name)
@@ -1461,16 +1474,23 @@ def _render_iso_group_boundaries(
             f'stroke="{stroke}" stroke-width="{theme.group_stroke_width}"/>'
         )
         label_text = _escape_text(bounds.name.capitalize())
+        lx, ly = bounds.label_x, bounds.label_y
+        # Isometric transform: rotate + skew to follow 30° perspective
+        label_transform = (
+            f"translate({lx} {ly}) rotate({iso_angle}) skewX({iso_angle}) translate({-lx} {-ly})"
+        )
         # Add text with white outline for readability
         lines.append(
-            f'<text class="group-label" x="{bounds.label_x}" y="{bounds.label_y}" '
+            f'<text class="group-label" x="{lx}" y="{ly}" '
             f'font-size="{label_size}" font-weight="bold" '
-            f'stroke="#ffffff" stroke-width="3" paint-order="stroke">'
+            f'stroke="#ffffff" stroke-width="4" paint-order="stroke" '
+            f'transform="{label_transform}">'
             f"{label_text}</text>"
         )
         lines.append(
-            f'<text class="group-label" x="{bounds.label_x}" y="{bounds.label_y}" '
-            f'fill="{stroke}" font-size="{label_size}" font-weight="bold">'
+            f'<text class="group-label" x="{lx}" y="{ly}" '
+            f'fill="{stroke}" font-size="{label_size}" font-weight="bold" '
+            f'transform="{label_transform}">'
             f"{label_text}</text>"
         )
         lines.append("</g>")

@@ -492,6 +492,9 @@ def _tree_edges_from_parent(
                     wireless=original.wireless,
                     speed=original.speed,
                     channel=original.channel,
+                    vlans=original.vlans,
+                    active_vlans=original.active_vlans,
+                    is_trunk=original.is_trunk,
                 )
             )
     return tree_edges

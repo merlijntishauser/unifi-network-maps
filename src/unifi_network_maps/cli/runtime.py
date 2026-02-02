@@ -17,6 +17,7 @@ from ..model.topology import (
     build_client_port_map,
     build_device_index,
     build_topology,
+    enrich_edges_with_active_vlans,
     group_devices_by_type,
     normalize_devices,
 )
@@ -82,6 +83,7 @@ def build_edges_with_clients(
     clients_override: list[object] | None = None,
 ) -> tuple[list, list | None]:
     clients = None
+    client_edges: list = []
     if args.include_clients:
         if clients_override is None:
             if config is None:
@@ -90,14 +92,16 @@ def build_edges_with_clients(
         else:
             clients = clients_override
         device_index = build_device_index(devices)
-        edges = edges + build_client_edges(
+        client_edges = build_client_edges(
             clients,
             device_index,
             include_ports=args.include_ports,
             client_mode=args.client_scope,
             only_unifi=args.only_unifi,
         )
-    return edges, clients
+    # Enrich infrastructure edges with active VLANs from client traffic
+    enriched_edges = enrich_edges_with_active_vlans(edges, client_edges)
+    return enriched_edges + client_edges, clients
 
 
 def select_edges(topology: TopologyResult) -> tuple[list, bool]:

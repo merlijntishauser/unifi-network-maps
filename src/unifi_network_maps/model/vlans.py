@@ -117,3 +117,25 @@ def _network_vlan_entries(networks: Iterable[object]) -> dict[int, dict[str, obj
         if name and not entry["name"]:
             entry["name"] = name
     return vlan_entries
+
+
+def build_network_vlan_map(networks: Iterable[object]) -> dict[str, int]:
+    """Build a mapping from network ID to VLAN ID for WLAN resolution."""
+    result: dict[str, int] = {}
+    for network in normalize_networks(networks):
+        network_id = network.get("network_id")
+        vlan_id = network.get("vlan_id")
+        if isinstance(network_id, str) and isinstance(vlan_id, int):
+            result[network_id] = vlan_id
+    return result
+
+
+def build_vlan_names(networks: Iterable[object]) -> dict[int, str]:
+    """Build a mapping from VLAN ID to network name."""
+    result: dict[int, str] = {}
+    for network in normalize_networks(networks):
+        vlan_id = network.get("vlan_id")
+        name = network.get("name")
+        if isinstance(vlan_id, int) and isinstance(name, str) and vlan_id not in result:
+            result[vlan_id] = name
+    return result

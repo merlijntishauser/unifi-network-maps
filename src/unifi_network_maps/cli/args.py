@@ -167,6 +167,12 @@ def add_svg_args(parser: argparse._ArgumentGroup) -> None:
         default=None,
         help="WAN2 ISP/connection name (e.g., 'Backup 4G')",
     )
+    parser.add_argument(
+        "--icon-set",
+        choices=["legacy", "modern"],
+        default=None,
+        help="Icon set to use (default: determined by theme, or 'legacy' if no theme)",
+    )
 
 
 def add_general_render_args(parser: argparse._ArgumentGroup) -> None:

@@ -80,7 +80,9 @@ def _iso_layout(options: SvgOptions) -> IsoLayout:
 
 
 _TYPE_ORDER = ["gateway", "switch", "ap", "client", "client_cluster", "other"]
-_ICON_FILES = {
+# Icon file mappings per icon set
+# Legacy set uses existing icons from root and isometric/ directories
+_ICON_FILES_LEGACY = {
     "gateway": "router-network.svg",
     "switch": "server-network.svg",
     "ap": "access-point.svg",
@@ -89,7 +91,7 @@ _ICON_FILES = {
     "other": "server.svg",
 }
 
-_ISO_ICON_FILES = {
+_ISO_ICON_FILES_LEGACY = {
     "gateway": "router.svg",
     "switch": "switch-module.svg",
     "ap": "tower.svg",
@@ -97,6 +99,36 @@ _ISO_ICON_FILES = {
     "client_cluster": "laptop.svg",
     "other": "server.svg",
 }
+
+# Modern set uses consistent naming in modern/ directory
+_ICON_FILES_MODERN = {
+    "gateway": "gateway.svg",
+    "switch": "switch.svg",
+    "ap": "ap.svg",
+    "client": "client.svg",
+    "client_cluster": "client.svg",
+    "other": "other.svg",
+}
+
+# Icon set registry: maps set names to (flat_dir, iso_dir, flat_files, iso_files)
+_ICON_SETS = {
+    "legacy": (
+        "",  # Flat icons in root icons/ directory
+        "isometric",  # Isometric icons in isometric/ subdirectory
+        _ICON_FILES_LEGACY,
+        _ISO_ICON_FILES_LEGACY,
+    ),
+    "modern": (
+        "modern",  # Both flat and iso use same directory
+        "modern",
+        _ICON_FILES_MODERN,
+        _ICON_FILES_MODERN,  # Same files for both (isometric style)
+    ),
+}
+
+# Backwards compatibility aliases
+_ICON_FILES = _ICON_FILES_LEGACY
+_ISO_ICON_FILES = _ISO_ICON_FILES_LEGACY
 
 _TYPE_COLORS = {
     "gateway": ("#ffd199", "#f08a00"),
@@ -318,29 +350,83 @@ def _label_metrics(
     return width, height
 
 
-def _load_icons() -> dict[str, str]:
+def _load_icons(icon_set: str = "legacy") -> dict[str, str]:
+    """Load flat (non-isometric) icons for the specified icon set.
+
+    Falls back to legacy icons if the requested icon is not found in the set.
+    """
     base = Path(__file__).resolve().parents[1] / "assets" / "icons"
     icons: dict[str, str] = {}
-    for node_type, filename in _ICON_FILES.items():
-        path = base / filename
-        if not path.exists():
-            continue
-        data = path.read_bytes()
-        encoded = base64.b64encode(data).decode("ascii")
-        icons[node_type] = f"data:image/svg+xml;base64,{encoded}"
+
+    # Get set configuration, defaulting to legacy
+    set_config = _ICON_SETS.get(icon_set, _ICON_SETS["legacy"])
+    subdir, _, file_map, _ = set_config
+
+    # Also load legacy for fallback
+    legacy_config = _ICON_SETS["legacy"]
+    legacy_subdir, _, legacy_files, _ = legacy_config
+
+    for node_type in _ICON_FILES_LEGACY.keys():
+        # Try requested set first
+        filename = file_map.get(node_type)
+        if filename:
+            path = base / subdir / filename if subdir else base / filename
+            if path.exists():
+                data = path.read_bytes()
+                encoded = base64.b64encode(data).decode("ascii")
+                icons[node_type] = f"data:image/svg+xml;base64,{encoded}"
+                continue
+
+        # Fallback to legacy
+        legacy_filename = legacy_files.get(node_type)
+        if legacy_filename:
+            legacy_path = (
+                base / legacy_subdir / legacy_filename if legacy_subdir else base / legacy_filename
+            )
+            if legacy_path.exists():
+                data = legacy_path.read_bytes()
+                encoded = base64.b64encode(data).decode("ascii")
+                icons[node_type] = f"data:image/svg+xml;base64,{encoded}"
+
     return icons
 
 
-def _load_isometric_icons() -> dict[str, str]:
-    base = Path(__file__).resolve().parents[1] / "assets" / "icons" / "isometric"
+def _load_isometric_icons(icon_set: str = "legacy") -> dict[str, str]:
+    """Load isometric icons for the specified icon set.
+
+    Falls back to legacy icons if the requested icon is not found in the set.
+    """
+    base = Path(__file__).resolve().parents[1] / "assets" / "icons"
     icons: dict[str, str] = {}
-    for node_type, filename in _ISO_ICON_FILES.items():
-        path = base / filename
-        if not path.exists():
-            continue
-        data = path.read_bytes()
-        encoded = base64.b64encode(data).decode("ascii")
-        icons[node_type] = f"data:image/svg+xml;base64,{encoded}"
+
+    # Get set configuration, defaulting to legacy
+    set_config = _ICON_SETS.get(icon_set, _ICON_SETS["legacy"])
+    _, iso_subdir, _, iso_file_map = set_config
+
+    # Also load legacy for fallback
+    legacy_config = _ICON_SETS["legacy"]
+    _, legacy_iso_subdir, _, legacy_iso_files = legacy_config
+
+    for node_type in _ISO_ICON_FILES_LEGACY.keys():
+        # Try requested set first
+        filename = iso_file_map.get(node_type)
+        if filename:
+            path = base / iso_subdir / filename
+            if path.exists():
+                data = path.read_bytes()
+                encoded = base64.b64encode(data).decode("ascii")
+                icons[node_type] = f"data:image/svg+xml;base64,{encoded}"
+                continue
+
+        # Fallback to legacy
+        legacy_filename = legacy_iso_files.get(node_type)
+        if legacy_filename:
+            legacy_path = base / legacy_iso_subdir / legacy_filename
+            if legacy_path.exists():
+                data = legacy_path.read_bytes()
+                encoded = base64.b64encode(data).decode("ascii")
+                icons[node_type] = f"data:image/svg+xml;base64,{encoded}"
+
     return icons
 
 
@@ -810,7 +896,7 @@ def render_svg(
     wan_info: WanInfo | None = None,
 ) -> str:
     options = options or SvgOptions()
-    icons = _load_icons()
+    icons = _load_icons(theme.icon_set)
 
     use_grouped = options.layout_mode == "grouped" and groups
     group_bounds_list: list[GroupBounds] = []
@@ -2038,7 +2124,7 @@ def render_svg_isometric(
     wan_info: WanInfo | None = None,
 ) -> str:
     options = options or SvgOptions()
-    icons = _load_isometric_icons()
+    icons = _load_isometric_icons(theme.icon_set)
     layout_positions = _iso_layout_positions(edges, node_types, options)
     layout = layout_positions.layout
     grid_positions = layout_positions.grid_positions

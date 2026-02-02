@@ -18,6 +18,7 @@ network.md
 *.svg
 !src/unifi_network_maps/assets/icons/*.svg
 !src/unifi_network_maps/assets/icons/isometric/*.svg
+!src/unifi_network_maps/assets/icons/modern/*.svg
 !examples/output/*.svg
 smoketest/
 network*.md

@@ -198,13 +198,13 @@ def test_render_svg_handles_missing_positions(monkeypatch):
 
 
 def test_render_svg_without_icons(monkeypatch):
-    monkeypatch.setattr(svg_module, "_load_icons", lambda: {})
+    monkeypatch.setattr(svg_module, "_load_icons", lambda icon_set="legacy": {})
     output = svg_module.render_svg([Edge("A", "B")], node_types={"A": "switch", "B": "switch"})
     assert "<image" not in output
 
 
 def test_render_svg_isometric_without_icons(monkeypatch):
-    monkeypatch.setattr(svg_module, "_load_isometric_icons", lambda: {})
+    monkeypatch.setattr(svg_module, "_load_isometric_icons", lambda icon_set="legacy": {})
     output = svg_module.render_svg_isometric(
         [Edge("A", "B")], node_types={"A": "switch", "B": "switch"}
     )
@@ -290,3 +290,75 @@ def test_render_svg_isometric_adds_edge_data_attributes():
     )
     assert 'data-edge-left="Gateway"' in output
     assert 'data-edge-right="Switch"' in output
+
+
+# Icon set tests
+
+
+def test_load_isometric_icons_legacy():
+    icons = svg_module._load_isometric_icons("legacy")
+    assert "gateway" in icons
+    assert "switch" in icons
+    assert "ap" in icons
+    assert "client" in icons
+    assert "other" in icons
+    assert all(v.startswith("data:image/svg+xml;base64,") for v in icons.values())
+
+
+def test_load_isometric_icons_modern():
+    icons = svg_module._load_isometric_icons("modern")
+    assert "gateway" in icons
+    assert "switch" in icons
+    assert "ap" in icons
+    assert "client" in icons
+    assert "other" in icons
+    assert all(v.startswith("data:image/svg+xml;base64,") for v in icons.values())
+
+
+def test_load_isometric_icons_fallback_to_legacy():
+    """Unknown icon set should fall back to legacy."""
+    icons = svg_module._load_isometric_icons("nonexistent_set")
+    assert "gateway" in icons
+    assert len(icons) > 0
+
+
+def test_load_icons_legacy():
+    icons = svg_module._load_icons("legacy")
+    assert "gateway" in icons
+    assert "switch" in icons
+
+
+def test_load_icons_modern():
+    icons = svg_module._load_icons("modern")
+    assert "gateway" in icons
+    assert "switch" in icons
+
+
+def test_render_svg_uses_theme_icon_set():
+    """SVG render should use icon_set from theme."""
+    from dataclasses import replace
+
+    from unifi_network_maps.render.svg_theme import DEFAULT_THEME
+
+    theme = replace(DEFAULT_THEME, icon_set="modern")
+    output = svg_module.render_svg(
+        [Edge("A", "B")],
+        node_types={"A": "gateway", "B": "switch"},
+        theme=theme,
+    )
+    assert "<svg" in output
+
+
+def test_render_svg_isometric_uses_theme_icon_set():
+    """Isometric SVG render should use icon_set from theme."""
+    from dataclasses import replace
+
+    from unifi_network_maps.render.svg_theme import DEFAULT_THEME
+
+    theme = replace(DEFAULT_THEME, icon_set="modern")
+    output = svg_module.render_svg_isometric(
+        [Edge("A", "B")],
+        node_types={"A": "gateway", "B": "switch"},
+        theme=theme,
+    )
+    assert "<svg" in output

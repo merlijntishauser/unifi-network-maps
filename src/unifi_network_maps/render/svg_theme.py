@@ -41,6 +41,9 @@ class SvgTheme:
     # WAN globe
     wan_globe: tuple[str, str] = ("#4fc3f7", "#0288d1")
 
+    # Icon set
+    icon_set: str = "legacy"
+
     def group_colors(self, group_name: str) -> tuple[str, str]:
         """Return (fill, stroke) colors for a group based on its type."""
         color_map = {

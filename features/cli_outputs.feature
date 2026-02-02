@@ -56,3 +56,18 @@ Feature: CLI output variants
   Scenario: Console script entrypoint renders help
     When I run the console entrypoint with "--help"
     Then stdout contains "usage:"
+
+  Scenario: SVG output with legacy icon set
+    Given the mock data file "examples/mock_data.json"
+    When I run the CLI with args "--format svg-iso --icon-set legacy" and output file
+    Then the output file contains "<image"
+
+  Scenario: SVG output with modern icon set
+    Given the mock data file "examples/mock_data.json"
+    When I run the CLI with args "--format svg-iso --icon-set modern" and output file
+    Then the output file contains "<image"
+
+  Scenario: SVG output uses theme default icon set
+    Given the mock data file "examples/mock_data.json"
+    When I run the CLI with args "--format svg-iso --theme unifi" and output file
+    Then the output file contains "<image"

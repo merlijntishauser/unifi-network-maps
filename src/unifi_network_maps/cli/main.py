@@ -179,6 +179,12 @@ def main(argv: list[str] | None = None) -> int:
         logging.error("Failed to load theme: %s", exc)
         return 2
 
+    # Apply CLI icon-set override if specified
+    if args.icon_set:
+        from dataclasses import replace
+
+        svg_theme = replace(svg_theme, icon_set=args.icon_set)
+
     if args.legend_only:
         legend_style = resolve_legend_style(
             format_name=args.format,

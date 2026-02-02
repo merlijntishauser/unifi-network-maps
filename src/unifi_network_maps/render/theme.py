@@ -100,6 +100,13 @@ def _coerce_vlan_colors(value: object) -> dict[int, str]:
     return result
 
 
+def _coerce_icon_set(value: object, default: str) -> str:
+    """Parse icon_set from theme YAML."""
+    if isinstance(value, str) and value in ("legacy", "modern", "flat", "outline"):
+        return value
+    return default
+
+
 def _svg_theme_from_dict(data: dict, base: SvgTheme) -> SvgTheme:
     nodes = data.get("nodes", {}) if isinstance(data.get("nodes"), dict) else {}
     links = data.get("links", {}) if isinstance(data.get("links"), dict) else {}
@@ -121,6 +128,7 @@ def _svg_theme_from_dict(data: dict, base: SvgTheme) -> SvgTheme:
         status_online=_coerce_color(status.get("online"), base.status_online),
         status_offline=_coerce_color(status.get("offline"), base.status_offline),
         wan_globe=_coerce_pair(data.get("wan_globe"), base.wan_globe),
+        icon_set=_coerce_icon_set(data.get("icon_set"), base.icon_set),
     )
 
 

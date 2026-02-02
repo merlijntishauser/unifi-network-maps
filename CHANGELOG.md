@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Add SVG grouped layout mode with visual boundaries for network segments (#19)
+- Add `--theme` CLI argument for built-in themes: `unifi`, `unifi-dark`, `minimal`, `classic`, `classic-dark` (#22)
+- Add theme properties: background, text colors (primary/secondary), status indicators (online/offline), WAN globe colors
+- Add WAN upstream visualization with ISP label, link speed, and status indicator
+
+### Changed
+- SVG renderer now uses theme-aware colors for background, text labels, and WAN box
+- WAN port detection uses `wan_networkconf_id` field instead of hardcoded port numbers
+
+### Fixed
+- Normalize gateway WAN port speeds from Gbps to Mbps for correct display (e.g., "10GbE" instead of "10MbE")
 
 ## [1.4.15] - 2026-02-01
 ### Changed

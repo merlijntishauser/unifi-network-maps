@@ -1471,9 +1471,9 @@ def _iso_front_face_label_position(
         )
     )
 
-    # Adjust position slightly for better visual centering
+    # Adjust position for better visual centering on the front face
     label_x = center_x + tile_height * 0.05
-    label_y = center_y + font_size * 0.3
+    label_y = center_y + font_size * 0.5 + tile_height * 0.1  # Lower on the face
 
     return label_x, label_y, angle
 
@@ -1566,15 +1566,15 @@ def _render_iso_node(
 
     # Position name label
     name_font_size = max(options.font_size - 2, 8)
-    if is_client and not port_label and node_depth > 0:
-        # Clients without port labels: render name on front face
+    if not port_label and node_depth > 0:
+        # Nodes without port labels: render name on front (left) face
         name_x, name_y, name_angle = _iso_front_face_label_position(
             left,
             tile_height=tile_h,
             font_size=name_font_size,
         )
     else:
-        # All other nodes: render name on bottom edge of top face
+        # Nodes with port labels: render name on bottom edge of top face
         name_x, name_y, name_angle = _iso_name_label_position(
             top,
             tile_width=tile_w,

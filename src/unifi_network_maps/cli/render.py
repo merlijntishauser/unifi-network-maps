@@ -96,31 +96,45 @@ def render_svg_output(
         site,
         clients_override=clients_override,
     )
-    options = SvgOptions(width=args.svg_width, height=args.svg_height)
+    layout_mode = getattr(args, "svg_layout_mode", "physical")
+    options = SvgOptions(
+        width=args.svg_width,
+        height=args.svg_height,
+        layout_mode=layout_mode,
+    )
+    groups = None
+    group_order = None
+    if layout_mode == "grouped":
+        groups = group_devices_by_type(devices)
+        group_order = ["gateway", "switch", "ap", "other"]
+        if clients:
+            client_names = [c.get("name") or c.get("hostname", "") for c in clients]
+            groups["client"] = [n for n in client_names if n]
+            group_order.append("client")
+    node_types = build_node_type_map(
+        devices,
+        clients,
+        client_mode=args.client_scope,
+        only_unifi=args.only_unifi,
+    )
     if args.format == "svg-iso":
         from ..render.svg import render_svg_isometric
 
         return render_svg_isometric(
             edges,
-            node_types=build_node_type_map(
-                devices,
-                clients,
-                client_mode=args.client_scope,
-                only_unifi=args.only_unifi,
-            ),
+            node_types=node_types,
             options=options,
             theme=svg_theme,
+            groups=groups,
+            group_order=group_order,
         )
     return render_svg(
         edges,
-        node_types=build_node_type_map(
-            devices,
-            clients,
-            client_mode=args.client_scope,
-            only_unifi=args.only_unifi,
-        ),
+        node_types=node_types,
         options=options,
         theme=svg_theme,
+        groups=groups,
+        group_order=group_order,
     )
 
 

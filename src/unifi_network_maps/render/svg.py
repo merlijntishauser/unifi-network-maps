@@ -24,6 +24,9 @@ class SvgOptions:
     icon_size: int = 18
     width: int | None = None
     height: int | None = None
+    layout_mode: str = "physical"  # "physical" | "grouped"
+    group_padding: int = 20
+    group_gap: int = 40
 
 
 @dataclass(frozen=True)
@@ -469,6 +472,165 @@ def _tree_layout_indices(
     return _layout_positions(nodes, children, roots=roots, sort_key=sort_key)
 
 
+# --- Grouped layout functions ---
+
+
+@dataclass(frozen=True)
+class GroupBounds:
+    name: str
+    x: float
+    y: float
+    width: float
+    height: float
+
+
+def _assign_nodes_to_groups(
+    nodes: set[str],
+    groups: dict[str, list[str]],
+) -> dict[str, str]:
+    """Map each node to its group name."""
+    node_to_group: dict[str, str] = {}
+    for group_name, members in groups.items():
+        for node in members:
+            if node in nodes:
+                node_to_group[node] = group_name
+    return node_to_group
+
+
+def _resolve_group_order(
+    groups: dict[str, list[str]],
+    group_order: list[str] | None,
+) -> list[str]:
+    """Return ordered list of group names."""
+    if group_order:
+        return [g for g in group_order if g in groups]
+    return sorted(groups.keys())
+
+
+def _filter_edges_for_group(
+    edges: list[Edge],
+    group_nodes: set[str],
+) -> list[Edge]:
+    """Return edges where both endpoints are in the group."""
+    return [e for e in edges if e.left in group_nodes and e.right in group_nodes]
+
+
+def _layout_single_group(
+    edges: list[Edge],
+    group_nodes: set[str],
+    node_types: dict[str, str],
+    options: SvgOptions,
+) -> tuple[dict[str, tuple[float, float]], float, float]:
+    """Layout nodes within a single group, return positions and dimensions."""
+    group_edges = _filter_edges_for_group(edges, group_nodes)
+    group_node_types = {n: node_types.get(n, "other") for n in group_nodes}
+    positions, width, height = _layout_nodes(group_edges, group_node_types, options)
+    return positions, float(width), float(height)
+
+
+def _compute_group_bounds(
+    group_name: str,
+    positions: dict[str, tuple[float, float]],
+    options: SvgOptions,
+    offset_x: float,
+) -> GroupBounds:
+    """Compute bounding rectangle for a group."""
+    if not positions:
+        return GroupBounds(group_name, offset_x, 0, 100, 100)
+    xs = [x for x, _ in positions.values()]
+    ys = [y for _, y in positions.values()]
+    min_x = min(xs) - options.group_padding
+    min_y = min(ys) - options.group_padding
+    max_x = max(xs) + options.node_width + options.group_padding
+    max_y = max(ys) + options.node_height + options.group_padding
+    return GroupBounds(group_name, min_x, min_y, max_x - min_x, max_y - min_y)
+
+
+def _offset_positions(
+    positions: dict[str, tuple[float, float]],
+    dx: float,
+    dy: float,
+) -> dict[str, tuple[float, float]]:
+    """Shift all positions by (dx, dy)."""
+    return {name: (x + dx, y + dy) for name, (x, y) in positions.items()}
+
+
+def _layout_grouped_nodes(
+    edges: list[Edge],
+    node_types: dict[str, str],
+    options: SvgOptions,
+    groups: dict[str, list[str]],
+    group_order: list[str] | None,
+) -> tuple[dict[str, tuple[float, float]], list[GroupBounds], int, int]:
+    """Layout nodes in horizontal group lanes."""
+    all_nodes = _layout_nodeset(edges, node_types)
+    ordered_groups = _resolve_group_order(groups, group_order)
+    node_to_group = _assign_nodes_to_groups(all_nodes, groups)
+
+    all_positions: dict[str, tuple[float, float]] = {}
+    group_bounds_list: list[GroupBounds] = []
+    current_x = float(options.padding)
+    max_height = 0.0
+
+    for group_name in ordered_groups:
+        group_nodes = set(groups.get(group_name, []))
+        group_nodes = group_nodes & all_nodes
+        if not group_nodes:
+            continue
+        positions, width, height = _layout_single_group(edges, group_nodes, node_types, options)
+        offset_x = current_x - options.padding
+        offset_positions = _offset_positions(positions, offset_x, 0)
+        all_positions.update(offset_positions)
+        bounds = _compute_group_bounds(group_name, offset_positions, options, current_x)
+        group_bounds_list.append(bounds)
+        current_x += width + options.group_gap
+        max_height = max(max_height, height)
+
+    ungrouped = all_nodes - set(node_to_group.keys())
+    if ungrouped:
+        ungrouped_positions, ug_width, ug_height = _layout_single_group(
+            edges, ungrouped, node_types, options
+        )
+        offset_positions = _offset_positions(ungrouped_positions, current_x - options.padding, 0)
+        all_positions.update(offset_positions)
+        bounds = _compute_group_bounds("Other", offset_positions, options, current_x)
+        group_bounds_list.append(bounds)
+        current_x += ug_width + options.group_gap
+        max_height = max(max_height, ug_height)
+
+    total_width = int(current_x - options.group_gap + options.padding)
+    total_height = int(max_height)
+    return all_positions, group_bounds_list, total_width, total_height
+
+
+def _render_group_boundaries(
+    lines: list[str],
+    group_bounds_list: list[GroupBounds],
+    theme: SvgTheme,
+    options: SvgOptions,
+) -> None:
+    """Render group background rectangles and labels."""
+    label_size = options.font_size + 4
+    for bounds in group_bounds_list:
+        group_attr = _escape_attr(bounds.name, quote=True)
+        fill, stroke = theme.group_colors(bounds.name)
+        lines.append(f'<g class="network-group" data-group-name="{group_attr}">')
+        lines.append(
+            f'<rect class="group-boundary" x="{bounds.x}" y="{bounds.y}" '
+            f'width="{bounds.width}" height="{bounds.height}" '
+            f'rx="{theme.group_radius}" fill="{fill}" fill-opacity="0.3" '
+            f'stroke="{stroke}" stroke-width="{theme.group_stroke_width}"/>'
+        )
+        label_x = bounds.x + 10
+        label_y = bounds.y + label_size + 8
+        lines.append(
+            f'<text class="group-label" x="{label_x}" y="{label_y}" '
+            f'fill="{stroke}" font-size="{label_size}" font-weight="bold">'
+            f"{_escape_text(bounds.name.capitalize())}</text>"
+        )
+        lines.append("</g>")
+
+
 def render_svg(
     edges: list[Edge],
     *,
@@ -476,10 +638,21 @@ def render_svg(
     node_data: dict[str, dict[str, str]] | None = None,
     options: SvgOptions | None = None,
     theme: SvgTheme = DEFAULT_THEME,
+    groups: dict[str, list[str]] | None = None,
+    group_order: list[str] | None = None,
 ) -> str:
     options = options or SvgOptions()
     icons = _load_icons()
-    positions, width, height = _layout_nodes(edges, node_types, options)
+
+    use_grouped = options.layout_mode == "grouped" and groups
+    group_bounds_list: list[GroupBounds] = []
+    if use_grouped and groups:
+        positions, group_bounds_list, width, height = _layout_grouped_nodes(
+            edges, node_types, options, groups, group_order
+        )
+    else:
+        positions, width, height = _layout_nodes(edges, node_types, options)
+
     out_width = options.width or width
     out_height = options.height or height
 
@@ -494,6 +667,9 @@ def render_svg(
         ),
     ]
 
+    if use_grouped and group_bounds_list:
+        _render_group_boundaries(lines, group_bounds_list, theme, options)
+
     node_port_labels, node_port_prefix = _render_svg_edges(
         lines, edges, positions, node_types, options
     )
@@ -506,6 +682,7 @@ def render_svg(
         icons,
         options,
         node_data,
+        groups=groups,
     )
 
     lines.append("</svg>")
@@ -607,12 +784,16 @@ def _render_svg_nodes(
     icons: dict[str, str],
     options: SvgOptions,
     node_data: dict[str, dict[str, str]] | None,
+    *,
+    groups: dict[str, list[str]] | None = None,
 ) -> None:
+    node_to_group = _build_node_to_group_map(groups) if groups else {}
     for name, (x, y) in positions.items():
         node_type = node_types.get(name, "other")
         fill, stroke = _TYPE_COLORS.get(node_type, _TYPE_COLORS["other"])
         fill = f"url(#node-{node_type})"
-        group_attrs = _svg_node_group_attrs(node_data, name, node_type)
+        group_name = node_to_group.get(name)
+        group_attrs = _svg_node_group_attrs(node_data, name, node_type, group_name)
         lines.append(f"<g{group_attrs}>")
         lines.append(f"<title>{_escape_text(name)}</title>")
         lines.append(
@@ -659,16 +840,28 @@ def _render_svg_nodes(
         lines.append("</g>")
 
 
+def _build_node_to_group_map(groups: dict[str, list[str]]) -> dict[str, str]:
+    """Build reverse mapping from node to group name."""
+    result: dict[str, str] = {}
+    for group_name, members in groups.items():
+        for node in members:
+            result[node] = group_name
+    return result
+
+
 def _svg_node_group_attrs(
     node_data: dict[str, dict[str, str]] | None,
     name: str,
     node_type: str,
+    group_name: str | None = None,
 ) -> str:
     attrs: dict[str, str] = {
         "class": "unm-node",
         "data-node-id": name,
         "data-node-type": node_type,
     }
+    if group_name:
+        attrs["data-group"] = group_name
     if node_data and (extra := node_data.get(name)):
         for key, value in extra.items():
             if key == "class":
@@ -1171,12 +1364,126 @@ def _render_iso_nodes(
         )
 
 
+@dataclass(frozen=True)
+class IsoGroupBounds:
+    name: str
+    points: list[tuple[float, float]]  # 4 corners of the parallelogram
+    label_x: float
+    label_y: float
+
+
+def _compute_iso_group_bounds(
+    grid_positions: dict[str, tuple[float, float]],
+    groups: dict[str, list[str]],
+    group_order: list[str] | None,
+    layout: IsoLayout,
+    offset_x: float,
+    offset_y: float,
+    options: SvgOptions,
+) -> list[IsoGroupBounds]:
+    """Compute isometric group bounds as parallelograms aligned with grid."""
+    ordered_groups = _resolve_group_order(groups, group_order)
+    node_to_group = _build_node_to_group_map(groups)
+    bounds_list: list[IsoGroupBounds] = []
+    # Convert screen padding to grid units
+    padding = options.group_padding / layout.step_width + 0.5
+
+    for group_name in ordered_groups:
+        group_grid = {
+            n: pos for n, pos in grid_positions.items() if node_to_group.get(n) == group_name
+        }
+        if not group_grid:
+            continue
+        bounds = _iso_group_parallelogram(
+            group_name, group_grid, layout, offset_x, offset_y, padding
+        )
+        bounds_list.append(bounds)
+    return bounds_list
+
+
+def _iso_group_parallelogram(
+    name: str,
+    group_grid: dict[str, tuple[float, float]],
+    layout: IsoLayout,
+    offset_x: float,
+    offset_y: float,
+    padding: float,
+) -> IsoGroupBounds:
+    """Create isometric parallelogram bounds from grid positions."""
+    gxs = [gx for gx, _ in group_grid.values()]
+    gys = [gy for _, gy in group_grid.values()]
+
+    # Extend bounds: padding before min, cell size (grid_spacing) + padding after max
+    min_gx = min(gxs) - padding
+    max_gx = max(gxs) + layout.grid_spacing_x + padding
+    min_gy = min(gys) - padding
+    max_gy = max(gys) + layout.grid_spacing_y + padding
+
+    # Project grid corners to screen coordinates
+    corners_grid = [
+        (min_gx, min_gy),  # top
+        (max_gx, min_gy),  # right
+        (max_gx, max_gy),  # bottom
+        (min_gx, max_gy),  # left
+    ]
+    points = [
+        (
+            _iso_project(layout, gx, gy)[0] + offset_x,
+            _iso_project(layout, gx, gy)[1] + offset_y,
+        )
+        for gx, gy in corners_grid
+    ]
+
+    # Position label at the top corner, offset inward
+    top_x, top_y = points[0]
+    right_x, right_y = points[1]
+    label_x = top_x + (right_x - top_x) * 0.1 + 10
+    label_y = top_y + (right_y - top_y) * 0.1 + 20
+    return IsoGroupBounds(name=name, points=points, label_x=label_x, label_y=label_y)
+
+
+def _render_iso_group_boundaries(
+    lines: list[str],
+    bounds_list: list[IsoGroupBounds],
+    theme: SvgTheme,
+    font_size: int = 10,
+) -> None:
+    """Render isometric group boundaries as parallelograms."""
+    label_size = font_size + 6
+    for bounds in bounds_list:
+        group_attr = _escape_attr(bounds.name, quote=True)
+        fill, stroke = theme.group_colors(bounds.name)
+        points_str = " ".join(f"{x},{y}" for x, y in bounds.points)
+        lines.append(f'<g class="network-group" data-group-name="{group_attr}">')
+        lines.append(
+            f'<polygon class="group-boundary" points="{points_str}" '
+            f'fill="{fill}" fill-opacity="0.35" '
+            f'stroke="{stroke}" stroke-width="{theme.group_stroke_width}"/>'
+        )
+        label_text = _escape_text(bounds.name.capitalize())
+        # Add text with white outline for readability
+        lines.append(
+            f'<text class="group-label" x="{bounds.label_x}" y="{bounds.label_y}" '
+            f'font-size="{label_size}" font-weight="bold" '
+            f'stroke="#ffffff" stroke-width="3" paint-order="stroke">'
+            f"{label_text}</text>"
+        )
+        lines.append(
+            f'<text class="group-label" x="{bounds.label_x}" y="{bounds.label_y}" '
+            f'fill="{stroke}" font-size="{label_size}" font-weight="bold">'
+            f"{label_text}</text>"
+        )
+        lines.append("</g>")
+
+
 def render_svg_isometric(
     edges: list[Edge],
     *,
     node_types: dict[str, str],
     options: SvgOptions | None = None,
     theme: SvgTheme = DEFAULT_THEME,
+    groups: dict[str, list[str]] | None = None,
+    group_order: list[str] | None = None,
 ) -> str:
     options = options or SvgOptions()
     icons = _load_isometric_icons()
@@ -1198,6 +1505,19 @@ def render_svg_isometric(
             "}</style>"
         ),
     ]
+
+    use_grouped = options.layout_mode == "grouped" and groups
+    if use_grouped and groups:
+        group_bounds_list = _compute_iso_group_bounds(
+            grid_positions,
+            groups,
+            group_order,
+            layout,
+            layout_positions.offset_x,
+            layout_positions.offset_y,
+            options,
+        )
+        _render_iso_group_boundaries(lines, group_bounds_list, theme, options.font_size)
 
     grid_lines = _iso_grid_lines(grid_positions, layout)
     if grid_lines:

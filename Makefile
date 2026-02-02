@@ -64,6 +64,10 @@ smoketest:
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-ports --include-clients --format svg --output smoketest/svg/network_ports_clients.svg
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-ports --include-clients --format svg-iso --output smoketest/svg-iso/network_ports_clients_iso.svg
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-ports --include-clients --client-scope all --format svg-iso --output smoketest/svg-iso/network_ports_clients_all_iso.svg
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format svg --svg-layout-mode grouped --output smoketest/svg/network_grouped.svg
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format svg-iso --svg-layout-mode grouped --output smoketest/svg-iso/network_grouped_iso.svg
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-clients --format svg --svg-layout-mode grouped --output smoketest/svg/network_clients_grouped.svg
+	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --include-clients --format svg-iso --svg-layout-mode grouped --output smoketest/svg-iso/network_clients_grouped_iso.svg
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format json --output smoketest/json/payload.json
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --format json --include-clients --output smoketest/json/payload_clients.json
 	PYTHONPATH=src .venv/bin/python -m unifi_network_maps.cli --theme-file src/unifi_network_maps/assets/themes/default.yaml --stdout > smoketest/themes/mermaid_default.mmd
@@ -80,6 +84,8 @@ smoketest-mock:
 	@mkdir -p smoketest-mock
 	PYTHONPATH=src $(PYTHON) -m unifi_network_maps.cli --mock-data examples/mock_data.json --include-ports --stdout > smoketest-mock/network_ports.mmd
 	PYTHONPATH=src $(PYTHON) -m unifi_network_maps.cli --mock-data examples/mock_data.json --include-ports --include-clients --format svg-iso --output smoketest-mock/network_ports_clients_iso.svg
+	PYTHONPATH=src $(PYTHON) -m unifi_network_maps.cli --mock-data examples/mock_data.json --format svg --svg-layout-mode grouped --output smoketest-mock/network_grouped.svg
+	PYTHONPATH=src $(PYTHON) -m unifi_network_maps.cli --mock-data examples/mock_data.json --format svg-iso --svg-layout-mode grouped --output smoketest-mock/network_grouped_iso.svg
 	PYTHONPATH=src $(PYTHON) -m unifi_network_maps.cli --mock-data examples/mock_data.json --format mkdocs --include-clients --mkdocs-dual-theme --mkdocs-sidebar-legend --output smoketest-mock/unifi-network-dual-theme-and-clients.md
 	@cat <<-'PY' | $(PYTHON) -
 	from pathlib import Path

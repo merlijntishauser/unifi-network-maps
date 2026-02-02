@@ -119,6 +119,12 @@ def add_svg_args(parser: argparse._ArgumentGroup) -> None:
     parser.add_argument("--svg-width", type=int, default=None, help="SVG width override")
     parser.add_argument("--svg-height", type=int, default=None, help="SVG height override")
     parser.add_argument("--theme-file", default=None, help="Path to theme YAML file")
+    parser.add_argument(
+        "--svg-layout-mode",
+        choices=["physical", "grouped"],
+        default="physical",
+        help="SVG layout mode: physical (default) or grouped by network segment",
+    )
 
 
 def add_general_render_args(parser: argparse._ArgumentGroup) -> None:

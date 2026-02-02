@@ -14,6 +14,22 @@ class SvgTheme:
     node_ap: tuple[str, str]
     node_client: tuple[str, str]
     node_other: tuple[str, str]
+    group_fill: str = "#f8f9fa"
+    group_stroke: str = "#dee2e6"
+    group_radius: int = 8
+    group_label_fill: str = "#495057"
+    group_stroke_width: int = 2
+
+    def group_colors(self, group_name: str) -> tuple[str, str]:
+        """Return (fill, stroke) colors for a group based on its type."""
+        color_map = {
+            "gateway": self.node_gateway,
+            "switch": self.node_switch,
+            "ap": self.node_ap,
+            "client": self.node_client,
+            "other": self.node_other,
+        }
+        return color_map.get(group_name.lower(), (self.group_fill, self.group_stroke))
 
 
 DEFAULT_THEME = SvgTheme(

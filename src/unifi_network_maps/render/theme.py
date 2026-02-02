@@ -75,6 +75,20 @@ def _mermaid_theme_from_dict(data: dict, base: MermaidTheme) -> MermaidTheme:
     )
 
 
+def _coerce_vlan_colors(value: object) -> dict[int, str]:
+    """Parse vlan_colors from theme YAML."""
+    if not isinstance(value, dict):
+        return {}
+    result: dict[int, str] = {}
+    for key, color in value.items():
+        if isinstance(color, str):
+            if isinstance(key, int):
+                result[key] = color
+            elif isinstance(key, str) and key.isdigit():
+                result[int(key)] = color
+    return result
+
+
 def _svg_theme_from_dict(data: dict, base: SvgTheme) -> SvgTheme:
     nodes = data.get("nodes", {}) if isinstance(data.get("nodes"), dict) else {}
     links = data.get("links", {}) if isinstance(data.get("links"), dict) else {}
@@ -87,6 +101,7 @@ def _svg_theme_from_dict(data: dict, base: SvgTheme) -> SvgTheme:
         node_ap=_coerce_pair(nodes.get("ap"), base.node_ap),
         node_client=_coerce_pair(nodes.get("client"), base.node_client),
         node_other=_coerce_pair(nodes.get("other"), base.node_other),
+        vlan_colors=_coerce_vlan_colors(data.get("vlan_colors")),
     )
 
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass(frozen=True)
@@ -19,6 +19,7 @@ class SvgTheme:
     group_radius: int = 8
     group_label_fill: str = "#495057"
     group_stroke_width: int = 2
+    vlan_colors: dict[int, str] = field(default_factory=dict)
 
     def group_colors(self, group_name: str) -> tuple[str, str]:
         """Return (fill, stroke) colors for a group based on its type."""
@@ -30,6 +31,14 @@ class SvgTheme:
             "other": self.node_other,
         }
         return color_map.get(group_name.lower(), (self.group_fill, self.group_stroke))
+
+    def vlan_color(self, vlan_id: int) -> str:
+        """Return color for a VLAN, using theme color or auto-generated fallback."""
+        if vlan_id in self.vlan_colors:
+            return self.vlan_colors[vlan_id]
+        # Golden angle HSL rotation for distinct, deterministic colors
+        hue = (vlan_id * 137) % 360
+        return f"hsl({hue}, 70%, 55%)"
 
 
 DEFAULT_THEME = SvgTheme(

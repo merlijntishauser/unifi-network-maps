@@ -1287,6 +1287,28 @@ def build_topology(
     return TopologyResult(raw_edges=raw_edges, tree_edges=tree_edges)
 
 
+def _normalize_wan_speed(speed: int | None) -> int | None:
+    """Normalize WAN port speed to Mbps.
+
+    Gateway devices report WAN port speeds in Gbps (e.g., 10 for 10G),
+    while switches report in Mbps (e.g., 1000 for 1G). This function
+    detects Gbps values and converts them to Mbps.
+
+    Args:
+        speed: Speed value from port table.
+
+    Returns:
+        Speed in Mbps, or None if not available.
+    """
+    if speed is None or speed == 0:
+        return speed
+    # Speeds 1-100 are likely in Gbps (1G to 100G), convert to Mbps
+    # Speeds >= 100 are already in Mbps (100M+)
+    if 1 <= speed <= 100:
+        return speed * 1000
+    return speed
+
+
 def _find_wan_port_by_assignment(port_table: list[PortInfo], wan_id: str) -> PortInfo | None:
     """Find a WAN port by its wan_networkconf_id assignment.
 
@@ -1356,11 +1378,12 @@ def extract_wan_info(
 
     wan1 = None
     if wan1_port:
+        wan1_speed = _normalize_wan_speed(wan1_port.speed)
         wan1 = WanInterface(
             port_idx=wan1_port.port_idx or 1,
-            link_speed=wan1_port.speed,
+            link_speed=wan1_speed,
             ip_address=device.ip if device.ip else None,
-            enabled=wan1_port.speed is not None and wan1_port.speed > 0,
+            enabled=wan1_speed is not None and wan1_speed > 0,
             label=wan1_label,
             isp_speed=wan1_isp_speed,
         )
@@ -1376,13 +1399,14 @@ def extract_wan_info(
     # Only include WAN2 if it has WAN assignment, or if label/speed specified, or active
     has_wan2_assignment = wan2_port and wan2_port.wan_networkconf_id
     has_wan2_cli_config = wan2_label or wan2_isp_speed
-    is_wan2_active = wan2_port and wan2_port.speed and wan2_port.speed > 0
+    wan2_speed = _normalize_wan_speed(wan2_port.speed) if wan2_port else None
+    is_wan2_active = wan2_speed is not None and wan2_speed > 0
     if wan2_port and (has_wan2_assignment or has_wan2_cli_config or is_wan2_active):
         wan2 = WanInterface(
             port_idx=wan2_port.port_idx or 9,
-            link_speed=wan2_port.speed,
+            link_speed=wan2_speed,
             ip_address=None,  # WAN2 IP typically not in standard device data
-            enabled=wan2_port.speed is not None and wan2_port.speed > 0,
+            enabled=is_wan2_active,
             label=wan2_label,
             isp_speed=wan2_isp_speed,
         )

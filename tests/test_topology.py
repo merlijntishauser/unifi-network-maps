@@ -22,6 +22,7 @@ from unifi_network_maps.model.topology import (
     _client_uplink_port,
     _find_wan_port_by_assignment,
     _get_model_display_name,
+    _normalize_wan_speed,
     _parse_uplink,
     _poe_ports_from_device,
     _port_speed_by_idx,
@@ -786,6 +787,27 @@ def test_coerce_device_uses_model_in_lts_for_model_name():
 
 
 # --- WAN detection tests ---
+
+
+def test_normalize_wan_speed_converts_gbps_to_mbps():
+    """Speeds 1-100 are assumed to be Gbps and converted to Mbps."""
+    assert _normalize_wan_speed(10) == 10000  # 10G -> 10000 Mbps
+    assert _normalize_wan_speed(1) == 1000  # 1G -> 1000 Mbps
+    assert _normalize_wan_speed(100) == 100000  # 100G -> 100000 Mbps
+    assert _normalize_wan_speed(25) == 25000  # 25G -> 25000 Mbps
+
+
+def test_normalize_wan_speed_preserves_mbps():
+    """Speeds >= 100 are assumed to be already in Mbps."""
+    assert _normalize_wan_speed(1000) == 1000  # 1000 Mbps stays as is
+    assert _normalize_wan_speed(10000) == 10000  # 10000 Mbps stays as is
+    assert _normalize_wan_speed(100000) == 100000  # 100 Gbps in Mbps stays as is
+
+
+def test_normalize_wan_speed_handles_none_and_zero():
+    """None and zero values are passed through unchanged."""
+    assert _normalize_wan_speed(None) is None
+    assert _normalize_wan_speed(0) == 0
 
 
 def test_find_wan_port_by_assignment_finds_wan():

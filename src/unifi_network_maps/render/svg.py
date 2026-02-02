@@ -1473,7 +1473,7 @@ def _iso_front_face_label_position(
 
     # Adjust position for better visual centering on the front face
     label_x = center_x + tile_height * 0.05
-    label_y = center_y + font_size * 0.5 + tile_height * 0.1  # Lower on the face
+    label_y = center_y + font_size * 0.4  # Centered vertically on the face
 
     return label_x, label_y, angle
 

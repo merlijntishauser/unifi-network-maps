@@ -132,12 +132,16 @@ def _build_wired_clients(
         port_idx = _next_core_port(state)
         _add_port(core_switch, port_idx, poe_enabled=False, rng=state.rng)
         name = _unique_client_name(state)
+        # Assign VLANs to wired clients based on index
+        vlan_options = [1, 10, 20, 30, 100]
+        client_vlan = vlan_options[port_idx % len(vlan_options)]
         clients.append(
             {
                 "name": name,
                 "is_wired": True,
                 "sw_mac": core_switch["mac"],
                 "sw_port": port_idx,
+                "vlan": client_vlan,
             }
         )
     return clients
@@ -149,15 +153,19 @@ def _build_wireless_clients(
     if not aps:
         return []
     clients = []
+    # Wireless VLANs - typically IoT or guest networks
+    wireless_vlans = [10, 20]
     for idx in range(max(0, count)):
         ap = aps[idx % len(aps)]
         name = _unique_client_name(state)
+        client_vlan = wireless_vlans[idx % len(wireless_vlans)]
         clients.append(
             {
                 "name": name,
                 "is_wired": False,
                 "ap_mac": ap["mac"],
                 "ap_port": 1,
+                "vlan": client_vlan,
             }
         )
     return clients
@@ -192,7 +200,7 @@ def _pick_version(state: _MockState, dev_type: str) -> str:
 def _link_gateway_to_switch(
     state: _MockState, gateway: dict[str, Any], core_switch: dict[str, Any]
 ) -> None:
-    _add_port(core_switch, 1, poe_enabled=False, rng=state.rng)
+    _add_port(core_switch, 1, poe_enabled=False, rng=state.rng, is_trunk=True)
     _add_lldp_link(
         gateway,
         core_switch,
@@ -259,7 +267,15 @@ def _add_port(
     *,
     poe_enabled: bool,
     rng: random.Random,
+    is_trunk: bool = False,
 ) -> None:
+    # Assign VLAN based on port index for variety
+    vlan_options = [1, 10, 20, 30, 100]
+    native_vlan = vlan_options[port_idx % len(vlan_options)]
+    tagged_vlans: list[int] = []
+    if is_trunk:
+        # Trunk ports carry multiple VLANs
+        tagged_vlans = [v for v in vlan_options if v != native_vlan]
     device["port_table"].append(
         {
             "port_idx": port_idx,
@@ -273,6 +289,8 @@ def _add_port(
             "poe_good": poe_enabled,
             "poe_voltage": round(rng.uniform(44.0, 52.0), 1) if poe_enabled else 0.0,
             "poe_current": round(rng.uniform(0.05, 0.12), 3) if poe_enabled else 0.0,
+            "native_vlan": native_vlan,
+            "tagged_vlans": tagged_vlans,
         }
     )
 

@@ -73,6 +73,7 @@ type PortMap = dict[tuple[str, str], str]
 type PoeMap = dict[tuple[str, str], bool]
 type SpeedMap = dict[tuple[str, str], int]
 type ClientPortMap = dict[str, list[tuple[int, str]]]
+type VlanMap = dict[tuple[str, str], tuple[int, ...]]
 
 
 def _get_attr(obj: object, name: str) -> object | None:
@@ -750,6 +751,7 @@ def build_edges(
     port_map: PortMap = {}
     poe_map: PoeMap = {}
     speed_map: SpeedMap = {}
+    vlan_map: VlanMap = {}
 
     devices_with_lldp_edges = _collect_lldp_links(
         ordered_devices,
@@ -757,6 +759,7 @@ def build_edges(
         port_map,
         poe_map,
         speed_map,
+        vlan_map,
         raw_links,
         seen,
         only_unifi=only_unifi,
@@ -777,6 +780,7 @@ def build_edges(
         port_map,
         poe_map,
         speed_map,
+        vlan_map,
         device_by_name,
         include_ports=include_ports,
     )
@@ -795,6 +799,7 @@ def build_port_map(devices: Iterable[Device], *, only_unifi: bool = True) -> Por
     port_map: PortMap = {}
     poe_map: PoeMap = {}
     speed_map: SpeedMap = {}
+    vlan_map: VlanMap = {}
 
     devices_with_lldp_edges = _collect_lldp_links(
         ordered_devices,
@@ -802,6 +807,7 @@ def build_port_map(devices: Iterable[Device], *, only_unifi: bool = True) -> Por
         port_map,
         poe_map,
         speed_map,
+        vlan_map,
         raw_links,
         seen,
         only_unifi=only_unifi,
@@ -851,12 +857,46 @@ def _port_speed_by_idx(port_table: list[PortInfo], port_idx: int) -> int | None:
     return None
 
 
+def _port_vlans_by_idx(port_table: list[PortInfo], port_idx: int) -> tuple[int, ...]:
+    """Get all VLANs configured on a port (native + tagged)."""
+    for port in port_table:
+        if port.port_idx == port_idx:
+            vlans: list[int] = []
+            if port.native_vlan is not None:
+                vlans.append(port.native_vlan)
+            vlans.extend(port.tagged_vlans)
+            return tuple(sorted(set(vlans)))
+    return ()
+
+
+def _populate_port_maps(
+    device_name: str,
+    peer_name: str,
+    port_idx: int,
+    poe_ports: dict[int, bool],
+    port_table: list[PortInfo],
+    poe_map: PoeMap,
+    speed_map: SpeedMap,
+    vlan_map: VlanMap,
+) -> None:
+    """Populate PoE, speed, and VLAN maps for an edge."""
+    if port_idx in poe_ports:
+        poe_map[(device_name, peer_name)] = poe_ports[port_idx]
+    port_speed = _port_speed_by_idx(port_table, port_idx)
+    if port_speed is not None:
+        speed_map[(device_name, peer_name)] = port_speed
+    port_vlans = _port_vlans_by_idx(port_table, port_idx)
+    if port_vlans:
+        vlan_map[(device_name, peer_name)] = port_vlans
+
+
 def _collect_lldp_links(
     devices: list[Device],
     index: dict[str, str],
     port_map: PortMap,
     poe_map: PoeMap,
     speed_map: SpeedMap,
+    vlan_map: VlanMap,
     raw_links: list[tuple[str, str]],
     seen: set[frozenset[str]],
     *,
@@ -896,11 +936,16 @@ def _collect_lldp_links(
             if label:
                 port_map[(device.name, peer_name)] = label
             if resolved_port_idx is not None:
-                if resolved_port_idx in poe_ports:
-                    poe_map[(device.name, peer_name)] = poe_ports[resolved_port_idx]
-                port_speed = _port_speed_by_idx(device.port_table, resolved_port_idx)
-                if port_speed is not None:
-                    speed_map[(device.name, peer_name)] = port_speed
+                _populate_port_maps(
+                    device.name,
+                    peer_name,
+                    resolved_port_idx,
+                    poe_ports,
+                    device.port_table,
+                    poe_map,
+                    speed_map,
+                    vlan_map,
+                )
 
             key = frozenset({device.name, peer_name})
             if key in seen:
@@ -990,6 +1035,7 @@ def _build_ordered_edges(
     port_map: PortMap,
     poe_map: PoeMap,
     speed_map: SpeedMap,
+    vlan_map: VlanMap,
     device_by_name: dict[str, Device],
     *,
     include_ports: bool,
@@ -1018,7 +1064,23 @@ def _build_ordered_edges(
         )
         speed = speed_map.get((left_name, right_name)) or speed_map.get((right_name, left_name))
         label = compose_port_label(left_name, right_name, port_map) if include_ports else None
-        edges.append(Edge(left=left_name, right=right_name, label=label, poe=poe, speed=speed))
+        # Merge VLAN info from both directions (edge might be seen from either side)
+        vlans_lr = vlan_map.get((left_name, right_name), ())
+        vlans_rl = vlan_map.get((right_name, left_name), ())
+        vlans = tuple(sorted(set(vlans_lr) | set(vlans_rl)))
+        is_trunk = len(vlans) > 1
+        edges.append(
+            Edge(
+                left=left_name,
+                right=right_name,
+                label=label,
+                poe=poe,
+                speed=speed,
+                vlans=vlans,
+                active_vlans=(),  # Will be populated later with client data
+                is_trunk=is_trunk,
+            )
+        )
     return edges
 
 

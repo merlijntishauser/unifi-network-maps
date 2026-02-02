@@ -258,7 +258,8 @@ class TestMermaidStructure:
     def test_has_edges(self, mermaid_content: str) -> None:
         """Mermaid contains edge connections."""
         # Pattern: node1 ---|"label"| node2 or node1 --> node2
-        assert re.search(r'---\|"|-->|---\s+\w', mermaid_content)
+        # Note: --> is Mermaid arrow syntax, not HTML comment
+        assert re.search(r'---\|"|-->|---\s+\w', mermaid_content)  # CodeQL: not HTML
 
     def test_has_class_definitions(self, mermaid_content: str) -> None:
         """Mermaid contains node class assignments."""

@@ -39,6 +39,9 @@ class Edge:
     wireless: bool = False
     speed: int | None = None
     channel: int | None = None
+    vlans: tuple[int, ...] = ()
+    active_vlans: tuple[int, ...] = ()
+    is_trunk: bool = False
 
 
 type DeviceSource = object
@@ -62,6 +65,8 @@ class PortInfo:
     poe_enable: bool
     poe_good: bool
     poe_power: float | None
+    native_vlan: int | None = None
+    tagged_vlans: tuple[int, ...] = ()
 
 
 type PortMap = dict[tuple[str, str], str]
@@ -204,6 +209,34 @@ def _resolve_port_idx_from_lldp(lldp_entry: LLDPEntry, port_table: list[PortInfo
     return _match_port_by_number(candidates, port_table)
 
 
+def _parse_int_safe(value: object) -> int | None:
+    """Parse an int from various types, returning None on failure."""
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str):
+        try:
+            return int(value)
+        except ValueError:
+            return None
+    return None
+
+
+def _coerce_vlan_list(value: object) -> tuple[int, ...]:
+    """Convert a VLAN list from various formats to a tuple of ints."""
+    if value is None:
+        return ()
+    if isinstance(value, int):
+        return (value,)
+    if isinstance(value, str):
+        parts = [p.strip() for p in value.split(",") if p.strip()]
+        parsed = [_parse_int_safe(p) for p in parts]
+        return tuple(sorted(v for v in parsed if v is not None))
+    if isinstance(value, list | tuple):
+        parsed = [_parse_int_safe(item) for item in value]
+        return tuple(sorted(v for v in parsed if v is not None))
+    return ()
+
+
 def _port_info_from_entry(port_entry: object) -> PortInfo:
     if isinstance(port_entry, dict):
         port_idx = port_entry.get("port_idx") or port_entry.get("portIdx")
@@ -215,6 +248,8 @@ def _port_info_from_entry(port_entry: object) -> PortInfo:
         poe_enable = _as_bool(port_entry.get("poe_enable"))
         poe_good = _as_bool(port_entry.get("poe_good"))
         poe_power = _as_float(port_entry.get("poe_power"))
+        native_vlan = port_entry.get("native_vlan")
+        tagged_vlans = port_entry.get("tagged_vlans")
     else:
         port_idx = _get_attr(port_entry, "port_idx") or _get_attr(port_entry, "portIdx")
         name = _get_attr(port_entry, "name")
@@ -225,6 +260,8 @@ def _port_info_from_entry(port_entry: object) -> PortInfo:
         poe_enable = _as_bool(_get_attr(port_entry, "poe_enable"))
         poe_good = _as_bool(_get_attr(port_entry, "poe_good"))
         poe_power = _as_float(_get_attr(port_entry, "poe_power"))
+        native_vlan = _get_attr(port_entry, "native_vlan")
+        tagged_vlans = _get_attr(port_entry, "tagged_vlans")
     return PortInfo(
         port_idx=_as_int(port_idx),
         name=str(name) if isinstance(name, str) and name.strip() else None,
@@ -235,6 +272,8 @@ def _port_info_from_entry(port_entry: object) -> PortInfo:
         poe_enable=poe_enable,
         poe_good=poe_good,
         poe_power=poe_power,
+        native_vlan=_as_int(native_vlan),
+        tagged_vlans=_coerce_vlan_list(tagged_vlans),
     )
 
 

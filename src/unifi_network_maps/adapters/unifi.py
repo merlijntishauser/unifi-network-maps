@@ -101,6 +101,21 @@ def _serialize_port_entry(entry: object) -> dict[str, object]:
         "aggregate",
         "aggregated_by",
     )
+    native_vlan = _first_attr(
+        entry,
+        "native_networkconf_id",
+        "port_vlan",
+        "vlan",
+        "native_vlan",
+        "pvid",
+    )
+    tagged_vlans = _first_attr(
+        entry,
+        "tagged_vlan_mgmt",
+        "tagged_vlans",
+        "vlan_trunk_mgmt",
+        "allowed_vlans",
+    )
     return {
         "port_idx": _first_attr(entry, "port_idx", "portIdx"),
         "name": _first_attr(entry, "name"),
@@ -111,6 +126,8 @@ def _serialize_port_entry(entry: object) -> dict[str, object]:
         "poe_enable": _first_attr(entry, "poe_enable"),
         "poe_good": _first_attr(entry, "poe_good"),
         "poe_power": _first_attr(entry, "poe_power"),
+        "native_vlan": native_vlan,
+        "tagged_vlans": tagged_vlans,
     }
 
 

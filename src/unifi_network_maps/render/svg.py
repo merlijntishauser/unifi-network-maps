@@ -716,6 +716,30 @@ def _edge_opacity(node_types: dict[str, str], edge: Edge) -> float:
     return 1.0
 
 
+def _render_vlan_endpoint_markers(
+    lines: list[str],
+    x: float,
+    y: float,
+    vlans: tuple[int, ...],
+    theme: SvgTheme,
+    marker_size: int = 6,
+    max_markers: int = 4,
+) -> None:
+    """Render small colored squares showing active VLANs at an endpoint."""
+    if not vlans:
+        return
+    for i, vlan_id in enumerate(vlans[:max_markers]):
+        color = theme.vlan_color(vlan_id)
+        marker_x = x - marker_size - 2
+        marker_y = y + (i * (marker_size + 2))
+        lines.append(
+            f'<rect x="{marker_x}" y="{marker_y}" width="{marker_size}" '
+            f'height="{marker_size}" fill="{color}" stroke="#fff" '
+            f'stroke-width="0.5" rx="1" data-vlan="{vlan_id}">'
+            f"<title>VLAN {vlan_id}</title></rect>"
+        )
+
+
 def _render_vlan_striped_edge(
     lines: list[str],
     path: str,
@@ -813,6 +837,8 @@ def _render_svg_edges(
             _render_vlan_striped_edge(
                 lines, path, display_vlans, theme, width_px, edge.wireless, base_attrs, opacity
             )
+            # Render VLAN endpoint markers at destination
+            _render_vlan_endpoint_markers(lines, dst_cx, dst_top + 4, display_vlans, theme)
         else:
             # Render standard edge (no VLAN info or no active VLANs)
             color = "url(#link-poe)" if edge.poe else "url(#link-standard)"
@@ -1198,6 +1224,10 @@ def _render_iso_edges(
             _render_iso_vlan_striped_edge(
                 lines, path, display_vlans, theme, width_px, edge.wireless, base_attrs, opacity
             )
+            # Render VLAN endpoint markers at destination
+            marker_x = dst_cx + layout.tile_width * 0.3
+            marker_y = dst_cy - layout.tile_height * 0.2
+            _render_vlan_endpoint_markers(lines, marker_x, marker_y, display_vlans, theme)
         else:
             color = "url(#iso-link-poe)" if edge.poe else "url(#iso-link-standard)"
             dash = ' stroke-dasharray="8 6"' if edge.wireless else ""

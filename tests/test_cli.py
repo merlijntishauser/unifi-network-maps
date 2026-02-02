@@ -135,7 +135,8 @@ def test_main_mermaid_includes_wired_clients(monkeypatch):
 
     monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
     monkeypatch.setattr(runtime_module, "fetch_devices", lambda *args, **kwargs: devices)
-    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw: raw)
+    monkeypatch.setattr(runtime_module, "fetch_networks", lambda *args, **kwargs: [])
+    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw, vlan_map=None: raw)
     monkeypatch.setattr(
         runtime_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]}
     )
@@ -244,7 +245,8 @@ def test_main_payload_from_mock_excludes_clients_by_default(monkeypatch, tmp_pat
 def test_main_logs_topology_errors(monkeypatch, caplog):
     monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
     monkeypatch.setattr(runtime_module, "fetch_devices", lambda *args, **kwargs: [])
-    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw: raw)
+    monkeypatch.setattr(runtime_module, "fetch_networks", lambda *args, **kwargs: [])
+    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw, vlan_map=None: raw)
 
     def raise_topology(*args, **kwargs):
         raise RuntimeError("bad topology")
@@ -268,7 +270,8 @@ def test_main_mermaid_wraps_markdown(monkeypatch):
 
     monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
     monkeypatch.setattr(runtime_module, "fetch_devices", lambda *args, **kwargs: devices)
-    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw: raw)
+    monkeypatch.setattr(runtime_module, "fetch_networks", lambda *args, **kwargs: [])
+    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw, vlan_map=None: raw)
     monkeypatch.setattr(
         runtime_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]}
     )
@@ -300,7 +303,8 @@ def test_main_mkdocs_includes_legend(monkeypatch):
 
     monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
     monkeypatch.setattr(runtime_module, "fetch_devices", lambda *args, **kwargs: devices)
-    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw: raw)
+    monkeypatch.setattr(runtime_module, "fetch_networks", lambda *args, **kwargs: [])
+    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw, vlan_map=None: raw)
     monkeypatch.setattr(
         runtime_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]}
     )
@@ -329,7 +333,8 @@ def test_main_mkdocs_includes_legend(monkeypatch):
 def test_main_mkdocs_sidebar_requires_output(monkeypatch):
     monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
     monkeypatch.setattr(runtime_module, "fetch_devices", lambda *args, **kwargs: [])
-    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw: raw)
+    monkeypatch.setattr(runtime_module, "fetch_networks", lambda *args, **kwargs: [])
+    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw, vlan_map=None: raw)
     monkeypatch.setattr(runtime_module, "group_devices_by_type", lambda *_: {"gateway": []})
     monkeypatch.setattr(
         runtime_module,
@@ -350,7 +355,8 @@ def test_main_mkdocs_sidebar_writes_assets(monkeypatch, tmp_path):
 
     monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
     monkeypatch.setattr(runtime_module, "fetch_devices", lambda *args, **kwargs: devices)
-    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw: raw)
+    monkeypatch.setattr(runtime_module, "fetch_networks", lambda *args, **kwargs: [])
+    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw, vlan_map=None: raw)
     monkeypatch.setattr(
         runtime_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]}
     )
@@ -387,7 +393,8 @@ def test_main_mkdocs_sidebar_disabled_does_not_write_assets(monkeypatch, tmp_pat
 
     monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
     monkeypatch.setattr(runtime_module, "fetch_devices", lambda *args, **kwargs: devices)
-    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw: raw)
+    monkeypatch.setattr(runtime_module, "fetch_networks", lambda *args, **kwargs: [])
+    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw, vlan_map=None: raw)
     monkeypatch.setattr(
         runtime_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]}
     )
@@ -425,7 +432,8 @@ def test_main_debug_dump_uses_non_negative_sample(monkeypatch):
 
     monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
     monkeypatch.setattr(runtime_module, "fetch_devices", lambda *args, **kwargs: devices)
-    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw: raw)
+    monkeypatch.setattr(runtime_module, "fetch_networks", lambda *args, **kwargs: [])
+    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw, vlan_map=None: raw)
     monkeypatch.setattr(runtime_module, "debug_dump_devices", debug_dump)
     monkeypatch.setattr(
         runtime_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]}
@@ -460,7 +468,8 @@ def test_main_svg_uses_size_overrides(monkeypatch):
 
     monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
     monkeypatch.setattr(runtime_module, "fetch_devices", lambda *args, **kwargs: devices)
-    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw: raw)
+    monkeypatch.setattr(runtime_module, "fetch_networks", lambda *args, **kwargs: [])
+    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw, vlan_map=None: raw)
     monkeypatch.setattr(
         runtime_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]}
     )
@@ -492,7 +501,8 @@ def test_main_lldp_md_skips_topology(monkeypatch):
     monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
     monkeypatch.setattr(runtime_module, "fetch_devices", lambda *args, **kwargs: devices)
     monkeypatch.setattr(render_module, "fetch_clients", lambda *args, **kwargs: [])
-    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw: raw)
+    monkeypatch.setattr(runtime_module, "fetch_networks", lambda *args, **kwargs: [])
+    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw, vlan_map=None: raw)
     monkeypatch.setattr(runtime_module, "build_topology", explode)
     monkeypatch.setattr(render_module, "render_lldp_md", lambda *_args, **_kwargs: "# LLDP\n")
     monkeypatch.setattr(render_module, "write_output", lambda *args, **kwargs: None)
@@ -516,7 +526,8 @@ def test_main_lldp_md_includes_clients(monkeypatch):
 
     monkeypatch.setattr(cli_module.Config, "from_env", lambda **_kwargs: _dummy_config())
     monkeypatch.setattr(runtime_module, "fetch_devices", lambda *args, **kwargs: devices)
-    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw: raw)
+    monkeypatch.setattr(runtime_module, "fetch_networks", lambda *args, **kwargs: [])
+    monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw, vlan_map=None: raw)
     monkeypatch.setattr(render_module, "fetch_clients", lambda *args, **kwargs: [{"name": "TV"}])
     monkeypatch.setattr(render_module, "render_lldp_md", fake_render_lldp_md)
     monkeypatch.setattr(render_module, "write_output", lambda *args, **kwargs: None)

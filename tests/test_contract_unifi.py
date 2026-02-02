@@ -70,9 +70,10 @@ def test_unifi_fixture_client_ports_contract():
 
 
 def test_mock_data_fixture_contract():
-    devices, clients = load_mock_data(str(Path("examples/mock_data.json")))
+    devices, clients, networks = load_mock_data(str(Path("examples/mock_data.json")))
     normalized = normalize_devices(devices)
     edges = build_edges(normalized, include_ports=True, only_unifi=False)
     assert normalized
     assert edges
     assert clients
+    assert networks

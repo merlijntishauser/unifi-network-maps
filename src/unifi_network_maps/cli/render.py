@@ -195,6 +195,7 @@ def render_lldp_format(
     site: str,
     mock_devices: list[object] | None,
     mock_clients: list[object] | None,
+    mock_networks: list[object] | None = None,
 ) -> int:
     try:
         _raw_devices, devices = load_devices_data(
@@ -202,6 +203,7 @@ def render_lldp_format(
             config,
             site,
             raw_devices_override=mock_devices,
+            raw_networks_override=mock_networks,
         )
     except Exception as exc:
         logging.error("Failed to load devices: %s", exc)
@@ -233,6 +235,7 @@ def render_standard_format(
     site: str,
     mock_devices: list[object] | None,
     mock_clients: list[object] | None,
+    mock_networks: list[object] | None = None,
     mermaid_theme: MermaidTheme,
     svg_theme: SvgTheme,
 ) -> int:
@@ -241,6 +244,7 @@ def render_standard_format(
         config=config,
         site=site,
         mock_devices=mock_devices,
+        mock_networks=mock_networks,
     )
     if topology_result is None:
         return 1

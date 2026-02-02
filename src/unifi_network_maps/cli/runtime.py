@@ -7,7 +7,7 @@ import logging
 from pathlib import Path
 
 from ..adapters.config import Config
-from ..adapters.unifi import fetch_clients, fetch_devices
+from ..adapters.unifi import fetch_clients, fetch_devices, fetch_networks
 from ..io.debug import debug_dump_devices
 from ..model.topology import (
     ClientPortMap,
@@ -21,6 +21,7 @@ from ..model.topology import (
     group_devices_by_type,
     normalize_devices,
 )
+from ..model.vlans import build_network_vlan_map
 from ..render.mermaid_theme import MermaidTheme
 from ..render.theme import load_theme
 
@@ -33,6 +34,7 @@ def load_devices_data(
     site: str,
     *,
     raw_devices_override: list[object] | None = None,
+    raw_networks_override: list[object] | None = None,
 ) -> tuple[list[object], list[Device]]:
     if raw_devices_override is None:
         if config is None:
@@ -42,7 +44,19 @@ def load_devices_data(
         )
     else:
         raw_devices = raw_devices_override
-    devices = normalize_devices(raw_devices)
+
+    # Build network-to-VLAN mapping for resolving network IDs in port configs
+    network_vlan_map: dict[str, int] | None = None
+    if raw_networks_override is not None:
+        network_vlan_map = build_network_vlan_map(raw_networks_override)
+    elif config is not None:
+        try:
+            raw_networks = list(fetch_networks(config, site=site, use_cache=not args.no_cache))
+            network_vlan_map = build_network_vlan_map(raw_networks)
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("Failed to fetch networks for VLAN resolution: %s", exc)
+
+    devices = normalize_devices(raw_devices, network_vlan_map)
     if args.debug_dump:
         debug_dump_devices(raw_devices, devices, sample_count=max(0, args.debug_sample))
     return raw_devices, devices
@@ -55,12 +69,14 @@ def build_topology_data(
     *,
     include_ports: bool | None = None,
     raw_devices_override: list[object] | None = None,
+    raw_networks_override: list[object] | None = None,
 ) -> tuple[list[Device], list[str], TopologyResult]:
     _raw_devices, devices = load_devices_data(
         args,
         config,
         site,
         raw_devices_override=raw_devices_override,
+        raw_networks_override=raw_networks_override,
     )
     groups_for_rank = group_devices_by_type(devices)
     gateways = groups_for_rank.get("gateway", [])
@@ -117,6 +133,7 @@ def load_topology_for_render(
     config: Config | None,
     site: str,
     mock_devices: list[object] | None,
+    mock_networks: list[object] | None = None,
 ) -> tuple[list[Device], TopologyResult] | None:
     try:
         include_ports = True if args.format == "mkdocs" else None
@@ -126,6 +143,7 @@ def load_topology_for_render(
             site,
             include_ports=include_ports,
             raw_devices_override=mock_devices,
+            raw_networks_override=mock_networks,
         )
     except Exception as exc:
         logging.error("Failed to build topology: %s", exc)

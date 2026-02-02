@@ -106,18 +106,18 @@ def _handle_generate_mock(args: argparse.Namespace) -> int | None:
 
 def _load_runtime_context(
     args: argparse.Namespace,
-) -> tuple[Config | None, str, list[object] | None, list[object] | None]:
+) -> tuple[Config | None, str, list[object] | None, list[object] | None, list[object] | None]:
     if args.mock_data:
         try:
-            mock_devices, mock_clients = load_mock_data(args.mock_data)
+            mock_devices, mock_clients, mock_networks = load_mock_data(args.mock_data)
         except Exception as exc:  # noqa: BLE001
             raise ValueError(f"Failed to load mock data: {exc}") from exc
-        return None, "mock", mock_devices, mock_clients
+        return None, "mock", mock_devices, mock_clients, mock_networks
     config = _load_config(args)
     if config is None:
         raise ValueError("Config required to run")
     site = _resolve_site(args, config)
-    return config, site, None, None
+    return config, site, None, None, None
 
 
 def _handle_json_format(
@@ -163,7 +163,7 @@ def main(argv: list[str] | None = None) -> int:
     if mock_result is not None:
         return mock_result
     try:
-        config, site, mock_devices, mock_clients = _load_runtime_context(args)
+        config, site, mock_devices, mock_clients, mock_networks = _load_runtime_context(args)
     except ValueError as exc:
         logging.error(str(exc))
         return 2
@@ -198,6 +198,7 @@ def main(argv: list[str] | None = None) -> int:
             site=site,
             mock_devices=mock_devices,
             mock_clients=mock_clients,
+            mock_networks=mock_networks,
         )
 
     return render_standard_format(
@@ -206,6 +207,7 @@ def main(argv: list[str] | None = None) -> int:
         site=site,
         mock_devices=mock_devices,
         mock_clients=mock_clients,
+        mock_networks=mock_networks,
         mermaid_theme=mermaid_theme,
         svg_theme=svg_theme,
     )

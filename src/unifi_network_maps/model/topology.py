@@ -222,23 +222,50 @@ def _parse_int_safe(value: object) -> int | None:
     return None
 
 
-def _coerce_vlan_list(value: object) -> tuple[int, ...]:
+def _coerce_vlan_list(
+    value: object, network_vlan_map: dict[str, int] | None = None
+) -> tuple[int, ...]:
     """Convert a VLAN list from various formats to a tuple of ints."""
     if value is None:
         return ()
-    if isinstance(value, int):
-        return (value,)
+    # Handle special string values from UniFi that are not VLAN lists
     if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in ("auto", "block_all", "all", "none", ""):
+            return ()
         parts = [p.strip() for p in value.split(",") if p.strip()]
         parsed = [_parse_int_safe(p) for p in parts]
         return tuple(sorted(v for v in parsed if v is not None))
+    if isinstance(value, int):
+        return (value,)
     if isinstance(value, list | tuple):
-        parsed = [_parse_int_safe(item) for item in value]
-        return tuple(sorted(v for v in parsed if v is not None))
+        result: list[int] = []
+        for item in value:
+            parsed_int = _parse_int_safe(item)
+            if parsed_int is not None:
+                result.append(parsed_int)
+            elif network_vlan_map and isinstance(item, str):
+                vlan_id = network_vlan_map.get(item)
+                if vlan_id is not None:
+                    result.append(vlan_id)
+        return tuple(sorted(set(result)))
     return ()
 
 
-def _port_info_from_entry(port_entry: object) -> PortInfo:
+def _resolve_vlan_id(value: object, network_vlan_map: dict[str, int] | None = None) -> int | None:
+    """Resolve a VLAN ID, which may be a network ID string."""
+    parsed = _as_int(value)
+    if parsed is not None:
+        return parsed
+    # Try to resolve network ID to VLAN number
+    if network_vlan_map and isinstance(value, str):
+        return network_vlan_map.get(value)
+    return None
+
+
+def _port_info_from_entry(
+    port_entry: object, network_vlan_map: dict[str, int] | None = None
+) -> PortInfo:
     if isinstance(port_entry, dict):
         port_idx = port_entry.get("port_idx") or port_entry.get("portIdx")
         name = port_entry.get("name")
@@ -273,18 +300,22 @@ def _port_info_from_entry(port_entry: object) -> PortInfo:
         poe_enable=poe_enable,
         poe_good=poe_good,
         poe_power=poe_power,
-        native_vlan=_as_int(native_vlan),
-        tagged_vlans=_coerce_vlan_list(tagged_vlans),
+        native_vlan=_resolve_vlan_id(native_vlan, network_vlan_map),
+        tagged_vlans=_coerce_vlan_list(tagged_vlans, network_vlan_map),
     )
 
 
-def _coerce_port_table(device: DeviceSource) -> list[PortInfo]:
+def _coerce_port_table(
+    device: DeviceSource, network_vlan_map: dict[str, int] | None = None
+) -> list[PortInfo]:
     port_table = _as_list(_get_attr(device, "port_table"))
-    return [_port_info_from_entry(port_entry) for port_entry in port_table]
+    return [_port_info_from_entry(port_entry, network_vlan_map) for port_entry in port_table]
 
 
-def _poe_ports_from_device(device: DeviceSource) -> dict[int, bool]:
-    port_table = _coerce_port_table(device)
+def _poe_ports_from_device(
+    device: DeviceSource, network_vlan_map: dict[str, int] | None = None
+) -> dict[int, bool]:
+    port_table = _coerce_port_table(device, network_vlan_map)
     poe_ports: dict[int, bool] = {}
     for port_entry in port_table:
         if port_entry.port_idx is None:
@@ -362,7 +393,7 @@ def _get_model_display_name(device: DeviceSource) -> str | None:
     return None
 
 
-def coerce_device(device: DeviceSource) -> Device:
+def coerce_device(device: DeviceSource, network_vlan_map: dict[str, int] | None = None) -> Device:
     name = _get_attr(device, "name")
     model_name = _get_model_display_name(device) or _get_attr(device, "model")
     model = _get_attr(device, "model")
@@ -388,8 +419,8 @@ def coerce_device(device: DeviceSource) -> Device:
 
     lldp_entries = _as_list(lldp_info)
     coerced_lldp = [coerce_lldp(lldp_entry) for lldp_entry in lldp_entries]
-    port_table = _coerce_port_table(device)
-    poe_ports = _poe_ports_from_device(device)
+    port_table = _coerce_port_table(device, network_vlan_map)
+    poe_ports = _poe_ports_from_device(device, network_vlan_map)
 
     return Device(
         name=str(name),
@@ -407,8 +438,10 @@ def coerce_device(device: DeviceSource) -> Device:
     )
 
 
-def normalize_devices(devices: Iterable[DeviceSource]) -> list[Device]:
-    return [coerce_device(device) for device in devices]
+def normalize_devices(
+    devices: Iterable[DeviceSource], network_vlan_map: dict[str, int] | None = None
+) -> list[Device]:
+    return [coerce_device(device, network_vlan_map) for device in devices]
 
 
 def classify_device_type(device: object) -> str:

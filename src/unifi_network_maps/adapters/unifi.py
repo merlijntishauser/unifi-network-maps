@@ -190,6 +190,7 @@ def _serialize_devices_for_cache(devices: Sequence[object]) -> list[dict[str, ob
 
 def _serialize_network_for_cache(network: object) -> dict[str, object]:
     return {
+        "_id": _first_attr(network, "_id", "id", "network_id", "networkId"),
         "name": _first_attr(network, "name", "network_name", "networkName"),
         "vlan": _first_attr(network, "vlan", "vlan_id", "vlanId", "vlanid"),
         "vlan_enabled": _first_attr(network, "vlan_enabled", "vlanEnabled"),

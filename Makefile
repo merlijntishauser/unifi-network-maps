@@ -44,8 +44,8 @@ smoketest-mock:
 	@$(CLI) --mock-data examples/mock_data.json --format svg --svg-layout-mode grouped --output smoketest-mock/network_grouped.svg
 	@$(CLI) --mock-data examples/mock_data.json --format svg-iso --svg-layout-mode grouped --output smoketest-mock/network_grouped_iso.svg
 	@$(CLI) --mock-data examples/mock_data.json --format mkdocs --include-clients --mkdocs-dual-theme --mkdocs-sidebar-legend --output smoketest-mock/unifi-network-dual-theme-and-clients.md
-	@$(CLI) --mock-data examples/mock_data.json --format svg --wan-label "KPN Fiber" --wan-speed "1 Gbps ↓↑" --output smoketest-mock/network_wan.svg
-	@$(CLI) --mock-data examples/mock_data.json --format svg-iso --wan-label "KPN Fiber" --wan-speed "1 Gbps ↓↑" --wan2-label "Backup 4G" --wan2-speed "100 Mbps" --output smoketest-mock/network_wan_dual_iso.svg
+	@$(CLI) --mock-data examples/mock_data.json --format svg --wan-label "Odido" --wan-speed "1 Gbps ↓↑" --output smoketest-mock/network_wan.svg
+	@$(CLI) --mock-data examples/mock_data.json --format svg-iso --wan-label "Odido" --wan-speed "1 Gbps ↓↑" --wan2-label "Backup SFP+" --output smoketest-mock/network_wan_dual_iso.svg
 
 smoketest-validate:
 	@$(VENV)/pytest tests/test_smoketest_validation.py -q

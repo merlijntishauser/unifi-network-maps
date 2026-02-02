@@ -48,9 +48,29 @@
       "port_table": [
         {
           "port_idx": 1,
-          "name": "WAN 1",
+          "name": "Port 1",
           "ifname": "eth0",
-          "speed": 2500,
+          "speed": null,
+          "port_poe": false,
+          "poe_enable": false,
+          "poe_good": false,
+          "poe_power": 0.0
+        },
+        {
+          "port_idx": 2,
+          "name": "Port 2",
+          "ifname": "eth1",
+          "speed": 1000,
+          "port_poe": false,
+          "poe_enable": false,
+          "poe_good": false,
+          "poe_power": 0.0
+        },
+        {
+          "port_idx": 5,
+          "name": "Port 5",
+          "ifname": "eth4",
+          "speed": 10000,
           "port_poe": false,
           "poe_enable": false,
           "poe_good": false,
@@ -58,19 +78,14 @@
           "wan_networkconf_id": "WAN"
         },
         {
-          "ifname": "eth9",
-          "is_uplink": false,
-          "name": "Port 9",
-          "native_vlan": 100,
-          "poe_class": 0,
-          "poe_current": 0.0,
+          "port_idx": 7,
+          "name": "SFP+ 2",
+          "ifname": "eth6",
+          "speed": null,
+          "port_poe": false,
           "poe_enable": false,
           "poe_good": false,
           "poe_power": 0.0,
-          "poe_voltage": 0.0,
-          "port_idx": 9,
-          "port_poe": false,
-          "tagged_vlans": [],
           "wan_networkconf_id": "WAN2"
         }
       ],

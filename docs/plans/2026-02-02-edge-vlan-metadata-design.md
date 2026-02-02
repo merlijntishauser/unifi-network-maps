@@ -184,7 +184,7 @@ Edge schema includes VLAN fields:
 6. `render/mermaid.py` - Edge label formatting
 7. `render/theme.py` - Theme loading for vlan_colors
 8. `cli/args.py` - New CLI flags
-9. `assets/themes/*.yaml` - Default vlan_colors
+9. `assets/themes/*.yaml` - Default vlan_colorsMy smoketest is using my 
 
 ### Edge Cases
 

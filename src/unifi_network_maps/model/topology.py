@@ -657,6 +657,16 @@ def _client_channel(client: object) -> int | None:
     return None
 
 
+def _client_vlan(client: object) -> int | None:
+    for key in ("vlan", "vlan_id", "vlanId", "vlanid"):
+        value = _client_field(client, key)
+        if isinstance(value, int) and value > 0:
+            return value
+        if isinstance(value, str) and value.isdigit() and int(value) > 0:
+            return int(value)
+    return None
+
+
 def _client_matches_mode(client: object, mode: str) -> bool:
     wired = _client_is_wired(client)
     if mode == "all":
@@ -704,6 +714,8 @@ def build_client_edges(
             continue
         is_wireless = not _client_is_wired(client)
         channel = _client_channel(client) if is_wireless else None
+        client_vlan = _client_vlan(client)
+        vlans = (client_vlan,) if client_vlan else ()
         edges.append(
             Edge(
                 left=device_name,
@@ -711,6 +723,9 @@ def build_client_edges(
                 label=label,
                 wireless=is_wireless,
                 channel=channel,
+                vlans=vlans,
+                active_vlans=vlans,  # Client's VLAN is always "active"
+                is_trunk=False,
             )
         )
         seen.add(key)
@@ -1082,6 +1097,43 @@ def _build_ordered_edges(
             )
         )
     return edges
+
+
+def enrich_edges_with_active_vlans(
+    edges: list[Edge],
+    client_edges: list[Edge],
+) -> list[Edge]:
+    """Add active_vlans to edges based on client traffic."""
+    # Build map of device -> set of active VLANs (from connected clients)
+    device_active_vlans: dict[str, set[int]] = {}
+    for client_edge in client_edges:
+        device_name = client_edge.left  # Client edges have device on left
+        for vlan in client_edge.active_vlans:
+            device_active_vlans.setdefault(device_name, set()).add(vlan)
+
+    # Enrich infrastructure edges with active VLANs
+    enriched: list[Edge] = []
+    for edge in edges:
+        # Active VLANs are those configured on the link AND active on either endpoint
+        left_active = device_active_vlans.get(edge.left, set())
+        right_active = device_active_vlans.get(edge.right, set())
+        combined_active = left_active | right_active
+        active_vlans = tuple(sorted(set(edge.vlans) & combined_active))
+        enriched.append(
+            Edge(
+                left=edge.left,
+                right=edge.right,
+                label=edge.label,
+                poe=edge.poe,
+                wireless=edge.wireless,
+                speed=edge.speed,
+                channel=edge.channel,
+                vlans=edge.vlans,
+                active_vlans=active_vlans,
+                is_trunk=edge.is_trunk,
+            )
+        )
+    return enriched
 
 
 @dataclass(frozen=True)

@@ -79,12 +79,13 @@ def _iso_layout(options: SvgOptions) -> IsoLayout:
     )
 
 
-_TYPE_ORDER = ["gateway", "switch", "ap", "client", "other"]
+_TYPE_ORDER = ["gateway", "switch", "ap", "client", "client_cluster", "other"]
 _ICON_FILES = {
     "gateway": "router-network.svg",
     "switch": "server-network.svg",
     "ap": "access-point.svg",
     "client": "laptop.svg",
+    "client_cluster": "laptop.svg",
     "other": "server.svg",
 }
 
@@ -93,6 +94,7 @@ _ISO_ICON_FILES = {
     "switch": "switch-module.svg",
     "ap": "tower.svg",
     "client": "laptop.svg",
+    "client_cluster": "laptop.svg",
     "other": "server.svg",
 }
 
@@ -101,6 +103,7 @@ _TYPE_COLORS = {
     "switch": ("#bfe4ff", "#1c6dd0"),
     "ap": ("#c4f2d4", "#1f9a50"),
     "client": ("#e4ccff", "#6b2fb4"),
+    "client_cluster": ("#d4b8ff", "#5a25a0"),  # Slightly darker purple for clusters
     "other": ("#e3e3e3", "#7b7b7b"),
 }
 

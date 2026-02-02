@@ -14,6 +14,7 @@ from ..model.topology import (
     TopologyResult,
     build_node_type_map,
     build_port_map,
+    collapse_client_edges,
     group_devices_by_type,
 )
 from ..render.legend import resolve_legend_style
@@ -117,6 +118,18 @@ def render_svg_output(
         client_mode=args.client_scope,
         only_unifi=args.only_unifi,
     )
+
+    # Apply client clustering if requested
+    if getattr(args, "collapse_clients", False):
+        edges, _client_counts = collapse_client_edges(edges, node_types)
+        # Add client_cluster to group order if using grouped layout
+        if layout_mode == "grouped" and group_order and "client_cluster" not in group_order:
+            group_order.append("client_cluster")
+            if groups is not None:
+                groups["client_cluster"] = [
+                    name for name, ntype in node_types.items() if ntype == "client_cluster"
+                ]
+
     if args.format == "svg-iso":
         from ..render.svg import render_svg_isometric
 

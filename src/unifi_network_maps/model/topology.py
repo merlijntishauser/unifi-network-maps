@@ -1172,6 +1172,58 @@ def enrich_edges_with_active_vlans(
     return enriched
 
 
+def collapse_client_edges(
+    edges: list[Edge],
+    node_types: dict[str, str],
+) -> tuple[list[Edge], dict[str, int]]:
+    """Collapse individual client edges into cluster nodes.
+
+    Groups clients by their uplink device and replaces individual client edges
+    with a single edge to a cluster node showing the client count.
+
+    Args:
+        edges: List of edges including client edges.
+        node_types: Mutable dict mapping node names to types. Will be updated
+            with new 'client_cluster' entries and individual clients removed.
+
+    Returns:
+        Tuple of (collapsed_edges, client_counts) where:
+        - collapsed_edges: Edges with individual clients replaced by clusters
+        - client_counts: Dict mapping device names to their client counts
+    """
+    client_counts: dict[str, int] = {}
+    collapsed_edges: list[Edge] = []
+    collapsed_clients: set[str] = set()
+
+    for edge in edges:
+        # Check if right side is a client (clients are always on right side of edge)
+        if node_types.get(edge.right) == "client":
+            client_counts[edge.left] = client_counts.get(edge.left, 0) + 1
+            collapsed_clients.add(edge.right)
+        else:
+            collapsed_edges.append(edge)
+
+    # Remove individual clients from node_types
+    for client_name in collapsed_clients:
+        node_types.pop(client_name, None)
+
+    # Create cluster edges for devices with clients
+    for device_name, count in sorted(client_counts.items()):
+        cluster_name = f"{device_name} ({count} clients)"
+        collapsed_edges.append(
+            Edge(
+                left=device_name,
+                right=cluster_name,
+                label=None,
+                poe=False,
+                wireless=False,
+            )
+        )
+        node_types[cluster_name] = "client_cluster"
+
+    return collapsed_edges, client_counts
+
+
 @dataclass(frozen=True)
 class TopologyResult:
     raw_edges: list[Edge]

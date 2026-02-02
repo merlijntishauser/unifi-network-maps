@@ -14,6 +14,7 @@ class SvgTheme:
     node_ap: tuple[str, str]
     node_client: tuple[str, str]
     node_other: tuple[str, str]
+    node_client_cluster: tuple[str, str] = ("#d4b8ff", "#a080e0")
     group_fill: str = "#f8f9fa"
     group_stroke: str = "#dee2e6"
     group_radius: int = 8
@@ -28,6 +29,7 @@ class SvgTheme:
             "switch": self.node_switch,
             "ap": self.node_ap,
             "client": self.node_client,
+            "client_cluster": self.node_client_cluster,
             "other": self.node_other,
         }
         return color_map.get(group_name.lower(), (self.group_fill, self.group_stroke))
@@ -81,6 +83,10 @@ def svg_defs(prefix: str, theme: SvgTheme = DEFAULT_THEME) -> str:
         f'<linearGradient id="{node_prefix}client" x1="0%" y1="0%" x2="100%" y2="100%">'
         f'<stop offset="0%" stop-color="{theme.node_client[0]}"/>'
         f'<stop offset="100%" stop-color="{theme.node_client[1]}"/>'
+        "</linearGradient>"
+        f'<linearGradient id="{node_prefix}client_cluster" x1="0%" y1="0%" x2="100%" y2="100%">'
+        f'<stop offset="0%" stop-color="{theme.node_client_cluster[0]}"/>'
+        f'<stop offset="100%" stop-color="{theme.node_client_cluster[1]}"/>'
         "</linearGradient>"
         f'<linearGradient id="{node_prefix}other" x1="0%" y1="0%" x2="100%" y2="100%">'
         f'<stop offset="0%" stop-color="{theme.node_other[0]}"/>'

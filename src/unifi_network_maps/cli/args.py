@@ -80,6 +80,11 @@ def add_functional_args(parser: argparse._ArgumentGroup) -> None:
         help="Client types to include (default: wired)",
     )
     parser.add_argument(
+        "--collapse-clients",
+        action="store_true",
+        help="Group clients by uplink device into cluster nodes with count badges",
+    )
+    parser.add_argument(
         "--only-unifi", action="store_true", help="Only include neighbors that are UniFi devices"
     )
     parser.add_argument(

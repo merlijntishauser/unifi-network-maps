@@ -906,11 +906,23 @@ def _iso_layout_positions(
     else:
         min_x = min_y = 0.0
         max_x = max_y = 0.0
-    offset_x = -min_x + layout.padding
-    offset_y = -min_y + layout.padding + layout.tile_y_offset
+    # Extra padding for west/northwest to prevent clipping
+    nw_pad = 300
+    offset_x = -min_x + layout.padding + nw_pad
+    offset_y = -min_y + layout.padding + layout.tile_y_offset + nw_pad
     for name, (x, y) in positions.items():
         positions[name] = (x + offset_x, y + offset_y)
-    width = max_x - min_x + layout.tile_width + layout.padding * 2 + layout.extra_pad
+    # Expand viewport to show more of the grid
+    viewport_expand = 400
+    width = (
+        max_x
+        - min_x
+        + layout.tile_width
+        + layout.padding * 2
+        + layout.extra_pad
+        + viewport_expand
+        + nw_pad
+    )
     height = (
         max_y
         - min_y
@@ -918,6 +930,8 @@ def _iso_layout_positions(
         + layout.padding * 2
         + layout.tile_y_offset
         + layout.extra_pad
+        + viewport_expand
+        + nw_pad
     )
     return IsoLayoutPositions(
         layout=layout,
@@ -940,7 +954,7 @@ def _iso_grid_lines(
     max_gx = max(gx for gx, _ in grid_positions.values())
     min_gy = min(gy for _, gy in grid_positions.values())
     max_gy = max(gy for _, gy in grid_positions.values())
-    pad = 12
+    pad = 36  # Large grid extent for visual appeal
     gx_start = int(math.floor(min_gx)) - pad
     gx_end = int(math.ceil(max_gx)) + pad
     gy_start = int(math.floor(min_gy)) - pad
@@ -1449,8 +1463,8 @@ def _iso_group_parallelogram(
     # Position label at the top corner, offset inward along the right edge
     top_x, top_y = points[0]
     right_x, right_y = points[1]
-    label_x = top_x + (right_x - top_x) * 0.15 + 15
-    label_y = top_y + (right_y - top_y) * 0.15 + 10
+    label_x = top_x + (right_x - top_x) * 0.15 - 30  # Shifted NW
+    label_y = top_y + (right_y - top_y) * 0.15 - 20
     return IsoGroupBounds(name=name, points=points, label_x=label_x, label_y=label_y)
 
 
@@ -1461,7 +1475,7 @@ def _render_iso_group_boundaries(
     font_size: int = 10,
 ) -> None:
     """Render isometric group boundaries as parallelograms."""
-    label_size = 48  # Large labels for visibility
+    label_size = 48  # Labels
     iso_angle = 30  # Match isometric perspective
     for bounds in bounds_list:
         group_attr = _escape_attr(bounds.name, quote=True)
@@ -1479,18 +1493,12 @@ def _render_iso_group_boundaries(
         label_transform = (
             f"translate({lx} {ly}) rotate({iso_angle}) skewX({iso_angle}) translate({-lx} {-ly})"
         )
-        # Add text with white outline for readability
+        # Text with thin outline for readability
         lines.append(
             f'<text class="group-label" x="{lx}" y="{ly}" '
-            f'font-size="{label_size}" font-weight="bold" '
-            f'stroke="#ffffff" stroke-width="4" paint-order="stroke" '
-            f'transform="{label_transform}">'
-            f"{label_text}</text>"
-        )
-        lines.append(
-            f'<text class="group-label" x="{lx}" y="{ly}" '
-            f'fill="{stroke}" font-size="{label_size}" font-weight="bold" '
-            f'transform="{label_transform}">'
+            f'font-size="{label_size}" font-weight="bold" fill="{stroke}" '
+            f'stroke="#ffffff" stroke-width="2" paint-order="stroke fill" '
+            f'opacity="0.7" transform="{label_transform}">'
             f"{label_text}</text>"
         )
         lines.append("</g>")
@@ -1520,9 +1528,9 @@ def render_svg_isometric(
         f'viewBox="0 0 {layout_positions.width} {layout_positions.height}">',
         svg_defs("iso", theme),
         (
-            "<style>text{font-family:Arial,Helvetica,sans-serif;font-size:"
-            f"{options.font_size}px;"
-            "}</style>"
+            "<style>text{font-family:Arial,Helvetica,sans-serif;}"
+            f"text:not(.group-label){{font-size:{options.font_size}px;}}"
+            "</style>"
         ),
     ]
 

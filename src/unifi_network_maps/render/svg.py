@@ -726,7 +726,7 @@ def _render_vlan_striped_edge(
     extra_attrs: str,
     opacity: float = 1.0,
 ) -> None:
-    """Render an edge with striped VLAN colors."""
+    """Render an edge with striped VLAN colors and glow effect."""
     if not vlans:
         return
     num_vlans = len(vlans)
@@ -734,6 +734,15 @@ def _render_vlan_striped_edge(
     total_pattern = segment_len * num_vlans
     gap_len = total_pattern - segment_len  # Gap is rest of pattern
     opacity_attr = f' opacity="{opacity}"' if opacity < 1.0 else ""
+
+    # Render glow layer behind the edge
+    glow_color = theme.vlan_color(vlans[0])
+    glow_width = base_width * 3
+    glow_opacity = 0.25 * opacity  # Scale glow with edge opacity
+    lines.append(
+        f'<path d="{path}" stroke="{glow_color}" stroke-width="{glow_width}" '
+        f'fill="none" opacity="{glow_opacity}" filter="url(#edge-glow)" {extra_attrs}/>'
+    )
 
     for i, vlan_id in enumerate(vlans):
         color = theme.vlan_color(vlan_id)
@@ -1089,7 +1098,7 @@ def _render_iso_vlan_striped_edge(
     extra_attrs: str,
     opacity: float = 1.0,
 ) -> None:
-    """Render an isometric edge with striped VLAN colors."""
+    """Render an isometric edge with striped VLAN colors and glow effect."""
     if not vlans:
         return
     num_vlans = len(vlans)
@@ -1097,6 +1106,16 @@ def _render_iso_vlan_striped_edge(
     total_pattern = segment_len * num_vlans
     gap_len = total_pattern - segment_len
     opacity_attr = f' opacity="{opacity}"' if opacity < 1.0 else ""
+
+    # Render glow layer behind the edge
+    glow_color = theme.vlan_color(vlans[0])
+    glow_width = base_width * 3
+    glow_opacity = 0.25 * opacity  # Scale glow with edge opacity
+    lines.append(
+        f'<path d="{path}" stroke="{glow_color}" stroke-width="{glow_width}" '
+        f'fill="none" stroke-linecap="round" stroke-linejoin="round" '
+        f'opacity="{glow_opacity}" filter="url(#iso-edge-glow)" {extra_attrs}/>'
+    )
 
     for i, vlan_id in enumerate(vlans):
         color = theme.vlan_color(vlan_id)

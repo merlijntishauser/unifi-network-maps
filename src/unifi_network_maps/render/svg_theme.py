@@ -55,6 +55,7 @@ DEFAULT_THEME = SvgTheme(
 def svg_defs(prefix: str, theme: SvgTheme = DEFAULT_THEME) -> str:
     gradient_prefix = f"{prefix}-" if prefix else ""
     node_prefix = f"{prefix}-node-" if prefix else "node-"
+    filter_prefix = f"{prefix}-" if prefix else ""
     return (
         "<defs>"
         f'<linearGradient id="{gradient_prefix}link-standard" x1="0%" y1="0%" x2="100%" y2="0%">'
@@ -85,5 +86,8 @@ def svg_defs(prefix: str, theme: SvgTheme = DEFAULT_THEME) -> str:
         f'<stop offset="0%" stop-color="{theme.node_other[0]}"/>'
         f'<stop offset="100%" stop-color="{theme.node_other[1]}"/>'
         "</linearGradient>"
+        f'<filter id="{filter_prefix}edge-glow" x="-50%" y="-50%" width="200%" height="200%">'
+        '<feGaussianBlur stdDeviation="4" result="blur"/>'
+        "</filter>"
         "</defs>"
     )

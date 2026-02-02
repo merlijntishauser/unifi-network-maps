@@ -57,15 +57,24 @@ eval $CLI --include-clients --format svg-iso --svg-layout-mode grouped --output 
 eval $CLI --format json --output smoketest/json/payload.json
 eval $CLI --format json --include-clients --output smoketest/json/payload_clients.json
 
-# Theme variants
-eval $CLI --theme-file src/unifi_network_maps/assets/themes/default.yaml --stdout > smoketest/themes/mermaid_default.mmd
-eval $CLI --theme-file src/unifi_network_maps/assets/themes/dark.yaml --stdout > smoketest/themes/mermaid_dark.mmd
-eval $CLI --theme-file src/unifi_network_maps/assets/themes/default.yaml --legend-only --stdout > smoketest/themes/legend_default.mmd
-eval $CLI --theme-file src/unifi_network_maps/assets/themes/dark.yaml --legend-only --stdout > smoketest/themes/legend_dark.mmd
-eval $CLI --theme-file src/unifi_network_maps/assets/themes/default.yaml --format svg --output smoketest/themes/svg_default.svg
-eval $CLI --theme-file src/unifi_network_maps/assets/themes/dark.yaml --format svg --output smoketest/themes/svg_dark.svg
-eval $CLI --theme-file src/unifi_network_maps/assets/themes/default.yaml --format svg-iso --output smoketest/themes/svg_iso_default.svg
-eval $CLI --theme-file src/unifi_network_maps/assets/themes/dark.yaml --format svg-iso --output smoketest/themes/svg_iso_dark.svg
+# Theme variants (built-in themes)
+eval $CLI --theme unifi --stdout > smoketest/themes/mermaid_unifi.mmd
+eval $CLI --theme unifi-dark --stdout > smoketest/themes/mermaid_unifi_dark.mmd
+eval $CLI --theme minimal --stdout > smoketest/themes/mermaid_minimal.mmd
+eval $CLI --theme classic --stdout > smoketest/themes/mermaid_classic.mmd
+eval $CLI --theme classic-dark --stdout > smoketest/themes/mermaid_classic_dark.mmd
+eval $CLI --theme unifi --format svg --output smoketest/themes/svg_unifi.svg
+eval $CLI --theme unifi-dark --format svg --output smoketest/themes/svg_unifi_dark.svg
+eval $CLI --theme minimal --format svg --output smoketest/themes/svg_minimal.svg
+eval $CLI --theme classic --format svg --output smoketest/themes/svg_classic.svg
+eval $CLI --theme classic-dark --format svg --output smoketest/themes/svg_classic_dark.svg
+eval $CLI --theme unifi --format svg-iso --output smoketest/themes/svg_iso_unifi.svg
+eval $CLI --theme unifi-dark --format svg-iso --output smoketest/themes/svg_iso_unifi_dark.svg
+eval $CLI --theme minimal --format svg-iso --output smoketest/themes/svg_iso_minimal.svg
+eval $CLI --theme classic --format svg-iso --output smoketest/themes/svg_iso_classic.svg
+eval $CLI --theme classic-dark --format svg-iso --output smoketest/themes/svg_iso_classic_dark.svg
+eval $CLI --theme unifi --legend-only --stdout > smoketest/themes/legend_unifi.mmd
+eval $CLI --theme unifi-dark --legend-only --stdout > smoketest/themes/legend_unifi_dark.mmd
 
 # WAN variants
 mkdir -p smoketest/wan

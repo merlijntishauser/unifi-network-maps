@@ -755,7 +755,7 @@ def _render_wan_upstream(
     # Draw bounding box with rounded corners
     lines.append(
         f'<rect x="{box_x}" y="{box_y}" width="{box_width}" height="{box_height}" '
-        f'rx="6" ry="6" fill="#f8fbff" stroke="#0288d1" stroke-width="1.5"/>'
+        f'rx="6" ry="6" fill="{theme.background}" stroke="{theme.wan_globe[1]}" stroke-width="1.5"/>'
     )
 
     # Draw globe icon inline with gradient fill
@@ -1853,7 +1853,7 @@ def _render_iso_wan_upstream(
     # Draw bounding box with rounded corners
     lines.append(
         f'<rect x="{box_x}" y="{box_y}" width="{box_width}" height="{box_height}" '
-        f'rx="8" ry="8" fill="#f8fbff" stroke="#0288d1" stroke-width="2"/>'
+        f'rx="8" ry="8" fill="{theme.background}" stroke="{theme.wan_globe[1]}" stroke-width="2"/>'
     )
 
     # Draw globe icon inline with gradient fill

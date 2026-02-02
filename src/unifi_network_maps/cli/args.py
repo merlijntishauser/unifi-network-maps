@@ -125,6 +125,17 @@ def add_svg_args(parser: argparse._ArgumentGroup) -> None:
         default="physical",
         help="SVG layout mode: physical (default) or grouped by network segment",
     )
+    parser.add_argument(
+        "--max-vlan-colors",
+        type=int,
+        default=None,
+        help="Limit VLAN colors shown on edges (default: no limit)",
+    )
+    parser.add_argument(
+        "--include-vlan-legend",
+        action="store_true",
+        help="Add VLAN color legend to SVG output",
+    )
 
 
 def add_general_render_args(parser: argparse._ArgumentGroup) -> None:

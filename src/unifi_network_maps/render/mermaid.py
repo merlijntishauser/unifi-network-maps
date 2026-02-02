@@ -87,6 +87,14 @@ def _render_group_sections(
         lines.append("  end")
 
 
+def _format_vlan_suffix(active_vlans: tuple[int, ...]) -> str:
+    """Format VLAN suffix for edge labels."""
+    if not active_vlans:
+        return ""
+    vlan_str = ",".join(f"V{v}" for v in sorted(active_vlans))
+    return f" [{vlan_str}]"
+
+
 def _render_edge_lines(
     lines: list[str],
     edges: list[Edge],
@@ -103,8 +111,9 @@ def _render_edge_lines(
         else:
             left = id_map[edge.left]
             right = id_map[edge.right]
-        if edge.label:
-            label = _escape(edge.label)
+        vlan_suffix = _format_vlan_suffix(edge.active_vlans)
+        if edge.label or vlan_suffix:
+            label = _escape(f"{edge.label or ''}{vlan_suffix}".strip())
             lines.append(f'  {left} ---|"{label}"| {right};')
         else:
             lines.append(f"  {left} --- {right};")

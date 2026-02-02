@@ -6,7 +6,7 @@ Quick reference for AI assistants working on this codebase.
 
 **unifi-network-maps** - A Python CLI tool that generates network diagrams (Mermaid, SVG, MkDocs) from UniFi Network Controller data via LLDP topology.
 
-- **Version**: 1.4.14
+- **Version**: 1.4.15
 - **Python**: 3.12+ (3.13 preferred)
 - **License**: MIT
 - **PyPI**: `pip install unifi-network-maps`
@@ -85,9 +85,17 @@ pytest --cov=unifi_network_maps --cov-report=term-missing
 # Smoketests (requires live UniFi or mock data)
 make smoketest            # Live UniFi
 make smoketest-mock       # Mock data
+make smoketest-validate   # Validate smoketest output structure
+
+# Visual regression testing
+make visual-regression    # Compare SVGs against baselines
+make visual-baselines     # Update baseline images after intentional changes
 
 # Mock data generation
 make mock-data
+
+# Help
+make makefile-help        # Show all make targets
 ```
 
 ## Environment Variables
@@ -118,7 +126,8 @@ unifi-network-maps --markdown --output ./network.md     # Markdown file
 --only-unifi            # Filter to UniFi devices only
 --mock-data FILE        # Use mock JSON instead of API
 --direction LR|TB       # Diagram direction
---group-by-type         # Group nodes in subgraphs
+--group-by-type         # Group nodes in subgraphs (Mermaid)
+--svg-layout-mode physical|grouped  # SVG layout with visual grouping
 --theme-file FILE       # Custom theme YAML
 ```
 
@@ -128,6 +137,8 @@ unifi-network-maps --markdown --output ./network.md     # Markdown file
 - **BDD tests**: `features/` - behave
 - **Contract tests**: `tests/test_contract_unifi.py` - fixture-based
 - **Live contract tests**: Set `UNIFI_CONTRACT_LIVE=1` with UniFi env vars
+- **Smoketest validation**: `tests/test_smoketest_validation.py` - structural validation of output files
+- **Visual regression**: `tests/test_visual_regression.py` - pixel-based SVG comparison
 
 ## Code Quality Guidelines
 
@@ -147,6 +158,8 @@ From AGENTS.md:
 - `PyYAML` - Theme configuration
 - `Jinja2` - Template rendering
 - `Faker` (dev) - Mock data generation
+- `cairosvg` (dev) - SVG to PNG rendering for visual regression
+- `Pillow` (dev) - Image comparison for visual regression
 
 ## Related Projects
 

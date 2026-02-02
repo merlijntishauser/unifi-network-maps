@@ -67,4 +67,15 @@ eval $CLI --theme-file src/unifi_network_maps/assets/themes/dark.yaml --format s
 eval $CLI --theme-file src/unifi_network_maps/assets/themes/default.yaml --format svg-iso --output smoketest/themes/svg_iso_default.svg
 eval $CLI --theme-file src/unifi_network_maps/assets/themes/dark.yaml --format svg-iso --output smoketest/themes/svg_iso_dark.svg
 
+# VLAN variants (requires --include-clients for active VLAN visualization)
+mkdir -p smoketest/vlan
+eval $CLI --include-clients --format svg --output smoketest/vlan/network_vlan.svg
+eval $CLI --include-clients --format svg-iso --output smoketest/vlan/network_vlan_iso.svg
+eval $CLI --include-clients --client-scope all --format svg --output smoketest/vlan/network_vlan_all_clients.svg
+eval $CLI --include-clients --client-scope all --format svg-iso --output smoketest/vlan/network_vlan_all_clients_iso.svg
+eval $CLI --include-clients --max-vlan-colors 3 --format svg --output smoketest/vlan/network_vlan_max3.svg
+eval $CLI --include-clients --max-vlan-colors 3 --format svg-iso --output smoketest/vlan/network_vlan_max3_iso.svg
+eval $CLI --include-ports --include-clients --format svg --output smoketest/vlan/network_vlan_ports.svg
+eval $CLI --include-ports --include-clients --format svg-iso --output smoketest/vlan/network_vlan_ports_iso.svg
+
 echo "Smoketest complete: $(find smoketest -type f | wc -l | tr -d ' ') files generated"

@@ -671,7 +671,7 @@ def render_svg(
         _render_group_boundaries(lines, group_bounds_list, theme, options)
 
     node_port_labels, node_port_prefix = _render_svg_edges(
-        lines, edges, positions, node_types, options
+        lines, edges, positions, node_types, options, theme
     )
     _render_svg_nodes(
         lines,
@@ -689,12 +689,56 @@ def render_svg(
     return "\n".join(lines) + "\n"
 
 
+def _vlan_data_attrs(edge: Edge) -> str:
+    """Generate VLAN data attributes for an edge."""
+    attrs = []
+    if edge.vlans:
+        attrs.append(f'data-vlans="{",".join(str(v) for v in edge.vlans)}"')
+    if edge.active_vlans:
+        attrs.append(f'data-active-vlans="{",".join(str(v) for v in edge.active_vlans)}"')
+    if edge.is_trunk:
+        attrs.append('data-trunk="true"')
+    return " ".join(attrs)
+
+
+def _render_vlan_striped_edge(
+    lines: list[str],
+    path: str,
+    vlans: tuple[int, ...],
+    theme: SvgTheme,
+    base_width: int,
+    is_wireless: bool,
+    extra_attrs: str,
+) -> None:
+    """Render an edge with striped VLAN colors."""
+    if not vlans:
+        return
+    num_vlans = len(vlans)
+    segment_len = 12  # Length of each colored segment
+    total_pattern = segment_len * num_vlans
+    gap_len = total_pattern - segment_len  # Gap is rest of pattern
+
+    for i, vlan_id in enumerate(vlans):
+        color = theme.vlan_color(vlan_id)
+        offset = -i * segment_len
+        dash = f'stroke-dasharray="{segment_len} {gap_len}"'
+        if is_wireless:
+            # For wireless, use smaller dashes within the segment
+            dash = f'stroke-dasharray="4 2 4 {gap_len + 2}"'
+        lines.append(
+            f'<path d="{path}" stroke="{color}" stroke-width="{base_width}" '
+            f'fill="none" {dash} stroke-dashoffset="{offset}" {extra_attrs}/>'
+        )
+
+
 def _render_svg_edges(
     lines: list[str],
     edges: list[Edge],
     positions: dict[str, tuple[float, float]],
     node_types: dict[str, str],
     options: SvgOptions,
+    theme: SvgTheme,
+    max_vlan_colors: int | None = None,
 ) -> tuple[dict[str, str], dict[str, str]]:
     node_port_labels: dict[str, str] = {}
     node_port_prefix: dict[str, str] = {}
@@ -710,7 +754,6 @@ def _render_svg_edges(
         src_bottom = src_y + options.node_height
         dst_top = dst_y
         mid_y = (src_bottom + dst_top) / 2
-        color = "url(#link-poe)" if edge.poe else "url(#link-standard)"
         width_px = 2 if edge.poe else 1
         if math.isclose(src_cx, dst_cx, abs_tol=0.01):
             elbow_x = src_cx + 0.5
@@ -723,13 +766,31 @@ def _render_svg_edges(
                 f"M {src_cx} {src_bottom} L {src_cx} {mid_y} "
                 f"L {dst_cx} {mid_y} L {dst_cx} {dst_top}"
             )
-        dash = ' stroke-dasharray="6 4"' if edge.wireless else ""
         left_attr = _escape_attr(edge.left, quote=True)
         right_attr = _escape_attr(edge.right, quote=True)
-        lines.append(
-            f'<path d="{path}" stroke="{color}" stroke-width="{width_px}" fill="none"{dash} '
-            f'data-edge-left="{left_attr}" data-edge-right="{right_attr}"/>'
-        )
+        vlan_attrs = _vlan_data_attrs(edge)
+        base_attrs = f'data-edge-left="{left_attr}" data-edge-right="{right_attr}"'
+        if vlan_attrs:
+            base_attrs = f"{base_attrs} {vlan_attrs}"
+
+        # Determine VLANs to visualize (active only, with optional limit)
+        display_vlans = edge.active_vlans
+        if max_vlan_colors and len(display_vlans) > max_vlan_colors:
+            display_vlans = display_vlans[:max_vlan_colors]
+
+        if display_vlans:
+            # Render striped VLAN edge
+            _render_vlan_striped_edge(
+                lines, path, display_vlans, theme, width_px, edge.wireless, base_attrs
+            )
+        else:
+            # Render standard edge (no VLAN info or no active VLANs)
+            color = "url(#link-poe)" if edge.poe else "url(#link-standard)"
+            dash = ' stroke-dasharray="6 4"' if edge.wireless else ""
+            lines.append(
+                f'<path d="{path}" stroke="{color}" stroke-width="{width_px}" '
+                f'fill="none"{dash} {base_attrs}/>'
+            )
         if edge.poe:
             icon_x = dst_cx
             icon_y = dst_top - 6
@@ -997,6 +1058,36 @@ def _iso_front_anchor(
     return cx, cy
 
 
+def _render_iso_vlan_striped_edge(
+    lines: list[str],
+    path: str,
+    vlans: tuple[int, ...],
+    theme: SvgTheme,
+    base_width: int,
+    is_wireless: bool,
+    extra_attrs: str,
+) -> None:
+    """Render an isometric edge with striped VLAN colors."""
+    if not vlans:
+        return
+    num_vlans = len(vlans)
+    segment_len = 16  # Slightly larger for isometric view
+    total_pattern = segment_len * num_vlans
+    gap_len = total_pattern - segment_len
+
+    for i, vlan_id in enumerate(vlans):
+        color = theme.vlan_color(vlan_id)
+        offset = -i * segment_len
+        dash = f'stroke-dasharray="{segment_len} {gap_len}"'
+        if is_wireless:
+            dash = f'stroke-dasharray="6 3 6 {gap_len + 1}"'
+        lines.append(
+            f'<path d="{path}" stroke="{color}" stroke-width="{base_width}" '
+            f'fill="none" stroke-linecap="round" stroke-linejoin="round" '
+            f'{dash} stroke-dashoffset="{offset}" {extra_attrs}/>'
+        )
+
+
 def _render_iso_edges(
     lines: list[str],
     edges: list[Edge],
@@ -1006,10 +1097,12 @@ def _render_iso_edges(
     node_types: dict[str, str],
     layout: IsoLayout,
     options: SvgOptions,
+    theme: SvgTheme,
     offset_x: float,
     offset_y: float,
     node_port_labels: dict[str, str],
     node_port_prefix: dict[str, str],
+    max_vlan_colors: int | None = None,
 ) -> None:
     for edge in edges:
         _record_iso_edge_label(edge, node_types, node_port_labels, node_port_prefix)
@@ -1020,7 +1113,6 @@ def _render_iso_edges(
         dst_grid = grid_positions.get(edge.right)
         if not src_grid or not dst_grid:
             continue
-        color = "url(#iso-link-poe)" if edge.poe else "url(#iso-link-standard)"
         width_px = 5 if edge.poe else 4
         src_gx, src_gy = float(src_grid[0]), float(src_grid[1])
         dst_gx, dst_gy = float(dst_grid[0]), float(dst_grid[1])
@@ -1043,14 +1135,31 @@ def _render_iso_edges(
             dst_cx,
             dst_cy,
         )
-        dash = ' stroke-dasharray="8 6"' if edge.wireless else ""
+        path = " ".join(path_cmds)
         left_attr = _escape_attr(edge.left, quote=True)
         right_attr = _escape_attr(edge.right, quote=True)
-        lines.append(
-            f'<path d="{" ".join(path_cmds)}" stroke="{color}" stroke-width="{width_px}" '
-            f'fill="none" stroke-linecap="round" stroke-linejoin="round"{dash} '
-            f'data-edge-left="{left_attr}" data-edge-right="{right_attr}"/>'
-        )
+        vlan_attrs = _vlan_data_attrs(edge)
+        base_attrs = f'data-edge-left="{left_attr}" data-edge-right="{right_attr}"'
+        if vlan_attrs:
+            base_attrs = f"{base_attrs} {vlan_attrs}"
+
+        # Determine VLANs to visualize
+        display_vlans = edge.active_vlans
+        if max_vlan_colors and len(display_vlans) > max_vlan_colors:
+            display_vlans = display_vlans[:max_vlan_colors]
+
+        if display_vlans:
+            _render_iso_vlan_striped_edge(
+                lines, path, display_vlans, theme, width_px, edge.wireless, base_attrs
+            )
+        else:
+            color = "url(#iso-link-poe)" if edge.poe else "url(#iso-link-standard)"
+            dash = ' stroke-dasharray="8 6"' if edge.wireless else ""
+            lines.append(
+                f'<path d="{path}" stroke="{color}" stroke-width="{width_px}" '
+                f'fill="none" stroke-linecap="round" stroke-linejoin="round"{dash} '
+                f"{base_attrs}/>"
+            )
         if edge.poe:
             icon_x = dst_cx
             icon_y = dst_cy - layout.tile_height * 0.4
@@ -1563,6 +1672,7 @@ def render_svg_isometric(
         node_types=node_types,
         layout=layout,
         options=options,
+        theme=theme,
         offset_x=layout_positions.offset_x,
         offset_y=layout_positions.offset_y,
         node_port_labels=node_port_labels,

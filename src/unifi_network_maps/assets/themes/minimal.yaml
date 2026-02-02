@@ -1,0 +1,63 @@
+mermaid:
+  nodes:
+    gateway:
+      fill: "#e5e7eb"
+      stroke: "#9ca3af"
+    switch:
+      fill: "#e5e7eb"
+      stroke: "#9ca3af"
+    ap:
+      fill: "#e5e7eb"
+      stroke: "#9ca3af"
+    client:
+      fill: "#f3f4f6"
+      stroke: "#d1d5db"
+    other:
+      fill: "#f3f4f6"
+      stroke: "#d1d5db"
+  poe_link: "#6b7280"
+  poe_link_width: 2
+  poe_link_arrow: "none"
+  standard_link: "#9ca3af"
+  standard_link_width: 2
+  standard_link_arrow: "none"
+svg:
+  background: "#fafafa"
+  text:
+    primary: "#374151"
+    secondary: "#9ca3af"
+  status:
+    online: "#6b7280"
+    offline: "#9ca3af"
+  wan_globe:
+    from: "#d1d5db"
+    to: "#9ca3af"
+  links:
+    standard:
+      from: "#9ca3af"
+      to: "#6b7280"
+    poe:
+      from: "#6b7280"
+      to: "#4b5563"
+  nodes:
+    gateway:
+      from: "#e5e7eb"
+      to: "#d1d5db"
+    switch:
+      from: "#e5e7eb"
+      to: "#d1d5db"
+    ap:
+      from: "#e5e7eb"
+      to: "#d1d5db"
+    client:
+      from: "#f3f4f6"
+      to: "#e5e7eb"
+    other:
+      from: "#f3f4f6"
+      to: "#e5e7eb"
+  vlan_colors:
+    1: "#9ca3af"
+    10: "#9ca3af"
+    20: "#9ca3af"
+    30: "#9ca3af"
+    100: "#9ca3af"

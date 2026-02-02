@@ -125,6 +125,12 @@ def add_svg_args(parser: argparse._ArgumentGroup) -> None:
     parser.add_argument("--svg-height", type=int, default=None, help="SVG height override")
     parser.add_argument("--theme-file", default=None, help="Path to theme YAML file")
     parser.add_argument(
+        "--theme",
+        choices=["unifi", "unifi-dark", "minimal", "classic", "classic-dark"],
+        default=None,
+        help="Built-in theme name (--theme-file takes priority if both specified)",
+    )
+    parser.add_argument(
         "--svg-layout-mode",
         choices=["physical", "grouped"],
         default="physical",

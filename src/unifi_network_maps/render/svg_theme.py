@@ -7,20 +7,39 @@ from dataclasses import dataclass, field
 
 @dataclass(frozen=True)
 class SvgTheme:
+    # Links
     link_standard: tuple[str, str]
     link_poe: tuple[str, str]
+
+    # Nodes
     node_gateway: tuple[str, str]
     node_switch: tuple[str, str]
     node_ap: tuple[str, str]
     node_client: tuple[str, str]
     node_other: tuple[str, str]
     node_client_cluster: tuple[str, str] = ("#d4b8ff", "#a080e0")
+
+    # Groups
     group_fill: str = "#f8f9fa"
     group_stroke: str = "#dee2e6"
     group_radius: int = 8
     group_label_fill: str = "#495057"
     group_stroke_width: int = 2
+
+    # VLANs
     vlan_colors: dict[int, str] = field(default_factory=dict)
+
+    # Background & text
+    background: str = "#ffffff"
+    text_primary: str = "#1a1a1a"
+    text_secondary: str = "#6b7280"
+
+    # Status indicators
+    status_online: str = "#00a86b"
+    status_offline: str = "#ef4444"
+
+    # WAN globe
+    wan_globe: tuple[str, str] = ("#4fc3f7", "#0288d1")
 
     def group_colors(self, group_name: str) -> tuple[str, str]:
         """Return (fill, stroke) colors for a group based on its type."""
@@ -96,8 +115,8 @@ def svg_defs(prefix: str, theme: SvgTheme = DEFAULT_THEME) -> str:
         '<feGaussianBlur stdDeviation="4" result="blur"/>'
         "</filter>"
         f'<linearGradient id="{gradient_prefix}globe" x1="0%" y1="0%" x2="100%" y2="100%">'
-        '<stop offset="0%" stop-color="#4fc3f7"/>'
-        '<stop offset="100%" stop-color="#0288d1"/>'
+        f'<stop offset="0%" stop-color="{theme.wan_globe[0]}"/>'
+        f'<stop offset="100%" stop-color="{theme.wan_globe[1]}"/>'
         "</linearGradient>"
         "</defs>"
     )

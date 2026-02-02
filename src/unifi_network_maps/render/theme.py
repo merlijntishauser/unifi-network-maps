@@ -12,6 +12,17 @@ from .mermaid_theme import MermaidTheme
 from .svg_theme import DEFAULT_THEME as DEFAULT_SVG_THEME
 from .svg_theme import SvgTheme
 
+# Built-in theme names mapped to YAML files in assets/themes/
+BUILTIN_THEMES = {
+    "unifi": "unifi.yaml",
+    "unifi-dark": "unifi-dark.yaml",
+    "minimal": "minimal.yaml",
+    "classic": "default.yaml",
+    "classic-dark": "dark.yaml",
+}
+
+_ASSETS_DIR = Path(__file__).parent.parent / "assets" / "themes"
+
 
 def _coerce_pair(value: object, default: tuple[str, str]) -> tuple[str, str]:
     if isinstance(value, list | tuple) and len(value) == 2:
@@ -92,6 +103,8 @@ def _coerce_vlan_colors(value: object) -> dict[int, str]:
 def _svg_theme_from_dict(data: dict, base: SvgTheme) -> SvgTheme:
     nodes = data.get("nodes", {}) if isinstance(data.get("nodes"), dict) else {}
     links = data.get("links", {}) if isinstance(data.get("links"), dict) else {}
+    text = data.get("text", {}) if isinstance(data.get("text"), dict) else {}
+    status = data.get("status", {}) if isinstance(data.get("status"), dict) else {}
 
     return SvgTheme(
         link_standard=_coerce_pair(links.get("standard"), base.link_standard),
@@ -102,6 +115,12 @@ def _svg_theme_from_dict(data: dict, base: SvgTheme) -> SvgTheme:
         node_client=_coerce_pair(nodes.get("client"), base.node_client),
         node_other=_coerce_pair(nodes.get("other"), base.node_other),
         vlan_colors=_coerce_vlan_colors(data.get("vlan_colors")),
+        background=_coerce_color(data.get("background"), base.background),
+        text_primary=_coerce_color(text.get("primary"), base.text_primary),
+        text_secondary=_coerce_color(text.get("secondary"), base.text_secondary),
+        status_online=_coerce_color(status.get("online"), base.status_online),
+        status_offline=_coerce_color(status.get("offline"), base.status_offline),
+        wan_globe=_coerce_pair(data.get("wan_globe"), base.wan_globe),
     )
 
 
@@ -119,7 +138,25 @@ def load_theme(path: str | Path) -> tuple[MermaidTheme, SvgTheme]:
     return mermaid_theme, svg_theme
 
 
-def resolve_themes(theme_file: str | Path | None) -> tuple[MermaidTheme, SvgTheme]:
+def resolve_themes(
+    theme_name: str | None = None,
+    theme_file: str | Path | None = None,
+) -> tuple[MermaidTheme, SvgTheme]:
+    """Resolve theme from name or file path.
+
+    Args:
+        theme_name: Built-in theme name (e.g., "unifi", "classic").
+        theme_file: Custom theme file path. Takes priority over theme_name.
+
+    Returns:
+        Tuple of (MermaidTheme, SvgTheme).
+    """
     if theme_file:
         return load_theme(theme_file)
+    if theme_name:
+        if theme_name not in BUILTIN_THEMES:
+            valid = ", ".join(sorted(BUILTIN_THEMES.keys()))
+            raise ValueError(f"Unknown theme: {theme_name}. Valid themes: {valid}")
+        builtin_path = _ASSETS_DIR / BUILTIN_THEMES[theme_name]
+        return load_theme(builtin_path)
     return DEFAULT_MERMAID_THEME, DEFAULT_SVG_THEME

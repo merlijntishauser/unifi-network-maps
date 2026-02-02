@@ -171,9 +171,12 @@ def main(argv: list[str] | None = None) -> int:
     if payload_result is not None:
         return payload_result
     try:
-        mermaid_theme, svg_theme = resolve_themes(args.theme_file)
+        mermaid_theme, svg_theme = resolve_themes(
+            theme_name=args.theme,
+            theme_file=args.theme_file,
+        )
     except Exception as exc:  # noqa: BLE001
-        logging.error("Failed to load theme file: %s", exc)
+        logging.error("Failed to load theme: %s", exc)
         return 2
 
     if args.legend_only:

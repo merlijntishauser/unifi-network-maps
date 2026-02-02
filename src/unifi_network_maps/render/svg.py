@@ -715,6 +715,7 @@ def _render_wan_upstream(
     wan_info: WanInfo,
     gateway_position: tuple[float, float],
     options: SvgOptions,
+    theme: SvgTheme,
 ) -> None:
     """Render WAN upstream visualization (orthogonal view)."""
     gx, gy = gateway_position
@@ -790,7 +791,8 @@ def _render_wan_upstream(
         y = text_y + i * line_height
         lines.append(
             f'<text x="{text_x}" y="{y}" text-anchor="middle" '
-            f'fill="#333" font-size="{font_size}">{_escape_text(label_text)}</text>'
+            f'fill="{theme.text_primary}" font-size="{font_size}">'
+            f"{_escape_text(label_text)}</text>"
         )
 
     lines.append("</g>")
@@ -831,6 +833,7 @@ def render_svg(
             f"{options.font_size}px;"
             "}</style>"
         ),
+        f'<rect width="100%" height="100%" fill="{theme.background}"/>',
     ]
 
     if use_grouped and group_bounds_list:
@@ -848,6 +851,7 @@ def render_svg(
         icons,
         options,
         node_data,
+        theme,
         groups=groups,
     )
 
@@ -860,7 +864,7 @@ def render_svg(
                 gateway_name = name
                 break
         if gateway_name and gateway_name in positions:
-            _render_wan_upstream(lines, wan_info, positions[gateway_name], options)
+            _render_wan_upstream(lines, wan_info, positions[gateway_name], options, theme)
 
     lines.append("</svg>")
     return "\n".join(lines) + "\n"
@@ -1078,6 +1082,7 @@ def _render_svg_nodes(
     icons: dict[str, str],
     options: SvgOptions,
     node_data: dict[str, dict[str, str]] | None,
+    theme: SvgTheme,
     *,
     groups: dict[str, list[str]] | None = None,
 ) -> None:
@@ -1122,14 +1127,15 @@ def _render_svg_nodes(
             wrapped = _wrap_text(port_label)
             lines.append(
                 f'<text x="{text_x}" y="{port_y}" class="node-port" '
-                f'text-anchor="start" fill="#555" font-size="{font_size}">'
+                f'text-anchor="start" fill="{theme.text_secondary}" font-size="{font_size}">'
             )
             for idx, line in enumerate(wrapped):
                 dy = 0 if idx == 0 else line_height
                 lines.append(f'<tspan x="{text_x}" dy="{dy}">{_escape_text(line)}</tspan>')
             lines.append("</text>")
         lines.append(
-            f'<text x="{text_x}" y="{text_y}" fill="#1f1f1f" text-anchor="start">{safe_name}</text>'
+            f'<text x="{text_x}" y="{text_y}" fill="{theme.text_primary}" '
+            f'text-anchor="start">{safe_name}</text>'
         )
         lines.append("</g>")
 
@@ -1664,6 +1670,7 @@ def _render_iso_node(
     port_label: str | None,
     port_prefix: str | None,
     layout: IsoLayout,
+    theme: SvgTheme,
 ) -> None:
     fill, stroke = _TYPE_COLORS.get(node_type, _TYPE_COLORS["other"])
     fill = f"url(#iso-node-{node_type})"
@@ -1761,7 +1768,7 @@ def _render_iso_node(
         f"translate({-name_x} {-name_y})"
     )
     lines.append(
-        f'<text x="{name_x}" y="{name_y}" text-anchor="middle" fill="#1f1f1f" '
+        f'<text x="{name_x}" y="{name_y}" text-anchor="middle" fill="{theme.text_primary}" '
         f'font-size="{name_font_size}" transform="{name_transform}">{_escape_text(name)}</text>'
     )
     lines.append("</g>")
@@ -1777,6 +1784,7 @@ def _render_iso_nodes(
     layout: IsoLayout,
     node_port_labels: dict[str, str],
     node_port_prefix: dict[str, str],
+    theme: SvgTheme,
 ) -> None:
     for name, (x, y) in positions.items():
         _render_iso_node(
@@ -1790,6 +1798,7 @@ def _render_iso_nodes(
             port_label=node_port_labels.get(name),
             port_prefix=node_port_prefix.get(name),
             layout=layout,
+            theme=theme,
         )
 
 
@@ -1799,6 +1808,7 @@ def _render_iso_wan_upstream(
     gateway_position: tuple[float, float],
     layout: IsoLayout,
     options: SvgOptions,
+    theme: SvgTheme,
 ) -> None:
     """Render WAN upstream visualization (isometric view)."""
     gx, gy = gateway_position
@@ -1884,7 +1894,8 @@ def _render_iso_wan_upstream(
         y = text_y + i * line_height
         lines.append(
             f'<text x="{text_x}" y="{y}" text-anchor="middle" '
-            f'fill="#333" font-size="{font_size}">{_escape_text(label_text)}</text>'
+            f'fill="{theme.text_primary}" font-size="{font_size}">'
+            f"{_escape_text(label_text)}</text>"
         )
 
     lines.append("</g>")
@@ -2045,6 +2056,7 @@ def render_svg_isometric(
             f"text:not(.group-label){{font-size:{options.font_size}px;}}"
             "</style>"
         ),
+        f'<rect width="100%" height="100%" fill="{theme.background}"/>',
     ]
 
     use_grouped = options.layout_mode == "grouped" and groups
@@ -2091,6 +2103,7 @@ def render_svg_isometric(
         layout=layout,
         node_port_labels=node_port_labels,
         node_port_prefix=node_port_prefix,
+        theme=theme,
     )
 
     # Render WAN upstream visualization
@@ -2102,7 +2115,9 @@ def render_svg_isometric(
                 gateway_name = name
                 break
         if gateway_name and gateway_name in positions:
-            _render_iso_wan_upstream(lines, wan_info, positions[gateway_name], layout, options)
+            _render_iso_wan_upstream(
+                lines, wan_info, positions[gateway_name], layout, options, theme
+            )
 
     lines.append("</svg>")
     return "\n".join(lines) + "\n"

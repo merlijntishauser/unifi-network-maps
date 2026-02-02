@@ -46,6 +46,11 @@ smoketest-mock:
 	@$(CLI) --mock-data examples/mock_data.json --format mkdocs --include-clients --mkdocs-dual-theme --mkdocs-sidebar-legend --output smoketest-mock/unifi-network-dual-theme-and-clients.md
 	@$(CLI) --mock-data examples/mock_data.json --format svg --wan-label "Odido" --wan-speed "1 Gbps ↓↑" --output smoketest-mock/network_wan.svg
 	@$(CLI) --mock-data examples/mock_data.json --format svg-iso --wan-label "Odido" --wan-speed "1 Gbps ↓↑" --wan2-label "Backup SFP+" --output smoketest-mock/network_wan_dual_iso.svg
+	@# Theme variants
+	@$(CLI) --mock-data examples/mock_data.json --theme unifi --format svg-iso --output smoketest-mock/theme_unifi_iso.svg
+	@$(CLI) --mock-data examples/mock_data.json --theme unifi-dark --format svg-iso --output smoketest-mock/theme_unifi_dark_iso.svg
+	@$(CLI) --mock-data examples/mock_data.json --theme minimal --format svg-iso --output smoketest-mock/theme_minimal_iso.svg
+	@$(CLI) --mock-data examples/mock_data.json --theme unifi --stdout > smoketest-mock/theme_unifi.mmd
 
 smoketest-validate:
 	@$(VENV)/pytest tests/test_smoketest_validation.py -q

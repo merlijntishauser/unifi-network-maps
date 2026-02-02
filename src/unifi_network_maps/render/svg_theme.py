@@ -95,5 +95,9 @@ def svg_defs(prefix: str, theme: SvgTheme = DEFAULT_THEME) -> str:
         f'<filter id="{filter_prefix}edge-glow" x="-50%" y="-50%" width="200%" height="200%">'
         '<feGaussianBlur stdDeviation="4" result="blur"/>'
         "</filter>"
+        f'<linearGradient id="{gradient_prefix}globe" x1="0%" y1="0%" x2="100%" y2="100%">'
+        '<stop offset="0%" stop-color="#4fc3f7"/>'
+        '<stop offset="100%" stop-color="#0288d1"/>'
+        "</linearGradient>"
         "</defs>"
     )

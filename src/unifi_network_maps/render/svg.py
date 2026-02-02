@@ -344,17 +344,6 @@ def _load_isometric_icons() -> dict[str, str]:
     return icons
 
 
-def _load_globe_icon() -> str | None:
-    """Load the globe icon for WAN visualization."""
-    base = Path(__file__).resolve().parents[1] / "assets" / "icons"
-    path = base / "globe.svg"
-    if not path.exists():
-        return None
-    data = path.read_bytes()
-    encoded = base64.b64encode(data).decode("ascii")
-    return f"data:image/svg+xml;base64,{encoded}"
-
-
 def _format_wan_speed(speed_mbps: int | None) -> str | None:
     """Format speed in Mbps to human-readable string."""
     if speed_mbps is None or speed_mbps == 0:
@@ -728,30 +717,80 @@ def _render_wan_upstream(
     options: SvgOptions,
 ) -> None:
     """Render WAN upstream visualization (orthogonal view)."""
-    globe_icon = _load_globe_icon()
-    if not globe_icon:
-        return
-
     gx, gy = gateway_position
-    globe_size = 48
-    globe_x = gx + options.node_width / 2 - globe_size / 2
-    globe_y = gy - globe_size - 40
     font_size = options.font_size
 
+    # Build label lines to calculate box size
+    label_lines = _build_wan_label_lines(wan_info)
+
+    # Calculate box dimensions based on content
+    globe_size = 36
+    padding = 10
+    line_height = font_size + 4
+    max_text_width = max((len(line) for line in label_lines), default=10) * font_size * 0.55
+    box_width = max(globe_size + padding * 2, max_text_width + padding * 2)
+    box_height = globe_size + len(label_lines) * line_height + padding * 3
+
+    # Position box to the right of the gateway
+    box_x = gx + options.node_width + 40
+    box_y = gy + options.node_height / 2 - box_height / 2
+
+    # Connection points
+    gateway_connect_x = gx + options.node_width
+    gateway_connect_y = gy + options.node_height / 2
+    box_connect_x = box_x
+    box_connect_y = box_y + box_height / 2
+
     lines.append('<g class="wan-upstream">')
+
+    # Draw connector line from gateway to box
     lines.append(
-        f'<image href="{globe_icon}" x="{globe_x}" y="{globe_y}" '
-        f'width="{globe_size}" height="{globe_size}"/>'
+        f'<path d="M {gateway_connect_x} {gateway_connect_y} '
+        f'L {box_connect_x} {box_connect_y}" '
+        f'stroke="#0288d1" stroke-width="2" fill="none" '
+        f'stroke-linecap="round" opacity="0.8"/>'
     )
 
-    label_lines = _build_wan_label_lines(wan_info)
-    text_x = gx + options.node_width / 2
-    text_y = globe_y + globe_size + 12
+    # Draw bounding box with rounded corners
+    lines.append(
+        f'<rect x="{box_x}" y="{box_y}" width="{box_width}" height="{box_height}" '
+        f'rx="6" ry="6" fill="#f8fbff" stroke="#0288d1" stroke-width="1.5"/>'
+    )
+
+    # Draw globe icon inline with gradient fill
+    globe_cx = box_x + box_width / 2
+    globe_cy = box_y + padding + globe_size / 2
+    globe_r = globe_size / 2 - 2
+    lines.append(f'<g transform="translate({globe_cx}, {globe_cy})">')
+    lines.append(
+        f'<circle cx="0" cy="0" r="{globe_r}" fill="none" stroke="url(#globe)" stroke-width="1.5"/>'
+    )
+    lines.append(
+        f'<ellipse cx="0" cy="0" rx="{globe_r * 0.35}" ry="{globe_r}" '
+        f'fill="none" stroke="url(#globe)" stroke-width="1.2"/>'
+    )
+    lines.append(
+        f'<line x1="{-globe_r}" y1="0" x2="{globe_r}" y2="0" '
+        f'stroke="url(#globe)" stroke-width="1.2"/>'
+    )
+    lines.append(
+        f'<ellipse cx="0" cy="{-globe_r * 0.5}" rx="{globe_r * 0.87}" ry="{globe_r * 0.18}" '
+        f'fill="none" stroke="url(#globe)" stroke-width="0.8"/>'
+    )
+    lines.append(
+        f'<ellipse cx="0" cy="{globe_r * 0.5}" rx="{globe_r * 0.87}" ry="{globe_r * 0.18}" '
+        f'fill="none" stroke="url(#globe)" stroke-width="0.8"/>'
+    )
+    lines.append("</g>")
+
+    # Render label lines
+    text_x = box_x + box_width / 2
+    text_y = box_y + padding + globe_size + padding + font_size
     for i, label_text in enumerate(label_lines):
-        y = text_y + i * (font_size + 4)
+        y = text_y + i * line_height
         lines.append(
             f'<text x="{text_x}" y="{y}" text-anchor="middle" '
-            f'fill="#555" font-size="{font_size}">{_escape_text(label_text)}</text>'
+            f'fill="#333" font-size="{font_size}">{_escape_text(label_text)}</text>'
         )
 
     lines.append("</g>")
@@ -1762,31 +1801,90 @@ def _render_iso_wan_upstream(
     options: SvgOptions,
 ) -> None:
     """Render WAN upstream visualization (isometric view)."""
-    globe_icon = _load_globe_icon()
-    if not globe_icon:
-        return
-
     gx, gy = gateway_position
     tile_w = layout.tile_width
-    globe_size = 56
-    globe_x = gx + tile_w / 2 - globe_size / 2
-    globe_y = gy - globe_size - 50
+    tile_h = layout.tile_height
+
+    # Build label lines to calculate box size
+    label_lines = _build_wan_label_lines(wan_info)
     font_size = max(options.font_size - 1, 8)
 
+    # Calculate box dimensions based on content
+    globe_size = 40
+    padding = 12
+    line_height = font_size + 4
+    max_text_width = max((len(line) for line in label_lines), default=10) * font_size * 0.55
+    box_width = max(globe_size + padding * 2, max_text_width + padding * 2)
+    box_height = globe_size + len(label_lines) * line_height + padding * 3
+
+    # Position box to the east (right side) of the gateway
+    # Move along the isometric NE direction
+    box_x = gx + tile_w + 60
+    box_y = gy - tile_h / 2 - box_height / 2 + 20
+
+    # Connection point on gateway (east edge of tile)
+    gateway_connect_x = gx + tile_w * 0.75
+    gateway_connect_y = gy + tile_h * 0.25
+
+    # Connection point on box (left edge, middle)
+    box_connect_x = box_x
+    box_connect_y = box_y + box_height / 2
+
     lines.append('<g class="wan-upstream">')
+
+    # Draw connector line from gateway to box
     lines.append(
-        f'<image href="{globe_icon}" x="{globe_x}" y="{globe_y}" '
-        f'width="{globe_size}" height="{globe_size}"/>'
+        f'<path d="M {gateway_connect_x} {gateway_connect_y} '
+        f'L {box_connect_x} {box_connect_y}" '
+        f'stroke="#0288d1" stroke-width="3" fill="none" '
+        f'stroke-linecap="round" opacity="0.8"/>'
     )
 
-    label_lines = _build_wan_label_lines(wan_info)
-    text_x = gx + tile_w / 2
-    text_y = globe_y + globe_size + 14
+    # Draw bounding box with rounded corners
+    lines.append(
+        f'<rect x="{box_x}" y="{box_y}" width="{box_width}" height="{box_height}" '
+        f'rx="8" ry="8" fill="#f8fbff" stroke="#0288d1" stroke-width="2"/>'
+    )
+
+    # Draw globe icon inline with gradient fill
+    globe_cx = box_x + box_width / 2
+    globe_cy = box_y + padding + globe_size / 2
+    globe_r = globe_size / 2 - 2
+    lines.append(f'<g transform="translate({globe_cx}, {globe_cy})">')
+    # Globe circle
+    lines.append(
+        f'<circle cx="0" cy="0" r="{globe_r}" fill="none" '
+        f'stroke="url(#iso-globe)" stroke-width="2"/>'
+    )
+    # Vertical ellipse (meridian)
+    lines.append(
+        f'<ellipse cx="0" cy="0" rx="{globe_r * 0.35}" ry="{globe_r}" '
+        f'fill="none" stroke="url(#iso-globe)" stroke-width="1.5"/>'
+    )
+    # Horizontal line (equator)
+    lines.append(
+        f'<line x1="{-globe_r}" y1="0" x2="{globe_r}" y2="0" '
+        f'stroke="url(#iso-globe)" stroke-width="1.5"/>'
+    )
+    # Latitude lines
+    lines.append(
+        f'<ellipse cx="0" cy="{-globe_r * 0.5}" rx="{globe_r * 0.87}" ry="{globe_r * 0.2}" '
+        f'fill="none" stroke="url(#iso-globe)" stroke-width="1"/>'
+    )
+    lines.append(
+        f'<ellipse cx="0" cy="{globe_r * 0.5}" rx="{globe_r * 0.87}" ry="{globe_r * 0.2}" '
+        f'fill="none" stroke="url(#iso-globe)" stroke-width="1"/>'
+    )
+    lines.append("</g>")
+
+    # Render label lines
+    text_x = box_x + box_width / 2
+    text_y = box_y + padding + globe_size + padding + font_size
     for i, label_text in enumerate(label_lines):
-        y = text_y + i * (font_size + 4)
+        y = text_y + i * line_height
         lines.append(
             f'<text x="{text_x}" y="{y}" text-anchor="middle" '
-            f'fill="#555" font-size="{font_size}">{_escape_text(label_text)}</text>'
+            f'fill="#333" font-size="{font_size}">{_escape_text(label_text)}</text>'
         )
 
     lines.append("</g>")

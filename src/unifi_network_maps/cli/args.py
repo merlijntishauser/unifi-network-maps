@@ -141,6 +141,26 @@ def add_svg_args(parser: argparse._ArgumentGroup) -> None:
         action="store_true",
         help="Add VLAN color legend to SVG output",
     )
+    parser.add_argument(
+        "--wan-speed",
+        default=None,
+        help="WAN1 ISP provisioned speed (e.g., '1 Gbps ↓↑')",
+    )
+    parser.add_argument(
+        "--wan-label",
+        default=None,
+        help="WAN1 ISP/connection name (e.g., 'KPN Fiber')",
+    )
+    parser.add_argument(
+        "--wan2-speed",
+        default=None,
+        help="WAN2 ISP provisioned speed (e.g., '500 Mbps ↓↑')",
+    )
+    parser.add_argument(
+        "--wan2-label",
+        default=None,
+        help="WAN2 ISP/connection name (e.g., 'Backup 4G')",
+    )
 
 
 def add_general_render_args(parser: argparse._ArgumentGroup) -> None:

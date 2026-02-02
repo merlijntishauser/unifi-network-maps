@@ -14,7 +14,9 @@ from ..model.topology import (
     TopologyResult,
     build_node_type_map,
     build_port_map,
+    classify_device_type,
     collapse_client_edges,
+    extract_wan_info,
     group_devices_by_type,
 )
 from ..render.legend import resolve_legend_style
@@ -130,6 +132,19 @@ def render_svg_output(
                     name for name, ntype in node_types.items() if ntype == "client_cluster"
                 ]
 
+    # Extract WAN info from gateway device
+    wan_info = None
+    for device in devices:
+        if classify_device_type(device) == "gateway":
+            wan_info = extract_wan_info(
+                device,
+                wan1_label=getattr(args, "wan_label", None),
+                wan1_isp_speed=getattr(args, "wan_speed", None),
+                wan2_label=getattr(args, "wan2_label", None),
+                wan2_isp_speed=getattr(args, "wan2_speed", None),
+            )
+            break
+
     if args.format == "svg-iso":
         from ..render.svg import render_svg_isometric
 
@@ -140,6 +155,7 @@ def render_svg_output(
             theme=svg_theme,
             groups=groups,
             group_order=group_order,
+            wan_info=wan_info,
         )
     return render_svg(
         edges,
@@ -148,6 +164,7 @@ def render_svg_output(
         theme=svg_theme,
         groups=groups,
         group_order=group_order,
+        wan_info=wan_info,
     )
 
 

@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from html import escape as _escape_attr
 from pathlib import Path
 
-from ..model.topology import Edge
+from ..model.topology import Edge, WanInfo, WanInterface
 from .svg_theme import DEFAULT_THEME, SvgTheme, svg_defs
 
 
@@ -344,6 +344,93 @@ def _load_isometric_icons() -> dict[str, str]:
     return icons
 
 
+def _load_globe_icon() -> str | None:
+    """Load the globe icon for WAN visualization."""
+    base = Path(__file__).resolve().parents[1] / "assets" / "icons"
+    path = base / "globe.svg"
+    if not path.exists():
+        return None
+    data = path.read_bytes()
+    encoded = base64.b64encode(data).decode("ascii")
+    return f"data:image/svg+xml;base64,{encoded}"
+
+
+def _format_wan_speed(speed_mbps: int | None) -> str | None:
+    """Format speed in Mbps to human-readable string."""
+    if speed_mbps is None or speed_mbps == 0:
+        return None
+    if speed_mbps >= 1000:
+        gbps = speed_mbps / 1000
+        if gbps == int(gbps):
+            return f"{int(gbps)}G"
+        return f"{gbps:.1f}G"
+    return f"{speed_mbps}M"
+
+
+def _format_wan_interface_line(
+    wan: WanInterface,
+    prefix: str,
+    *,
+    is_dual: bool,
+    include_speed: bool = True,
+) -> str:
+    """Format a single WAN interface line."""
+    status = "●" if wan.enabled else "○"
+    label = wan.label or prefix
+    speed_parts = []
+    if include_speed and wan.link_speed and wan.enabled:
+        speed_parts.append(f"Link {_format_wan_speed(wan.link_speed)}")
+    if wan.isp_speed:
+        speed_parts.append(f"ISP {wan.isp_speed}")
+    speed_str = " / ".join(speed_parts) if speed_parts else ""
+
+    if not wan.enabled and prefix == "WAN2":
+        return f"{prefix}: {label} (disabled) {status}"
+
+    if is_dual:
+        line = f"{prefix}: {label}"
+        if speed_str:
+            line += f" ({speed_str})"
+        return f"{line} {status}"
+
+    return label
+
+
+def _build_wan_label_lines(wan_info: WanInfo) -> list[str]:
+    """Build label lines for WAN display."""
+    label_lines: list[str] = []
+    is_dual = wan_info.wan2 is not None
+
+    if wan_info.wan1:
+        wan1 = wan_info.wan1
+        if is_dual:
+            label_lines.append(
+                _format_wan_interface_line(wan1, "WAN1", is_dual=True, include_speed=True)
+            )
+        else:
+            # Single WAN format: multi-line
+            label_lines.append(wan1.label or "WAN1")
+            speed_parts = []
+            if wan1.link_speed:
+                speed_parts.append(f"Link {_format_wan_speed(wan1.link_speed)}")
+            if wan1.isp_speed:
+                speed_parts.append(f"ISP {wan1.isp_speed}")
+            if speed_parts:
+                label_lines.append(" / ".join(speed_parts))
+            if wan1.ip_address:
+                label_lines.append(wan1.ip_address)
+
+    if wan_info.wan2:
+        label_lines.append(
+            _format_wan_interface_line(wan_info.wan2, "WAN2", is_dual=True, include_speed=True)
+        )
+        # Add IP from WAN1 for dual WAN display
+        if wan_info.wan1 and wan_info.wan1.ip_address:
+            label_lines.append(wan_info.wan1.ip_address)
+
+    return label_lines
+
+
 def _layout_nodes(
     edges: list[Edge], node_types: dict[str, str], options: SvgOptions
 ) -> tuple[dict[str, tuple[float, float]], int, int]:
@@ -634,6 +721,42 @@ def _render_group_boundaries(
         lines.append("</g>")
 
 
+def _render_wan_upstream(
+    lines: list[str],
+    wan_info: WanInfo,
+    gateway_position: tuple[float, float],
+    options: SvgOptions,
+) -> None:
+    """Render WAN upstream visualization (orthogonal view)."""
+    globe_icon = _load_globe_icon()
+    if not globe_icon:
+        return
+
+    gx, gy = gateway_position
+    globe_size = 48
+    globe_x = gx + options.node_width / 2 - globe_size / 2
+    globe_y = gy - globe_size - 40
+    font_size = options.font_size
+
+    lines.append('<g class="wan-upstream">')
+    lines.append(
+        f'<image href="{globe_icon}" x="{globe_x}" y="{globe_y}" '
+        f'width="{globe_size}" height="{globe_size}"/>'
+    )
+
+    label_lines = _build_wan_label_lines(wan_info)
+    text_x = gx + options.node_width / 2
+    text_y = globe_y + globe_size + 12
+    for i, label_text in enumerate(label_lines):
+        y = text_y + i * (font_size + 4)
+        lines.append(
+            f'<text x="{text_x}" y="{y}" text-anchor="middle" '
+            f'fill="#555" font-size="{font_size}">{_escape_text(label_text)}</text>'
+        )
+
+    lines.append("</g>")
+
+
 def render_svg(
     edges: list[Edge],
     *,
@@ -643,6 +766,7 @@ def render_svg(
     theme: SvgTheme = DEFAULT_THEME,
     groups: dict[str, list[str]] | None = None,
     group_order: list[str] | None = None,
+    wan_info: WanInfo | None = None,
 ) -> str:
     options = options or SvgOptions()
     icons = _load_icons()
@@ -687,6 +811,17 @@ def render_svg(
         node_data,
         groups=groups,
     )
+
+    # Render WAN upstream visualization
+    if wan_info:
+        # Find gateway position
+        gateway_name = None
+        for name, ntype in node_types.items():
+            if ntype == "gateway":
+                gateway_name = name
+                break
+        if gateway_name and gateway_name in positions:
+            _render_wan_upstream(lines, wan_info, positions[gateway_name], options)
 
     lines.append("</svg>")
     return "\n".join(lines) + "\n"
@@ -1619,6 +1754,44 @@ def _render_iso_nodes(
         )
 
 
+def _render_iso_wan_upstream(
+    lines: list[str],
+    wan_info: WanInfo,
+    gateway_position: tuple[float, float],
+    layout: IsoLayout,
+    options: SvgOptions,
+) -> None:
+    """Render WAN upstream visualization (isometric view)."""
+    globe_icon = _load_globe_icon()
+    if not globe_icon:
+        return
+
+    gx, gy = gateway_position
+    tile_w = layout.tile_width
+    globe_size = 56
+    globe_x = gx + tile_w / 2 - globe_size / 2
+    globe_y = gy - globe_size - 50
+    font_size = max(options.font_size - 1, 8)
+
+    lines.append('<g class="wan-upstream">')
+    lines.append(
+        f'<image href="{globe_icon}" x="{globe_x}" y="{globe_y}" '
+        f'width="{globe_size}" height="{globe_size}"/>'
+    )
+
+    label_lines = _build_wan_label_lines(wan_info)
+    text_x = gx + tile_w / 2
+    text_y = globe_y + globe_size + 14
+    for i, label_text in enumerate(label_lines):
+        y = text_y + i * (font_size + 4)
+        lines.append(
+            f'<text x="{text_x}" y="{y}" text-anchor="middle" '
+            f'fill="#555" font-size="{font_size}">{_escape_text(label_text)}</text>'
+        )
+
+    lines.append("</g>")
+
+
 @dataclass(frozen=True)
 class IsoGroupBounds:
     name: str
@@ -1753,6 +1926,7 @@ def render_svg_isometric(
     theme: SvgTheme = DEFAULT_THEME,
     groups: dict[str, list[str]] | None = None,
     group_order: list[str] | None = None,
+    wan_info: WanInfo | None = None,
 ) -> str:
     options = options or SvgOptions()
     icons = _load_isometric_icons()
@@ -1820,6 +1994,17 @@ def render_svg_isometric(
         node_port_labels=node_port_labels,
         node_port_prefix=node_port_prefix,
     )
+
+    # Render WAN upstream visualization
+    if wan_info:
+        # Find gateway position
+        gateway_name = None
+        for name, ntype in node_types.items():
+            if ntype == "gateway":
+                gateway_name = name
+                break
+        if gateway_name and gateway_name in positions:
+            _render_iso_wan_upstream(lines, wan_info, positions[gateway_name], layout, options)
 
     lines.append("</svg>")
     return "\n".join(lines) + "\n"

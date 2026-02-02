@@ -47,6 +47,16 @@
       "name": "Cloud Gateway",
       "port_table": [
         {
+          "port_idx": 1,
+          "name": "WAN 1",
+          "ifname": "eth0",
+          "speed": 2500,
+          "port_poe": false,
+          "poe_enable": false,
+          "poe_good": false,
+          "poe_power": 0.0
+        },
+        {
           "ifname": "eth9",
           "is_uplink": false,
           "name": "Port 9",

@@ -69,6 +69,26 @@ class PortInfo:
     tagged_vlans: tuple[int, ...] = ()
 
 
+@dataclass(frozen=True)
+class WanInterface:
+    """Information about a WAN interface on a gateway."""
+
+    port_idx: int
+    link_speed: int | None  # From API (Mbps)
+    ip_address: str | None  # Public IP
+    enabled: bool  # Port up/down
+    label: str | None = None  # From CLI flag
+    isp_speed: str | None = None  # From CLI flag
+
+
+@dataclass(frozen=True)
+class WanInfo:
+    """WAN interface information for a gateway device."""
+
+    wan1: WanInterface | None = None
+    wan2: WanInterface | None = None
+
+
 type PortMap = dict[tuple[str, str], str]
 type PoeMap = dict[tuple[str, str], bool]
 type SpeedMap = dict[tuple[str, str], int]
@@ -1252,3 +1272,94 @@ def build_topology(
         len(gateways),
     )
     return TopologyResult(raw_edges=raw_edges, tree_edges=tree_edges)
+
+
+def _is_wan_port(port: PortInfo, port_idx: int) -> bool:
+    """Check if a port is likely a WAN port."""
+    # WAN ports are typically eth0/Port 1 or named "WAN"
+    if port.port_idx == port_idx:
+        return True
+    name = (port.name or "").lower()
+    ifname = (port.ifname or "").lower()
+    return "wan" in name or "wan" in ifname
+
+
+def _find_wan_port(port_table: list[PortInfo], wan_idx: int) -> PortInfo | None:
+    """Find a WAN port in the port table."""
+    for port in port_table:
+        if port.port_idx == wan_idx:
+            return port
+    return None
+
+
+def _format_speed(speed_mbps: int | None) -> str | None:
+    """Format speed in Mbps to human-readable string."""
+    if speed_mbps is None or speed_mbps == 0:
+        return None
+    if speed_mbps >= 1000:
+        gbps = speed_mbps / 1000
+        if gbps == int(gbps):
+            return f"{int(gbps)} Gbps"
+        return f"{gbps:.1f} Gbps"
+    return f"{speed_mbps} Mbps"
+
+
+def extract_wan_info(
+    device: Device,
+    *,
+    wan1_label: str | None = None,
+    wan1_isp_speed: str | None = None,
+    wan2_label: str | None = None,
+    wan2_isp_speed: str | None = None,
+) -> WanInfo | None:
+    """Extract WAN interface information from a gateway device.
+
+    Args:
+        device: The gateway device to extract WAN info from.
+        wan1_label: Optional label for WAN1 (e.g., "KPN Fiber").
+        wan1_isp_speed: Optional ISP speed for WAN1 (e.g., "1 Gbps ↓↑").
+        wan2_label: Optional label for WAN2 (e.g., "Backup 4G").
+        wan2_isp_speed: Optional ISP speed for WAN2.
+
+    Returns:
+        WanInfo with WAN interface details, or None if not a gateway.
+    """
+    device_type = classify_device_type(device)
+    if device_type != "gateway":
+        return None
+
+    port_table = device.port_table
+    if not port_table:
+        return None
+
+    # WAN1 is typically port 1 (eth0)
+    wan1_port = _find_wan_port(port_table, 1)
+    wan1 = None
+    if wan1_port:
+        wan1 = WanInterface(
+            port_idx=1,
+            link_speed=wan1_port.speed,
+            ip_address=device.ip if device.ip else None,
+            enabled=wan1_port.speed is not None and wan1_port.speed > 0,
+            label=wan1_label,
+            isp_speed=wan1_isp_speed,
+        )
+
+    # WAN2 is typically port 9 (eth8) on UDM Pro, or port 2 on other models
+    # Try port 9 first, then port 2
+    wan2_port = _find_wan_port(port_table, 9) or _find_wan_port(port_table, 2)
+    wan2 = None
+    # Only include WAN2 if there's a label/speed specified or if it appears active
+    if wan2_port and (wan2_label or wan2_isp_speed or (wan2_port.speed and wan2_port.speed > 0)):
+        wan2 = WanInterface(
+            port_idx=wan2_port.port_idx or 9,
+            link_speed=wan2_port.speed,
+            ip_address=None,  # WAN2 IP typically not in standard device data
+            enabled=wan2_port.speed is not None and wan2_port.speed > 0,
+            label=wan2_label,
+            isp_speed=wan2_isp_speed,
+        )
+
+    if wan1 or wan2:
+        return WanInfo(wan1=wan1, wan2=wan2)
+    return None

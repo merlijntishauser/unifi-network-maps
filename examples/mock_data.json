@@ -2,27 +2,31 @@
   "clients": [
     {
       "is_wired": true,
-      "name": "email-03.garcia.info",
+      "name": "Emma",
       "sw_mac": "80:ba:37:d9:cc:21",
-      "sw_port": 4
+      "sw_port": 4,
+      "vlan": 100
     },
     {
       "is_wired": true,
-      "name": "email-95.pope.com",
+      "name": "Cynthia",
       "sw_mac": "80:ba:37:d9:cc:21",
-      "sw_port": 5
+      "sw_port": 5,
+      "vlan": 1
     },
     {
       "ap_mac": "3e:9f:09:b4:3c:eb",
       "ap_port": 1,
       "is_wired": false,
-      "name": "laptop-93.williams.com"
+      "name": "James",
+      "vlan": 10
     },
     {
       "ap_mac": "12:ea:87:66:22:16",
       "ap_port": 1,
       "is_wired": false,
-      "name": "web-39.rice.com"
+      "name": "Justin",
+      "vlan": 20
     }
   ],
   "devices": [
@@ -43,11 +47,19 @@
       "name": "Cloud Gateway",
       "port_table": [
         {
-          "ifname": "eth8",
+          "ifname": "eth9",
+          "is_uplink": false,
           "name": "Port 9",
+          "native_vlan": 100,
+          "poe_class": 0,
+          "poe_current": 0.0,
           "poe_enable": false,
+          "poe_good": false,
+          "poe_power": 0.0,
+          "poe_voltage": 0.0,
           "port_idx": 9,
-          "port_poe": false
+          "port_poe": false,
+          "tagged_vlans": []
         }
       ],
       "type": "udm",
@@ -84,41 +96,84 @@
       "name": "Core Switch",
       "port_table": [
         {
-          "ifname": "eth0",
-          "name": "Port 1",
-          "poe_enable": false,
-          "port_idx": 1,
-          "port_poe": false
-        },
-        {
           "ifname": "eth1",
-          "name": "Port 2",
-          "poe_enable": true,
-          "poe_power": 6.9,
-          "port_idx": 2,
-          "port_poe": true
+          "is_uplink": false,
+          "name": "Port 1",
+          "native_vlan": 10,
+          "poe_class": 0,
+          "poe_current": 0.0,
+          "poe_enable": false,
+          "poe_good": false,
+          "poe_power": 0.0,
+          "poe_voltage": 0.0,
+          "port_idx": 1,
+          "port_poe": false,
+          "tagged_vlans": [
+            1,
+            20,
+            30,
+            100
+          ]
         },
         {
           "ifname": "eth2",
-          "name": "Port 3",
+          "is_uplink": false,
+          "name": "Port 2",
+          "native_vlan": 20,
+          "poe_class": 4,
+          "poe_current": 0.064,
           "poe_enable": true,
-          "poe_power": 6.6,
-          "port_idx": 3,
-          "port_poe": true
+          "poe_good": true,
+          "poe_power": 3.23,
+          "poe_voltage": 51.9,
+          "port_idx": 2,
+          "port_poe": true,
+          "tagged_vlans": []
         },
         {
           "ifname": "eth3",
-          "name": "Port 4",
-          "poe_enable": false,
-          "port_idx": 4,
-          "port_poe": false
+          "is_uplink": false,
+          "name": "Port 3",
+          "native_vlan": 30,
+          "poe_class": 4,
+          "poe_current": 0.074,
+          "poe_enable": true,
+          "poe_good": true,
+          "poe_power": 2.26,
+          "poe_voltage": 49.6,
+          "port_idx": 3,
+          "port_poe": true,
+          "tagged_vlans": []
         },
         {
           "ifname": "eth4",
-          "name": "Port 5",
+          "is_uplink": false,
+          "name": "Port 4",
+          "native_vlan": 100,
+          "poe_class": 0,
+          "poe_current": 0.0,
           "poe_enable": false,
+          "poe_good": false,
+          "poe_power": 0.0,
+          "poe_voltage": 0.0,
+          "port_idx": 4,
+          "port_poe": false,
+          "tagged_vlans": []
+        },
+        {
+          "ifname": "eth5",
+          "is_uplink": false,
+          "name": "Port 5",
+          "native_vlan": 1,
+          "poe_class": 0,
+          "poe_current": 0.0,
+          "poe_enable": false,
+          "poe_good": false,
+          "poe_power": 0.0,
+          "poe_voltage": 0.0,
           "port_idx": 5,
-          "port_poe": false
+          "port_poe": false,
+          "tagged_vlans": []
         }
       ],
       "type": "usw",
@@ -141,12 +196,19 @@
       "name": "AP International",
       "port_table": [
         {
-          "ifname": "eth0",
+          "ifname": "eth1",
+          "is_uplink": false,
           "name": "Port 1",
+          "native_vlan": 10,
+          "poe_class": 4,
+          "poe_current": 0.115,
           "poe_enable": true,
-          "poe_power": 5.7,
+          "poe_good": true,
+          "poe_power": 3.53,
+          "poe_voltage": 50.3,
           "port_idx": 1,
-          "port_poe": true
+          "port_poe": true,
+          "tagged_vlans": []
         }
       ],
       "type": "uap",
@@ -169,16 +231,61 @@
       "name": "AP Respond",
       "port_table": [
         {
-          "ifname": "eth0",
+          "ifname": "eth1",
+          "is_uplink": false,
           "name": "Port 1",
+          "native_vlan": 10,
+          "poe_class": 4,
+          "poe_current": 0.078,
           "poe_enable": true,
-          "poe_power": 5.7,
+          "poe_good": true,
+          "poe_power": 2.44,
+          "poe_voltage": 50.6,
           "port_idx": 1,
-          "port_poe": true
+          "port_poe": true,
+          "tagged_vlans": []
         }
       ],
       "type": "uap",
       "version": "6.7.10"
+    }
+  ],
+  "networks": [
+    {
+      "name": "LAN",
+      "network_id": null,
+      "purpose": "corporate",
+      "vlan_enabled": false,
+      "vlan_id": 1
+    },
+    {
+      "name": "Guest",
+      "network_id": null,
+      "purpose": "guest",
+      "vlan_enabled": true,
+      "vlan_id": 20
+    }
+  ],
+  "vlan_info": [
+    {
+      "client_count": 1,
+      "id": 1,
+      "name": "LAN"
+    },
+    {
+      "client_count": 1,
+      "id": 10,
+      "name": null
+    },
+    {
+      "client_count": 1,
+      "id": 20,
+      "name": "Guest"
+    },
+    {
+      "client_count": 1,
+      "id": 100,
+      "name": null
     }
   ]
 }

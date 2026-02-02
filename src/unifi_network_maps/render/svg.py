@@ -1446,6 +1446,38 @@ def _render_iso_port_label(
     return label_center_x, label_center_y
 
 
+def _iso_front_face_label_position(
+    left_face: list[tuple[float, float]],
+    tile_height: float,
+    font_size: int,
+) -> tuple[float, float, float]:
+    """Position label on the front (left) face of an isometric node."""
+    # left_face points: [top-left, top-right, bottom-right, bottom-left]
+    # We want to center the text on this face
+    top_left = left_face[0]
+    top_right = left_face[1]
+    bottom_right = left_face[2]
+    bottom_left = left_face[3]
+
+    # Center of the face
+    center_x = (top_left[0] + top_right[0] + bottom_right[0] + bottom_left[0]) / 4
+    center_y = (top_left[1] + top_right[1] + bottom_right[1] + bottom_left[1]) / 4
+
+    # Angle follows the top edge of the left face (from top_left to top_right)
+    angle = math.degrees(
+        math.atan2(
+            top_right[1] - top_left[1],
+            top_right[0] - top_left[0],
+        )
+    )
+
+    # Adjust position slightly for better visual centering
+    label_x = center_x + tile_height * 0.05
+    label_y = center_y + font_size * 0.3
+
+    return label_x, label_y, angle
+
+
 def _render_iso_node(
     lines: list[str],
     *,
@@ -1461,9 +1493,18 @@ def _render_iso_node(
 ) -> None:
     fill, stroke = _TYPE_COLORS.get(node_type, _TYPE_COLORS["other"])
     fill = f"url(#iso-node-{node_type})"
-    node_depth = layout.tile_height * 0.15  # Consistent 3D depth for all nodes
     tile_w = layout.tile_width
     tile_h = layout.tile_height
+
+    # Determine node depth based on node type and port label
+    is_client = node_type in ("client", "client_cluster")
+    if is_client and port_label:
+        # Clients with port labels: no 3D box, only the port label tile
+        node_depth = 0.0
+    else:
+        # All other nodes: consistent 3D depth
+        node_depth = layout.tile_height * 0.15
+
     group_attrs = _svg_node_group_attrs(None, name, node_type)
     lines.append(f"<g{group_attrs}>")
     lines.append(f"<title>{_escape_text(name)}</title>")
@@ -1515,20 +1556,32 @@ def _render_iso_node(
         icon_x = icon_center_x - iso_icon_size / 2
         icon_lift = tile_h * (0.02 if port_label else 0.04)
         icon_y = icon_center_y - iso_icon_size / 2 - icon_lift - tile_h * 0.05
-        if node_type == "client":
+        if is_client:
             icon_y -= tile_h * 0.05
         lines.append(
             f'<image href="{icon_href}" x="{icon_x}" y="{icon_y}" '
             f'width="{iso_icon_size}" height="{iso_icon_size}" '
             f'preserveAspectRatio="xMidYMid meet"/>'
         )
+
+    # Position name label
     name_font_size = max(options.font_size - 2, 8)
-    name_x, name_y, name_angle = _iso_name_label_position(
-        top,
-        tile_width=tile_w,
-        tile_height=tile_h,
-        font_size=name_font_size,
-    )
+    if is_client and not port_label and node_depth > 0:
+        # Clients without port labels: render name on front face
+        name_x, name_y, name_angle = _iso_front_face_label_position(
+            left,
+            tile_height=tile_h,
+            font_size=name_font_size,
+        )
+    else:
+        # All other nodes: render name on bottom edge of top face
+        name_x, name_y, name_angle = _iso_name_label_position(
+            top,
+            tile_width=tile_w,
+            tile_height=tile_h,
+            font_size=name_font_size,
+        )
+
     name_transform = (
         f"translate({name_x} {name_y}) rotate({name_angle}) skewX(30) "
         f"translate({-name_x} {-name_y})"

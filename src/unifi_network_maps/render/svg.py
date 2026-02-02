@@ -701,6 +701,21 @@ def _vlan_data_attrs(edge: Edge) -> str:
     return " ".join(attrs)
 
 
+def _edge_opacity(node_types: dict[str, str], edge: Edge) -> float:
+    """Return opacity for edge based on endpoint types.
+
+    Client edges are semi-transparent to reduce visual clutter
+    and keep focus on infrastructure connections.
+    """
+    left_type = node_types.get(edge.left, "other")
+    right_type = node_types.get(edge.right, "other")
+
+    if right_type == "client" or left_type == "client":
+        return 0.5
+
+    return 1.0
+
+
 def _render_vlan_striped_edge(
     lines: list[str],
     path: str,
@@ -709,6 +724,7 @@ def _render_vlan_striped_edge(
     base_width: int,
     is_wireless: bool,
     extra_attrs: str,
+    opacity: float = 1.0,
 ) -> None:
     """Render an edge with striped VLAN colors."""
     if not vlans:
@@ -717,6 +733,7 @@ def _render_vlan_striped_edge(
     segment_len = 12  # Length of each colored segment
     total_pattern = segment_len * num_vlans
     gap_len = total_pattern - segment_len  # Gap is rest of pattern
+    opacity_attr = f' opacity="{opacity}"' if opacity < 1.0 else ""
 
     for i, vlan_id in enumerate(vlans):
         color = theme.vlan_color(vlan_id)
@@ -727,7 +744,7 @@ def _render_vlan_striped_edge(
             dash = f'stroke-dasharray="4 2 4 {gap_len + 2}"'
         lines.append(
             f'<path d="{path}" stroke="{color}" stroke-width="{base_width}" '
-            f'fill="none" {dash} stroke-dashoffset="{offset}" {extra_attrs}/>'
+            f'fill="none" {dash} stroke-dashoffset="{offset}"{opacity_attr} {extra_attrs}/>'
         )
 
 
@@ -778,10 +795,14 @@ def _render_svg_edges(
         if max_vlan_colors and len(display_vlans) > max_vlan_colors:
             display_vlans = display_vlans[:max_vlan_colors]
 
+        # Client edges are semi-transparent to reduce visual clutter
+        opacity = _edge_opacity(node_types, edge)
+        opacity_attr = f' opacity="{opacity}"' if opacity < 1.0 else ""
+
         if display_vlans:
             # Render striped VLAN edge
             _render_vlan_striped_edge(
-                lines, path, display_vlans, theme, width_px, edge.wireless, base_attrs
+                lines, path, display_vlans, theme, width_px, edge.wireless, base_attrs, opacity
             )
         else:
             # Render standard edge (no VLAN info or no active VLANs)
@@ -789,7 +810,7 @@ def _render_svg_edges(
             dash = ' stroke-dasharray="6 4"' if edge.wireless else ""
             lines.append(
                 f'<path d="{path}" stroke="{color}" stroke-width="{width_px}" '
-                f'fill="none"{dash} {base_attrs}/>'
+                f'fill="none"{dash}{opacity_attr} {base_attrs}/>'
             )
         if edge.poe:
             icon_x = dst_cx
@@ -1066,6 +1087,7 @@ def _render_iso_vlan_striped_edge(
     base_width: int,
     is_wireless: bool,
     extra_attrs: str,
+    opacity: float = 1.0,
 ) -> None:
     """Render an isometric edge with striped VLAN colors."""
     if not vlans:
@@ -1074,6 +1096,7 @@ def _render_iso_vlan_striped_edge(
     segment_len = 16  # Slightly larger for isometric view
     total_pattern = segment_len * num_vlans
     gap_len = total_pattern - segment_len
+    opacity_attr = f' opacity="{opacity}"' if opacity < 1.0 else ""
 
     for i, vlan_id in enumerate(vlans):
         color = theme.vlan_color(vlan_id)
@@ -1084,7 +1107,7 @@ def _render_iso_vlan_striped_edge(
         lines.append(
             f'<path d="{path}" stroke="{color}" stroke-width="{base_width}" '
             f'fill="none" stroke-linecap="round" stroke-linejoin="round" '
-            f'{dash} stroke-dashoffset="{offset}" {extra_attrs}/>'
+            f'{dash} stroke-dashoffset="{offset}"{opacity_attr} {extra_attrs}/>'
         )
 
 
@@ -1148,16 +1171,20 @@ def _render_iso_edges(
         if max_vlan_colors and len(display_vlans) > max_vlan_colors:
             display_vlans = display_vlans[:max_vlan_colors]
 
+        # Client edges are semi-transparent to reduce visual clutter
+        opacity = _edge_opacity(node_types, edge)
+        opacity_attr = f' opacity="{opacity}"' if opacity < 1.0 else ""
+
         if display_vlans:
             _render_iso_vlan_striped_edge(
-                lines, path, display_vlans, theme, width_px, edge.wireless, base_attrs
+                lines, path, display_vlans, theme, width_px, edge.wireless, base_attrs, opacity
             )
         else:
             color = "url(#iso-link-poe)" if edge.poe else "url(#iso-link-standard)"
             dash = ' stroke-dasharray="8 6"' if edge.wireless else ""
             lines.append(
                 f'<path d="{path}" stroke="{color}" stroke-width="{width_px}" '
-                f'fill="none" stroke-linecap="round" stroke-linejoin="round"{dash} '
+                f'fill="none" stroke-linecap="round" stroke-linejoin="round"{dash}{opacity_attr} '
                 f"{base_attrs}/>"
             )
         if edge.poe:
@@ -1382,7 +1409,7 @@ def _render_iso_node(
 ) -> None:
     fill, stroke = _TYPE_COLORS.get(node_type, _TYPE_COLORS["other"])
     fill = f"url(#iso-node-{node_type})"
-    node_depth = 0.0
+    node_depth = layout.tile_height * 0.15  # Consistent 3D depth for all nodes
     tile_w = layout.tile_width
     tile_h = layout.tile_height
     group_attrs = _svg_node_group_attrs(None, name, node_type)

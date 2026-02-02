@@ -1,12 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Generator: Adobe Illustrator 16.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 width="60px" height="60px" viewBox="0 0 60 60" enable-background="new 0 0 60 60" xml:space="preserve">
-<rect x="16.151" y="54.29" fill="#00A79D" stroke="#00A79D" stroke-width="1.7391" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" width="27.697" height="1.176"/>
-<rect x="1.934" y="9.647" fill="none" width="56.133" height="34"/>
-<path fill="#FBB040" d="M58.566,8.647H1.434c-0.276,0-0.5,0.224-0.5,0.5v38.386c0,0.277,0.224,0.5,0.5,0.5h57.133
-	c0.276,0,0.5-0.223,0.5-0.5V9.147C59.066,8.871,58.843,8.647,58.566,8.647z M57.066,40.646H2.934v-30h54.133V40.646z"/>
-<rect x="2.934" y="10.522" fill="#FFFFFF" width="54.133" height="30"/>
-<circle fill="#FFFFFF" cx="30" cy="44.313" r="2.688"/>
+<!-- UniFi-inspired isometric client/laptop icon -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160">
+  <!-- Shadow -->
+  <ellipse cx="100" cy="145" rx="60" ry="12" fill="#000000" opacity="0.2"/>
+
+  <!-- Laptop base (keyboard section) -->
+  <!-- Right face of base -->
+  <path d="M100,130 L160,100 L160,95 L100,125 Z" fill="#6885A9"/>
+  <!-- Left face of base -->
+  <path d="M100,130 L40,100 L40,95 L100,125 Z" fill="#B5C5DC"/>
+  <!-- Top of base (keyboard) -->
+  <path d="M40,95 L100,65 L160,95 L100,125 Z" fill="#CDD9EE"/>
+
+  <!-- Keyboard detail lines -->
+  <line x1="55" y1="90" x2="85" y2="73" stroke="#B5C5DC" stroke-width="1.5"/>
+  <line x1="60" y1="95" x2="90" y2="78" stroke="#B5C5DC" stroke-width="1.5"/>
+  <line x1="65" y1="100" x2="95" y2="83" stroke="#B5C5DC" stroke-width="1.5"/>
+
+  <!-- Screen (angled back) -->
+  <!-- Screen back face -->
+  <path d="M45,92 L100,62 L155,92 L155,45 L100,15 L45,45 Z" fill="#6885A9"/>
+  <!-- Screen front face (display) -->
+  <path d="M50,88 L100,60 L150,88 L150,48 L100,20 L50,48 Z" fill="#4A5568"/>
+  <!-- Screen content area -->
+  <path d="M55,82 L100,57 L145,82 L145,52 L100,27 L55,52 Z" fill="#2D3748"/>
+
+  <!-- Screen glare -->
+  <path d="M60,75 L85,60 L85,50 L60,65 Z" fill="#FFFFFF" opacity="0.15"/>
+
+  <!-- Outline -->
+  <path d="M40,95 L100,65 L160,95 L160,100 L100,130 L40,100 Z"
+        fill="none" stroke="#231F20" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M45,92 L100,62 L155,92 L155,45 L100,15 L45,45 Z"
+        fill="none" stroke="#231F20" stroke-width="2" stroke-linejoin="round"/>
 </svg>

@@ -4,7 +4,7 @@
 
 | Phase | Status | Commit |
 |-------|--------|--------|
-| Phase 1: Infrastructure + Modern Icons | ✅ Complete | `fc5f6ef` |
+| Phase 1: Infrastructure + Modern Icons | ✅ Complete | `6c37063` |
 | Phase 2: Flat/Minimal Icon Set | Pending | - |
 | Phase 3: Outline/Wireframe Icon Set | Pending | - |
 | Phase 4: Extended Device Types | Pending | - |
@@ -19,9 +19,9 @@ Upgrade the icon system to support multiple selectable icon sets with improved v
 |--------|----------|
 | **Selection mechanism** | `--theme` sets default icon set, `--icon-set` can override |
 | **Icon sets planned** | `legacy` (current) → `modern` → `flat` → `outline` |
-| **First new style** | Modern isometric (minimalistic style) |
-| **Core device types** | Gateway, Switch, AP, Client |
-| **Icon sourcing** | Mix from multiple free/open-source with consistent style |
+| **First new style** | Modern isometric (UniFi-inspired style) |
+| **Core device types** | Gateway, Switch, AP, Client, Other |
+| **Icon sourcing** | Custom-created matching isopacks 30° isometric angle |
 | **License compliance** | LICENSES.md + README attribution |
 
 ## Theme-to-Icon-Set Defaults
@@ -62,8 +62,8 @@ Upgrade the icon system to support multiple selectable icon sets with improved v
 ### 1.4 Asset Structure
 
 - [x] Create `assets/icons/modern/` directory for isometric icons
-- [x] Source 5 modern icons: gateway, switch, ap, client, other
-- [x] Icons sourced from: tmusabaika/minimalistic-networking-icons
+- [x] Create 5 modern icons: gateway, switch, ap, client, other
+- [x] Custom icons matching isopacks 30° isometric style and color palette
 
 ### 1.5 Attribution
 

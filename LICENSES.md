@@ -17,24 +17,23 @@ src/unifi_network_maps/assets/icons/isometric/ISOPACKS_LICENSE
 
 ### Modern Icon Set
 
-The modern icon set (`src/unifi_network_maps/assets/icons/modern/`) contains minimalistic network device icons.
+The modern icon set (`src/unifi_network_maps/assets/icons/modern/`) contains custom isometric
+network device icons designed to match the isopacks aesthetic.
 
-#### tmusabaika/minimalistic-networking-icons
+#### Custom Icons (MIT)
 
-Source: https://github.com/tmusabaika/minimalistic-networking-icons
+Icons created for this project, matching the isopacks 30° isometric projection angle and
+color palette (#CDD9EE light, #B5C5DC medium, #6885A9 dark, #231F20 outline).
 
-Icons from the "StrokesDigital Networking Icons" collection, described as "Free minimalist icons
-and symbols for use in GNS3 and Packet Tracer topologies."
+| Icon | Description |
+|------|-------------|
+| gateway.svg | UDM-style box with LED strip |
+| switch.svg | 1U rack-mount switch with ports |
+| ap.svg | Ceiling-mount disc (UniFi AP style) |
+| client.svg | Laptop with screen and keyboard |
+| other.svg | Generic device cube |
 
-| Icon | Original Name | Source File |
-|------|---------------|-------------|
-| gateway.svg | minima_router.svg | strokes-digital_minima_icons_assorted |
-| switch.svg | minima_switch.svg | strokes-digital_minima_icons_assorted |
-| ap.svg | minima_hub.svg | strokes-digital_minima_icons_assorted |
-| client.svg | minima_client.svg | strokes-digital_minima_icons_assorted |
-| other.svg | minima_server.svg | strokes-digital_minima_icons_assorted |
-
-*Note: No explicit license file in repository. Icons described as "Free" in README.*
+These icons are part of this project and licensed under MIT.
 
 ## License Compatibility
 

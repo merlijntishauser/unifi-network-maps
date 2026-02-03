@@ -60,6 +60,14 @@ Icon symbols from [Heroicons](https://heroicons.com/) by Tailwind Labs.
 | ap.svg | wifi (outline) |
 | client.svg | computer-desktop (outline) |
 | other.svg | server (outline) |
+| camera.svg | video-camera (outline) |
+| tv.svg | tv (outline) |
+| phone.svg | device-phone-mobile (outline) |
+| printer.svg | printer (outline) |
+| nas.svg | server-stack (outline) |
+| speaker.svg | speaker-wave (outline) |
+| game_console.svg | puzzle-piece (outline) |
+| iot.svg | signal (outline) |
 
 ### Outline Icon Set
 
@@ -81,6 +89,14 @@ Icon symbols from [Lucide](https://lucide.dev/).
 | ap.svg | radio |
 | client.svg | monitor |
 | other.svg | box |
+| camera.svg | video |
+| tv.svg | tv |
+| phone.svg | smartphone |
+| printer.svg | printer |
+| nas.svg | server |
+| speaker.svg | volume-2 |
+| game_console.svg | gamepad-2 |
+| iot.svg | wifi |
 
 ## License Compatibility
 

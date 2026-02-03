@@ -309,7 +309,36 @@ def _unique_name(state: _MockState, prefix: str) -> str:
     return name
 
 
+# Device name templates for testing device categorization
+_DEVICE_NAME_TEMPLATES = [
+    "Living Room TV",
+    "Samsung Smart TV",
+    "Sonos One",
+    "HomePod Mini",
+    "Ring Doorbell",
+    "Front Door Camera",
+    "HP LaserJet",
+    "Brother Printer",
+    "Synology NAS",
+    "PlayStation 5",
+    "Xbox Series X",
+    "iPhone",
+    "Nest Thermostat",
+    "Hue Bridge",
+    "Echo Dot",
+]
+
+
 def _unique_client_name(state: _MockState) -> str:
+    # 40% chance to use a device name, 60% chance to use a person name
+    if state.rng.random() < 0.4 and _DEVICE_NAME_TEMPLATES:
+        # Pick a device name that hasn't been used
+        available = [n for n in _DEVICE_NAME_TEMPLATES if n not in state.used_names]
+        if available:
+            name = state.rng.choice(available)
+            state.used_names.add(name)
+            return name
+    # Fall back to person names
     name = state.fake.first_name()
     while name in state.used_names:
         name = state.fake.first_name()

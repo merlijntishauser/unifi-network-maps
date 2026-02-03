@@ -79,13 +79,37 @@ def _iso_layout(options: SvgOptions) -> IsoLayout:
     )
 
 
-_TYPE_ORDER = ["gateway", "switch", "ap", "client", "client_cluster", "other"]
+_TYPE_ORDER = [
+    "gateway",
+    "switch",
+    "ap",
+    "camera",
+    "tv",
+    "phone",
+    "printer",
+    "nas",
+    "speaker",
+    "game_console",
+    "iot",
+    "client",
+    "client_cluster",
+    "other",
+]
 # Icon file mappings per icon set
 # Legacy set uses existing icons from root and isometric/ directories
+# New device types fall back to generic icons in legacy set
 _ICON_FILES_LEGACY = {
     "gateway": "router-network.svg",
     "switch": "server-network.svg",
     "ap": "access-point.svg",
+    "camera": "laptop.svg",  # Fallback
+    "tv": "laptop.svg",  # Fallback
+    "phone": "laptop.svg",  # Fallback
+    "printer": "server.svg",  # Fallback
+    "nas": "server.svg",  # Fallback
+    "speaker": "laptop.svg",  # Fallback
+    "game_console": "laptop.svg",  # Fallback
+    "iot": "server.svg",  # Fallback
     "client": "laptop.svg",
     "client_cluster": "laptop.svg",
     "other": "server.svg",
@@ -95,6 +119,14 @@ _ISO_ICON_FILES_LEGACY = {
     "gateway": "router.svg",
     "switch": "switch-module.svg",
     "ap": "tower.svg",
+    "camera": "laptop.svg",  # Fallback
+    "tv": "laptop.svg",  # Fallback
+    "phone": "laptop.svg",  # Fallback
+    "printer": "server.svg",  # Fallback
+    "nas": "server.svg",  # Fallback
+    "speaker": "laptop.svg",  # Fallback
+    "game_console": "laptop.svg",  # Fallback
+    "iot": "server.svg",  # Fallback
     "client": "laptop.svg",
     "client_cluster": "laptop.svg",
     "other": "server.svg",
@@ -105,6 +137,14 @@ _ICON_FILES_MODERN = {
     "gateway": "gateway.svg",
     "switch": "switch.svg",
     "ap": "ap.svg",
+    "camera": "camera.svg",
+    "tv": "tv.svg",
+    "phone": "phone.svg",
+    "printer": "printer.svg",
+    "nas": "nas.svg",
+    "speaker": "speaker.svg",
+    "game_console": "game_console.svg",
+    "iot": "iot.svg",
     "client": "client.svg",
     "client_cluster": "client.svg",
     "other": "other.svg",
@@ -146,6 +186,14 @@ _TYPE_COLORS = {
     "gateway": ("#ffd199", "#f08a00"),
     "switch": ("#bfe4ff", "#1c6dd0"),
     "ap": ("#c4f2d4", "#1f9a50"),
+    "camera": ("#b3e5fc", "#0277bd"),  # Light blue / dark blue
+    "tv": ("#d1c4e9", "#512da8"),  # Light violet / deep purple
+    "phone": ("#c8e6c9", "#388e3c"),  # Light green / green
+    "printer": ("#cfd8dc", "#546e7a"),  # Blue-gray light / dark
+    "nas": ("#ffe0b2", "#e65100"),  # Amber light / dark orange
+    "speaker": ("#b2dfdb", "#00796b"),  # Teal light / dark
+    "game_console": ("#e1bee7", "#7b1fa2"),  # Light purple / purple
+    "iot": ("#b2ebf2", "#00838f"),  # Cyan light / dark cyan
     "client": ("#e4ccff", "#6b2fb4"),
     "client_cluster": ("#d4b8ff", "#5a25a0"),  # Slightly darker purple for clusters
     "other": ("#e3e3e3", "#7b7b7b"),

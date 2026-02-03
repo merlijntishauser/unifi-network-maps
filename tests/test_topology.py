@@ -36,6 +36,7 @@ from unifi_network_maps.model.topology import (
     build_node_type_map,
     build_topology,
     build_tree_edges_by_topology,
+    classify_client_type,
     classify_device_type,
     coerce_device,
     extract_wan_info,
@@ -977,3 +978,119 @@ def test_extract_wan_info_fallback_to_port_idx():
     assert result.wan1 is not None
     assert result.wan1.port_idx == 1
     assert result.wan1.link_speed == 2500
+
+
+# --- Client classification tests ---
+
+
+def test_classify_client_type_default_client():
+    """Unknown clients should return 'client' type."""
+    client = {"name": "John Laptop"}
+    assert classify_client_type(client) == "client"
+
+
+def test_classify_client_type_by_name_tv():
+    """Client names containing TV patterns should be classified as 'tv'."""
+    assert classify_client_type({"name": "Living Room TV"}) == "tv"
+    assert classify_client_type({"name": "Apple TV"}) == "tv"
+    assert classify_client_type({"name": "Chromecast"}) == "tv"
+
+
+def test_classify_client_type_by_name_camera():
+    """Client names containing camera patterns should be classified as 'camera'."""
+    assert classify_client_type({"name": "Front Door Camera"}) == "camera"
+    assert classify_client_type({"name": "Ring Doorbell"}) == "camera"
+    assert classify_client_type({"name": "UVC-G4-Pro"}) == "camera"
+
+
+def test_classify_client_type_by_name_phone():
+    """Client names containing phone patterns should be classified as 'phone'."""
+    assert classify_client_type({"name": "John's iPhone"}) == "phone"
+    assert classify_client_type({"name": "Office VoIP Phone"}) == "phone"
+
+
+def test_classify_client_type_by_name_printer():
+    """Client names containing printer patterns should be classified as 'printer'."""
+    assert classify_client_type({"name": "HP LaserJet Pro"}) == "printer"
+    assert classify_client_type({"name": "Office Printer"}) == "printer"
+
+
+def test_classify_client_type_by_name_nas():
+    """Client names containing NAS patterns should be classified as 'nas'."""
+    assert classify_client_type({"name": "DS920+ NAS"}) == "nas"
+    assert classify_client_type({"name": "Synology"}) == "nas"
+    assert classify_client_type({"name": "QNAP Storage"}) == "nas"
+
+
+def test_classify_client_type_by_name_speaker():
+    """Client names containing speaker patterns should be classified as 'speaker'."""
+    assert classify_client_type({"name": "Sonos One"}) == "speaker"
+    assert classify_client_type({"name": "HomePod Mini"}) == "speaker"
+    assert classify_client_type({"name": "Echo Dot"}) == "speaker"
+
+
+def test_classify_client_type_by_name_game_console():
+    """Client names containing game console patterns should be classified as 'game_console'."""
+    assert classify_client_type({"name": "PlayStation 5"}) == "game_console"
+    assert classify_client_type({"name": "Xbox Series X"}) == "game_console"
+    assert classify_client_type({"name": "Nintendo Switch"}) == "game_console"
+
+
+def test_classify_client_type_by_name_iot():
+    """Client names containing IoT patterns should be classified as 'iot'."""
+    assert classify_client_type({"name": "Hue Bridge"}) == "iot"
+    assert classify_client_type({"name": "Nest Thermostat"}) == "iot"
+    assert classify_client_type({"name": "Smart Plug"}) == "iot"
+
+
+def test_classify_client_type_by_vendor():
+    """Clients should be classified by vendor/OUI when name doesn't match."""
+    assert classify_client_type({"name": "DS920", "oui": "Synology"}) == "nas"
+    assert classify_client_type({"name": "Device", "vendor": "QNAP"}) == "nas"
+
+
+def test_classify_client_type_by_unifi_product_line():
+    """UniFi devices should be classified by product_line."""
+    client = {
+        "name": "Doorbell",
+        "unifi_device_info_from_ucore": {"product_line": "Protect"},
+    }
+    assert classify_client_type(client) == "camera"
+
+    client = {
+        "name": "Office Phone",
+        "unifi_device_info_from_ucore": {"product_line": "Talk"},
+    }
+    assert classify_client_type(client) == "phone"
+
+
+def test_classify_client_type_by_unifi_model():
+    """UniFi devices should be classified by model patterns."""
+    client = {
+        "name": "G4 Doorbell",
+        "unifi_device_info_from_ucore": {"product_shortname": "UVC-G4-Doorbell"},
+    }
+    assert classify_client_type(client) == "camera"
+
+
+def test_classify_client_type_unifi_takes_priority():
+    """UniFi device info should take priority over name heuristics."""
+    # Name says "smart" (iot), but UniFi says it's a camera
+    client = {
+        "name": "Smart PoE Chime",
+        "unifi_device_info_from_ucore": {"product_line": "Protect"},
+    }
+    assert classify_client_type(client) == "camera"
+
+
+def test_build_node_type_map_classifies_clients():
+    """build_node_type_map should use classify_client_type for clients."""
+    clients = [
+        {"name": "Living Room TV", "is_wired": True},
+        {"name": "Sonos One", "is_wired": True},
+        {"name": "Generic Client", "is_wired": True},
+    ]
+    node_types = build_node_type_map([], clients)
+    assert node_types["Living Room TV"] == "tv"
+    assert node_types["Sonos One"] == "speaker"
+    assert node_types["Generic Client"] == "client"

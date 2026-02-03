@@ -7,7 +7,7 @@
 | Phase 1: Infrastructure + Modern Icons | ✅ Complete | `6c37063` |
 | Phase 2: Flat/Minimal Icon Set | ✅ Complete | - |
 | Phase 3: Outline/Wireframe Icon Set | ✅ Complete | - |
-| Phase 4: Extended Device Types | Pending | - |
+| Phase 4: Extended Device Types | ✅ Complete | - |
 
 ## Overview
 
@@ -128,34 +128,33 @@ Upgrade the icon system to support multiple selectable icon sets with improved v
 
 ---
 
-## Phase 4: Extended Device Types
+## Phase 4: Extended Device Types ✅
 
-*Depends on: Phase 1 complete (can run parallel to Phase 2/3)*
+*Completed: 2026-02-03*
 
 ### 4.1 Device Type Detection
 
-- [ ] Map UniFi fingerprints to device categories
-- [ ] OUI-based manufacturer detection for common devices
-- [ ] Name heuristics (contains "TV", "Sonos", "Printer", etc.)
-- [ ] Add `device_category` field to client data model
+- [x] Map UniFi fingerprints to device categories (product_line: Protect→camera, Talk→phone)
+- [x] OUI-based manufacturer detection for common devices (Synology, QNAP, Sonos, etc.)
+- [x] Name heuristics (contains "TV", "Sonos", "Printer", etc.)
+- [x] Client type classification via `classify_client_type()` function
 
 ### 4.2 Additional Icons (per set that exists)
 
-Priority device types to add:
-- [ ] `camera` - UniFi Protect / security cameras
-- [ ] `tv` - Smart TVs, streaming devices
-- [ ] `phone` - Mobile devices, VoIP phones
-- [ ] `printer` - Network printers
-- [ ] `nas` - Network storage
-- [ ] `speaker` - Smart speakers (Sonos, HomePod)
-- [ ] `game_console` - Gaming devices
-- [ ] `iot` - Generic IoT/smart home devices
-- [ ] `unknown` - Fallback for unidentified devices
+Device types added to all icon sets (modern, flat, outline, legacy):
+- [x] `camera` - UniFi Protect / security cameras
+- [x] `tv` - Smart TVs, streaming devices
+- [x] `phone` - Mobile devices, VoIP phones
+- [x] `printer` - Network printers
+- [x] `nas` - Network storage
+- [x] `speaker` - Smart speakers (Sonos, HomePod)
+- [x] `game_console` - Gaming devices
+- [x] `iot` - Generic IoT/smart home devices
 
 ### 4.3 Icon Variants
 
-- [ ] Status variants: online (normal), offline (dimmed/grayed)
-- [ ] Consider size variants for dense layouts
+- [ ] Status variants: online (normal), offline (dimmed/grayed) - deferred
+- [ ] Consider size variants for dense layouts - deferred
 
 ---
 

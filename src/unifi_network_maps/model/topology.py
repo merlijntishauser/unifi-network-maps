@@ -498,6 +498,113 @@ def classify_device_type(device: object) -> str:
     return "other"
 
 
+# Client device category detection patterns
+_CLIENT_NAME_PATTERNS: dict[str, tuple[str, ...]] = {
+    "camera": ("camera", "cam", "doorbell", "uvc", "protect", "ring", "nest cam", "arlo"),
+    "tv": ("tv", "television", "apple tv", "chromecast", "roku", "fire tv", "shield", "smart tv"),
+    "phone": ("phone", "iphone", "android", "pixel", "galaxy", "mobile", "voip", "handset"),
+    "printer": ("printer", "print", "laserjet", "inkjet", "epson", "canon", "brother", "hp "),
+    "nas": ("nas", "synology", "qnap", "diskstation", "drobo", "freenas", "truenas"),
+    "speaker": ("sonos", "homepod", "echo", "alexa", "google home", "speaker", "soundbar"),
+    "game_console": ("playstation", "ps4", "ps5", "xbox", "nintendo", "switch", "steam deck"),
+    "iot": ("sensor", "thermostat", "nest", "hue", "smart", "zigbee", "z-wave", "iot"),
+}
+
+# OUI/vendor patterns for manufacturer-based detection
+_CLIENT_VENDOR_PATTERNS: dict[str, tuple[str, ...]] = {
+    "camera": ("ubiquiti", "hikvision", "dahua", "axis", "ring", "arlo", "nest", "wyze"),
+    "tv": ("samsung tv", "lg tv", "sony tv", "vizio", "tcl", "roku", "apple tv"),
+    "phone": ("apple", "samsung mobile", "google pixel", "oneplus", "xiaomi"),
+    "printer": ("hp inc", "canon", "epson", "brother", "lexmark", "xerox", "ricoh"),
+    "nas": ("synology", "qnap", "western digital", "seagate", "netgear readynas"),
+    "speaker": ("sonos", "bose", "harman", "bang & olufsen", "denon"),
+    "game_console": ("sony interactive", "microsoft xbox", "nintendo"),
+}
+
+# UniFi product line mappings
+_UNIFI_PRODUCT_CATEGORIES: dict[str, str] = {
+    "protect": "camera",
+    "talk": "phone",
+    "access": "iot",
+    "led": "iot",
+    "connect": "iot",
+}
+
+
+def _classify_by_name(name: str) -> str | None:
+    """Classify client by display name heuristics."""
+    name_lower = name.lower()
+    for category, patterns in _CLIENT_NAME_PATTERNS.items():
+        for pattern in patterns:
+            if pattern in name_lower:
+                return category
+    return None
+
+
+def _classify_by_vendor(vendor: str) -> str | None:
+    """Classify client by OUI/vendor name."""
+    vendor_lower = vendor.lower()
+    for category, patterns in _CLIENT_VENDOR_PATTERNS.items():
+        for pattern in patterns:
+            if pattern in vendor_lower:
+                return category
+    return None
+
+
+def _classify_by_unifi_info(ucore: dict[str, object]) -> str | None:
+    """Classify client by UniFi device info (product_line, model)."""
+    product_line = ucore.get("product_line")
+    if isinstance(product_line, str):
+        line_lower = product_line.lower()
+        for line_prefix, category in _UNIFI_PRODUCT_CATEGORIES.items():
+            if line_lower.startswith(line_prefix):
+                return category
+    # Check model/shortname for specific device types
+    for key in ("product_shortname", "computed_model", "product_model"):
+        value = ucore.get(key)
+        if isinstance(value, str):
+            value_lower = value.lower()
+            if any(cam in value_lower for cam in ("camera", "doorbell", "uvc", "g4", "g5")):
+                return "camera"
+            if "talk" in value_lower or "phone" in value_lower:
+                return "phone"
+    return None
+
+
+def classify_client_type(client: object) -> str:
+    """Classify a client into a device category.
+
+    Detection priority:
+    1. UniFi device info (product_line, model)
+    2. Display name heuristics
+    3. OUI/vendor patterns
+
+    Returns one of: camera, tv, phone, printer, nas, speaker, game_console, iot, client
+    """
+    # Check UniFi device info first (most reliable)
+    ucore = _client_ucore_info(client)
+    if ucore:
+        category = _classify_by_unifi_info(ucore)
+        if category:
+            return category
+
+    # Check display name heuristics
+    name = _client_display_name(client)
+    if name:
+        category = _classify_by_name(name)
+        if category:
+            return category
+
+    # Check OUI/vendor
+    vendor = _client_vendor(client)
+    if vendor:
+        category = _classify_by_vendor(vendor)
+        if category:
+            return category
+
+    return "client"
+
+
 def group_devices_by_type(devices: Iterable[Device]) -> dict[str, list[str]]:
     groups: dict[str, list[str]] = {"gateway": [], "switch": [], "ap": [], "other": []}
     for device in devices:
@@ -817,7 +924,7 @@ def build_node_type_map(
                 continue
             name = _client_display_name(client)
             if name:
-                node_types[name] = "client"
+                node_types[name] = classify_client_type(client)
     return node_types
 
 

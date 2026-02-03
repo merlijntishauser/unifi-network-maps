@@ -1,24 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Isometric base + Heroicon globe with isometric matrix transform -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 180">
-  <!-- Shadow -->
-  <ellipse cx="100" cy="165" rx="60" ry="15" fill="#000000" opacity="0.2"/>
-
-  <!-- Isometric cube base -->
-  <path d="M100,140 L160,105 L160,55 L100,90 Z" fill="#6885A9"/>
-  <path d="M100,140 L40,105 L40,55 L100,90 Z" fill="#B5C5DC"/>
-  <path d="M40,55 L100,20 L160,55 L100,90 Z" fill="#CDD9EE"/>
-
-  <!-- Outline -->
-  <path d="M40,55 L100,20 L160,55 L160,105 L100,140 L40,105 Z"
-        fill="none" stroke="#231F20" stroke-width="2" stroke-linejoin="round"/>
-  <line x1="100" y1="90" x2="100" y2="140" stroke="#231F20" stroke-width="2"/>
-  <line x1="100" y1="90" x2="40" y2="55" stroke="#231F20" stroke-width="2"/>
-  <line x1="100" y1="90" x2="160" y2="55" stroke="#231F20" stroke-width="2"/>
-
-  <!-- Heroicon globe-alt with isometric matrix -->
-  <g transform="matrix(0.866, 0.5, -0.866, 0.5, 100, 40)">
-    <g transform="translate(-12,-12) scale(1.5)">
+<!-- Heroicon globe-alt as isometric decal (30° perspective) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 40">
+  <g transform="matrix(0.866, 0.5, -0.866, 0.5, 30, 8)">
+    <g transform="translate(-12,-12) scale(1)">
       <path d="M21.7214 12.7517C21.7404 12.5036 21.75 12.2529 21.75 11.9999C21.75 10.4758 21.4003 9.03328 20.7767 7.74835C19.5396 8.92269 18.0671 9.85146 16.4374 10.4565C16.4789 10.9655 16.5 11.4803 16.5 11.9999C16.5 13.1011 16.4051 14.1802 16.2229 15.2293C18.2163 14.7277 20.0717 13.8792 21.7214 12.7517Z" fill="#2D3748"/>
       <path d="M14.6343 15.5501C14.874 14.4043 15 13.2168 15 11.9999C15 11.6315 14.9885 11.2659 14.9657 10.9032C14.0141 11.1299 13.021 11.2499 12 11.2499C10.979 11.2499 9.98594 11.1299 9.0343 10.9032C9.01155 11.2659 9 11.6315 9 11.9999C9 13.2168 9.12601 14.4043 9.3657 15.5501C10.2246 15.6817 11.1043 15.7499 12 15.7499C12.8957 15.7499 13.7754 15.6817 14.6343 15.5501Z" fill="#2D3748"/>
       <path d="M9.77224 17.119C10.5028 17.2054 11.2462 17.2499 12 17.2499C12.7538 17.2499 13.4972 17.2054 14.2278 17.119C13.714 18.7746 12.9575 20.3235 12 21.724C11.0425 20.3235 10.286 18.7746 9.77224 17.119Z" fill="#2D3748"/>

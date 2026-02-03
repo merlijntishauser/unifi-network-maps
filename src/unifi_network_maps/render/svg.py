@@ -794,7 +794,7 @@ def _render_group_boundaries(
             f'stroke="{stroke}" stroke-width="{theme.group_stroke_width}"/>'
         )
         label_x = bounds.x + 10
-        label_y = bounds.y + label_size + 8
+        label_y = bounds.y + label_size + 2
         lines.append(
             f'<text class="group-label" x="{label_x}" y="{label_y}" '
             f'fill="{stroke}" font-size="{label_size}" font-weight="bold">'
@@ -825,15 +825,15 @@ def _render_wan_upstream(
     box_width = max(globe_size + padding * 2, max_text_width + padding * 2)
     box_height = globe_size + len(label_lines) * line_height + padding * 3
 
-    # Position box to the right of the gateway
-    box_x = gx + options.node_width + 40
-    box_y = gy + options.node_height / 2 - box_height / 2
+    # Position box above the gateway (free-standing)
+    box_x = gx + options.node_width / 2 - box_width / 2
+    box_y = gy - box_height - 30
 
     # Connection points
-    gateway_connect_x = gx + options.node_width
-    gateway_connect_y = gy + options.node_height / 2
-    box_connect_x = box_x
-    box_connect_y = box_y + box_height / 2
+    gateway_connect_x = gx + options.node_width / 2
+    gateway_connect_y = gy
+    box_connect_x = box_x + box_width / 2
+    box_connect_y = box_y + box_height
 
     lines.append('<g class="wan-upstream">')
 
@@ -913,6 +913,29 @@ def render_svg(
         )
     else:
         positions, width, height = _layout_nodes(edges, node_types, options)
+
+    # Add space at top for WAN box if present
+    wan_offset_y = 0.0
+    if wan_info:
+        wan_box_height = (
+            36 + 3 * (options.font_size + 4) + 30 + 30
+        )  # globe + labels + padding + gap
+        wan_offset_y = wan_box_height
+        height += wan_offset_y
+        # Shift all positions down
+        positions = {name: (x, y + wan_offset_y) for name, (x, y) in positions.items()}
+        # Shift group bounds down
+        if group_bounds_list:
+            group_bounds_list = [
+                GroupBounds(
+                    name=gb.name,
+                    x=gb.x,
+                    y=gb.y + wan_offset_y,
+                    width=gb.width,
+                    height=gb.height,
+                )
+                for gb in group_bounds_list
+            ]
 
     out_width = options.width or width
     out_height = options.height or height

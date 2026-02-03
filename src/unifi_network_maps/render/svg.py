@@ -102,14 +102,14 @@ _ICON_FILES_LEGACY = {
     "gateway": "router-network.svg",
     "switch": "server-network.svg",
     "ap": "access-point.svg",
-    "camera": "laptop.svg",  # Fallback
-    "tv": "laptop.svg",  # Fallback
-    "phone": "laptop.svg",  # Fallback
-    "printer": "server.svg",  # Fallback
-    "nas": "server.svg",  # Fallback
-    "speaker": "laptop.svg",  # Fallback
-    "game_console": "laptop.svg",  # Fallback
-    "iot": "server.svg",  # Fallback
+    "camera": "camera.svg",
+    "tv": "tv.svg",
+    "phone": "phone.svg",
+    "printer": "printer.svg",
+    "nas": "nas.svg",
+    "speaker": "speaker.svg",
+    "game_console": "game_console.svg",
+    "iot": "iot.svg",
     "client": "laptop.svg",
     "client_cluster": "laptop.svg",
     "other": "server.svg",
@@ -119,14 +119,14 @@ _ISO_ICON_FILES_LEGACY = {
     "gateway": "router.svg",
     "switch": "switch-module.svg",
     "ap": "tower.svg",
-    "camera": "laptop.svg",  # Fallback
-    "tv": "laptop.svg",  # Fallback
-    "phone": "laptop.svg",  # Fallback
-    "printer": "server.svg",  # Fallback
-    "nas": "server.svg",  # Fallback
-    "speaker": "laptop.svg",  # Fallback
-    "game_console": "laptop.svg",  # Fallback
-    "iot": "server.svg",  # Fallback
+    "camera": "camera.svg",
+    "tv": "tv.svg",
+    "phone": "phone.svg",
+    "printer": "printer.svg",
+    "nas": "nas.svg",
+    "speaker": "speaker.svg",
+    "game_console": "game_console.svg",
+    "iot": "iot.svg",
     "client": "laptop.svg",
     "client_cluster": "laptop.svg",
     "other": "server.svg",

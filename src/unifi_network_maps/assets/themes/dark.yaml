@@ -25,7 +25,17 @@ mermaid:
   standard_link_width: 2
   standard_link_arrow: "none"
 svg:
-  icon_set: legacy
+  icon_set: modern
+  background: "#1a1a1a"
+  wan_background: "#1e3a5f"
+  text:
+    primary: "#f5f5f5"
+    secondary: "#a0a0a0"
+  status:
+    online: "#66bb6a"
+    offline: "#ef5350"
+  node_side_left: "#4a4a4a"
+  node_side_right: "#3a3a3a"
   links:
     standard:
       from: "#66bb6a"

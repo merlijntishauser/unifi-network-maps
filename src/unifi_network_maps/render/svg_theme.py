@@ -40,6 +40,7 @@ class SvgTheme:
 
     # WAN globe
     wan_globe: tuple[str, str] = ("#4fc3f7", "#0288d1")
+    wan_background: str = "#f0f9ff"  # Light blue tint for WAN box
 
     # Icon set
     icon_set: str = "legacy"

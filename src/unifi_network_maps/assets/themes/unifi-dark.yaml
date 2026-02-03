@@ -30,6 +30,7 @@ svg:
   node_side_left: "#4b5563"
   node_side_right: "#374151"
   background: "#111827"
+  wan_background: "#1e3a5f"
   text:
     primary: "#f9fafb"
     secondary: "#9ca3af"

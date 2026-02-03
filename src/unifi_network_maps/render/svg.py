@@ -119,10 +119,10 @@ _ICON_SETS = {
         _ISO_ICON_FILES_LEGACY,
     ),
     "modern": (
-        "modern",  # Both flat and iso use same directory
-        "modern",
+        "modern-flat",  # Flat icons for orthogonal SVG
+        "modern",  # Isometric icons for iso SVG
         _ICON_FILES_MODERN,
-        _ICON_FILES_MODERN,  # Same files for both (isometric style)
+        _ICON_FILES_MODERN,
     ),
 }
 
@@ -350,10 +350,11 @@ def _label_metrics(
     return width, height
 
 
-def _load_icons(icon_set: str = "legacy") -> dict[str, str]:
+def _load_icons(icon_set: str = "legacy", decal_color: str = "#1a1a1a") -> dict[str, str]:
     """Load flat (non-isometric) icons for the specified icon set.
 
     Falls back to legacy icons if the requested icon is not found in the set.
+    Modern icons use #DECAL0 as placeholder which gets replaced with decal_color.
     """
     base = Path(__file__).resolve().parents[1] / "assets" / "icons"
     icons: dict[str, str] = {}
@@ -372,8 +373,10 @@ def _load_icons(icon_set: str = "legacy") -> dict[str, str]:
         if filename:
             path = base / subdir / filename if subdir else base / filename
             if path.exists():
-                data = path.read_bytes()
-                encoded = base64.b64encode(data).decode("ascii")
+                data = path.read_text(encoding="utf-8")
+                # Replace color placeholder with theme color
+                data = data.replace("#DECAL0", decal_color)
+                encoded = base64.b64encode(data.encode("utf-8")).decode("ascii")
                 icons[node_type] = f"data:image/svg+xml;base64,{encoded}"
                 continue
 
@@ -845,7 +848,7 @@ def _render_wan_upstream(
     # Draw bounding box with rounded corners
     lines.append(
         f'<rect x="{box_x}" y="{box_y}" width="{box_width}" height="{box_height}" '
-        f'rx="6" ry="6" fill="{theme.background}" stroke="{theme.wan_globe[1]}" stroke-width="1.5"/>'
+        f'rx="6" ry="6" fill="{theme.wan_background}" stroke="{theme.wan_globe[1]}" stroke-width="1.5"/>'
     )
 
     # Draw globe icon inline with gradient fill
@@ -900,7 +903,7 @@ def render_svg(
     wan_info: WanInfo | None = None,
 ) -> str:
     options = options or SvgOptions()
-    icons = _load_icons(theme.icon_set)
+    icons = _load_icons(theme.icon_set, decal_color=theme.text_primary)
 
     use_grouped = options.layout_mode == "grouped" and groups
     group_bounds_list: list[GroupBounds] = []
@@ -1918,9 +1921,10 @@ def _render_iso_wan_upstream(
     box_height = globe_size + len(label_lines) * line_height + padding * 3
 
     # Position box to the east (right side) of the gateway
-    # Move along the isometric NE direction
+    # Move along the isometric NE direction (slope ~0.5 for parallel grid lines)
     box_x = gx + tile_w + 60
-    box_y = gy - tile_h / 2 - box_height / 2 + 20
+    # Position so link runs parallel to isometric grid (y offset follows NE slope)
+    box_y = gy - tile_h / 2 - box_height / 2 + 38
 
     # Connection point on gateway (east edge of tile)
     gateway_connect_x = gx + tile_w * 0.75
@@ -1943,7 +1947,7 @@ def _render_iso_wan_upstream(
     # Draw bounding box with rounded corners
     lines.append(
         f'<rect x="{box_x}" y="{box_y}" width="{box_width}" height="{box_height}" '
-        f'rx="8" ry="8" fill="{theme.background}" stroke="{theme.wan_globe[1]}" stroke-width="2"/>'
+        f'rx="8" ry="8" fill="{theme.wan_background}" stroke="{theme.wan_globe[1]}" stroke-width="2"/>'
     )
 
     # Draw globe icon inline with gradient fill

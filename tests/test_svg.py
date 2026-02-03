@@ -198,7 +198,9 @@ def test_render_svg_handles_missing_positions(monkeypatch):
 
 
 def test_render_svg_without_icons(monkeypatch):
-    monkeypatch.setattr(svg_module, "_load_icons", lambda icon_set="legacy": {})
+    monkeypatch.setattr(
+        svg_module, "_load_icons", lambda icon_set="legacy", decal_color="#1a1a1a": {}
+    )
     output = svg_module.render_svg([Edge("A", "B")], node_types={"A": "switch", "B": "switch"})
     assert "<image" not in output
 

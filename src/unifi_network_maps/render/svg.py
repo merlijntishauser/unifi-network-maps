@@ -1122,11 +1122,15 @@ def _render_svg_edges(
                 f'fill="none"{dash}{opacity_attr} {base_attrs}/>'
             )
         if edge.poe:
-            icon_x = dst_cx
-            icon_y = dst_top - 6
+            poe_size = 16
+            # Position icon on the vertical line segment, 80% from mid_y to dst_top
+            icon_x = dst_cx - poe_size / 2
+            icon_center_y = mid_y + 0.8 * (dst_top - mid_y)
+            icon_y = icon_center_y - poe_size / 2
             lines.append(
-                f'<text x="{icon_x}" y="{icon_y}" text-anchor="middle" fill="#1e88e5" '
-                f'font-size="{max(options.font_size, 10)}">⚡</text>'
+                f'<use href="#poe-bolt" x="{icon_x}" y="{icon_y}" '
+                f'width="{poe_size}" height="{poe_size}" '
+                f'fill="{theme.poe_fill}" stroke="{theme.poe_stroke}" stroke-width="0.5"/>'
             )
     return node_port_labels, node_port_prefix
 
@@ -1513,11 +1517,28 @@ def _render_iso_edges(
                 f"{base_attrs}/>"
             )
         if edge.poe:
-            icon_x = dst_cx
-            icon_y = dst_cy - layout.tile_height * 0.4
+            poe_size = 30
+            # Position icon on the last segment of the path
+            dx = dst_gx - src_gx
+            dy = dst_gy - src_gy
+            if dx == 0 or dy == 0:
+                # Straight line: interpolate from src to dst
+                seg_start_x, seg_start_y = src_cx, src_cy
+            else:
+                # Path has elbow: interpolate on last segment (elbow to dst)
+                elbow_cx, elbow_cy = _iso_front_anchor(
+                    layout, gx=dst_gx, gy=src_gy, offset_x=offset_x, offset_y=offset_y
+                )
+                seg_start_x, seg_start_y = elbow_cx, elbow_cy
+            t = 0.6  # 60% from elbow towards node
+            icon_center_x = seg_start_x + t * (dst_cx - seg_start_x)
+            icon_center_y = seg_start_y + t * (dst_cy - seg_start_y)
+            icon_x = icon_center_x - poe_size / 2
+            icon_y = icon_center_y - poe_size / 2
             lines.append(
-                f'<text x="{icon_x}" y="{icon_y}" text-anchor="middle" fill="#1e88e5" '
-                f'font-size="{max(options.font_size, 10)}">⚡</text>'
+                f'<use href="#iso-poe-bolt" x="{icon_x}" y="{icon_y}" '
+                f'width="{poe_size}" height="{poe_size}" '
+                f'fill="{theme.poe_fill}" stroke="{theme.poe_stroke}" stroke-width="1"/>'
             )
 
 

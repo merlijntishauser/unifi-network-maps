@@ -129,6 +129,8 @@ def _svg_theme_from_dict(data: dict, base: SvgTheme) -> SvgTheme:
         status_offline=_coerce_color(status.get("offline"), base.status_offline),
         wan_globe=_coerce_pair(data.get("wan_globe"), base.wan_globe),
         wan_background=_coerce_color(data.get("wan_background"), base.wan_background),
+        poe_fill=_coerce_color(data.get("poe_fill"), base.poe_fill),
+        poe_stroke=_coerce_color(data.get("poe_stroke"), base.poe_stroke),
         icon_set=_coerce_icon_set(data.get("icon_set"), base.icon_set),
         icon_decal=_coerce_color(data.get("icon_decal"), base.icon_decal),
         node_side_left=_coerce_color(data.get("node_side_left"), base.node_side_left),

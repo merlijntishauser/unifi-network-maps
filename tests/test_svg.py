@@ -32,7 +32,7 @@ def test_render_svg_renders_poe_icon():
         [Edge("A", "B", poe=True)],
         node_types={"A": "gateway", "B": "switch"},
     )
-    assert "⚡" in output
+    assert "poe-bolt" in output
 
 
 def test_render_svg_dashes_wireless_links():
@@ -194,7 +194,8 @@ def test_render_svg_isometric_client_label_without_arrow():
 def test_render_svg_handles_missing_positions(monkeypatch):
     monkeypatch.setattr(svg_module, "_layout_nodes", lambda _e, _n, _o: ({}, 0, 0))
     output = svg_module.render_svg([Edge("A", "B")], node_types={"A": "switch", "B": "switch"})
-    assert "<path" not in output
+    # No edge paths should be rendered (path with stroke attribute)
+    assert 'stroke="url(#link' not in output
 
 
 def test_render_svg_without_icons(monkeypatch):
@@ -220,7 +221,8 @@ def test_render_svg_isometric_skips_missing_positions(monkeypatch):
     output = svg_module.render_svg_isometric(
         [Edge("A", "B")], node_types={"A": "switch", "B": "switch"}
     )
-    assert "<path" not in output
+    # No edge paths should be rendered (path with stroke attribute)
+    assert 'stroke="url(#iso-link' not in output
 
 
 def test_render_svg_isometric_elbow_path():
@@ -236,7 +238,7 @@ def test_render_svg_isometric_poe_icon():
         [Edge("A", "B", poe=True)],
         node_types={"A": "switch", "B": "switch"},
     )
-    assert "⚡" in output
+    assert "iso-poe-bolt" in output
 
 
 def test_render_svg_isometric_client_left_label():

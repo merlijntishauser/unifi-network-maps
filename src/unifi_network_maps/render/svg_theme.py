@@ -42,6 +42,10 @@ class SvgTheme:
     wan_globe: tuple[str, str] = ("#4fc3f7", "#0288d1")
     wan_background: str = "#f0f9ff"  # Light blue tint for WAN box
 
+    # PoE indicator
+    poe_fill: str = "#1565c0"  # Dark blue
+    poe_stroke: str = "#ffc107"  # Golden
+
     # Icon set
     icon_set: str = "legacy"
 
@@ -158,5 +162,9 @@ def svg_defs(prefix: str, theme: SvgTheme = DEFAULT_THEME) -> str:
         f'<stop offset="0%" stop-color="{theme.wan_globe[0]}"/>'
         f'<stop offset="100%" stop-color="{theme.wan_globe[1]}"/>'
         "</linearGradient>"
+        # Heroicon bolt for PoE indicator
+        f'<symbol id="{filter_prefix}poe-bolt" viewBox="0 0 24 24">'
+        '<path fill-rule="evenodd" d="M14.615 1.595a.75.75 0 0 1 .359.852L12.982 9.75h7.268a.75.75 0 0 1 .548 1.262l-10.5 11.25a.75.75 0 0 1-1.272-.71l1.992-7.302H3.75a.75.75 0 0 1-.548-1.262l10.5-11.25a.75.75 0 0 1 .913-.143Z" clip-rule="evenodd"/>'
+        "</symbol>"
         "</defs>"
     )

@@ -391,10 +391,11 @@ def _load_icons(icon_set: str = "legacy") -> dict[str, str]:
     return icons
 
 
-def _load_isometric_icons(icon_set: str = "legacy") -> dict[str, str]:
+def _load_isometric_icons(icon_set: str = "legacy", decal_color: str = "#5A6878") -> dict[str, str]:
     """Load isometric icons for the specified icon set.
 
     Falls back to legacy icons if the requested icon is not found in the set.
+    Modern icons use #DECAL0 as placeholder which gets replaced with decal_color.
     """
     base = Path(__file__).resolve().parents[1] / "assets" / "icons"
     icons: dict[str, str] = {}
@@ -413,7 +414,10 @@ def _load_isometric_icons(icon_set: str = "legacy") -> dict[str, str]:
         if filename:
             path = base / iso_subdir / filename
             if path.exists():
-                data = path.read_bytes()
+                content = path.read_text(encoding="utf-8")
+                # Replace placeholder color with theme color
+                content = content.replace("#DECAL0", decal_color)
+                data = content.encode("utf-8")
                 encoded = base64.b64encode(data).decode("ascii")
                 icons[node_type] = f"data:image/svg+xml;base64,{encoded}"
                 continue
@@ -2124,7 +2128,7 @@ def render_svg_isometric(
     wan_info: WanInfo | None = None,
 ) -> str:
     options = options or SvgOptions()
-    icons = _load_isometric_icons(theme.icon_set)
+    icons = _load_isometric_icons(theme.icon_set, theme.icon_decal)
     layout_positions = _iso_layout_positions(edges, node_types, options)
     layout = layout_positions.layout
     grid_positions = layout_positions.grid_positions

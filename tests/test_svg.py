@@ -204,7 +204,9 @@ def test_render_svg_without_icons(monkeypatch):
 
 
 def test_render_svg_isometric_without_icons(monkeypatch):
-    monkeypatch.setattr(svg_module, "_load_isometric_icons", lambda icon_set="legacy": {})
+    monkeypatch.setattr(
+        svg_module, "_load_isometric_icons", lambda icon_set="legacy", decal_color="#5A6878": {}
+    )
     output = svg_module.render_svg_isometric(
         [Edge("A", "B")], node_types={"A": "switch", "B": "switch"}
     )

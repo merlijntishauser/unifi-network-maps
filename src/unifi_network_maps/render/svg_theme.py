@@ -44,6 +44,9 @@ class SvgTheme:
     # Icon set
     icon_set: str = "legacy"
 
+    # Icon decal color (for modern icons rendered on node surface)
+    icon_decal: str = "#5A6878"
+
     def group_colors(self, group_name: str) -> tuple[str, str]:
         """Return (fill, stroke) colors for a group based on its type."""
         color_map = {

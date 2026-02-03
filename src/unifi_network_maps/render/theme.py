@@ -129,6 +129,7 @@ def _svg_theme_from_dict(data: dict, base: SvgTheme) -> SvgTheme:
         status_offline=_coerce_color(status.get("offline"), base.status_offline),
         wan_globe=_coerce_pair(data.get("wan_globe"), base.wan_globe),
         icon_set=_coerce_icon_set(data.get("icon_set"), base.icon_set),
+        icon_decal=_coerce_color(data.get("icon_decal"), base.icon_decal),
     )
 
 

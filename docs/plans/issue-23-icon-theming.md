@@ -130,7 +130,7 @@ Upgrade the icon system to support multiple selectable icon sets with improved v
 
 ## Phase 4: Extended Device Types ✅
 
-*Completed: 2026-02-03*
+*Completed: 2026-02-03* (commit `5a525fe`)
 
 ### 4.1 Device Type Detection
 

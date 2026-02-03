@@ -1,29 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- UniFi-inspired isometric switch icon (rack-mount style) -->
+<!-- Isometric 1U rack base + Heroicon server with isometric matrix transform -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 140">
   <!-- Shadow -->
   <ellipse cx="120" cy="125" rx="75" ry="15" fill="#000000" opacity="0.2"/>
 
   <!-- Isometric flat box - 1U rack style -->
-  <!-- Right face (darker) - thin -->
   <path d="M120,105 L200,60 L200,45 L120,90 Z" fill="#6885A9"/>
-
-  <!-- Left face (medium) - thin -->
   <path d="M120,105 L40,60 L40,45 L120,90 Z" fill="#B5C5DC"/>
-
-  <!-- Top face (lightest) - wide -->
   <path d="M40,45 L120,10 L200,45 L120,90 Z" fill="#CDD9EE"/>
-
-  <!-- Port indicators on top face (2 rows of 4) -->
-  <rect x="55" y="35" width="8" height="5" fill="#231F20" transform="skewY(-30) skewX(0)"/>
-  <rect x="70" y="35" width="8" height="5" fill="#231F20" transform="skewY(-30) skewX(0)"/>
-  <rect x="85" y="35" width="8" height="5" fill="#231F20" transform="skewY(-30) skewX(0)"/>
-  <rect x="100" y="35" width="8" height="5" fill="#231F20" transform="skewY(-30) skewX(0)"/>
-
-  <!-- LED indicators -->
-  <circle cx="65" cy="65" r="3" fill="#00A86B"/>
-  <circle cx="80" cy="57" r="3" fill="#00A86B"/>
-  <circle cx="95" cy="49" r="3" fill="#00A86B"/>
 
   <!-- Outline -->
   <path d="M40,45 L120,10 L200,45 L200,60 L120,105 L40,60 Z"
@@ -31,4 +15,12 @@
   <line x1="120" y1="90" x2="120" y2="105" stroke="#231F20" stroke-width="2"/>
   <line x1="120" y1="90" x2="40" y2="45" stroke="#231F20" stroke-width="2"/>
   <line x1="120" y1="90" x2="200" y2="45" stroke="#231F20" stroke-width="2"/>
+
+  <!-- Heroicon server with isometric matrix -->
+  <g transform="matrix(0.866, 0.5, -0.866, 0.5, 120, 35)">
+    <g transform="translate(-12,-12) scale(1.3)">
+      <path d="M4.07993 5.22701C4.43013 3.91375 5.61948 3 6.97863 3H17.0214C18.3805 3 19.5699 3.91375 19.9201 5.22701L22.0338 13.1535C21.1346 12.4318 19.9927 12 18.75 12H5.25C4.00727 12 2.86538 12.4318 1.96619 13.1535L4.07993 5.22701Z" fill="#2D3748"/>
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M5.25 13.5C3.17893 13.5 1.5 15.1789 1.5 17.25C1.5 19.3211 3.17893 21 5.25 21H18.75C20.8211 21 22.5 19.3211 22.5 17.25C22.5 15.1789 20.8211 13.5 18.75 13.5H5.25ZM15.75 18C16.1642 18 16.5 17.6642 16.5 17.25C16.5 16.8358 16.1642 16.5 15.75 16.5C15.3358 16.5 15 16.8358 15 17.25C15 17.6642 15.3358 18 15.75 18ZM19.5 17.25C19.5 17.6642 19.1642 18 18.75 18C18.3358 18 18 17.6642 18 17.25C18 16.8358 18.3358 16.5 18.75 16.5C19.1642 16.5 19.5 16.8358 19.5 17.25Z" fill="#2D3748"/>
+    </g>
+  </g>
 </svg>

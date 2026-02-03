@@ -17,23 +17,29 @@ src/unifi_network_maps/assets/icons/isometric/ISOPACKS_LICENSE
 
 ### Modern Icon Set
 
-The modern icon set (`src/unifi_network_maps/assets/icons/modern/`) contains custom isometric
-network device icons designed to match the isopacks aesthetic.
+The modern icon set (`src/unifi_network_maps/assets/icons/modern/`) combines custom isometric
+base shapes with Heroicons rendered on top using isometric matrix transforms.
 
-#### Custom Icons (MIT)
+#### Isometric Base Shapes (MIT)
 
-Icons created for this project, matching the isopacks 30° isometric projection angle and
-color palette (#CDD9EE light, #B5C5DC medium, #6885A9 dark, #231F20 outline).
+Custom isometric base shapes created for this project, using the isopacks color palette
+(#CDD9EE light, #B5C5DC medium, #6885A9 dark, #231F20 outline).
 
-| Icon | Description |
-|------|-------------|
-| gateway.svg | UDM-style box with LED strip |
-| switch.svg | 1U rack-mount switch with ports |
-| ap.svg | Ceiling-mount disc (UniFi AP style) |
-| client.svg | Laptop with screen and keyboard |
-| other.svg | Generic device cube |
+#### Heroicons (MIT)
 
-These icons are part of this project and licensed under MIT.
+Icon symbols from [Heroicons](https://heroicons.com/) by Tailwind Labs.
+
+- Source: https://github.com/tailwindlabs/heroicons
+- License: MIT License
+- Icons used: globe-alt, server, wifi, computer-desktop
+
+| Icon | Base Shape | Heroicon |
+|------|------------|----------|
+| gateway.svg | Cube | globe-alt |
+| switch.svg | 1U rack | server |
+| ap.svg | Disc | wifi |
+| client.svg | Cube | computer-desktop |
+| other.svg | Cube | server |
 
 ## License Compatibility
 

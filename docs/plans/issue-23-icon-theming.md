@@ -19,9 +19,9 @@ Upgrade the icon system to support multiple selectable icon sets with improved v
 |--------|----------|
 | **Selection mechanism** | `--theme` sets default icon set, `--icon-set` can override |
 | **Icon sets planned** | `legacy` (current) → `modern` → `flat` → `outline` |
-| **First new style** | Modern isometric (UniFi-inspired style) |
+| **First new style** | Modern isometric (base shapes + Heroicons) |
 | **Core device types** | Gateway, Switch, AP, Client, Other |
-| **Icon sourcing** | Custom-created matching isopacks 30° isometric angle |
+| **Icon sourcing** | Isometric base shapes + Heroicons (MIT) with matrix transform |
 | **License compliance** | LICENSES.md + README attribution |
 
 ## Theme-to-Icon-Set Defaults

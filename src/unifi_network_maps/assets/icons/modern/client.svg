@@ -1,36 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- UniFi-inspired isometric client/laptop icon -->
+<!-- Isometric cube base + Heroicon computer-desktop with isometric matrix transform -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160">
   <!-- Shadow -->
-  <ellipse cx="100" cy="145" rx="60" ry="12" fill="#000000" opacity="0.2"/>
+  <ellipse cx="100" cy="145" rx="50" ry="12" fill="#000000" opacity="0.2"/>
 
-  <!-- Laptop base (keyboard section) -->
-  <!-- Right face of base -->
-  <path d="M100,130 L160,100 L160,95 L100,125 Z" fill="#6885A9"/>
-  <!-- Left face of base -->
-  <path d="M100,130 L40,100 L40,95 L100,125 Z" fill="#B5C5DC"/>
-  <!-- Top of base (keyboard) -->
-  <path d="M40,95 L100,65 L160,95 L100,125 Z" fill="#CDD9EE"/>
-
-  <!-- Keyboard detail lines -->
-  <line x1="55" y1="90" x2="85" y2="73" stroke="#B5C5DC" stroke-width="1.5"/>
-  <line x1="60" y1="95" x2="90" y2="78" stroke="#B5C5DC" stroke-width="1.5"/>
-  <line x1="65" y1="100" x2="95" y2="83" stroke="#B5C5DC" stroke-width="1.5"/>
-
-  <!-- Screen (angled back) -->
-  <!-- Screen back face -->
-  <path d="M45,92 L100,62 L155,92 L155,45 L100,15 L45,45 Z" fill="#6885A9"/>
-  <!-- Screen front face (display) -->
-  <path d="M50,88 L100,60 L150,88 L150,48 L100,20 L50,48 Z" fill="#4A5568"/>
-  <!-- Screen content area -->
-  <path d="M55,82 L100,57 L145,82 L145,52 L100,27 L55,52 Z" fill="#2D3748"/>
-
-  <!-- Screen glare -->
-  <path d="M60,75 L85,60 L85,50 L60,65 Z" fill="#FFFFFF" opacity="0.15"/>
+  <!-- Isometric cube base -->
+  <path d="M100,130 L150,100 L150,60 L100,90 Z" fill="#6885A9"/>
+  <path d="M100,130 L50,100 L50,60 L100,90 Z" fill="#B5C5DC"/>
+  <path d="M50,60 L100,30 L150,60 L100,90 Z" fill="#CDD9EE"/>
 
   <!-- Outline -->
-  <path d="M40,95 L100,65 L160,95 L160,100 L100,130 L40,100 Z"
+  <path d="M50,60 L100,30 L150,60 L150,100 L100,130 L50,100 Z"
         fill="none" stroke="#231F20" stroke-width="2" stroke-linejoin="round"/>
-  <path d="M45,92 L100,62 L155,92 L155,45 L100,15 L45,45 Z"
-        fill="none" stroke="#231F20" stroke-width="2" stroke-linejoin="round"/>
+  <line x1="100" y1="90" x2="100" y2="130" stroke="#231F20" stroke-width="2"/>
+  <line x1="100" y1="90" x2="50" y2="60" stroke="#231F20" stroke-width="2"/>
+  <line x1="100" y1="90" x2="150" y2="60" stroke="#231F20" stroke-width="2"/>
+
+  <!-- Heroicon computer-desktop with isometric matrix -->
+  <g transform="matrix(0.866, 0.5, -0.866, 0.5, 100, 45)">
+    <g transform="translate(-12,-12) scale(1.3)">
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M2.25 5.25C2.25 3.59315 3.59315 2.25 5.25 2.25H18.75C20.4069 2.25 21.75 3.59315 21.75 5.25V15C21.75 16.6569 20.4069 18 18.75 18H15.75V18.2574C15.75 18.8541 15.9871 19.4264 16.409 19.8483L17.0303 20.4697C17.2448 20.6842 17.309 21.0068 17.1929 21.287C17.0768 21.5673 16.8033 21.75 16.5 21.75H7.5C7.19665 21.75 6.92318 21.5673 6.80709 21.287C6.691 21.0068 6.75517 20.6842 6.96967 20.4697L7.59099 19.8484C8.01295 19.4264 8.25 18.8541 8.25 18.2574V18H5.25C3.59315 18 2.25 16.6569 2.25 15V5.25ZM3.75 5.25V12.75C3.75 13.5784 4.42157 14.25 5.25 14.25H18.75C19.5784 14.25 20.25 13.5784 20.25 12.75V5.25C20.25 4.42157 19.5784 3.75 18.75 3.75H5.25C4.42157 3.75 3.75 4.42157 3.75 5.25Z" fill="#2D3748"/>
+    </g>
+  </g>
 </svg>

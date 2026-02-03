@@ -1784,8 +1784,8 @@ def _render_iso_node(
         f'<polygon points="{_points_to_svg(top)}" fill="transparent" '
         'pointer-events="all" class="node-hitbox"/>'
     )
-    left_fill = "#d0d0d0" if node_type == "other" else "#dcdcdc"
-    right_fill = "#c2c2c2" if node_type == "other" else "#c8c8c8"
+    left_fill = theme.node_side_left
+    right_fill = theme.node_side_right
     _iso_render_faces(
         lines,
         top=top,
@@ -1832,7 +1832,7 @@ def _render_iso_node(
         lines.append(
             f'<image href="{icon_href}" x="{icon_x}" y="{icon_y}" '
             f'width="{iso_icon_size}" height="{iso_icon_size}" '
-            f'preserveAspectRatio="xMidYMid meet"/>'
+            f'preserveAspectRatio="xMidYMid meet" filter="url(#iso-icon-emboss)"/>'
         )
 
     # Position name label

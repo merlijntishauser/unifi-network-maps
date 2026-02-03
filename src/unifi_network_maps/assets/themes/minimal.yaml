@@ -23,7 +23,7 @@ mermaid:
   standard_link_arrow: "none"
 svg:
   icon_set: modern
-  icon_decal: "#4B5563"
+  icon_decal: "#231F20"
   background: "#fafafa"
   text:
     primary: "#374151"

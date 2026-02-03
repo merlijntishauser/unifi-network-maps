@@ -47,6 +47,10 @@ class SvgTheme:
     # Icon decal color (for modern icons rendered on node surface)
     icon_decal: str = "#5A6878"
 
+    # Isometric node side face colors (SW=left, E=right)
+    node_side_left: str = "#dcdcdc"
+    node_side_right: str = "#c8c8c8"
+
     def group_colors(self, group_name: str) -> tuple[str, str]:
         """Return (fill, stroke) colors for a group based on its type."""
         color_map = {
@@ -119,6 +123,35 @@ def svg_defs(prefix: str, theme: SvgTheme = DEFAULT_THEME) -> str:
         "</linearGradient>"
         f'<filter id="{filter_prefix}edge-glow" x="-50%" y="-50%" width="200%" height="200%">'
         '<feGaussianBlur stdDeviation="4" result="blur"/>'
+        "</filter>"
+        # Emboss filter for icon decals - iOS glass effect
+        f'<filter id="{filter_prefix}icon-emboss" x="-50%" y="-50%" width="200%" height="200%">'
+        # Outer glow/shadow for depth
+        '<feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="blur"/>'
+        '<feOffset in="blur" dx="0" dy="1.5" result="dropShadow"/>'
+        '<feFlood flood-color="#000000" flood-opacity="0.25" result="shadowColor"/>'
+        '<feComposite in="shadowColor" in2="dropShadow" operator="in" result="shadow"/>'
+        # Top highlight edge (outside the icon)
+        '<feGaussianBlur in="SourceAlpha" stdDeviation="1" result="blurLight"/>'
+        '<feOffset in="blurLight" dx="-1.5" dy="-1.2" result="lightOffset"/>'
+        '<feFlood flood-color="#ffffff" flood-opacity="0.8" result="lightColor"/>'
+        '<feComposite in="lightColor" in2="lightOffset" operator="in" result="highlight"/>'
+        # Subtract original shape from highlight to keep only edge glow
+        '<feComposite in="highlight" in2="SourceAlpha" operator="out" result="edgeHighlight"/>'
+        # Bottom shadow edge (outside the icon)
+        '<feGaussianBlur in="SourceAlpha" stdDeviation="1" result="blurDark"/>'
+        '<feOffset in="blurDark" dx="1.5" dy="1.2" result="darkOffset"/>'
+        '<feFlood flood-color="#000000" flood-opacity="0.5" result="darkColor"/>'
+        '<feComposite in="darkColor" in2="darkOffset" operator="in" result="innerShadow"/>'
+        # Subtract original shape from shadow to keep only edge shadow
+        '<feComposite in="innerShadow" in2="SourceAlpha" operator="out" result="edgeShadow"/>'
+        # Combine: edges first, then full-strength icon on top
+        "<feMerge>"
+        '<feMergeNode in="shadow"/>'
+        '<feMergeNode in="edgeHighlight"/>'
+        '<feMergeNode in="edgeShadow"/>'
+        '<feMergeNode in="SourceGraphic"/>'
+        "</feMerge>"
         "</filter>"
         f'<linearGradient id="{gradient_prefix}globe" x1="0%" y1="0%" x2="100%" y2="100%">'
         f'<stop offset="0%" stop-color="{theme.wan_globe[0]}"/>'

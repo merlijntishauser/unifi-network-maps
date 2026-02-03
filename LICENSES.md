@@ -61,6 +61,27 @@ Icon symbols from [Heroicons](https://heroicons.com/) by Tailwind Labs.
 | client.svg | computer-desktop (outline) |
 | other.svg | server (outline) |
 
+### Outline Icon Set
+
+The outline icon set (`src/unifi_network_maps/assets/icons/outline/`) uses Lucide icons
+for a technical wireframe style with consistent stroke weights.
+
+#### Lucide Icons (ISC License)
+
+Icon symbols from [Lucide](https://lucide.dev/).
+
+- Source: https://github.com/lucide-icons/lucide
+- License: ISC License (MIT-compatible)
+- Style: Technical wireframe (uniform stroke-width: 2)
+
+| Icon | Lucide Icon |
+|------|-------------|
+| gateway.svg | globe |
+| switch.svg | hard-drive |
+| ap.svg | radio |
+| client.svg | monitor |
+| other.svg | box |
+
 ## License Compatibility
 
 When sourcing icons for this project, use license-compatible sources:

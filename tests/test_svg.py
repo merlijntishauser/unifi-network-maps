@@ -353,6 +353,19 @@ def test_load_isometric_icons_flat():
     assert "switch" in icons
 
 
+def test_load_icons_outline():
+    icons = svg_module._load_icons("outline")
+    assert "gateway" in icons
+    assert "switch" in icons
+    assert "ap" in icons
+
+
+def test_load_isometric_icons_outline():
+    icons = svg_module._load_isometric_icons("outline")
+    assert "gateway" in icons
+    assert "switch" in icons
+
+
 def test_render_svg_uses_theme_icon_set():
     """SVG render should use icon_set from theme."""
     from dataclasses import replace

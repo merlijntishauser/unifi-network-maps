@@ -130,6 +130,12 @@ _ICON_SETS = {
         _ICON_FILES_MODERN,
         _ICON_FILES_MODERN,
     ),
+    "outline": (
+        "outline",  # Lucide icons (technical wireframe style)
+        "outline",  # Same for isometric (2D outline icons)
+        _ICON_FILES_MODERN,
+        _ICON_FILES_MODERN,
+    ),
 }
 
 # Backwards compatibility aliases

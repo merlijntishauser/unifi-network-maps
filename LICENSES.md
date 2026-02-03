@@ -41,6 +41,26 @@ Icon symbols from [Heroicons](https://heroicons.com/) by Tailwind Labs.
 | client.svg | Cube | computer-desktop |
 | other.svg | Cube | server |
 
+### Flat Icon Set
+
+The flat icon set (`src/unifi_network_maps/assets/icons/flat/`) uses Heroicons outline style.
+
+#### Heroicons Outline (MIT)
+
+Icon symbols from [Heroicons](https://heroicons.com/) by Tailwind Labs.
+
+- Source: https://github.com/tailwindlabs/heroicons
+- License: MIT License
+- Style: Outline (stroke-based, no fill)
+
+| Icon | Heroicon |
+|------|----------|
+| gateway.svg | globe-alt (outline) |
+| switch.svg | server-stack (outline) |
+| ap.svg | wifi (outline) |
+| client.svg | computer-desktop (outline) |
+| other.svg | server (outline) |
+
 ## License Compatibility
 
 When sourcing icons for this project, use license-compatible sources:

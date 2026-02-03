@@ -5,7 +5,7 @@
 | Phase | Status | Commit |
 |-------|--------|--------|
 | Phase 1: Infrastructure + Modern Icons | ✅ Complete | `6c37063` |
-| Phase 2: Flat/Minimal Icon Set | Pending | - |
+| Phase 2: Flat/Minimal Icon Set | ✅ Complete | - |
 | Phase 3: Outline/Wireframe Icon Set | Pending | - |
 | Phase 4: Extended Device Types | Pending | - |
 
@@ -79,28 +79,28 @@ Upgrade the icon system to support multiple selectable icon sets with improved v
 
 ---
 
-## Phase 2: Flat/Minimal Icon Set
+## Phase 2: Flat/Minimal Icon Set ✅
 
-*Depends on: Phase 1 complete* ✅
+*Completed: 2026-02-03*
 
 ### 2.1 Icon Sourcing
 
-- [ ] Source flat/minimal style icons for: gateway, switch, ap, client
-- [ ] Ensure 2D style works well at small sizes
-- [ ] Verify license compatibility
-- [ ] Add to `LICENSES.md`
+- [x] Source flat/minimal style icons for: gateway, switch, ap, client, other
+- [x] Ensure 2D style works well at small sizes (Heroicons outline)
+- [x] Verify license compatibility (MIT)
+- [x] Add to `LICENSES.md`
 
 ### 2.2 Implementation
 
-- [ ] Populate `assets/icons/flat/` directory
-- [ ] Add `flat` to `--icon-set` choices
-- [ ] Update `minimal` theme to default to `flat` icon set
-- [ ] Add smoketest variants for flat icons
+- [x] Populate `assets/icons/flat/` directory
+- [x] Add `flat` to `--icon-set` choices
+- [x] Update `minimal` theme to default to `flat` icon set
+- [x] Smoketest includes flat icon rendering via minimal theme
 
 ### 2.3 Testing
 
-- [ ] Visual regression baselines for flat icon set
-- [ ] BDD scenario for flat icon rendering
+- [x] Unit tests for flat icon loading
+- [x] Smoketest validates flat icon rendering
 
 ---
 

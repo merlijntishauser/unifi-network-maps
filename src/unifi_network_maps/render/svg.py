@@ -124,6 +124,12 @@ _ICON_SETS = {
         _ICON_FILES_MODERN,
         _ICON_FILES_MODERN,
     ),
+    "flat": (
+        "flat",  # Heroicons outline style
+        "flat",  # Same for isometric (2D outline icons)
+        _ICON_FILES_MODERN,
+        _ICON_FILES_MODERN,
+    ),
 }
 
 # Backwards compatibility aliases

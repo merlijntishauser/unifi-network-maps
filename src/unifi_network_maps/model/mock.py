@@ -112,8 +112,12 @@ def _build_clients(
     aps: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     clients = []
-    clients.extend(_build_wired_clients(options.wired_client_count, state, core_switch))
-    clients.extend(_build_wireless_clients(options.wireless_client_count, state, aps))
+    wired = _build_wired_clients(options.wired_client_count, state, core_switch, start_index=0)
+    wireless = _build_wireless_clients(
+        options.wireless_client_count, state, aps, start_index=len(wired)
+    )
+    clients.extend(wired)
+    clients.extend(wireless)
     return clients
 
 
@@ -125,13 +129,13 @@ def _build_networks() -> list[dict[str, Any]]:
 
 
 def _build_wired_clients(
-    count: int, state: _MockState, core_switch: dict[str, Any]
+    count: int, state: _MockState, core_switch: dict[str, Any], start_index: int = 0
 ) -> list[dict[str, Any]]:
     clients = []
-    for _ in range(max(0, count)):
+    for i in range(max(0, count)):
         port_idx = _next_core_port(state)
         _add_port(core_switch, port_idx, poe_enabled=False, rng=state.rng)
-        name = _unique_client_name(state)
+        name = _unique_client_name(state, client_index=start_index + i)
         # Assign VLANs to wired clients based on index
         vlan_options = [1, 10, 20, 30, 100]
         client_vlan = vlan_options[port_idx % len(vlan_options)]
@@ -148,7 +152,7 @@ def _build_wired_clients(
 
 
 def _build_wireless_clients(
-    count: int, state: _MockState, aps: list[dict[str, Any]]
+    count: int, state: _MockState, aps: list[dict[str, Any]], start_index: int = 0
 ) -> list[dict[str, Any]]:
     if not aps:
         return []
@@ -157,7 +161,7 @@ def _build_wireless_clients(
     wireless_vlans = [10, 20]
     for idx in range(max(0, count)):
         ap = aps[idx % len(aps)]
-        name = _unique_client_name(state)
+        name = _unique_client_name(state, client_index=start_index + idx)
         client_vlan = wireless_vlans[idx % len(wireless_vlans)]
         clients.append(
             {
@@ -310,35 +314,35 @@ def _unique_name(state: _MockState, prefix: str) -> str:
 
 
 # Device name templates for testing device categorization
+# Ordered by category to ensure variety in mock data
 _DEVICE_NAME_TEMPLATES = [
-    "Living Room TV",
-    "Samsung Smart TV",
-    "Sonos One",
-    "HomePod Mini",
-    "Ring Doorbell",
-    "Front Door Camera",
-    "HP LaserJet",
-    "Brother Printer",
-    "Synology NAS",
-    "PlayStation 5",
-    "Xbox Series X",
-    "iPhone",
-    "Nest Thermostat",
-    "Hue Bridge",
-    "Echo Dot",
+    "Living Room TV",  # tv
+    "Sonos One",  # speaker
+    "Ring Doorbell",  # camera
+    "HP LaserJet",  # printer
+    "Synology NAS",  # nas
+    "PlayStation 5",  # game_console
+    "iPhone",  # phone
+    "Hue Bridge",  # iot
+    "Samsung Smart TV",  # tv
+    "HomePod Mini",  # speaker
+    "Front Door Camera",  # camera
+    "Brother Printer",  # printer
+    "Xbox Series X",  # game_console
+    "Nest Thermostat",  # iot
+    "Echo Dot",  # speaker
 ]
 
 
-def _unique_client_name(state: _MockState) -> str:
-    # 40% chance to use a device name, 60% chance to use a person name
-    if state.rng.random() < 0.4 and _DEVICE_NAME_TEMPLATES:
-        # Pick a device name that hasn't been used
-        available = [n for n in _DEVICE_NAME_TEMPLATES if n not in state.used_names]
-        if available:
-            name = state.rng.choice(available)
+def _unique_client_name(state: _MockState, client_index: int = 0) -> str:
+    # Use device names for first N clients to ensure variety in mock output
+    # This guarantees different device types appear in smoketests
+    if client_index < len(_DEVICE_NAME_TEMPLATES):
+        name = _DEVICE_NAME_TEMPLATES[client_index]
+        if name not in state.used_names:
             state.used_names.add(name)
             return name
-    # Fall back to person names
+    # Fall back to person names for additional clients
     name = state.fake.first_name()
     while name in state.used_names:
         name = state.fake.first_name()

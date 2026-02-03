@@ -2,14 +2,14 @@
   "clients": [
     {
       "is_wired": true,
-      "name": "Emma",
+      "name": "Living Room TV",
       "sw_mac": "80:ba:37:d9:cc:21",
       "sw_port": 4,
       "vlan": 100
     },
     {
       "is_wired": true,
-      "name": "Cynthia",
+      "name": "Sonos One",
       "sw_mac": "80:ba:37:d9:cc:21",
       "sw_port": 5,
       "vlan": 1
@@ -18,14 +18,14 @@
       "ap_mac": "3e:9f:09:b4:3c:eb",
       "ap_port": 1,
       "is_wired": false,
-      "name": "James",
+      "name": "Ring Doorbell",
       "vlan": 10
     },
     {
       "ap_mac": "12:ea:87:66:22:16",
       "ap_port": 1,
       "is_wired": false,
-      "name": "Justin",
+      "name": "HP LaserJet",
       "vlan": 20
     }
   ],

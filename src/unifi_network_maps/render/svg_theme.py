@@ -11,13 +11,23 @@ class SvgTheme:
     link_standard: tuple[str, str]
     link_poe: tuple[str, str]
 
-    # Nodes
+    # Nodes - infrastructure
     node_gateway: tuple[str, str]
     node_switch: tuple[str, str]
     node_ap: tuple[str, str]
     node_client: tuple[str, str]
     node_other: tuple[str, str]
     node_client_cluster: tuple[str, str] = ("#d4b8ff", "#a080e0")
+
+    # Nodes - extended device types
+    node_camera: tuple[str, str] = ("#b3e5fc", "#64b5f6")  # Light blue
+    node_tv: tuple[str, str] = ("#d1c4e9", "#9575cd")  # Light violet
+    node_phone: tuple[str, str] = ("#c8e6c9", "#81c784")  # Light green
+    node_printer: tuple[str, str] = ("#cfd8dc", "#90a4ae")  # Blue-gray
+    node_nas: tuple[str, str] = ("#ffe0b2", "#ffb74d")  # Amber
+    node_speaker: tuple[str, str] = ("#b2dfdb", "#4db6ac")  # Teal
+    node_game_console: tuple[str, str] = ("#e1bee7", "#ba68c8")  # Light purple
+    node_iot: tuple[str, str] = ("#b2ebf2", "#4dd0e1")  # Cyan
 
     # Groups
     group_fill: str = "#f8f9fa"
@@ -64,6 +74,14 @@ class SvgTheme:
             "ap": self.node_ap,
             "client": self.node_client,
             "client_cluster": self.node_client_cluster,
+            "camera": self.node_camera,
+            "tv": self.node_tv,
+            "phone": self.node_phone,
+            "printer": self.node_printer,
+            "nas": self.node_nas,
+            "speaker": self.node_speaker,
+            "game_console": self.node_game_console,
+            "iot": self.node_iot,
             "other": self.node_other,
         }
         return color_map.get(group_name.lower(), (self.group_fill, self.group_stroke))
@@ -125,6 +143,39 @@ def svg_defs(prefix: str, theme: SvgTheme = DEFAULT_THEME) -> str:
         f'<linearGradient id="{node_prefix}other" x1="0%" y1="0%" x2="100%" y2="100%">'
         f'<stop offset="0%" stop-color="{theme.node_other[0]}"/>'
         f'<stop offset="100%" stop-color="{theme.node_other[1]}"/>'
+        "</linearGradient>"
+        # Extended device types
+        f'<linearGradient id="{node_prefix}camera" x1="0%" y1="0%" x2="100%" y2="100%">'
+        f'<stop offset="0%" stop-color="{theme.node_camera[0]}"/>'
+        f'<stop offset="100%" stop-color="{theme.node_camera[1]}"/>'
+        "</linearGradient>"
+        f'<linearGradient id="{node_prefix}tv" x1="0%" y1="0%" x2="100%" y2="100%">'
+        f'<stop offset="0%" stop-color="{theme.node_tv[0]}"/>'
+        f'<stop offset="100%" stop-color="{theme.node_tv[1]}"/>'
+        "</linearGradient>"
+        f'<linearGradient id="{node_prefix}phone" x1="0%" y1="0%" x2="100%" y2="100%">'
+        f'<stop offset="0%" stop-color="{theme.node_phone[0]}"/>'
+        f'<stop offset="100%" stop-color="{theme.node_phone[1]}"/>'
+        "</linearGradient>"
+        f'<linearGradient id="{node_prefix}printer" x1="0%" y1="0%" x2="100%" y2="100%">'
+        f'<stop offset="0%" stop-color="{theme.node_printer[0]}"/>'
+        f'<stop offset="100%" stop-color="{theme.node_printer[1]}"/>'
+        "</linearGradient>"
+        f'<linearGradient id="{node_prefix}nas" x1="0%" y1="0%" x2="100%" y2="100%">'
+        f'<stop offset="0%" stop-color="{theme.node_nas[0]}"/>'
+        f'<stop offset="100%" stop-color="{theme.node_nas[1]}"/>'
+        "</linearGradient>"
+        f'<linearGradient id="{node_prefix}speaker" x1="0%" y1="0%" x2="100%" y2="100%">'
+        f'<stop offset="0%" stop-color="{theme.node_speaker[0]}"/>'
+        f'<stop offset="100%" stop-color="{theme.node_speaker[1]}"/>'
+        "</linearGradient>"
+        f'<linearGradient id="{node_prefix}game_console" x1="0%" y1="0%" x2="100%" y2="100%">'
+        f'<stop offset="0%" stop-color="{theme.node_game_console[0]}"/>'
+        f'<stop offset="100%" stop-color="{theme.node_game_console[1]}"/>'
+        "</linearGradient>"
+        f'<linearGradient id="{node_prefix}iot" x1="0%" y1="0%" x2="100%" y2="100%">'
+        f'<stop offset="0%" stop-color="{theme.node_iot[0]}"/>'
+        f'<stop offset="100%" stop-color="{theme.node_iot[1]}"/>'
         "</linearGradient>"
         f'<filter id="{filter_prefix}edge-glow" x="-50%" y="-50%" width="200%" height="200%">'
         '<feGaussianBlur stdDeviation="4" result="blur"/>'

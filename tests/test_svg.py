@@ -342,6 +342,63 @@ def test_load_icons_modern():
     assert "switch" in icons
 
 
+def test_darken_hex_basic():
+    assert svg_module._darken_hex("#ffffff", 0.5) == "#7f7f7f"
+    assert svg_module._darken_hex("#000000", 0.5) == "#000000"
+
+
+def test_darken_hex_typical_factor():
+    result = svg_module._darken_hex("#006fff", 0.35)
+    assert result == "#0048a5"
+
+
+def test_darken_hex_zero_factor():
+    assert svg_module._darken_hex("#ff8000", 0.0) == "#ff8000"
+
+
+def test_darken_hex_invalid_input():
+    assert svg_module._darken_hex("not-a-color", 0.35) == "not-a-color"
+    assert svg_module._darken_hex("#fff", 0.35) == "#fff"
+
+
+def test_build_decal_colors_returns_all_node_types():
+    from unifi_network_maps.render.svg_theme import DEFAULT_THEME
+
+    colors = svg_module._build_decal_colors(DEFAULT_THEME)
+    expected = {
+        "gateway",
+        "switch",
+        "ap",
+        "client",
+        "other",
+        "client_cluster",
+        "camera",
+        "tv",
+        "phone",
+        "printer",
+        "nas",
+        "speaker",
+        "game_console",
+        "iot",
+    }
+    assert set(colors.keys()) == expected
+    for color in colors.values():
+        assert color.startswith("#")
+        assert len(color) == 7
+
+
+def test_build_decal_colors_are_darker_than_source():
+    from unifi_network_maps.render.svg_theme import DEFAULT_THEME
+
+    colors = svg_module._build_decal_colors(DEFAULT_THEME)
+    # Gateway source "to" is #ffb15a, decal should be darker (lower RGB sum)
+    source = DEFAULT_THEME.node_gateway[1]
+    decal = colors["gateway"]
+    src_sum = sum(int(source[i : i + 2], 16) for i in (1, 3, 5))
+    dec_sum = sum(int(decal[i : i + 2], 16) for i in (1, 3, 5))
+    assert dec_sum < src_sum
+
+
 def test_render_svg_uses_theme_icon_set():
     """SVG render should use icon_set from theme."""
     from dataclasses import replace

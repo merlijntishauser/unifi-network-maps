@@ -84,7 +84,7 @@ def _render_device_ports(
     table_rows = [
         [
             escape_markdown(port_label),
-            _escape_connected_cell(connected or "-"),
+            connected or "-",  # Not escaped: contains intentional HTML (br, ul)
             escape_markdown(speed),
             escape_markdown(poe_state),
             escape_markdown(power),
@@ -290,10 +290,6 @@ def _port_sort_key(port: object) -> tuple[int, str]:
         return (0, f"{port_idx:04d}")
     name = getattr(port, "name", "") or ""
     return (1, name.lower())
-
-
-def _escape_connected_cell(value: str) -> str:
-    return value
 
 
 def _render_device_details(device: Device) -> list[str]:

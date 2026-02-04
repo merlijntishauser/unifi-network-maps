@@ -64,6 +64,14 @@ def _svg_style_block(theme: SvgTheme, font_size: int, *, iso: bool = False) -> s
     return "".join(parts)
 
 
+# Isometric layout constants (module-level for discoverability)
+_ISO_NW_PADDING = 300  # North-west padding for iso layout
+_ISO_VIEWPORT_EXPAND = 400  # Viewport expansion around content
+_ISO_GRID_EXTENT_PAD = 36  # Grid extent padding beyond content
+_ISO_GROUP_LABEL_SIZE = 48  # Font size for group boundary labels
+_ISO_PERSPECTIVE_ANGLE = 30  # Isometric perspective angle in degrees
+
+
 @dataclass(frozen=True)
 class SvgOptions:
     node_width: int = 160
@@ -1452,14 +1460,12 @@ def _iso_layout_positions(
     else:
         min_x = min_y = 0.0
         max_x = max_y = 0.0
-    # Extra padding for west/northwest to prevent clipping
-    nw_pad = 300
-    offset_x = -min_x + layout.padding + nw_pad
-    offset_y = -min_y + layout.padding + layout.tile_y_offset + nw_pad
+    offset_x = -min_x + layout.padding + _ISO_NW_PADDING
+    offset_y = -min_y + layout.padding + layout.tile_y_offset + _ISO_NW_PADDING
     for name, (x, y) in positions.items():
         positions[name] = (x + offset_x, y + offset_y)
     # Expand viewport to show more of the grid
-    viewport_expand = 400
+    viewport_expand = _ISO_VIEWPORT_EXPAND
     width = (
         max_x
         - min_x
@@ -1467,7 +1473,7 @@ def _iso_layout_positions(
         + layout.padding * 2
         + layout.extra_pad
         + viewport_expand
-        + nw_pad
+        + _ISO_NW_PADDING
     )
     height = (
         max_y
@@ -1477,7 +1483,7 @@ def _iso_layout_positions(
         + layout.tile_y_offset
         + layout.extra_pad
         + viewport_expand
-        + nw_pad
+        + _ISO_NW_PADDING
     )
     return IsoLayoutPositions(
         layout=layout,
@@ -1501,11 +1507,10 @@ def _iso_grid_lines(
     max_gx = max(gx for gx, _ in grid_positions.values())
     min_gy = min(gy for _, gy in grid_positions.values())
     max_gy = max(gy for _, gy in grid_positions.values())
-    pad = 36  # Large grid extent for visual appeal
-    gx_start = int(math.floor(min_gx)) - pad
-    gx_end = int(math.ceil(max_gx)) + pad
-    gy_start = int(math.floor(min_gy)) - pad
-    gy_end = int(math.ceil(max_gy)) + pad
+    gx_start = int(math.floor(min_gx)) - _ISO_GRID_EXTENT_PAD
+    gx_end = int(math.ceil(max_gx)) + _ISO_GRID_EXTENT_PAD
+    gy_start = int(math.floor(min_gy)) - _ISO_GRID_EXTENT_PAD
+    gy_end = int(math.ceil(max_gy)) + _ISO_GRID_EXTENT_PAD
     grid_lines: list[str] = []
     for gx in range(gx_start, gx_end + 1):
         x1, y1 = _iso_project(layout, float(gx), float(gy_start))
@@ -2261,8 +2266,8 @@ def _render_iso_group_boundaries(
     theme: SvgTheme,
 ) -> None:
     """Render isometric group boundaries as parallelograms."""
-    label_size = 48  # Labels
-    iso_angle = 30  # Match isometric perspective
+    label_size = _ISO_GROUP_LABEL_SIZE
+    iso_angle = _ISO_PERSPECTIVE_ANGLE
     for bounds in bounds_list:
         group_attr = _escape_attr(bounds.name, quote=True)
         fill, stroke = theme.group_colors(bounds.name)

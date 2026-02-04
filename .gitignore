@@ -20,6 +20,8 @@ network.md
 !src/unifi_network_maps/assets/icons/isometric/*.svg
 !src/unifi_network_maps/assets/icons/modern/*.svg
 !examples/output/*.svg
+!examples/themes/*.svg
+!examples/themes/*.png
 smoketest/
 network*.md
 build/

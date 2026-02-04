@@ -1,6 +1,6 @@
 .PHONY: venv install lint format typecheck test bdd coverage smoketest smoketest-mock \
         smoketest-validate visual-regression visual-baselines mock-data ci version \
-        version-sync version-bump help
+        version-sync version-bump theme-matrix help
 
 VERSION_FILE = VERSION
 VENV = .venv/bin
@@ -81,6 +81,9 @@ version-sync:
 
 version-bump:
 	@scripts/version_bump.sh
+
+theme-matrix:
+	@PYTHONPATH=src $(VENV)/python scripts/generate_theme_matrix.py
 
 # Help
 help:

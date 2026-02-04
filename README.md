@@ -174,9 +174,6 @@ graph TB
 See `examples/mkdocs/` for a ready-to-use setup that renders Mermaid diagrams
 with Material for MkDocs, including a sample `unifi-network` page and legend.
 
-The built-in themes live at `src/unifi_network_maps/assets/themes/default.yaml` and
-`src/unifi_network_maps/assets/themes/dark.yaml`.
-
 
 ## Options
 
@@ -190,44 +187,63 @@ Source:
 Mock:
 - `--generate-mock`: write mock data JSON and exit.
 - `--mock-seed`: seed for deterministic mock generation.
-- `--mock-switches`: number of switches to generate.
-- `--mock-aps`: number of access points to generate.
-- `--mock-wired-clients`: number of wired clients to generate.
-- `--mock-wireless-clients`: number of wireless clients to generate.
+- `--mock-switches`: number of switches to generate (default 1).
+- `--mock-aps`: number of access points to generate (default 2).
+- `--mock-wired-clients`: number of wired clients to generate (default 2).
+- `--mock-wireless-clients`: number of wireless clients to generate (default 2).
 
 Functional:
 - `--include-ports`: show port labels (Mermaid shows both ends; SVG shows compact labels).
-- `--include-clients`: add active wired clients as leaf nodes.
+- `--include-clients`: add active clients as leaf nodes.
 - `--client-scope wired|wireless|all`: which client types to include (default wired).
-- `--only-unifi`: only include neighbors that are UniFi devices; when clients are included, filters to UniFi-managed clients (by explicit UniFi flags or vendor/OUI).
+- `--collapse-clients`: group clients by uplink device into cluster nodes with count badges.
+- `--only-unifi`: only include neighbors that are UniFi devices; when clients are included, filters to UniFi-managed clients.
 - `--no-cache`: disable UniFi API cache reads and writes.
 
 Mermaid:
-- `--direction LR|TB`: diagram direction for Mermaid (default TB).
-- `--group-by-type`: group nodes by gateway/switch/AP in Mermaid subgraphs.
-- `--legend-scale`: scale legend font/link sizes for Mermaid outputs (default 1.0).
+- `--direction LR|TB`: diagram direction (default TB).
+- `--group-by-type`: group nodes by gateway/switch/AP in subgraphs.
+- `--legend-scale`: scale legend font/link sizes (default 1.0).
 - `--legend-style auto|compact|diagram`: legend rendering mode (auto uses compact for mkdocs).
-- `--legend-only`: render just the legend as a separate Mermaid graph (Mermaid only).
+- `--legend-only`: render just the legend as a separate Mermaid graph.
 
 SVG:
 - `--svg-width/--svg-height`: override SVG output dimensions.
-- `--theme-file`: load a YAML theme for Mermaid + SVG colors (see `examples/theme.yaml` and `examples/theme-dark.yaml`).
+- `--theme`: built-in theme (`unifi`, `unifi-dark`, `minimal`, `classic`, `classic-dark`).
+- `--theme-file`: custom theme YAML (takes priority over `--theme`; see `examples/theme.yaml`).
+- `--icon-set isometric|modern`: icon set to use (default: determined by theme, or `isometric`).
+- `--svg-layout-mode physical|grouped`: layout mode for SVG output (default physical).
+- `--wan-label/--wan-speed`: WAN1 ISP name and provisioned speed.
+- `--wan2-label/--wan2-speed`: WAN2 ISP name and provisioned speed.
+- `--max-vlan-colors`: limit VLAN colors shown on edges (default: no limit).
+- `--include-vlan-legend`: add VLAN color legend to SVG output.
 
 Output:
 - `--format mermaid|svg|svg-iso|lldp-md|mkdocs|json`: output format (default mermaid).
 - `--stdout`: write output to stdout.
-- `--markdown`: wrap Mermaid output in a code fence.
-- `--mkdocs-sidebar-legend`: write assets to place the compact legend in the MkDocs right sidebar.
+- `--output`: write output to file.
+- `--markdown`: wrap Mermaid output in a code fence for notes tools like Obsidian.
+- `--mkdocs-sidebar-legend`: write sidebar legend assets next to the output file.
 - `--mkdocs-dual-theme`: render light/dark Mermaid blocks for Material theme switching.
-- `--mkdocs-timestamp-zone`: timezone for mkdocs timestamp (`Europe/Amsterdam` default; use `off` to disable).
+- `--mkdocs-timestamp-zone`: timezone for mkdocs timestamp (default `Europe/Amsterdam`; use `off` to disable).
 
 Debug:
 - `--debug-dump`: dump gateway + sample devices to stderr for debugging.
 - `--debug-sample N`: number of non-gateway devices in debug dump (default 2).
 
-## Theme file
+## Themes
 
-Example theme YAML (override only the values you want):
+Five built-in themes are available via `--theme`:
+
+| Theme | Style | Default icon set |
+|-------|-------|-----------------|
+| `unifi` | Clean light theme based on the [ui.com](https://ui.com) color palette | modern |
+| `unifi-dark` | Dark variant using official Ubiquiti dark surface colors | modern |
+| `minimal` | Neutral grey tones, understated | isometric |
+| `classic` | Warm default palette with distinct device colors | isometric |
+| `classic-dark` | Dark variant of classic | modern |
+
+For custom colors, create a theme YAML and pass it with `--theme-file`. Override only the values you need:
 
 ```yaml
 mermaid:
@@ -237,28 +253,29 @@ mermaid:
       stroke: "#d98300"
   poe_link: "#1e88e5"
 svg:
+  icon_set: modern
+  grid_color: "#c0c8d0"
+  background: "#f9fafa"
   links:
     standard:
-      from: "#2ecc71"
-      to: "#1b8f4a"
-    poe:
-      from: "#1e88e5"
-      to: "#0d47a1"
+      from: "#006fff"
+      to: "#0560d4"
   nodes:
     switch:
-      from: "#d6ecff"
-      to: "#b6dcff"
+      from: "#4dd88a"
+      to: "#38cc65"
 ```
+
+See `examples/theme.yaml` and `examples/theme-dark.yaml` for full examples.
 
 ## Notes
 
 - Default output is top-to-bottom (TB) and rendered as a hop-based tree from the gateway(s).
 - Nodes are color-coded by type (gateway/switch/AP/client) with a sensible default palette.
-- PoE links are highlighted in blue and annotated with a power icon when detected from `port_table`.
+- PoE links are annotated with a power icon when detected from `port_table`.
 - Wireless client links render as dashed lines to indicate the last-known upstream.
-- SVG output supports multiple icon sets selectable via `--icon-set` (isometric, modern).
-- Icon licenses and attribution are documented in [LICENSES.md](LICENSES.md).
 - SVG port labels render inside child nodes for readability.
+- Icon licenses and attribution are documented in [LICENSES.md](LICENSES.md).
 
 
 ## AI Disclosure

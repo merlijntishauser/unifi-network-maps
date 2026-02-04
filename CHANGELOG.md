@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `--theme` CLI argument for built-in themes: `unifi`, `unifi-dark`, `minimal`, `classic`, `classic-dark` (#22)
 - Add theme properties: background, text colors (primary/secondary), status indicators (online/offline), WAN globe colors
 - Add WAN upstream visualization with ISP label, link speed, and status indicator
-- Add `--icon-set` CLI argument for selectable icon sets: `legacy`, `modern` (#23)
+- Add `--icon-set` CLI argument for selectable icon sets: `isometric`, `modern` (#23)
 - Add modern icon set with minimalistic network device icons (gateway, switch, ap, client)
 - Theme YAML schema now supports `icon_set` field to set default icon set per theme
 

@@ -57,7 +57,7 @@ class SvgTheme:
     poe_stroke: str = "#ffc107"  # Golden
 
     # Icon set
-    icon_set: str = "legacy"
+    icon_set: str = "isometric"
 
     # Icon decal color (for modern icons rendered on node surface)
     icon_decal: str = "#5A6878"

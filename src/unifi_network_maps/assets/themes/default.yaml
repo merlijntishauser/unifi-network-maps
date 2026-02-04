@@ -22,7 +22,7 @@ mermaid:
   standard_link_width: 2
   standard_link_arrow: "none"
 svg:
-  icon_set: legacy
+  icon_set: isometric
   links:
     standard:
       from: "#2ecc71"

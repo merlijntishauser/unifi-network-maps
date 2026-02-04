@@ -4,11 +4,11 @@ This document lists the licenses for third-party assets used in this project.
 
 ## Icon Sets
 
-### Legacy Icon Set (Default)
+### Isometric Icon Set (Default)
 
 #### markmanx/isopacks (MIT)
 
-Isometric SVG icons in the legacy set are vendored under `src/unifi_network_maps/assets/icons/isometric/`.
+Isometric SVG icons in the isometric set are vendored under `src/unifi_network_maps/assets/icons/isometric/`.
 The upstream MIT license is included at:
 
 ```
@@ -40,63 +40,6 @@ Icon symbols from [Heroicons](https://heroicons.com/) by Tailwind Labs.
 | ap.svg | Disc | wifi |
 | client.svg | Cube | computer-desktop |
 | other.svg | Cube | server |
-
-### Flat Icon Set
-
-The flat icon set (`src/unifi_network_maps/assets/icons/flat/`) uses Heroicons outline style.
-
-#### Heroicons Outline (MIT)
-
-Icon symbols from [Heroicons](https://heroicons.com/) by Tailwind Labs.
-
-- Source: https://github.com/tailwindlabs/heroicons
-- License: MIT License
-- Style: Outline (stroke-based, no fill)
-
-| Icon | Heroicon |
-|------|----------|
-| gateway.svg | globe-alt (outline) |
-| switch.svg | server-stack (outline) |
-| ap.svg | wifi (outline) |
-| client.svg | computer-desktop (outline) |
-| other.svg | server (outline) |
-| camera.svg | video-camera (outline) |
-| tv.svg | tv (outline) |
-| phone.svg | device-phone-mobile (outline) |
-| printer.svg | printer (outline) |
-| nas.svg | server-stack (outline) |
-| speaker.svg | speaker-wave (outline) |
-| game_console.svg | puzzle-piece (outline) |
-| iot.svg | signal (outline) |
-
-### Outline Icon Set
-
-The outline icon set (`src/unifi_network_maps/assets/icons/outline/`) uses Lucide icons
-for a technical wireframe style with consistent stroke weights.
-
-#### Lucide Icons (ISC License)
-
-Icon symbols from [Lucide](https://lucide.dev/).
-
-- Source: https://github.com/lucide-icons/lucide
-- License: ISC License (MIT-compatible)
-- Style: Technical wireframe (uniform stroke-width: 2)
-
-| Icon | Lucide Icon |
-|------|-------------|
-| gateway.svg | globe |
-| switch.svg | hard-drive |
-| ap.svg | radio |
-| client.svg | monitor |
-| other.svg | box |
-| camera.svg | video |
-| tv.svg | tv |
-| phone.svg | smartphone |
-| printer.svg | printer |
-| nas.svg | server |
-| speaker.svg | volume-2 |
-| game_console.svg | gamepad-2 |
-| iot.svg | wifi |
 
 ## License Compatibility
 

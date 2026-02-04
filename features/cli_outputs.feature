@@ -57,9 +57,9 @@ Feature: CLI output variants
     When I run the console entrypoint with "--help"
     Then stdout contains "usage:"
 
-  Scenario: SVG output with legacy icon set
+  Scenario: SVG output with isometric icon set
     Given the mock data file "examples/mock_data.json"
-    When I run the CLI with args "--format svg-iso --icon-set legacy" and output file
+    When I run the CLI with args "--format svg-iso --icon-set isometric" and output file
     Then the output file contains "<image"
 
   Scenario: SVG output with modern icon set

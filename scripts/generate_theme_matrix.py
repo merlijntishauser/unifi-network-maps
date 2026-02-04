@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate a composite theme x icon-set matrix image.
 
-Produces 40 individual SVGs (5 themes x 4 icon sets x 2 formats) and
+Produces 20 individual SVGs (5 themes x 2 icon sets x 2 formats) and
 assembles them into a single labeled PNG grid at
 examples/themes/theme_matrix.png.
 """
@@ -20,7 +20,7 @@ OUTPUT_DIR = ROOT / "examples" / "themes"
 MOCK_DATA = ROOT / "examples" / "mock_data.json"
 
 THEMES = ["unifi", "unifi-dark", "minimal", "classic", "classic-dark"]
-ICON_SETS = ["legacy", "modern", "flat", "outline"]
+ICON_SETS = ["isometric", "modern"]
 FORMATS = ["svg", "svg-iso"]
 
 THEME_LABELS = {

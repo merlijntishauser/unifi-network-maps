@@ -52,7 +52,7 @@ smoketest-mock:
 	@$(CLI) --mock-data examples/mock_data.json --theme minimal --format svg-iso --output smoketest-mock/theme_minimal_iso.svg
 	@$(CLI) --mock-data examples/mock_data.json --theme unifi --stdout > smoketest-mock/theme_unifi.mmd
 	@# Icon set variants
-	@$(CLI) --mock-data examples/mock_data.json --format svg-iso --icon-set legacy --output smoketest-mock/iconset_legacy_iso.svg
+	@$(CLI) --mock-data examples/mock_data.json --format svg-iso --icon-set isometric --output smoketest-mock/iconset_isometric_iso.svg
 	@$(CLI) --mock-data examples/mock_data.json --format svg-iso --icon-set modern --output smoketest-mock/iconset_modern_iso.svg
 
 smoketest-validate:

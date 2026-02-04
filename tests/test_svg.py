@@ -200,7 +200,7 @@ def test_render_svg_handles_missing_positions(monkeypatch):
 
 def test_render_svg_without_icons(monkeypatch):
     monkeypatch.setattr(
-        svg_module, "_load_icons", lambda icon_set="legacy", decal_color="#1a1a1a": {}
+        svg_module, "_load_icons", lambda icon_set="isometric", decal_color="#1a1a1a": {}
     )
     output = svg_module.render_svg([Edge("A", "B")], node_types={"A": "switch", "B": "switch"})
     assert "<image" not in output
@@ -208,7 +208,7 @@ def test_render_svg_without_icons(monkeypatch):
 
 def test_render_svg_isometric_without_icons(monkeypatch):
     monkeypatch.setattr(
-        svg_module, "_load_isometric_icons", lambda icon_set="legacy", decal_color="#5A6878": {}
+        svg_module, "_load_isometric_icons", lambda icon_set="isometric", decal_color="#5A6878": {}
     )
     output = svg_module.render_svg_isometric(
         [Edge("A", "B")], node_types={"A": "switch", "B": "switch"}
@@ -301,8 +301,8 @@ def test_render_svg_isometric_adds_edge_data_attributes():
 # Icon set tests
 
 
-def test_load_isometric_icons_legacy():
-    icons = svg_module._load_isometric_icons("legacy")
+def test_load_isometric_icons_isometric():
+    icons = svg_module._load_isometric_icons("isometric")
     assert "gateway" in icons
     assert "switch" in icons
     assert "ap" in icons
@@ -321,47 +321,21 @@ def test_load_isometric_icons_modern():
     assert all(v.startswith("data:image/svg+xml;base64,") for v in icons.values())
 
 
-def test_load_isometric_icons_fallback_to_legacy():
-    """Unknown icon set should fall back to legacy."""
+def test_load_isometric_icons_fallback_to_isometric():
+    """Unknown icon set should fall back to isometric."""
     icons = svg_module._load_isometric_icons("nonexistent_set")
     assert "gateway" in icons
     assert len(icons) > 0
 
 
-def test_load_icons_legacy():
-    icons = svg_module._load_icons("legacy")
+def test_load_icons_isometric():
+    icons = svg_module._load_icons("isometric")
     assert "gateway" in icons
     assert "switch" in icons
 
 
 def test_load_icons_modern():
     icons = svg_module._load_icons("modern")
-    assert "gateway" in icons
-    assert "switch" in icons
-
-
-def test_load_icons_flat():
-    icons = svg_module._load_icons("flat")
-    assert "gateway" in icons
-    assert "switch" in icons
-    assert "ap" in icons
-
-
-def test_load_isometric_icons_flat():
-    icons = svg_module._load_isometric_icons("flat")
-    assert "gateway" in icons
-    assert "switch" in icons
-
-
-def test_load_icons_outline():
-    icons = svg_module._load_icons("outline")
-    assert "gateway" in icons
-    assert "switch" in icons
-    assert "ap" in icons
-
-
-def test_load_isometric_icons_outline():
-    icons = svg_module._load_isometric_icons("outline")
     assert "gateway" in icons
     assert "switch" in icons
 

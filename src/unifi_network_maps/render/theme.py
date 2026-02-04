@@ -102,7 +102,7 @@ def _coerce_vlan_colors(value: object) -> dict[int, str]:
 
 def _coerce_icon_set(value: object, default: str) -> str:
     """Parse icon_set from theme YAML."""
-    if isinstance(value, str) and value in ("legacy", "modern", "flat", "outline"):
+    if isinstance(value, str) and value in ("isometric", "modern"):
         return value
     return default
 

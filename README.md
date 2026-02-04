@@ -249,7 +249,7 @@ svg:
 - Nodes are color-coded by type (gateway/switch/AP/client) with a sensible default palette.
 - PoE links are highlighted in blue and annotated with a power icon when detected from `port_table`.
 - Wireless client links render as dashed lines to indicate the last-known upstream.
-- SVG output supports multiple icon sets selectable via `--icon-set` (legacy, modern).
+- SVG output supports multiple icon sets selectable via `--icon-set` (isometric, modern).
 - Icon licenses and attribution are documented in [LICENSES.md](LICENSES.md).
 - SVG port labels render inside child nodes for readability.
 

@@ -96,9 +96,9 @@ _TYPE_ORDER = [
     "other",
 ]
 # Icon file mappings per icon set
-# Legacy set uses existing icons from root and isometric/ directories
-# New device types fall back to generic icons in legacy set
-_ICON_FILES_LEGACY = {
+# Isometric set uses existing icons from root and isometric/ directories
+# New device types fall back to generic icons in isometric set
+_ICON_FILES_ISOMETRIC = {
     "gateway": "router-network.svg",
     "switch": "server-network.svg",
     "ap": "access-point.svg",
@@ -115,7 +115,7 @@ _ICON_FILES_LEGACY = {
     "other": "server.svg",
 }
 
-_ISO_ICON_FILES_LEGACY = {
+_ISO_ICON_FILES_ISOMETRIC = {
     "gateway": "router.svg",
     "switch": "switch-module.svg",
     "ap": "tower.svg",
@@ -152,11 +152,11 @@ _ICON_FILES_MODERN = {
 
 # Icon set registry: maps set names to (flat_dir, iso_dir, flat_files, iso_files)
 _ICON_SETS = {
-    "legacy": (
+    "isometric": (
         "",  # Flat icons in root icons/ directory
         "isometric",  # Isometric icons in isometric/ subdirectory
-        _ICON_FILES_LEGACY,
-        _ISO_ICON_FILES_LEGACY,
+        _ICON_FILES_ISOMETRIC,
+        _ISO_ICON_FILES_ISOMETRIC,
     ),
     "modern": (
         "modern-flat",  # Flat icons for orthogonal SVG
@@ -164,23 +164,11 @@ _ICON_SETS = {
         _ICON_FILES_MODERN,
         _ICON_FILES_MODERN,
     ),
-    "flat": (
-        "flat",  # Heroicons outline style
-        "flat",  # Same for isometric (2D outline icons)
-        _ICON_FILES_MODERN,
-        _ICON_FILES_MODERN,
-    ),
-    "outline": (
-        "outline",  # Lucide icons (technical wireframe style)
-        "outline",  # Same for isometric (2D outline icons)
-        _ICON_FILES_MODERN,
-        _ICON_FILES_MODERN,
-    ),
 }
 
 # Backwards compatibility aliases
-_ICON_FILES = _ICON_FILES_LEGACY
-_ISO_ICON_FILES = _ISO_ICON_FILES_LEGACY
+_ICON_FILES = _ICON_FILES_ISOMETRIC
+_ISO_ICON_FILES = _ISO_ICON_FILES_ISOMETRIC
 
 _TYPE_COLORS = {
     "gateway": ("#ffd199", "#f08a00"),
@@ -410,24 +398,24 @@ def _label_metrics(
     return width, height
 
 
-def _load_icons(icon_set: str = "legacy", decal_color: str = "#1a1a1a") -> dict[str, str]:
+def _load_icons(icon_set: str = "isometric", decal_color: str = "#1a1a1a") -> dict[str, str]:
     """Load flat (non-isometric) icons for the specified icon set.
 
-    Falls back to legacy icons if the requested icon is not found in the set.
+    Falls back to isometric icons if the requested icon is not found in the set.
     Modern icons use #DECAL0 as placeholder which gets replaced with decal_color.
     """
     base = Path(__file__).resolve().parents[1] / "assets" / "icons"
     icons: dict[str, str] = {}
 
-    # Get set configuration, defaulting to legacy
-    set_config = _ICON_SETS.get(icon_set, _ICON_SETS["legacy"])
+    # Get set configuration, defaulting to isometric
+    set_config = _ICON_SETS.get(icon_set, _ICON_SETS["isometric"])
     subdir, _, file_map, _ = set_config
 
-    # Also load legacy for fallback
-    legacy_config = _ICON_SETS["legacy"]
-    legacy_subdir, _, legacy_files, _ = legacy_config
+    # Also load isometric for fallback
+    fallback_config = _ICON_SETS["isometric"]
+    legacy_subdir, _, legacy_files, _ = fallback_config
 
-    for node_type in _ICON_FILES_LEGACY.keys():
+    for node_type in _ICON_FILES_ISOMETRIC.keys():
         # Try requested set first
         filename = file_map.get(node_type)
         if filename:
@@ -454,24 +442,26 @@ def _load_icons(icon_set: str = "legacy", decal_color: str = "#1a1a1a") -> dict[
     return icons
 
 
-def _load_isometric_icons(icon_set: str = "legacy", decal_color: str = "#5A6878") -> dict[str, str]:
+def _load_isometric_icons(
+    icon_set: str = "isometric", decal_color: str = "#5A6878"
+) -> dict[str, str]:
     """Load isometric icons for the specified icon set.
 
-    Falls back to legacy icons if the requested icon is not found in the set.
+    Falls back to isometric icons if the requested icon is not found in the set.
     Modern icons use #DECAL0 as placeholder which gets replaced with decal_color.
     """
     base = Path(__file__).resolve().parents[1] / "assets" / "icons"
     icons: dict[str, str] = {}
 
-    # Get set configuration, defaulting to legacy
-    set_config = _ICON_SETS.get(icon_set, _ICON_SETS["legacy"])
+    # Get set configuration, defaulting to isometric
+    set_config = _ICON_SETS.get(icon_set, _ICON_SETS["isometric"])
     _, iso_subdir, _, iso_file_map = set_config
 
-    # Also load legacy for fallback
-    legacy_config = _ICON_SETS["legacy"]
-    _, legacy_iso_subdir, _, legacy_iso_files = legacy_config
+    # Also load isometric for fallback
+    fallback_config = _ICON_SETS["isometric"]
+    _, legacy_iso_subdir, _, legacy_iso_files = fallback_config
 
-    for node_type in _ISO_ICON_FILES_LEGACY.keys():
+    for node_type in _ISO_ICON_FILES_ISOMETRIC.keys():
         # Try requested set first
         filename = iso_file_map.get(node_type)
         if filename:

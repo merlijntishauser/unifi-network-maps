@@ -169,9 +169,9 @@ def add_svg_args(parser: argparse._ArgumentGroup) -> None:
     )
     parser.add_argument(
         "--icon-set",
-        choices=["legacy", "modern", "flat", "outline"],
+        choices=["isometric", "modern"],
         default=None,
-        help="Icon set to use (default: determined by theme, or 'legacy' if no theme)",
+        help="Icon set to use (default: determined by theme, or 'isometric' if no theme)",
     )
 
 

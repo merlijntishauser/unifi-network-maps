@@ -22,7 +22,7 @@ mermaid:
   standard_link_width: 2
   standard_link_arrow: "none"
 svg:
-  icon_set: flat
+  icon_set: isometric
   icon_decal: "#374151"
   background: "#fafafa"
   text:

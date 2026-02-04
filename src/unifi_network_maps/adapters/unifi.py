@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import IO, TYPE_CHECKING
 
 from ..io.paths import resolve_cache_dir
+from ..model.helpers import as_list, first_attr, get_field
 from ..model.vlans import build_vlan_info, normalize_networks
 from .config import Config
 
@@ -38,47 +39,18 @@ def _cache_dir() -> Path:
         return resolve_cache_dir(".cache/unifi_network_maps")
 
 
-def _device_attr(device: object, name: str) -> object | None:
-    if isinstance(device, dict):
-        return device.get(name)
-    return getattr(device, name, None)
-
-
-def _first_attr(device: object, *names: str) -> object | None:
-    for name in names:
-        value = _device_attr(device, name)
-        if value is not None:
-            return value
-    return None
-
-
-def _as_list(value: object | None) -> list[object]:
-    if value is None:
-        return []
-    if isinstance(value, list):
-        return value
-    if isinstance(value, dict):
-        return [value]
-    if isinstance(value, str | bytes):
-        return []
-    try:
-        return list(value)  # type: ignore[arg-type]
-    except TypeError:
-        return []
-
-
 def _serialize_lldp_entry(entry: object) -> dict[str, object]:
     return {
-        "chassis_id": _first_attr(entry, "chassis_id", "chassisId"),
-        "port_id": _first_attr(entry, "port_id", "portId"),
-        "port_desc": _first_attr(entry, "port_desc", "portDesc", "port_descr", "portDescr"),
-        "local_port_name": _first_attr(entry, "local_port_name", "localPortName"),
-        "local_port_idx": _first_attr(entry, "local_port_idx", "localPortIdx"),
+        "chassis_id": first_attr(entry, "chassis_id", "chassisId"),
+        "port_id": first_attr(entry, "port_id", "portId"),
+        "port_desc": first_attr(entry, "port_desc", "portDesc", "port_descr", "portDescr"),
+        "local_port_name": first_attr(entry, "local_port_name", "localPortName"),
+        "local_port_idx": first_attr(entry, "local_port_idx", "localPortIdx"),
     }
 
 
 def _serialize_lldp_entries(value: object | None) -> list[dict[str, object]]:
-    entries = _as_list(value)
+    entries = as_list(value)
     serialized: list[dict[str, object]] = []
     for entry in entries:
         data = _serialize_lldp_entry(entry)
@@ -88,7 +60,7 @@ def _serialize_lldp_entries(value: object | None) -> list[dict[str, object]]:
 
 
 def _serialize_port_entry(entry: object) -> dict[str, object]:
-    aggregation_group = _first_attr(
+    aggregation_group = first_attr(
         entry,
         "aggregation_group",
         "aggregation_id",
@@ -101,7 +73,7 @@ def _serialize_port_entry(entry: object) -> dict[str, object]:
         "aggregate",
         "aggregated_by",
     )
-    native_vlan = _first_attr(
+    native_vlan = first_attr(
         entry,
         "native_networkconf_id",
         "port_vlan",
@@ -109,7 +81,7 @@ def _serialize_port_entry(entry: object) -> dict[str, object]:
         "native_vlan",
         "pvid",
     )
-    tagged_vlans = _first_attr(
+    tagged_vlans = first_attr(
         entry,
         "tagged_vlan_mgmt",
         "tagged_vlans",
@@ -117,31 +89,31 @@ def _serialize_port_entry(entry: object) -> dict[str, object]:
         "allowed_vlans",
     )
     return {
-        "port_idx": _first_attr(entry, "port_idx", "portIdx"),
-        "name": _first_attr(entry, "name"),
-        "ifname": _first_attr(entry, "ifname"),
-        "speed": _first_attr(entry, "speed"),
+        "port_idx": first_attr(entry, "port_idx", "portIdx"),
+        "name": first_attr(entry, "name"),
+        "ifname": first_attr(entry, "ifname"),
+        "speed": first_attr(entry, "speed"),
         "aggregation_group": aggregation_group,
-        "port_poe": _first_attr(entry, "port_poe"),
-        "poe_enable": _first_attr(entry, "poe_enable"),
-        "poe_good": _first_attr(entry, "poe_good"),
-        "poe_power": _first_attr(entry, "poe_power"),
+        "port_poe": first_attr(entry, "port_poe"),
+        "poe_enable": first_attr(entry, "poe_enable"),
+        "poe_good": first_attr(entry, "poe_good"),
+        "poe_power": first_attr(entry, "poe_power"),
         "native_vlan": native_vlan,
         "tagged_vlans": tagged_vlans,
     }
 
 
 def _serialize_port_table(value: object | None) -> list[dict[str, object]]:
-    return [_serialize_port_entry(entry) for entry in _as_list(value)]
+    return [_serialize_port_entry(entry) for entry in as_list(value)]
 
 
 def _serialize_uplink(value: object | None) -> dict[str, object] | None:
     if value is None:
         return None
     data = {
-        "uplink_mac": _first_attr(value, "uplink_mac", "uplink_device_mac"),
-        "uplink_device_name": _first_attr(value, "uplink_device_name", "uplink_name"),
-        "uplink_remote_port": _first_attr(value, "uplink_remote_port", "port_idx"),
+        "uplink_mac": first_attr(value, "uplink_mac", "uplink_device_mac"),
+        "uplink_device_name": first_attr(value, "uplink_device_name", "uplink_name"),
+        "uplink_remote_port": first_attr(value, "uplink_remote_port", "port_idx"),
     }
     if any(item is not None for item in data.values()):
         return data
@@ -149,36 +121,36 @@ def _serialize_uplink(value: object | None) -> dict[str, object] | None:
 
 
 def _device_lldp_value(device: object) -> object | None:
-    lldp_info = _device_attr(device, "lldp_info")
+    lldp_info = get_field(device, "lldp_info")
     if lldp_info is None:
-        lldp_info = _device_attr(device, "lldp")
+        lldp_info = get_field(device, "lldp")
     if lldp_info is None:
-        lldp_info = _device_attr(device, "lldp_table")
+        lldp_info = get_field(device, "lldp_table")
     return lldp_info
 
 
 def _device_uplink_fields(device: object) -> dict[str, object | None]:
     return {
-        "uplink": _serialize_uplink(_device_attr(device, "uplink")),
-        "last_uplink": _serialize_uplink(_device_attr(device, "last_uplink")),
-        "uplink_mac": _first_attr(device, "uplink_mac", "uplink_device_mac"),
-        "uplink_device_name": _device_attr(device, "uplink_device_name"),
-        "uplink_remote_port": _device_attr(device, "uplink_remote_port"),
-        "last_uplink_mac": _device_attr(device, "last_uplink_mac"),
+        "uplink": _serialize_uplink(get_field(device, "uplink")),
+        "last_uplink": _serialize_uplink(get_field(device, "last_uplink")),
+        "uplink_mac": first_attr(device, "uplink_mac", "uplink_device_mac"),
+        "uplink_device_name": get_field(device, "uplink_device_name"),
+        "uplink_remote_port": get_field(device, "uplink_remote_port"),
+        "last_uplink_mac": get_field(device, "last_uplink_mac"),
     }
 
 
 def _serialize_device_for_cache(device: object) -> dict[str, object]:
     payload = {
-        "name": _device_attr(device, "name"),
-        "model_name": _device_attr(device, "model_name"),
-        "model": _device_attr(device, "model"),
-        "mac": _device_attr(device, "mac"),
-        "ip": _first_attr(device, "ip", "ip_address"),
-        "type": _first_attr(device, "type", "device_type"),
-        "displayable_version": _first_attr(device, "displayable_version", "version"),
+        "name": get_field(device, "name"),
+        "model_name": get_field(device, "model_name"),
+        "model": get_field(device, "model"),
+        "mac": get_field(device, "mac"),
+        "ip": first_attr(device, "ip", "ip_address"),
+        "type": first_attr(device, "type", "device_type"),
+        "displayable_version": first_attr(device, "displayable_version", "version"),
         "lldp_info": _serialize_lldp_entries(_device_lldp_value(device)),
-        "port_table": _serialize_port_table(_device_attr(device, "port_table")),
+        "port_table": _serialize_port_table(get_field(device, "port_table")),
     }
     payload.update(_device_uplink_fields(device))
     return payload
@@ -190,11 +162,11 @@ def _serialize_devices_for_cache(devices: Sequence[object]) -> list[dict[str, ob
 
 def _serialize_network_for_cache(network: object) -> dict[str, object]:
     return {
-        "_id": _first_attr(network, "_id", "id", "network_id", "networkId"),
-        "name": _first_attr(network, "name", "network_name", "networkName"),
-        "vlan": _first_attr(network, "vlan", "vlan_id", "vlanId", "vlanid"),
-        "vlan_enabled": _first_attr(network, "vlan_enabled", "vlanEnabled"),
-        "purpose": _first_attr(network, "purpose"),
+        "_id": first_attr(network, "_id", "id", "network_id", "networkId"),
+        "name": first_attr(network, "name", "network_name", "networkName"),
+        "vlan": first_attr(network, "vlan", "vlan_id", "vlanId", "vlanid"),
+        "vlan_enabled": first_attr(network, "vlan_enabled", "vlanEnabled"),
+        "purpose": first_attr(network, "purpose"),
     }
 
 

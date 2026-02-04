@@ -5,35 +5,11 @@ from __future__ import annotations
 import logging
 from collections.abc import Iterable
 
-from .helpers import get_field
+from .helpers import as_bool, as_list, get_field
 from .lldp import coerce_lldp
 from .topology import Device, DeviceSource, PortInfo, UplinkInfo
 
 logger = logging.getLogger(__name__)
-
-
-def _as_list(value: object | None) -> list[object]:
-    if value is None:
-        return []
-    if isinstance(value, list):
-        return value
-    if isinstance(value, dict):
-        return [value]
-    if isinstance(value, str | bytes):
-        return []
-    if isinstance(value, Iterable):
-        return list(value)
-    return []
-
-
-def _as_bool(value: object | None) -> bool:
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, int | float):
-        return value != 0
-    if isinstance(value, str):
-        return value.strip().lower() in {"1", "true", "yes", "y", "on"}
-    return False
 
 
 def _as_float(value: object | None) -> float:
@@ -168,9 +144,9 @@ def _port_info_from_entry(
         ifname = port_entry.get("ifname")
         speed = port_entry.get("speed")
         aggregation_group = _aggregation_group(port_entry)
-        port_poe = _as_bool(port_entry.get("port_poe"))
-        poe_enable = _as_bool(port_entry.get("poe_enable"))
-        poe_good = _as_bool(port_entry.get("poe_good"))
+        port_poe = as_bool(port_entry.get("port_poe"))
+        poe_enable = as_bool(port_entry.get("poe_enable"))
+        poe_good = as_bool(port_entry.get("poe_good"))
         poe_power = _as_float(port_entry.get("poe_power"))
         native_vlan = port_entry.get("native_vlan")
         tagged_vlans = port_entry.get("tagged_vlans")
@@ -180,9 +156,9 @@ def _port_info_from_entry(
         ifname = get_field(port_entry, "ifname")
         speed = get_field(port_entry, "speed")
         aggregation_group = _aggregation_group(port_entry)
-        port_poe = _as_bool(get_field(port_entry, "port_poe"))
-        poe_enable = _as_bool(get_field(port_entry, "poe_enable"))
-        poe_good = _as_bool(get_field(port_entry, "poe_good"))
+        port_poe = as_bool(get_field(port_entry, "port_poe"))
+        poe_enable = as_bool(get_field(port_entry, "poe_enable"))
+        poe_good = as_bool(get_field(port_entry, "poe_good"))
         poe_power = _as_float(get_field(port_entry, "poe_power"))
         native_vlan = get_field(port_entry, "native_vlan")
         tagged_vlans = get_field(port_entry, "tagged_vlans")
@@ -205,7 +181,7 @@ def _port_info_from_entry(
 def _coerce_port_table(
     device: DeviceSource, network_vlan_map: dict[str, int] | None = None
 ) -> list[PortInfo]:
-    port_table = _as_list(get_field(device, "port_table"))
+    port_table = as_list(get_field(device, "port_table"))
     return [_port_info_from_entry(port_entry, network_vlan_map) for port_entry in port_table]
 
 
@@ -308,7 +284,7 @@ def coerce_device(device: DeviceSource, network_vlan_map: dict[str, int] | None 
         else:
             raise ValueError(f"Device {name} missing LLDP info")
 
-    lldp_entries = _as_list(lldp_info)
+    lldp_entries = as_list(lldp_info)
     coerced_lldp = [coerce_lldp(lldp_entry) for lldp_entry in lldp_entries]
     port_table = _coerce_port_table(device, network_vlan_map)
     poe_ports = _poe_ports_from_device(device, network_vlan_map)

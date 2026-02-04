@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from unifi_network_maps.model.helpers import get_field
+from unifi_network_maps.model.helpers import as_bool, as_list, get_field
 from unifi_network_maps.model.topology import (
     Device,
     Edge,
@@ -32,11 +32,9 @@ from unifi_network_maps.model.topology import (
 )
 from unifi_network_maps.model.topology_coerce import (
     _aggregation_group,
-    _as_bool,
     _as_float,
     _as_group_id,
     _as_int,
-    _as_list,
     _get_model_display_name,
     _parse_uplink,
     _poe_ports_from_device,
@@ -510,11 +508,11 @@ def test_build_tree_edges_no_gateways():
 
 
 def test_as_bool_int_true():
-    assert _as_bool(1) is True
+    assert as_bool(1) is True
 
 
 def test_as_bool_str_truthy():
-    assert _as_bool("yes") is True
+    assert as_bool("yes") is True
 
 
 def test_as_float_none_returns_zero():
@@ -627,7 +625,7 @@ def test_build_topology_returns_edges():
 
 
 def test_as_list_coerces_iterable():
-    assert _as_list(("a", "b")) == ["a", "b"]
+    assert as_list(("a", "b")) == ["a", "b"]
 
 
 def test_as_int_parses_digit_string():

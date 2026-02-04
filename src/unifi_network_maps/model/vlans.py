@@ -4,39 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from .helpers import get_field
-
-
-def _as_list(value: object | None) -> list[object]:
-    if value is None:
-        return []
-    if isinstance(value, list):
-        return value
-    if isinstance(value, dict):
-        return [value]
-    if isinstance(value, str | bytes):
-        return []
-    if isinstance(value, Iterable):
-        return list(value)
-    return []
-
-
-def _first_attr(obj: object, *names: str) -> object | None:
-    for name in names:
-        value = get_field(obj, name)
-        if value is not None:
-            return value
-    return None
-
-
-def _as_bool(value: object | None) -> bool:
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, int | float):
-        return value != 0
-    if isinstance(value, str):
-        return value.strip().lower() in {"1", "true", "yes", "y", "on"}
-    return False
+from .helpers import as_bool, as_list, first_attr
 
 
 def _as_vlan_id(value: object | None) -> int | None:
@@ -48,8 +16,8 @@ def _as_vlan_id(value: object | None) -> int | None:
 
 
 def _network_vlan_id(network: object) -> int | None:
-    vlan_value = _first_attr(network, "vlan", "vlan_id", "vlanId", "vlanid")
-    vlan_enabled = _as_bool(_first_attr(network, "vlan_enabled", "vlanEnabled"))
+    vlan_value = first_attr(network, "vlan", "vlan_id", "vlanId", "vlanid")
+    vlan_enabled = as_bool(first_attr(network, "vlan_enabled", "vlanEnabled"))
     vlan_id = _as_vlan_id(vlan_value)
     if vlan_id is not None:
         return vlan_id
@@ -60,16 +28,16 @@ def _network_vlan_id(network: object) -> int | None:
 
 def normalize_networks(networks: Iterable[object]) -> list[dict[str, object]]:
     normalized: list[dict[str, object]] = []
-    for network in _as_list(networks):
+    for network in as_list(networks):
         if network is None:
             continue
         normalized.append(
             {
-                "network_id": _first_attr(network, "_id", "id", "network_id", "networkId"),
-                "name": _first_attr(network, "name", "network_name", "networkName"),
+                "network_id": first_attr(network, "_id", "id", "network_id", "networkId"),
+                "name": first_attr(network, "name", "network_name", "networkName"),
                 "vlan_id": _network_vlan_id(network),
-                "vlan_enabled": _as_bool(_first_attr(network, "vlan_enabled", "vlanEnabled")),
-                "purpose": _first_attr(network, "purpose"),
+                "vlan_enabled": as_bool(first_attr(network, "vlan_enabled", "vlanEnabled")),
+                "purpose": first_attr(network, "purpose"),
             }
         )
     return normalized
@@ -91,8 +59,8 @@ def build_vlan_info(
 
 def _client_vlan_counts(clients: Iterable[object]) -> dict[int, int]:
     vlan_counts: dict[int, int] = {}
-    for client in _as_list(clients):
-        vlan_id = _as_vlan_id(_first_attr(client, "vlan", "vlan_id", "vlanId", "vlanid"))
+    for client in as_list(clients):
+        vlan_id = _as_vlan_id(first_attr(client, "vlan", "vlan_id", "vlanId", "vlanid"))
         if vlan_id is None:
             continue
         vlan_counts[vlan_id] = vlan_counts.get(vlan_id, 0) + 1

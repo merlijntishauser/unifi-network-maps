@@ -19,8 +19,8 @@ from ..model.topology import (
     build_topology,
     enrich_edges_with_active_vlans,
     group_devices_by_type,
-    normalize_devices,
 )
+from ..model.topology_coerce import normalize_devices
 from ..model.vlans import build_network_vlan_map
 from ..render.mermaid_theme import MermaidTheme
 from ..render.theme import load_theme

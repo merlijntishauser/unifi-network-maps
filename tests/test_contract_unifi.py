@@ -13,8 +13,8 @@ from unifi_network_maps.model.topology import (
     build_client_port_map,
     build_device_index,
     build_edges,
-    normalize_devices,
 )
+from unifi_network_maps.model.topology_coerce import normalize_devices
 
 FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
 

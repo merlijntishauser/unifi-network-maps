@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 from .paths import resolve_mock_data_path
 
@@ -15,7 +16,7 @@ def _as_list(value: object, name: str) -> list[object]:
     raise ValueError(f"Mock data field '{name}' must be a list")
 
 
-def load_mock_data(path: str) -> tuple[list[object], list[object], list[object]]:
+def load_mock_data(path: str | Path) -> tuple[list[object], list[object], list[object]]:
     resolved = resolve_mock_data_path(path)
     payload = json.loads(resolved.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
@@ -26,7 +27,7 @@ def load_mock_data(path: str) -> tuple[list[object], list[object], list[object]]
     return devices, clients, networks
 
 
-def load_mock_payload(path: str) -> dict[str, list[object] | list[dict[str, object]]]:
+def load_mock_payload(path: str | Path) -> dict[str, list[object] | list[dict[str, object]]]:
     resolved = resolve_mock_data_path(path)
     payload = json.loads(resolved.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):

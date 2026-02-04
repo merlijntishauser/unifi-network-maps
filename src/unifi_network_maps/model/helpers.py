@@ -44,6 +44,15 @@ def first_attr(obj: object, *names: str) -> object | None:
     return None
 
 
+def first_string_field(obj: object, *keys: str) -> str | None:
+    """Return the first non-empty stripped string from *keys*."""
+    for key in keys:
+        value = get_field(obj, key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return None
+
+
 def normalize_mac(value: str) -> str:
     return value.strip().lower()
 

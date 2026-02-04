@@ -7,7 +7,7 @@ from collections import deque
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 
-from .helpers import get_field, normalize_mac
+from .helpers import first_string_field, get_field, normalize_mac
 from .labels import compose_port_label, order_edge_names
 from .lldp import LLDPEntry, local_port_label
 from .ports import extract_port_number
@@ -352,30 +352,27 @@ def build_device_index(devices: Iterable[Device]) -> dict[str, str]:
 
 
 def _client_display_name(client: object) -> str | None:
-    raw_name = get_field(client, "name")
-    if isinstance(raw_name, str) and raw_name.strip():
-        return raw_name.strip()
+    name = first_string_field(client, "name")
+    if name:
+        return name
     preferred = _client_ucore_display_name(client)
     if preferred:
         return preferred
-    for key in ("hostname", "mac"):
-        value = get_field(client, key)
-        if isinstance(value, str) and value.strip():
-            return value.strip()
-    return None
+    return first_string_field(client, "hostname", "mac")
 
 
 def _client_uplink_mac(client: object) -> str | None:
-    for key in ("ap_mac", "sw_mac", "uplink_mac", "uplink_device_mac", "last_uplink_mac"):
-        value = get_field(client, key)
-        if isinstance(value, str) and value.strip():
-            return value.strip()
+    mac = first_string_field(
+        client, "ap_mac", "sw_mac", "uplink_mac", "uplink_device_mac", "last_uplink_mac"
+    )
+    if mac:
+        return mac
     for key in ("uplink", "last_uplink"):
         nested = get_field(client, key)
         if isinstance(nested, dict):
-            value = nested.get("uplink_mac") or nested.get("uplink_device_mac")
-            if isinstance(value, str) and value.strip():
-                return value.strip()
+            mac = first_string_field(nested, "uplink_mac", "uplink_device_mac")
+            if mac:
+                return mac
     return None
 
 
@@ -423,11 +420,9 @@ def _client_unifi_flag(client: object) -> bool | None:
 
 
 def _client_vendor(client: object) -> str | None:
-    for key in ("oui", "vendor", "vendor_name", "manufacturer", "manufacturer_name"):
-        value = get_field(client, key)
-        if isinstance(value, str) and value.strip():
-            return value.strip()
-    return None
+    return first_string_field(
+        client, "oui", "vendor", "vendor_name", "manufacturer", "manufacturer_name"
+    )
 
 
 def _client_ucore_info(client: object) -> dict[str, object] | None:
@@ -441,18 +436,11 @@ def _client_ucore_display_name(client: object) -> str | None:
     ucore = _client_ucore_info(client)
     if not ucore:
         return None
-    for key in ("name", "computed_model", "product_model", "product_shortname"):
-        value = ucore.get(key)
-        if isinstance(value, str) and value.strip():
-            return value.strip()
-    return None
+    return first_string_field(ucore, "name", "computed_model", "product_model", "product_shortname")
 
 
 def _client_hostname_source(client: object) -> str | None:
-    value = get_field(client, "hostname_source")
-    if isinstance(value, str) and value.strip():
-        return value.strip()
-    return None
+    return first_string_field(client, "hostname_source")
 
 
 def _client_is_unifi(client: object) -> bool:
@@ -911,7 +899,8 @@ def _build_ordered_edges(
         )
         speed = speed_map.get((left_name, right_name)) or speed_map.get((right_name, left_name))
         label = compose_port_label(left_name, right_name, port_map) if include_ports else None
-        # Merge VLAN info from both directions (edge might be seen from either side)
+        # Merge VLAN info from both directions: each side's port_table may
+        # independently report the VLANs configured on this link.
         vlans_lr = vlan_map.get((left_name, right_name), ())
         vlans_rl = vlan_map.get((right_name, left_name), ())
         vlans = tuple(sorted(set(vlans_lr) | set(vlans_rl)))

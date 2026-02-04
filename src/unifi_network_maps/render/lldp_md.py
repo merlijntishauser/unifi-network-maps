@@ -4,158 +4,21 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from ..model.helpers import get_field, normalize_mac
+from ..model.helpers import normalize_mac
 from ..model.lldp import LLDPEntry, local_port_label
-from ..model.ports import extract_port_number
-from ..model.topology import Device, build_client_port_map, build_device_index, build_port_map
+from ..model.topology import (
+    Device,
+    _client_display_name,
+    _client_matches_filters,
+    _client_uplink_mac,
+    _client_uplink_port,
+    build_client_port_map,
+    build_device_index,
+    build_port_map,
+)
 from .device_ports_md import render_device_port_details
 from .markdown_tables import markdown_table_lines
 from .templating import render_template
-
-
-def _client_display_name(client: object) -> str | None:
-    raw_name = get_field(client, "name")
-    if isinstance(raw_name, str) and raw_name.strip():
-        return raw_name.strip()
-    preferred = _client_ucore_display_name(client)
-    if preferred:
-        return preferred
-    for key in ("hostname", "mac"):
-        value = get_field(client, key)
-        if isinstance(value, str) and value.strip():
-            return value.strip()
-    return None
-
-
-def _client_uplink_mac(client: object) -> str | None:
-    for key in ("ap_mac", "sw_mac", "uplink_mac", "uplink_device_mac", "last_uplink_mac"):
-        value = get_field(client, key)
-        if isinstance(value, str) and value.strip():
-            return value.strip()
-    for key in ("uplink", "last_uplink"):
-        nested = get_field(client, key)
-        if isinstance(nested, dict):
-            value = nested.get("uplink_mac") or nested.get("uplink_device_mac")
-            if isinstance(value, str) and value.strip():
-                return value.strip()
-    return None
-
-
-def _client_uplink_port(client: object) -> int | None:
-    for value in _client_port_values(client):
-        parsed = _parse_port_value(value)
-        if parsed is not None:
-            return parsed
-    return None
-
-
-def _client_port_values(client: object) -> Iterable[object | None]:
-    for key in ("uplink_remote_port", "sw_port", "ap_port", "port_idx"):
-        yield get_field(client, key)
-    for key in ("uplink", "last_uplink"):
-        nested = get_field(client, key)
-        if isinstance(nested, dict):
-            for nested_key in ("uplink_remote_port", "port_idx"):
-                yield nested.get(nested_key)
-
-
-def _parse_port_value(value: object | None) -> int | None:
-    if isinstance(value, int):
-        return value
-    if isinstance(value, str):
-        stripped = value.strip()
-        if stripped.isdigit():
-            return int(stripped)
-        return extract_port_number(stripped)
-    return None
-
-
-def _client_is_wired(client: object) -> bool:
-    return bool(get_field(client, "is_wired"))
-
-
-def _client_unifi_flag(client: object) -> bool | None:
-    for key in ("is_unifi", "is_unifi_device", "is_ubnt", "is_uap", "is_managed"):
-        value = get_field(client, key)
-        if isinstance(value, bool):
-            return value
-        if isinstance(value, int):
-            return value != 0
-    return None
-
-
-def _client_vendor(client: object) -> str | None:
-    for key in ("oui", "vendor", "vendor_name", "manufacturer", "manufacturer_name"):
-        value = get_field(client, key)
-        if isinstance(value, str) and value.strip():
-            return value.strip()
-    return None
-
-
-def _client_ucore_info(client: object) -> dict[str, object] | None:
-    info = get_field(client, "unifi_device_info_from_ucore")
-    if isinstance(info, dict):
-        return info
-    return None
-
-
-def _client_ucore_display_name(client: object) -> str | None:
-    ucore = _client_ucore_info(client)
-    if not ucore:
-        return None
-    for key in ("name", "computed_model", "product_model", "product_shortname"):
-        value = ucore.get(key)
-        if isinstance(value, str) and value.strip():
-            return value.strip()
-    return None
-
-
-def _client_hostname_source(client: object) -> str | None:
-    value = get_field(client, "hostname_source")
-    if isinstance(value, str) and value.strip():
-        return value.strip()
-    return None
-
-
-def _client_is_unifi(client: object) -> bool:
-    flag = _client_unifi_flag(client)
-    if flag is not None:
-        return flag
-    ucore = _client_ucore_info(client)
-    if ucore:
-        managed = ucore.get("managed")
-        if isinstance(managed, bool) and managed:
-            return True
-        if isinstance(ucore.get("product_line"), str) and ucore.get("product_line"):
-            return True
-        if isinstance(ucore.get("product_shortname"), str) and ucore.get("product_shortname"):
-            return True
-        for key in ("name", "computed_model", "product_model"):
-            value = ucore.get(key)
-            if isinstance(value, str) and value.strip():
-                return True
-    vendor = _client_vendor(client)
-    if not vendor:
-        return False
-    normalized = vendor.lower()
-    return "ubiquiti" in normalized or "unifi" in normalized
-
-
-def _client_matches_mode(client: object, mode: str) -> bool:
-    wired = _client_is_wired(client)
-    if mode == "all":
-        return True
-    if mode == "wireless":
-        return not wired
-    return wired
-
-
-def _client_matches_filters(client: object, *, client_mode: str, only_unifi: bool) -> bool:
-    if not _client_matches_mode(client, client_mode):
-        return False
-    if only_unifi and not _client_is_unifi(client):
-        return False
-    return True
 
 
 def _lldp_sort_key(entry: LLDPEntry) -> tuple[int, str, str]:

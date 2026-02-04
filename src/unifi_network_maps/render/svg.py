@@ -214,10 +214,6 @@ _ICON_SETS = {
     ),
 }
 
-# Backwards compatibility aliases
-_ICON_FILES = _ICON_FILES_ISOMETRIC
-_ISO_ICON_FILES = _ISO_ICON_FILES_ISOMETRIC
-
 _TYPE_COLORS = {
     "gateway": ("#ffd199", "#f08a00"),
     "switch": ("#bfe4ff", "#1c6dd0"),

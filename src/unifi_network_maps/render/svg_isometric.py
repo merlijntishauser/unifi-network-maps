@@ -1,0 +1,1156 @@
+"""Isometric SVG rendering for network diagrams."""
+
+from __future__ import annotations
+
+import math
+from dataclasses import dataclass
+from html import escape as _escape_attr
+
+from ..model.topology import Edge, WanInfo
+from .svg import (
+    SvgOptions,
+    _build_node_to_group_map,
+    _edge_opacity,
+    _render_vlan_endpoint_markers,
+    _resolve_group_order,
+    _svg_node_group_attrs,
+    _svg_style_block,
+    _tree_layout_indices,
+    _vlan_data_attrs,
+)
+from .svg_icons import _TYPE_COLORS, _build_decal_colors, _load_isometric_icons
+from .svg_labels import (
+    _build_wan_label_lines,
+    _compact_edge_label,
+    _escape_text,
+    _extract_device_name,
+    _extract_port_text,
+    _format_port_label_lines,
+    _shorten_prefix,
+)
+from .svg_theme import DEFAULT_THEME, SvgTheme, svg_defs
+
+# Isometric layout constants (module-level for discoverability)
+_ISO_NW_PADDING = 300  # North-west padding for iso layout
+_ISO_VIEWPORT_EXPAND = 400  # Viewport expansion around content
+_ISO_GRID_EXTENT_PAD = 36  # Grid extent padding beyond content
+_ISO_GROUP_LABEL_SIZE = 48  # Font size for group boundary labels
+_ISO_PERSPECTIVE_ANGLE = 30  # Isometric perspective angle in degrees
+
+
+@dataclass(frozen=True)
+class IsoLayout:
+    iso_angle: float
+    tile_width: float
+    tile_height: float
+    step_width: float
+    step_height: float
+    grid_spacing_x: int
+    grid_spacing_y: int
+    padding: float
+    tile_y_offset: float
+    extra_pad: float
+
+
+@dataclass(frozen=True)
+class IsoLayoutPositions:
+    layout: IsoLayout
+    grid_positions: dict[str, tuple[float, float]]
+    positions: dict[str, tuple[float, float]]
+    width: float
+    height: float
+    offset_x: float
+    offset_y: float
+
+
+def _iso_layout(options: SvgOptions) -> IsoLayout:
+    tile_width = options.node_width * 1.5
+    iso_angle = math.radians(30.0)
+    tile_height = tile_width * math.tan(iso_angle)
+    step_width = tile_width
+    step_height = tile_height
+    grid_spacing_x = max(2, 1 + int(round(options.h_gap / max(tile_width, 1))))
+    grid_spacing_y = max(2, 1 + int(round(options.v_gap / max(tile_height, 1))))
+    padding = float(options.padding)
+    tile_y_offset = tile_height / 2
+    extra_pad = max(12.0, tile_width * 0.35)
+    return IsoLayout(
+        iso_angle=iso_angle,
+        tile_width=tile_width,
+        tile_height=tile_height,
+        step_width=step_width,
+        step_height=step_height,
+        grid_spacing_x=grid_spacing_x,
+        grid_spacing_y=grid_spacing_y,
+        padding=padding,
+        tile_y_offset=tile_y_offset,
+        extra_pad=extra_pad,
+    )
+
+
+def _iso_tile_points(
+    center_x: float, center_y: float, width: float, height: float
+) -> list[tuple[float, float]]:
+    return [
+        (center_x, center_y - height / 2),
+        (center_x + width / 2, center_y),
+        (center_x, center_y + height / 2),
+        (center_x - width / 2, center_y),
+    ]
+
+
+def _points_to_svg(points: list[tuple[float, float]]) -> str:
+    return " ".join(f"{px},{py}" for px, py in points)
+
+
+def _iso_front_text_position(
+    top_points: list[tuple[float, float]], tile_width: float, tile_height: float
+) -> tuple[float, float, float]:
+    left_edge_top = top_points[0]
+    left_edge_bottom = top_points[3]
+    edge_mid_x = (left_edge_top[0] + left_edge_bottom[0]) / 2
+    edge_mid_y = (left_edge_top[1] + left_edge_bottom[1]) / 2
+    center_x = sum(px for px, _py in top_points) / len(top_points)
+    center_y = sum(py for _px, py in top_points) / len(top_points)
+    normal_x = center_x - edge_mid_x
+    normal_y = center_y - edge_mid_y
+    normal_len = math.hypot(normal_x, normal_y) or 1.0
+    normal_x /= normal_len
+    normal_y /= normal_len
+    inset = tile_height * 0.27
+    text_x = edge_mid_x + normal_x * inset + tile_width * 0.02
+    text_y = edge_mid_y + normal_y * inset + tile_height * 0.33
+    edge_dx = left_edge_bottom[0] - left_edge_top[0]
+    edge_dy = left_edge_bottom[1] - left_edge_top[1]
+    edge_len = math.hypot(edge_dx, edge_dy) or 1.0
+    edge_dx /= edge_len
+    edge_dy /= edge_len
+    slide = tile_height * 0.32
+    text_x += edge_dx * slide
+    text_y += edge_dy * slide
+    name_edge_left = top_points[3]
+    name_edge_right = top_points[2]
+    angle = math.degrees(
+        math.atan2(
+            name_edge_right[1] - name_edge_left[1],
+            name_edge_right[0] - name_edge_left[0],
+        )
+    )
+    return text_x, text_y, angle
+
+
+def _render_iso_text(
+    lines: list[str],
+    *,
+    text_x: float,
+    text_y: float,
+    angle: float,
+    text_lines: list[str],
+    font_size: int,
+    fill: str,
+) -> None:
+    line_height = font_size + 2
+    start_y = text_y - (len(text_lines) - 1) * line_height / 2
+    text_transform = (
+        f"translate({text_x} {start_y}) rotate({angle}) skewX(30) translate({-text_x} {-start_y})"
+    )
+    lines.append(
+        f'<text x="{text_x}" y="{start_y}" text-anchor="middle" fill="{fill}" '
+        f'font-size="{font_size}" font-style="normal" '
+        f'transform="{text_transform}">'
+    )
+    for idx, line in enumerate(text_lines):
+        dy = 0 if idx == 0 else line_height
+        lines.append(f'<tspan x="{text_x}" dy="{dy}">{_escape_text(line)}</tspan>')
+    lines.append("</text>")
+
+
+def _iso_name_label_position(
+    top_points: list[tuple[float, float]],
+    *,
+    tile_width: float,
+    tile_height: float,
+    font_size: int,
+) -> tuple[float, float, float]:
+    name_edge_left = top_points[3]
+    name_edge_right = top_points[2]
+    name_mid_x = (name_edge_left[0] + name_edge_right[0]) / 2
+    name_mid_y = (name_edge_left[1] + name_edge_right[1]) / 2
+    name_center_x = sum(px for px, _py in top_points) / len(top_points)
+    name_center_y = sum(py for _px, py in top_points) / len(top_points)
+    name_normal_x = name_center_x - name_mid_x
+    name_normal_y = name_center_y - name_mid_y
+    name_normal_len = math.hypot(name_normal_x, name_normal_y) or 1.0
+    name_normal_x /= name_normal_len
+    name_normal_y /= name_normal_len
+    name_inset = tile_height * 0.13
+    name_x = name_mid_x + name_normal_x * name_inset - tile_width * 0.08
+    name_y = name_mid_y + name_normal_y * name_inset + font_size - tile_height * 0.05
+    name_angle = math.degrees(
+        math.atan2(
+            name_edge_right[1] - name_edge_left[1],
+            name_edge_right[0] - name_edge_left[0],
+        )
+    )
+    return name_x, name_y, name_angle
+
+
+def _iso_project(layout: IsoLayout, gx: float, gy: float) -> tuple[float, float]:
+    iso_x = (gx - gy) * (layout.step_width / 2)
+    iso_y = (gx + gy) * (layout.step_height / 2)
+    return iso_x, iso_y
+
+
+def _iso_project_center(layout: IsoLayout, gx: float, gy: float) -> tuple[float, float]:
+    return _iso_project(layout, gx + 0.5, gy + 0.5)
+
+
+def _iso_layout_positions(
+    edges: list[Edge],
+    node_types: dict[str, str],
+    options: SvgOptions,
+) -> IsoLayoutPositions:
+    layout = _iso_layout(options)
+    positions_index, levels = _tree_layout_indices(edges, node_types)
+    grid_positions: dict[str, tuple[float, float]] = {}
+    positions: dict[str, tuple[float, float]] = {}
+    for name, idx in positions_index.items():
+        level = levels.get(name, 0)
+        gx = round(idx * layout.grid_spacing_x)
+        gy = round(float(level) * layout.grid_spacing_y)
+        grid_positions[name] = (float(gx), float(gy))
+        iso_x, iso_y = _iso_project_center(layout, float(gx), float(gy))
+        positions[name] = (iso_x, iso_y)
+    if positions:
+        min_x = min(x for x, _ in positions.values())
+        min_y = min(y for _, y in positions.values())
+        max_x = max(x for x, _ in positions.values())
+        max_y = max(y for _, y in positions.values())
+    else:
+        min_x = min_y = 0.0
+        max_x = max_y = 0.0
+    offset_x = -min_x + layout.padding + _ISO_NW_PADDING
+    offset_y = -min_y + layout.padding + layout.tile_y_offset + _ISO_NW_PADDING
+    for name, (x, y) in positions.items():
+        positions[name] = (x + offset_x, y + offset_y)
+    # Expand viewport to show more of the grid
+    viewport_expand = _ISO_VIEWPORT_EXPAND
+    width = (
+        max_x
+        - min_x
+        + layout.tile_width
+        + layout.padding * 2
+        + layout.extra_pad
+        + viewport_expand
+        + _ISO_NW_PADDING
+    )
+    height = (
+        max_y
+        - min_y
+        + layout.tile_height
+        + layout.padding * 2
+        + layout.tile_y_offset
+        + layout.extra_pad
+        + viewport_expand
+        + _ISO_NW_PADDING
+    )
+    return IsoLayoutPositions(
+        layout=layout,
+        grid_positions=grid_positions,
+        positions=positions,
+        width=width,
+        height=height,
+        offset_x=offset_x,
+        offset_y=offset_y,
+    )
+
+
+def _iso_grid_lines(
+    grid_positions: dict[str, tuple[float, float]],
+    layout: IsoLayout,
+    grid_color: str = "#efefef",
+) -> list[str]:
+    if not grid_positions:
+        return []
+    min_gx = min(gx for gx, _ in grid_positions.values())
+    max_gx = max(gx for gx, _ in grid_positions.values())
+    min_gy = min(gy for _, gy in grid_positions.values())
+    max_gy = max(gy for _, gy in grid_positions.values())
+    gx_start = int(math.floor(min_gx)) - _ISO_GRID_EXTENT_PAD
+    gx_end = int(math.ceil(max_gx)) + _ISO_GRID_EXTENT_PAD
+    gy_start = int(math.floor(min_gy)) - _ISO_GRID_EXTENT_PAD
+    gy_end = int(math.ceil(max_gy)) + _ISO_GRID_EXTENT_PAD
+    grid_lines: list[str] = []
+    for gx in range(gx_start, gx_end + 1):
+        x1, y1 = _iso_project(layout, float(gx), float(gy_start))
+        x2, y2 = _iso_project(layout, float(gx), float(gy_end))
+        x1 += layout.padding
+        y1 += layout.padding
+        x2 += layout.padding
+        y2 += layout.padding
+        grid_lines.append(
+            f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{grid_color}" stroke-width="0.6"/>'
+        )
+    for gy in range(gy_start, gy_end + 1):
+        x1, y1 = _iso_project(layout, float(gx_start), float(gy))
+        x2, y2 = _iso_project(layout, float(gx_end), float(gy))
+        x1 += layout.padding
+        y1 += layout.padding
+        x2 += layout.padding
+        y2 += layout.padding
+        grid_lines.append(
+            f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{grid_color}" stroke-width="0.6"/>'
+        )
+    return grid_lines
+
+
+def _iso_front_anchor(
+    layout: IsoLayout,
+    *,
+    gx: float,
+    gy: float,
+    offset_x: float,
+    offset_y: float,
+) -> tuple[float, float]:
+    iso_x, iso_y = _iso_project_center(layout, gx, gy)
+    cx = iso_x + offset_x + layout.tile_width / 2
+    cy = iso_y + offset_y + layout.tile_height / 2
+    return cx, cy
+
+
+def _render_iso_vlan_striped_edge(
+    lines: list[str],
+    path: str,
+    vlans: tuple[int, ...],
+    theme: SvgTheme,
+    base_width: int,
+    is_wireless: bool,
+    extra_attrs: str,
+    opacity: float = 1.0,
+) -> None:
+    """Render an isometric edge with striped VLAN colors and glow effect."""
+    if not vlans:
+        return
+    num_vlans = len(vlans)
+    segment_len = 16  # Slightly larger for isometric view
+    total_pattern = segment_len * num_vlans
+    gap_len = total_pattern - segment_len
+    opacity_attr = f' opacity="{opacity}"' if opacity < 1.0 else ""
+
+    # Render glow layer behind the edge
+    glow_color = theme.vlan_color(vlans[0])
+    glow_width = base_width * 3
+    glow_opacity = 0.25 * opacity  # Scale glow with edge opacity
+    lines.append(
+        f'<path d="{path}" stroke="{glow_color}" stroke-width="{glow_width}" '
+        f'fill="none" stroke-linecap="round" stroke-linejoin="round" '
+        f'opacity="{glow_opacity}" filter="url(#iso-edge-glow)" {extra_attrs}/>'
+    )
+
+    for i, vlan_id in enumerate(vlans):
+        color = theme.vlan_color(vlan_id)
+        offset = -i * segment_len
+        dash = f'stroke-dasharray="{segment_len} {gap_len}"'
+        if is_wireless:
+            dash = f'stroke-dasharray="6 3 6 {gap_len + 1}"'
+        lines.append(
+            f'<path d="{path}" stroke="{color}" stroke-width="{base_width}" '
+            f'fill="none" stroke-linecap="round" stroke-linejoin="round" '
+            f'{dash} stroke-dashoffset="{offset}"{opacity_attr} {extra_attrs}/>'
+        )
+
+
+def _render_iso_edges(
+    lines: list[str],
+    edges: list[Edge],
+    *,
+    positions: dict[str, tuple[float, float]],
+    grid_positions: dict[str, tuple[float, float]],
+    node_types: dict[str, str],
+    layout: IsoLayout,
+    theme: SvgTheme,
+    offset_x: float,
+    offset_y: float,
+    node_port_labels: dict[str, str],
+    node_port_prefix: dict[str, str],
+    max_vlan_colors: int | None = None,
+) -> None:
+    for edge in edges:
+        _record_iso_edge_label(edge, node_types, node_port_labels, node_port_prefix)
+    for edge in sorted(edges, key=lambda item: item.poe):
+        if edge.left not in positions or edge.right not in positions:
+            continue
+        src_grid = grid_positions.get(edge.left)
+        dst_grid = grid_positions.get(edge.right)
+        if not src_grid or not dst_grid:
+            continue
+        width_px = 5 if edge.poe else 4
+        src_gx, src_gy = float(src_grid[0]), float(src_grid[1])
+        dst_gx, dst_gy = float(dst_grid[0]), float(dst_grid[1])
+        src_cx, src_cy = _iso_front_anchor(
+            layout, gx=src_gx, gy=src_gy, offset_x=offset_x, offset_y=offset_y
+        )
+        dst_cx, dst_cy = _iso_front_anchor(
+            layout, gx=dst_gx, gy=dst_gy, offset_x=offset_x, offset_y=offset_y
+        )
+        path_cmds = _iso_edge_path(
+            layout,
+            offset_x,
+            offset_y,
+            src_gx,
+            src_gy,
+            dst_gx,
+            dst_gy,
+            src_cx,
+            src_cy,
+            dst_cx,
+            dst_cy,
+        )
+        path = " ".join(path_cmds)
+        left_attr = _escape_attr(edge.left, quote=True)
+        right_attr = _escape_attr(edge.right, quote=True)
+        vlan_attrs = _vlan_data_attrs(edge)
+        base_attrs = f'data-edge-left="{left_attr}" data-edge-right="{right_attr}"'
+        if vlan_attrs:
+            base_attrs = f"{base_attrs} {vlan_attrs}"
+
+        # Determine VLANs to visualize
+        display_vlans = edge.active_vlans
+        if max_vlan_colors and len(display_vlans) > max_vlan_colors:
+            display_vlans = display_vlans[:max_vlan_colors]
+
+        # Client edges are semi-transparent to reduce visual clutter
+        opacity = _edge_opacity(node_types, edge)
+        opacity_attr = f' opacity="{opacity}"' if opacity < 1.0 else ""
+
+        if display_vlans:
+            _render_iso_vlan_striped_edge(
+                lines, path, display_vlans, theme, width_px, edge.wireless, base_attrs, opacity
+            )
+            # Render VLAN endpoint markers at destination
+            marker_x = dst_cx + layout.tile_width * 0.3
+            marker_y = dst_cy - layout.tile_height * 0.2
+            _render_vlan_endpoint_markers(lines, marker_x, marker_y, display_vlans, theme)
+        else:
+            color = "url(#iso-link-poe)" if edge.poe else "url(#iso-link-standard)"
+            dash = ' stroke-dasharray="8 6"' if edge.wireless else ""
+            lines.append(
+                f'<path d="{path}" stroke="{color}" stroke-width="{width_px}" '
+                f'fill="none" stroke-linecap="round" stroke-linejoin="round"{dash}{opacity_attr} '
+                f"{base_attrs}/>"
+            )
+        if edge.poe:
+            poe_size = 30
+            # Position icon on the last segment of the path
+            dx = dst_gx - src_gx
+            dy = dst_gy - src_gy
+            if dx == 0 or dy == 0:
+                # Straight line: interpolate from src to dst
+                seg_start_x, seg_start_y = src_cx, src_cy
+            else:
+                # Path has elbow: interpolate on last segment (elbow to dst)
+                elbow_cx, elbow_cy = _iso_front_anchor(
+                    layout, gx=dst_gx, gy=src_gy, offset_x=offset_x, offset_y=offset_y
+                )
+                seg_start_x, seg_start_y = elbow_cx, elbow_cy
+            t = 0.6  # 60% from elbow towards node
+            icon_center_x = seg_start_x + t * (dst_cx - seg_start_x)
+            icon_center_y = seg_start_y + t * (dst_cy - seg_start_y)
+            icon_x = icon_center_x - poe_size / 2
+            icon_y = icon_center_y - poe_size / 2
+            lines.append(
+                f'<use href="#iso-poe-bolt" x="{icon_x}" y="{icon_y}" '
+                f'width="{poe_size}" height="{poe_size}" '
+                f'fill="{theme.poe_fill}" stroke="{theme.poe_stroke}" stroke-width="1"/>'
+            )
+
+
+def _iso_edge_path(
+    layout: IsoLayout,
+    offset_x: float,
+    offset_y: float,
+    src_gx: float,
+    src_gy: float,
+    dst_gx: float,
+    dst_gy: float,
+    src_cx: float,
+    src_cy: float,
+    dst_cx: float,
+    dst_cy: float,
+) -> list[str]:
+    dx = dst_gx - src_gx
+    dy = dst_gy - src_gy
+    if dx == 0 or dy == 0:
+        return [f"M {src_cx} {src_cy}", f"L {dst_cx} {dst_cy}"]
+    elbow_gx, elbow_gy = dst_gx, src_gy
+    elbow_cx, elbow_cy = _iso_front_anchor(
+        layout,
+        gx=elbow_gx,
+        gy=elbow_gy,
+        offset_x=offset_x,
+        offset_y=offset_y,
+    )
+    return [
+        f"M {src_cx} {src_cy}",
+        f"L {elbow_cx} {elbow_cy}",
+        f"L {dst_cx} {dst_cy}",
+    ]
+
+
+def _record_iso_edge_label(
+    edge: Edge,
+    node_types: dict[str, str],
+    node_port_labels: dict[str, str],
+    node_port_prefix: dict[str, str],
+) -> None:
+    if not edge.label:
+        return
+    label_text = _compact_edge_label(edge.label, left_node=edge.left, right_node=edge.right)
+    left_type = node_types.get(edge.left, "other")
+    right_type = node_types.get(edge.right, "other")
+    client_node = None
+    upstream_node = None
+    if left_type == "client" and right_type != "client":
+        client_node = edge.left
+        upstream_node = edge.right
+    elif right_type == "client" and left_type != "client":
+        client_node = edge.right
+        upstream_node = edge.left
+    if client_node and upstream_node:
+        if "<->" not in label_text:
+            upstream_part = edge.label.split("<->", 1)[0].strip()
+            port_text = _extract_port_text(upstream_part) or label_text
+            node_port_labels.setdefault(client_node, f"{upstream_node}: {port_text}")
+            node_port_prefix.setdefault(client_node, _shorten_prefix(upstream_node))
+        return
+    upstream_part = edge.label.split("<->", 1)[0].strip()
+    upstream_name = _extract_device_name(upstream_part) or edge.left
+    if label_text.lower().startswith("port "):
+        label_text = f"{upstream_name} {label_text}"
+    node_port_labels.setdefault(edge.right, label_text)
+    node_port_prefix.setdefault(edge.right, _shorten_prefix(edge.left))
+
+
+def _iso_node_polygons(
+    x: float,
+    y: float,
+    tile_w: float,
+    tile_h: float,
+    node_depth: float,
+) -> tuple[list[tuple[float, float]], list[tuple[float, float]], list[tuple[float, float]]]:
+    top = [
+        (x + tile_w / 2, y),
+        (x + tile_w, y + tile_h / 2),
+        (x + tile_w / 2, y + tile_h),
+        (x, y + tile_h / 2),
+    ]
+    left = [
+        (x, y + tile_h / 2),
+        (x + tile_w / 2, y + tile_h),
+        (x + tile_w / 2, y + tile_h + node_depth),
+        (x, y + tile_h / 2 + node_depth),
+    ]
+    right = [
+        (x + tile_w, y + tile_h / 2),
+        (x + tile_w / 2, y + tile_h),
+        (x + tile_w / 2, y + tile_h + node_depth),
+        (x + tile_w, y + tile_h / 2 + node_depth),
+    ]
+    return top, left, right
+
+
+def _iso_render_faces(
+    lines: list[str],
+    *,
+    top: list[tuple[float, float]],
+    left: list[tuple[float, float]],
+    right: list[tuple[float, float]],
+    fill: str,
+    stroke: str,
+    left_fill: str,
+    right_fill: str,
+    node_depth: float,
+) -> None:
+    if node_depth > 0:
+        lines.append(
+            f'<polygon points="{" ".join(f"{px},{py}" for px, py in left)}" '
+            f'fill="{left_fill}" stroke="{stroke}" stroke-width="1"/>'
+        )
+        lines.append(
+            f'<polygon points="{" ".join(f"{px},{py}" for px, py in right)}" '
+            f'fill="{right_fill}" stroke="{stroke}" stroke-width="1"/>'
+        )
+    lines.append(
+        f'<polygon points="{" ".join(f"{px},{py}" for px, py in top)}" '
+        f'fill="{fill}" stroke="{stroke}" stroke-width="1"/>'
+    )
+
+
+def _render_iso_port_label(
+    lines: list[str],
+    *,
+    port_label: str,
+    node_type: str,
+    prefix: str,
+    center_x: float,
+    center_y: float,
+    tile_w: float,
+    tile_h: float,
+    fill: str,
+    stroke: str,
+    left_fill: str,
+    right_fill: str,
+    font_size: int,
+) -> tuple[float, float]:
+    tile_width = tile_w
+    tile_height = tile_h
+    stack_depth = tile_h / 2
+    label_center_x = center_x
+    label_center_y = center_y - stack_depth
+    top_points = _iso_tile_points(label_center_x, label_center_y, tile_width, tile_height)
+    tile_points = _points_to_svg(top_points)
+    bottom_points = [(px, py + stack_depth) for px, py in top_points]
+    right_face = [
+        top_points[1],
+        top_points[2],
+        bottom_points[2],
+        bottom_points[1],
+    ]
+    left_face = [
+        top_points[3],
+        top_points[2],
+        bottom_points[2],
+        bottom_points[3],
+    ]
+    left_points = " ".join(f"{px},{py}" for px, py in left_face)
+    right_points = " ".join(f"{px},{py}" for px, py in right_face)
+    lines.append(
+        f'<polygon class="label-tile-side" points="{left_points}" '
+        f'fill="{left_fill}" stroke="{stroke}" stroke-width="1"/>'
+    )
+    lines.append(
+        f'<polygon class="label-tile-side" points="{right_points}" '
+        f'fill="{right_fill}" stroke="{stroke}" stroke-width="1"/>'
+    )
+    lines.append(
+        f'<polygon class="label-tile" points="{tile_points}" '
+        f'fill="{fill}" stroke="{stroke}" stroke-width="1"/>'
+    )
+    left_edge_top = top_points[0]
+    left_edge_bottom = top_points[3]
+    edge_len = math.hypot(
+        left_edge_bottom[0] - left_edge_top[0],
+        left_edge_bottom[1] - left_edge_top[1],
+    )
+    max_chars = max(6, int((edge_len * 0.85) / (font_size * 0.6)))
+    front_lines = _format_port_label_lines(
+        port_label,
+        node_type=node_type,
+        prefix=prefix,
+        max_chars=max_chars,
+    )
+    if front_lines:
+        text_x, text_y, edge_angle = _iso_front_text_position(top_points, tile_w, tile_h)
+        _render_iso_text(
+            lines,
+            text_x=text_x,
+            text_y=text_y,
+            angle=edge_angle,
+            text_lines=front_lines,
+            font_size=font_size,
+            fill="#555",
+        )
+    return label_center_x, label_center_y
+
+
+def _iso_front_face_label_position(
+    left_face: list[tuple[float, float]],
+    tile_height: float,
+    font_size: int,
+) -> tuple[float, float, float]:
+    """Position label on the front (left) face of an isometric node."""
+    # left_face points: [top-left, top-right, bottom-right, bottom-left]
+    # We want to center the text on this face
+    top_left = left_face[0]
+    top_right = left_face[1]
+    bottom_right = left_face[2]
+    bottom_left = left_face[3]
+
+    # Center of the face
+    center_x = (top_left[0] + top_right[0] + bottom_right[0] + bottom_left[0]) / 4
+    center_y = (top_left[1] + top_right[1] + bottom_right[1] + bottom_left[1]) / 4
+
+    # Angle follows the top edge of the left face (from top_left to top_right)
+    angle = math.degrees(
+        math.atan2(
+            top_right[1] - top_left[1],
+            top_right[0] - top_left[0],
+        )
+    )
+
+    # Adjust position for better visual centering on the front face
+    label_x = center_x - tile_height * 0.01
+    label_y = center_y + font_size * 0.5 + tile_height * 0.04 - 6
+
+    return label_x, label_y, angle
+
+
+def _render_iso_node(
+    lines: list[str],
+    *,
+    name: str,
+    x: float,
+    y: float,
+    node_type: str,
+    icons: dict[str, str],
+    options: SvgOptions,
+    port_label: str | None,
+    port_prefix: str | None,
+    layout: IsoLayout,
+    theme: SvgTheme,
+) -> None:
+    fill, stroke = _TYPE_COLORS.get(node_type, _TYPE_COLORS["other"])
+    fill = f"url(#iso-node-{node_type})"
+    tile_w = layout.tile_width
+    tile_h = layout.tile_height
+
+    # Determine node depth based on port label presence
+    is_client = node_type in ("client", "client_cluster")
+    if port_label:
+        # Nodes with port labels: no 3D base box, only the port label tile
+        node_depth = 0.0
+    else:
+        # Nodes without port labels: consistent 3D depth
+        node_depth = layout.tile_height * 0.15
+
+    group_attrs = _svg_node_group_attrs(None, name, node_type)
+    lines.append(f"<g{group_attrs}>")
+    lines.append(f"<title>{_escape_text(name)}</title>")
+    top, left, right = _iso_node_polygons(x, y, tile_w, tile_h, node_depth)
+    lines.append(
+        f'<polygon points="{_points_to_svg(top)}" fill="transparent" '
+        'pointer-events="all" class="node-hitbox"/>'
+    )
+    left_fill = theme.node_side_left
+    right_fill = theme.node_side_right
+    _iso_render_faces(
+        lines,
+        top=top,
+        left=left,
+        right=right,
+        fill=fill,
+        stroke=stroke,
+        left_fill=left_fill,
+        right_fill=right_fill,
+        node_depth=node_depth,
+    )
+    icon_href = icons.get(node_type, icons.get("other"))
+    center_x = x + tile_w / 2
+    center_y = y + tile_h / 2
+    icon_center_x = center_x
+    icon_center_y = center_y
+    iso_icon_size = min(tile_w, tile_h) * 1.26
+    if port_label:
+        font_size = max(options.font_size - 2, 8)
+        prefix = port_prefix or "switch"
+        icon_center_x, icon_center_y = _render_iso_port_label(
+            lines,
+            port_label=port_label,
+            node_type=node_type,
+            prefix=prefix,
+            center_x=center_x,
+            center_y=center_y,
+            tile_w=tile_w,
+            tile_h=tile_h,
+            fill=fill,
+            stroke=stroke,
+            left_fill=left_fill,
+            right_fill=right_fill,
+            font_size=font_size,
+        )
+    if node_type == "ap":
+        icon_center_y -= tile_h * 0.4
+    if icon_href:
+        icon_x = icon_center_x - iso_icon_size / 2
+        icon_lift = tile_h * (0.02 if port_label else 0.04)
+        icon_y = icon_center_y - iso_icon_size / 2 - icon_lift - tile_h * 0.05
+        if is_client:
+            icon_y -= tile_h * 0.05
+        lines.append(
+            f'<image href="{icon_href}" x="{icon_x}" y="{icon_y}" '
+            f'width="{iso_icon_size}" height="{iso_icon_size}" '
+            f'preserveAspectRatio="xMidYMid meet" filter="url(#iso-icon-emboss)"/>'
+        )
+
+    # Position name label
+    name_font_size = max(options.font_size - 2, 8)
+    if not port_label and node_depth > 0:
+        # Nodes without port labels: render name on front (left) face
+        name_x, name_y, name_angle = _iso_front_face_label_position(
+            left,
+            tile_height=tile_h,
+            font_size=name_font_size,
+        )
+    else:
+        # Nodes with port labels: render name on bottom edge of top face
+        name_x, name_y, name_angle = _iso_name_label_position(
+            top,
+            tile_width=tile_w,
+            tile_height=tile_h,
+            font_size=name_font_size,
+        )
+
+    name_transform = (
+        f"translate({name_x} {name_y}) rotate({name_angle}) skewX(30) "
+        f"translate({-name_x} {-name_y})"
+    )
+    lines.append(
+        f'<text x="{name_x}" y="{name_y}" class="node-label" text-anchor="middle" fill="{theme.text_primary}" '
+        f'font-size="{name_font_size}" transform="{name_transform}">{_escape_text(name)}</text>'
+    )
+    lines.append("</g>")
+
+
+def _render_iso_nodes(
+    lines: list[str],
+    *,
+    positions: dict[str, tuple[float, float]],
+    node_types: dict[str, str],
+    icons: dict[str, str],
+    options: SvgOptions,
+    layout: IsoLayout,
+    node_port_labels: dict[str, str],
+    node_port_prefix: dict[str, str],
+    theme: SvgTheme,
+) -> None:
+    for name, (x, y) in positions.items():
+        _render_iso_node(
+            lines,
+            name=name,
+            x=x,
+            y=y,
+            node_type=node_types.get(name, "other"),
+            icons=icons,
+            options=options,
+            port_label=node_port_labels.get(name),
+            port_prefix=node_port_prefix.get(name),
+            layout=layout,
+            theme=theme,
+        )
+
+
+def _render_iso_wan_upstream(
+    lines: list[str],
+    wan_info: WanInfo,
+    gateway_position: tuple[float, float],
+    layout: IsoLayout,
+    options: SvgOptions,
+    theme: SvgTheme,
+) -> None:
+    """Render WAN upstream visualization (isometric view)."""
+    gx, gy = gateway_position
+    tile_w = layout.tile_width
+    tile_h = layout.tile_height
+
+    # Build label lines to calculate box size
+    label_lines = _build_wan_label_lines(wan_info)
+    font_size = max(options.font_size - 1, 8)
+
+    # Calculate box dimensions based on content
+    globe_size = 40
+    padding = 12
+    line_height = font_size + 4
+    max_text_width = max((len(line) for line in label_lines), default=10) * font_size * 0.55
+    box_width = max(globe_size + padding * 2, max_text_width + padding * 2)
+    box_height = globe_size + len(label_lines) * line_height + padding * 3
+
+    # Position box to the east (right side) of the gateway
+    # Move along the isometric NE direction (slope ~0.5 for parallel grid lines)
+    box_x = gx + tile_w + 60
+    # Position so link runs parallel to isometric grid (y offset follows NE slope)
+    box_y = gy - tile_h / 2 - box_height / 2 + 38
+
+    # Connection point on gateway (east edge of tile)
+    gateway_connect_x = gx + tile_w * 0.75
+    gateway_connect_y = gy + tile_h * 0.25
+
+    # Connection point on box (left edge, middle)
+    box_connect_x = box_x
+    box_connect_y = box_y + box_height / 2
+
+    lines.append('<g class="wan-upstream">')
+
+    # Draw connector line from gateway to box
+    lines.append(
+        f'<path d="M {gateway_connect_x} {gateway_connect_y} '
+        f'L {box_connect_x} {box_connect_y}" '
+        f'stroke="#0288d1" stroke-width="3" fill="none" '
+        f'stroke-linecap="round" opacity="0.8"/>'
+    )
+
+    # Draw bounding box with rounded corners
+    lines.append(
+        f'<rect x="{box_x}" y="{box_y}" width="{box_width}" height="{box_height}" '
+        f'rx="8" ry="8" fill="{theme.wan_background}" stroke="{theme.wan_globe[1]}" stroke-width="2"/>'
+    )
+
+    # Draw globe icon inline with gradient fill
+    globe_cx = box_x + box_width / 2
+    globe_cy = box_y + padding + globe_size / 2
+    globe_r = globe_size / 2 - 2
+    lines.append(f'<g transform="translate({globe_cx}, {globe_cy})">')
+    # Globe circle
+    lines.append(
+        f'<circle cx="0" cy="0" r="{globe_r}" fill="none" '
+        f'stroke="url(#iso-globe)" stroke-width="2"/>'
+    )
+    # Vertical ellipse (meridian)
+    lines.append(
+        f'<ellipse cx="0" cy="0" rx="{globe_r * 0.35}" ry="{globe_r}" '
+        f'fill="none" stroke="url(#iso-globe)" stroke-width="1.5"/>'
+    )
+    # Horizontal line (equator)
+    lines.append(
+        f'<line x1="{-globe_r}" y1="0" x2="{globe_r}" y2="0" '
+        f'stroke="url(#iso-globe)" stroke-width="1.5"/>'
+    )
+    # Latitude lines
+    lines.append(
+        f'<ellipse cx="0" cy="{-globe_r * 0.5}" rx="{globe_r * 0.87}" ry="{globe_r * 0.2}" '
+        f'fill="none" stroke="url(#iso-globe)" stroke-width="1"/>'
+    )
+    lines.append(
+        f'<ellipse cx="0" cy="{globe_r * 0.5}" rx="{globe_r * 0.87}" ry="{globe_r * 0.2}" '
+        f'fill="none" stroke="url(#iso-globe)" stroke-width="1"/>'
+    )
+    lines.append("</g>")
+
+    # Render label lines
+    text_x = box_x + box_width / 2
+    text_y = box_y + padding + globe_size + padding + font_size
+    for i, label_text in enumerate(label_lines):
+        y = text_y + i * line_height
+        lines.append(
+            f'<text x="{text_x}" y="{y}" text-anchor="middle" '
+            f'fill="{theme.text_primary}" font-size="{font_size}">'
+            f"{_escape_text(label_text)}</text>"
+        )
+
+    lines.append("</g>")
+
+
+@dataclass(frozen=True)
+class IsoGroupBounds:
+    name: str
+    points: list[tuple[float, float]]  # 4 corners of the parallelogram
+    label_x: float
+    label_y: float
+
+
+def _compute_iso_group_bounds(
+    grid_positions: dict[str, tuple[float, float]],
+    groups: dict[str, list[str]],
+    group_order: list[str] | None,
+    layout: IsoLayout,
+    offset_x: float,
+    offset_y: float,
+    options: SvgOptions,
+) -> list[IsoGroupBounds]:
+    """Compute isometric group bounds as parallelograms aligned with grid."""
+    ordered_groups = _resolve_group_order(groups, group_order)
+    node_to_group = _build_node_to_group_map(groups)
+    bounds_list: list[IsoGroupBounds] = []
+    # Convert screen padding to grid units
+    padding = options.group_padding / layout.step_width + 0.5
+
+    for group_name in ordered_groups:
+        group_grid = {
+            n: pos for n, pos in grid_positions.items() if node_to_group.get(n) == group_name
+        }
+        if not group_grid:
+            continue
+        bounds = _iso_group_parallelogram(
+            group_name, group_grid, layout, offset_x, offset_y, padding
+        )
+        bounds_list.append(bounds)
+    return bounds_list
+
+
+def _iso_group_parallelogram(
+    name: str,
+    group_grid: dict[str, tuple[float, float]],
+    layout: IsoLayout,
+    offset_x: float,
+    offset_y: float,
+    padding: float,
+) -> IsoGroupBounds:
+    """Create isometric parallelogram bounds from grid positions."""
+    gxs = [gx for gx, _ in group_grid.values()]
+    gys = [gy for _, gy in group_grid.values()]
+
+    is_single_node = len(group_grid) == 1
+    if is_single_node:
+        # For single-node groups: boundary centered around the node
+        # Shift to align with node's visual center
+        node_half = 0.8  # Half-size of boundary in grid units
+        center_gx = min(gxs) + 1.45  # Tuned for visual centering
+        center_gy = min(gys) + 0.45
+        min_gx = center_gx - node_half
+        max_gx = center_gx + node_half
+        min_gy = center_gy - node_half
+        max_gy = center_gy + node_half
+    else:
+        # For multi-node groups: use grid spacing with padding
+        min_gx = min(gxs) - padding
+        max_gx = max(gxs) + layout.grid_spacing_x + padding
+        min_gy = min(gys) - padding
+        max_gy = max(gys) + layout.grid_spacing_y + padding
+
+    # Project grid corners to screen coordinates
+    corners_grid = [
+        (min_gx, min_gy),  # top
+        (max_gx, min_gy),  # right
+        (max_gx, max_gy),  # bottom
+        (min_gx, max_gy),  # left
+    ]
+    points = [
+        (
+            _iso_project(layout, gx, gy)[0] + offset_x,
+            _iso_project(layout, gx, gy)[1] + offset_y,
+        )
+        for gx, gy in corners_grid
+    ]
+
+    # Position label at the top corner, offset inward along the right edge
+    top_x, top_y = points[0]
+    right_x, right_y = points[1]
+    label_x = top_x + (right_x - top_x) * 0.15 - 30  # Shifted NW
+    label_y = top_y + (right_y - top_y) * 0.15 - 20
+    return IsoGroupBounds(name=name, points=points, label_x=label_x, label_y=label_y)
+
+
+def _render_iso_group_boundaries(
+    lines: list[str],
+    bounds_list: list[IsoGroupBounds],
+    theme: SvgTheme,
+) -> None:
+    """Render isometric group boundaries as parallelograms."""
+    label_size = _ISO_GROUP_LABEL_SIZE
+    iso_angle = _ISO_PERSPECTIVE_ANGLE
+    for bounds in bounds_list:
+        group_attr = _escape_attr(bounds.name, quote=True)
+        fill, stroke = theme.group_colors(bounds.name)
+        points_str = " ".join(f"{x},{y}" for x, y in bounds.points)
+        lines.append(f'<g class="network-group" data-group-name="{group_attr}">')
+        lines.append(
+            f'<polygon class="group-boundary" points="{points_str}" '
+            f'fill="{fill}" fill-opacity="0.35" '
+            f'stroke="{stroke}" stroke-width="{theme.group_stroke_width}"/>'
+        )
+        label_text = _escape_text(bounds.name.capitalize())
+        lx, ly = bounds.label_x, bounds.label_y
+        # Isometric transform: rotate + skew to follow 30° perspective
+        label_transform = (
+            f"translate({lx} {ly}) rotate({iso_angle}) skewX({iso_angle}) translate({-lx} {-ly})"
+        )
+        # Text with thin outline for readability
+        lines.append(
+            f'<text class="group-label" x="{lx}" y="{ly}" '
+            f'font-size="{label_size}" font-weight="bold" fill="{stroke}" '
+            f'stroke="#ffffff" stroke-width="2" paint-order="stroke fill" '
+            f'opacity="0.7" transform="{label_transform}">'
+            f"{label_text}</text>"
+        )
+        lines.append("</g>")
+
+
+def render_svg_isometric(
+    edges: list[Edge],
+    *,
+    node_types: dict[str, str],
+    options: SvgOptions | None = None,
+    theme: SvgTheme = DEFAULT_THEME,
+    groups: dict[str, list[str]] | None = None,
+    group_order: list[str] | None = None,
+    wan_info: WanInfo | None = None,
+) -> str:
+    options = options or SvgOptions()
+    per_type_decals = _build_decal_colors(theme)
+    icons = _load_isometric_icons(theme.icon_set, theme.icon_decal, per_type_decals)
+    layout_positions = _iso_layout_positions(edges, node_types, options)
+    layout = layout_positions.layout
+    grid_positions = layout_positions.grid_positions
+    positions = layout_positions.positions
+
+    out_width = options.width or int(layout_positions.width)
+    out_height = options.height or int(layout_positions.height)
+
+    lines = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{out_width}" height="{out_height}" '
+        f'viewBox="0 0 {layout_positions.width} {layout_positions.height}">',
+        svg_defs("iso", theme),
+        _svg_style_block(theme, options.font_size, iso=True),
+        f'<rect width="100%" height="100%" fill="{theme.background}"/>',
+    ]
+
+    use_grouped = options.layout_mode == "grouped" and groups
+    if use_grouped and groups:
+        group_bounds_list = _compute_iso_group_bounds(
+            grid_positions,
+            groups,
+            group_order,
+            layout,
+            layout_positions.offset_x,
+            layout_positions.offset_y,
+            options,
+        )
+        _render_iso_group_boundaries(lines, group_bounds_list, theme)
+
+    grid_lines = _iso_grid_lines(grid_positions, layout, theme.grid_color)
+    if grid_lines:
+        lines.append('<g class="iso-grid" opacity="0.7">')
+        lines.extend(grid_lines)
+        lines.append("</g>")
+
+    node_port_labels: dict[str, str] = {}
+    node_port_prefix: dict[str, str] = {}
+    _render_iso_edges(
+        lines,
+        edges,
+        positions=positions,
+        grid_positions=grid_positions,
+        node_types=node_types,
+        layout=layout,
+        theme=theme,
+        offset_x=layout_positions.offset_x,
+        offset_y=layout_positions.offset_y,
+        node_port_labels=node_port_labels,
+        node_port_prefix=node_port_prefix,
+    )
+    _render_iso_nodes(
+        lines,
+        positions=positions,
+        node_types=node_types,
+        icons=icons,
+        options=options,
+        layout=layout,
+        node_port_labels=node_port_labels,
+        node_port_prefix=node_port_prefix,
+        theme=theme,
+    )
+
+    # Render WAN upstream visualization
+    if wan_info:
+        # Find gateway position
+        gateway_name = None
+        for name, ntype in node_types.items():
+            if ntype == "gateway":
+                gateway_name = name
+                break
+        if gateway_name and gateway_name in positions:
+            _render_iso_wan_upstream(
+                lines, wan_info, positions[gateway_name], layout, options, theme
+            )
+
+    lines.append("</svg>")
+    return "\n".join(lines) + "\n"

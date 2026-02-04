@@ -146,7 +146,7 @@ def render_svg_output(
             break
 
     if args.format == "svg-iso":
-        from ..render.svg import render_svg_isometric
+        from ..render.svg_isometric import render_svg_isometric
 
         return render_svg_isometric(
             edges,

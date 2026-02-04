@@ -1,7 +1,7 @@
 import re
 
 from unifi_network_maps.model.topology import Edge
-from unifi_network_maps.render.svg import render_svg_isometric
+from unifi_network_maps.render.svg_isometric import render_svg_isometric
 
 
 def test_render_svg_isometric_outputs_svg_root():

@@ -3,6 +3,7 @@ from pathlib import Path
 
 import unifi_network_maps.render.svg as svg_module
 import unifi_network_maps.render.svg_icons as svg_icons_module
+import unifi_network_maps.render.svg_isometric as svg_iso_module
 import unifi_network_maps.render.svg_labels as svg_labels_module
 from unifi_network_maps.model.topology import Edge
 
@@ -125,7 +126,7 @@ def test_render_svg_prefixes_upstream_for_port_only_label():
 
 
 def test_render_svg_isometric_renders_label_tile():
-    output = svg_module.render_svg_isometric(
+    output = svg_iso_module.render_svg_isometric(
         [Edge("A", "B", label="A: Port 1 <-> B: Port 2")],
         node_types={"A": "switch", "B": "switch"},
     )
@@ -139,7 +140,7 @@ def test_load_icons_missing_files_returns_empty(monkeypatch):
 
 def test_load_isometric_icons_missing_files_returns_empty(monkeypatch):
     monkeypatch.setattr(Path, "exists", lambda _self: False)
-    assert svg_module._load_isometric_icons() == {}
+    assert svg_icons_module._load_isometric_icons() == {}
 
 
 def test_tree_layout_indices_cycle_returns_nodes():
@@ -156,7 +157,7 @@ def test_tree_layout_indices_empty_returns_empty():
 
 
 def test_render_svg_isometric_handles_no_edges():
-    output = svg_module.render_svg_isometric([], node_types={})
+    output = svg_iso_module.render_svg_isometric([], node_types={})
     assert output.startswith("<svg")
 
 
@@ -189,7 +190,7 @@ def test_render_svg_client_label_left_side():
 
 
 def test_render_svg_isometric_client_label_without_arrow():
-    output = svg_module.render_svg_isometric(
+    output = svg_iso_module.render_svg_isometric(
         [Edge("Switch", "Client", label="Switch: Port 4")],
         node_types={"Switch": "switch", "Client": "client"},
     )
@@ -213,19 +214,19 @@ def test_render_svg_without_icons(monkeypatch):
 
 def test_render_svg_isometric_without_icons(monkeypatch):
     monkeypatch.setattr(
-        svg_module,
+        svg_iso_module,
         "_load_isometric_icons",
         lambda icon_set="isometric", decal_color="#5A6878", decal_colors=None: {},
     )
-    output = svg_module.render_svg_isometric(
+    output = svg_iso_module.render_svg_isometric(
         [Edge("A", "B")], node_types={"A": "switch", "B": "switch"}
     )
     assert "<image" not in output
 
 
 def test_render_svg_isometric_skips_missing_positions(monkeypatch):
-    monkeypatch.setattr(svg_module, "_tree_layout_indices", lambda _e, _n: ({}, {}))
-    output = svg_module.render_svg_isometric(
+    monkeypatch.setattr(svg_iso_module, "_tree_layout_indices", lambda _e, _n: ({}, {}))
+    output = svg_iso_module.render_svg_isometric(
         [Edge("A", "B")], node_types={"A": "switch", "B": "switch"}
     )
     # No edge paths should be rendered (path with stroke attribute)
@@ -233,7 +234,7 @@ def test_render_svg_isometric_skips_missing_positions(monkeypatch):
 
 
 def test_render_svg_isometric_elbow_path():
-    output = svg_module.render_svg_isometric(
+    output = svg_iso_module.render_svg_isometric(
         [Edge("Root", "B"), Edge("Root", "C")],
         node_types={"Root": "gateway", "B": "switch", "C": "switch"},
     )
@@ -241,7 +242,7 @@ def test_render_svg_isometric_elbow_path():
 
 
 def test_render_svg_isometric_poe_icon():
-    output = svg_module.render_svg_isometric(
+    output = svg_iso_module.render_svg_isometric(
         [Edge("A", "B", poe=True)],
         node_types={"A": "switch", "B": "switch"},
     )
@@ -249,7 +250,7 @@ def test_render_svg_isometric_poe_icon():
 
 
 def test_render_svg_isometric_client_left_label():
-    output = svg_module.render_svg_isometric(
+    output = svg_iso_module.render_svg_isometric(
         [Edge("Client", "Switch", label="Switch: Port 2")],
         node_types={"Switch": "switch", "Client": "client"},
     )
@@ -257,7 +258,7 @@ def test_render_svg_isometric_client_left_label():
 
 
 def test_render_svg_isometric_port_prefixes_upstream():
-    output = svg_module.render_svg_isometric(
+    output = svg_iso_module.render_svg_isometric(
         [Edge("Switch", "AP", label="Port 1 <-> Port 2")],
         node_types={"Switch": "switch", "AP": "ap"},
     )
@@ -265,14 +266,14 @@ def test_render_svg_isometric_port_prefixes_upstream():
 
 
 def test_render_svg_isometric_defs_use_iso_node_prefix():
-    output = svg_module.render_svg_isometric(
+    output = svg_iso_module.render_svg_isometric(
         [Edge("A", "B")], node_types={"A": "switch", "B": "switch"}
     )
     assert 'id="iso-node-switch"' in output
 
 
 def test_render_svg_isometric_nodes_reference_iso_node_prefix():
-    output = svg_module.render_svg_isometric(
+    output = svg_iso_module.render_svg_isometric(
         [Edge("A", "B")], node_types={"A": "switch", "B": "switch"}
     )
     assert 'fill="url(#iso-node-switch)"' in output
@@ -297,7 +298,7 @@ def test_render_svg_escapes_edge_data_attributes():
 
 
 def test_render_svg_isometric_adds_edge_data_attributes():
-    output = svg_module.render_svg_isometric(
+    output = svg_iso_module.render_svg_isometric(
         [Edge("Gateway", "Switch")],
         node_types={"Gateway": "gateway", "Switch": "switch"},
     )
@@ -309,7 +310,7 @@ def test_render_svg_isometric_adds_edge_data_attributes():
 
 
 def test_load_isometric_icons_isometric():
-    icons = svg_module._load_isometric_icons("isometric")
+    icons = svg_icons_module._load_isometric_icons("isometric")
     assert "gateway" in icons
     assert "switch" in icons
     assert "ap" in icons
@@ -319,7 +320,7 @@ def test_load_isometric_icons_isometric():
 
 
 def test_load_isometric_icons_modern():
-    icons = svg_module._load_isometric_icons("modern")
+    icons = svg_icons_module._load_isometric_icons("modern")
     assert "gateway" in icons
     assert "switch" in icons
     assert "ap" in icons
@@ -330,7 +331,7 @@ def test_load_isometric_icons_modern():
 
 def test_load_isometric_icons_fallback_to_isometric():
     """Unknown icon set should fall back to isometric."""
-    icons = svg_module._load_isometric_icons("nonexistent_set")
+    icons = svg_icons_module._load_isometric_icons("nonexistent_set")
     assert "gateway" in icons
     assert len(icons) > 0
 
@@ -480,7 +481,7 @@ def test_render_svg_isometric_uses_theme_icon_set():
     from unifi_network_maps.render.svg_theme import DEFAULT_THEME
 
     theme = replace(DEFAULT_THEME, icon_set="modern")
-    output = svg_module.render_svg_isometric(
+    output = svg_iso_module.render_svg_isometric(
         [Edge("A", "B")],
         node_types={"A": "gateway", "B": "switch"},
         theme=theme,

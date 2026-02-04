@@ -1,6 +1,7 @@
 """Tests for SVG group rendering."""
 
 import unifi_network_maps.render.svg as svg_module
+import unifi_network_maps.render.svg_isometric as svg_iso_module
 from unifi_network_maps.model.topology import Edge
 
 
@@ -114,7 +115,7 @@ def test_render_svg_isometric_groups():
     edges = [Edge("A", "B")]
     node_types = {"A": "gateway", "B": "switch"}
     groups = {"Core": ["A", "B"]}
-    output = svg_module.render_svg_isometric(
+    output = svg_iso_module.render_svg_isometric(
         edges,
         node_types=node_types,
         options=svg_module.SvgOptions(layout_mode="grouped"),
@@ -130,7 +131,7 @@ def test_render_svg_isometric_physical_ignores_groups():
     edges = [Edge("A", "B")]
     node_types = {"A": "gateway", "B": "switch"}
     groups = {"Core": ["A", "B"]}
-    output = svg_module.render_svg_isometric(
+    output = svg_iso_module.render_svg_isometric(
         edges,
         node_types=node_types,
         options=svg_module.SvgOptions(layout_mode="physical"),

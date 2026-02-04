@@ -17,7 +17,7 @@ from ..model.topology import (
     build_port_map,
 )
 from .device_ports_md import render_device_port_details
-from .markdown_tables import markdown_table_lines
+from .markdown_tables import escape_markdown, markdown_table_lines
 from .templating import render_template
 
 
@@ -86,16 +86,16 @@ def _details_table_lines(
     wired_count, client_sample = _client_summary(device, client_rows)
     client_label = f"Clients ({client_mode})"
     rows = [
-        ["Model", _escape_cell(device.model_name or device.type or "-")],
-        ["Type", _escape_cell(device.type or "-")],
-        ["IP", _escape_cell(device.ip or "-")],
-        ["MAC", _escape_cell(device.mac or "-")],
-        ["Firmware", _escape_cell(device.version or "-")],
-        ["Uplink", _escape_cell(_uplink_summary(device))],
-        ["Ports", _escape_cell(_port_summary(device))],
-        ["PoE", _escape_cell(_poe_summary(device))],
-        [client_label, _escape_cell(wired_count)],
-        ["Client examples", _escape_cell(client_sample)],
+        ["Model", escape_markdown(device.model_name or device.type or "-")],
+        ["Type", escape_markdown(device.type or "-")],
+        ["IP", escape_markdown(device.ip or "-")],
+        ["MAC", escape_markdown(device.mac or "-")],
+        ["Firmware", escape_markdown(device.version or "-")],
+        ["Uplink", escape_markdown(_uplink_summary(device))],
+        ["Ports", escape_markdown(_port_summary(device))],
+        ["PoE", escape_markdown(_poe_summary(device))],
+        [client_label, escape_markdown(wired_count)],
+        ["Client examples", escape_markdown(client_sample)],
     ]
     lines = ["### Details", ""]
     lines.extend(markdown_table_lines(["Field", "Value"], rows))
@@ -122,13 +122,6 @@ def _lldp_rows(
             ]
         )
     return rows
-
-
-def _escape_cell(value: str) -> str:
-    escaped = value.replace("\\", "\\\\")
-    for char in ("|", "[", "]", "*", "_", "`", "<", ">"):
-        escaped = escaped.replace(char, f"\\{char}")
-    return escaped
 
 
 def _client_rows(
@@ -224,7 +217,7 @@ def _render_device_lldp_section(
             markdown_table_lines(
                 ["Local Port", "Neighbor", "Neighbor Port", "Chassis ID", "Port Description"],
                 _lldp_rows(device.lldp_info, device_index),
-                escape=_escape_cell,
+                escape=escape_markdown,
             )
         ).rstrip()
     else:
@@ -241,7 +234,7 @@ def _render_device_lldp_section(
                         markdown_table_lines(
                             ["Client", "Port"],
                             [
-                                [_escape_cell(client_name), _escape_cell(port_label or "-")]
+                                [escape_markdown(client_name), escape_markdown(port_label or "-")]
                                 for client_name, port_label in rows
                             ],
                         )
@@ -250,7 +243,7 @@ def _render_device_lldp_section(
             ).rstrip()
         else:
             clients_section = "\n".join(
-                ["### Clients", *[f"- {_escape_cell(name)}" for name, _ in rows]]
+                ["### Clients", *[f"- {escape_markdown(name)}" for name, _ in rows]]
             ).rstrip()
     return render_template(
         "lldp_device_section.md.j2",

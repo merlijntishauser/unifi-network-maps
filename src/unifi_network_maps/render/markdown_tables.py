@@ -5,6 +5,14 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable
 
 
+def escape_markdown(value: str) -> str:
+    """Escape characters that have special meaning in Markdown table cells."""
+    escaped = value.replace("\\", "\\\\")
+    for char in ("|", "[", "]", "*", "_", "`", "<", ">"):
+        escaped = escaped.replace(char, f"\\{char}")
+    return escaped
+
+
 def markdown_table_lines(
     headers: list[str],
     rows: Iterable[Iterable[str]],

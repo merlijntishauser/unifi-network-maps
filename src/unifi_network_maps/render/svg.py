@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import functools
 import math
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -16,9 +17,11 @@ _FONTS_DIR = Path(__file__).resolve().parents[1] / "assets" / "fonts"
 _SYSTEM_FONT_STACK = "Arial,Helvetica,sans-serif"
 
 
+@functools.lru_cache(maxsize=4)
 def _build_font_style(font_family: str | None) -> tuple[str, str]:
     """Build @font-face CSS and font-family stack for the given font.
 
+    Results are cached to avoid repeated disk I/O for the same font family.
     Returns (font_face_css, font_family_css) where font_face_css may be empty.
     """
     if not font_family:

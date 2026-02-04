@@ -457,7 +457,7 @@ def _load_icons(icon_set: str = "isometric", decal_color: str = "#1a1a1a") -> di
 
     # Also load isometric for fallback
     fallback_config = _ICON_SETS["isometric"]
-    legacy_subdir, _, legacy_files, _ = fallback_config
+    fallback_subdir, _, fallback_files, _ = fallback_config
 
     for node_type in _ICON_FILES_ISOMETRIC.keys():
         # Try requested set first
@@ -472,14 +472,16 @@ def _load_icons(icon_set: str = "isometric", decal_color: str = "#1a1a1a") -> di
                 icons[node_type] = f"data:image/svg+xml;base64,{encoded}"
                 continue
 
-        # Fallback to legacy
-        legacy_filename = legacy_files.get(node_type)
-        if legacy_filename:
-            legacy_path = (
-                base / legacy_subdir / legacy_filename if legacy_subdir else base / legacy_filename
+        # Fallback to isometric set
+        fallback_filename = fallback_files.get(node_type)
+        if fallback_filename:
+            fallback_path = (
+                base / fallback_subdir / fallback_filename
+                if fallback_subdir
+                else base / fallback_filename
             )
-            if legacy_path.exists():
-                data = legacy_path.read_bytes()
+            if fallback_path.exists():
+                data = fallback_path.read_bytes()
                 encoded = base64.b64encode(data).decode("ascii")
                 icons[node_type] = f"data:image/svg+xml;base64,{encoded}"
 
@@ -537,7 +539,7 @@ def _load_isometric_icons(
 
     # Also load isometric for fallback
     fallback_config = _ICON_SETS["isometric"]
-    _, legacy_iso_subdir, _, legacy_iso_files = fallback_config
+    _, fallback_iso_subdir, _, fallback_iso_files = fallback_config
 
     for node_type in _ISO_ICON_FILES_ISOMETRIC.keys():
         # Try requested set first
@@ -554,12 +556,12 @@ def _load_isometric_icons(
                 icons[node_type] = f"data:image/svg+xml;base64,{encoded}"
                 continue
 
-        # Fallback to legacy
-        legacy_filename = legacy_iso_files.get(node_type)
-        if legacy_filename:
-            legacy_path = base / legacy_iso_subdir / legacy_filename
-            if legacy_path.exists():
-                data = legacy_path.read_bytes()
+        # Fallback to isometric set
+        fallback_filename = fallback_iso_files.get(node_type)
+        if fallback_filename:
+            fallback_path = base / fallback_iso_subdir / fallback_filename
+            if fallback_path.exists():
+                data = fallback_path.read_bytes()
                 encoded = base64.b64encode(data).decode("ascii")
                 icons[node_type] = f"data:image/svg+xml;base64,{encoded}"
 

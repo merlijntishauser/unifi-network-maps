@@ -1417,6 +1417,7 @@ def _iso_layout_positions(
 def _iso_grid_lines(
     grid_positions: dict[str, tuple[float, float]],
     layout: IsoLayout,
+    grid_color: str = "#efefef",
 ) -> list[str]:
     if not grid_positions:
         return []
@@ -1438,7 +1439,7 @@ def _iso_grid_lines(
         x2 += layout.padding
         y2 += layout.padding
         grid_lines.append(
-            f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="#efefef" stroke-width="0.6"/>'
+            f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{grid_color}" stroke-width="0.6"/>'
         )
     for gy in range(gy_start, gy_end + 1):
         x1, y1 = _iso_project(layout, float(gx_start), float(gy))
@@ -1448,7 +1449,7 @@ def _iso_grid_lines(
         x2 += layout.padding
         y2 += layout.padding
         grid_lines.append(
-            f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="#efefef" stroke-width="0.6"/>'
+            f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{grid_color}" stroke-width="0.6"/>'
         )
     return grid_lines
 
@@ -2260,7 +2261,7 @@ def render_svg_isometric(
         )
         _render_iso_group_boundaries(lines, group_bounds_list, theme, options.font_size)
 
-    grid_lines = _iso_grid_lines(grid_positions, layout)
+    grid_lines = _iso_grid_lines(grid_positions, layout, theme.grid_color)
     if grid_lines:
         lines.append('<g class="iso-grid" opacity="0.7">')
         lines.extend(grid_lines)

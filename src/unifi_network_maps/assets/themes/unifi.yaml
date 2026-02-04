@@ -24,6 +24,7 @@ mermaid:
 svg:
   icon_set: modern
   icon_decal: "#212327"
+  grid_color: "#a0bde0"
   background: "#f9fafa"
   text:
     primary: "#212327"

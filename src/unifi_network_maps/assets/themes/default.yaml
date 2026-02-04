@@ -23,6 +23,7 @@ mermaid:
   standard_link_arrow: "none"
 svg:
   icon_set: isometric
+  grid_color: "#b8bcc2"
   links:
     standard:
       from: "#2ecc71"

@@ -141,6 +141,13 @@ unifi-network-maps --mock-data examples/mock_data.json   --include-ports --inclu
 
 ![Isometric network example](examples/output/network_ports_clients_iso.svg)
 
+### Themes & Icon Sets
+
+Built-in themes (`--theme`) and icon sets (`--icon-set`) can be combined freely.
+Regenerate this overview with `make theme-matrix`.
+
+![Theme × icon-set matrix](examples/themes/theme_matrix.png)
+
 Mermaid example with ports:
 
 ```mermaid

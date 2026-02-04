@@ -62,6 +62,9 @@ class SvgTheme:
     # Icon decal color (for modern icons rendered on node surface)
     icon_decal: str = "#5A6878"
 
+    # Isometric grid
+    grid_color: str = "#efefef"
+
     # Isometric node side face colors (SW=left, E=right)
     node_side_left: str = "#dcdcdc"
     node_side_right: str = "#c8c8c8"

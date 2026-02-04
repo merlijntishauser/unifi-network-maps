@@ -24,6 +24,7 @@ mermaid:
 svg:
   icon_set: isometric
   icon_decal: "#374151"
+  grid_color: "#b8bcc2"
   background: "#fafafa"
   text:
     primary: "#374151"

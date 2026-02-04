@@ -133,6 +133,7 @@ def _svg_theme_from_dict(data: dict, base: SvgTheme) -> SvgTheme:
         poe_stroke=_coerce_color(data.get("poe_stroke"), base.poe_stroke),
         icon_set=_coerce_icon_set(data.get("icon_set"), base.icon_set),
         icon_decal=_coerce_color(data.get("icon_decal"), base.icon_decal),
+        grid_color=_coerce_color(data.get("grid_color"), base.grid_color),
         node_side_left=_coerce_color(data.get("node_side_left"), base.node_side_left),
         node_side_right=_coerce_color(data.get("node_side_right"), base.node_side_right),
     )

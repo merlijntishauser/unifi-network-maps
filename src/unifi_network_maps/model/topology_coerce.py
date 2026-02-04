@@ -5,16 +5,11 @@ from __future__ import annotations
 import logging
 from collections.abc import Iterable
 
+from .helpers import get_field
 from .lldp import coerce_lldp
 from .topology import Device, DeviceSource, PortInfo, UplinkInfo
 
 logger = logging.getLogger(__name__)
-
-
-def _get_attr(obj: object, name: str) -> object | None:
-    if isinstance(obj, dict):
-        return obj.get(name)
-    return getattr(obj, name, None)
 
 
 def _as_list(value: object | None) -> list[object]:
@@ -29,10 +24,6 @@ def _as_list(value: object | None) -> list[object]:
     if isinstance(value, Iterable):
         return list(value)
     return []
-
-
-def _normalize_mac(value: str) -> str:
-    return value.strip().lower()
 
 
 def _as_bool(value: object | None) -> bool:
@@ -98,7 +89,7 @@ def _aggregation_group(port_entry: object) -> object | None:
                 return value
         return None
     for key in keys:
-        value = _get_attr(port_entry, key)
+        value = get_field(port_entry, key)
         if value not in (None, "", False):
             return value
     return None
@@ -162,7 +153,7 @@ def _extract_wan_networkconf_id(port_entry: object) -> str | None:
     if isinstance(port_entry, dict):
         value = port_entry.get("wan_networkconf_id")
     else:
-        value = _get_attr(port_entry, "wan_networkconf_id")
+        value = get_field(port_entry, "wan_networkconf_id")
     if isinstance(value, str) and value.strip():
         return value.strip()
     return None
@@ -184,17 +175,17 @@ def _port_info_from_entry(
         native_vlan = port_entry.get("native_vlan")
         tagged_vlans = port_entry.get("tagged_vlans")
     else:
-        port_idx = _get_attr(port_entry, "port_idx") or _get_attr(port_entry, "portIdx")
-        name = _get_attr(port_entry, "name")
-        ifname = _get_attr(port_entry, "ifname")
-        speed = _get_attr(port_entry, "speed")
+        port_idx = get_field(port_entry, "port_idx") or get_field(port_entry, "portIdx")
+        name = get_field(port_entry, "name")
+        ifname = get_field(port_entry, "ifname")
+        speed = get_field(port_entry, "speed")
         aggregation_group = _aggregation_group(port_entry)
-        port_poe = _as_bool(_get_attr(port_entry, "port_poe"))
-        poe_enable = _as_bool(_get_attr(port_entry, "poe_enable"))
-        poe_good = _as_bool(_get_attr(port_entry, "poe_good"))
-        poe_power = _as_float(_get_attr(port_entry, "poe_power"))
-        native_vlan = _get_attr(port_entry, "native_vlan")
-        tagged_vlans = _get_attr(port_entry, "tagged_vlans")
+        port_poe = _as_bool(get_field(port_entry, "port_poe"))
+        poe_enable = _as_bool(get_field(port_entry, "poe_enable"))
+        poe_good = _as_bool(get_field(port_entry, "poe_good"))
+        poe_power = _as_float(get_field(port_entry, "poe_power"))
+        native_vlan = get_field(port_entry, "native_vlan")
+        tagged_vlans = get_field(port_entry, "tagged_vlans")
     return PortInfo(
         port_idx=_as_int(port_idx),
         name=str(name) if isinstance(name, str) and name.strip() else None,
@@ -214,7 +205,7 @@ def _port_info_from_entry(
 def _coerce_port_table(
     device: DeviceSource, network_vlan_map: dict[str, int] | None = None
 ) -> list[PortInfo]:
-    port_table = _as_list(_get_attr(device, "port_table"))
+    port_table = _as_list(get_field(device, "port_table"))
     return [_port_info_from_entry(port_entry, network_vlan_map) for port_entry in port_table]
 
 
@@ -236,12 +227,6 @@ def _poe_ports_from_device(
     return poe_ports
 
 
-def _device_field(device: object, name: str) -> object | None:
-    if isinstance(device, dict):
-        return device.get(name)
-    return getattr(device, name, None)
-
-
 def _parse_uplink(value: object | None) -> UplinkInfo | None:
     if value is None:
         return None
@@ -250,9 +235,9 @@ def _parse_uplink(value: object | None) -> UplinkInfo | None:
         name = value.get("uplink_device_name") or value.get("uplink_name")
         port = _as_int(value.get("uplink_remote_port") or value.get("port_idx"))
     else:
-        mac = _get_attr(value, "uplink_mac") or _get_attr(value, "uplink_device_mac")
-        name = _get_attr(value, "uplink_device_name") or _get_attr(value, "uplink_name")
-        port = _as_int(_get_attr(value, "uplink_remote_port") or _get_attr(value, "port_idx"))
+        mac = get_field(value, "uplink_mac") or get_field(value, "uplink_device_mac")
+        name = get_field(value, "uplink_device_name") or get_field(value, "uplink_name")
+        port = _as_int(get_field(value, "uplink_remote_port") or get_field(value, "port_idx"))
     mac_value = str(mac).strip() if isinstance(mac, str) and mac.strip() else None
     name_value = str(name).strip() if isinstance(name, str) and name.strip() else None
     if mac_value is None and name_value is None and port is None:
@@ -261,19 +246,19 @@ def _parse_uplink(value: object | None) -> UplinkInfo | None:
 
 
 def _uplink_info(device: DeviceSource) -> tuple[UplinkInfo | None, UplinkInfo | None]:
-    uplink = _parse_uplink(_device_field(device, "uplink"))
-    last_uplink = _parse_uplink(_device_field(device, "last_uplink"))
+    uplink = _parse_uplink(get_field(device, "uplink"))
+    last_uplink = _parse_uplink(get_field(device, "last_uplink"))
 
     if uplink is None:
-        mac = _device_field(device, "uplink_mac") or _device_field(device, "uplink_device_mac")
-        name = _device_field(device, "uplink_device_name")
-        port = _as_int(_device_field(device, "uplink_remote_port"))
+        mac = get_field(device, "uplink_mac") or get_field(device, "uplink_device_mac")
+        name = get_field(device, "uplink_device_name")
+        port = _as_int(get_field(device, "uplink_remote_port"))
         uplink = _parse_uplink(
             {"uplink_mac": mac, "uplink_device_name": name, "uplink_remote_port": port}
         )
 
     if last_uplink is None:
-        mac = _device_field(device, "last_uplink_mac")
+        mac = get_field(device, "last_uplink_mac")
         last_uplink = _parse_uplink({"uplink_mac": mac})
 
     return uplink, last_uplink
@@ -293,25 +278,25 @@ def _get_model_display_name(device: DeviceSource) -> str | None:
         "model_name",
     )
     for key in candidates:
-        value = _get_attr(device, key)
+        value = get_field(device, key)
         if isinstance(value, str) and value.strip():
             return value.strip()
     return None
 
 
 def coerce_device(device: DeviceSource, network_vlan_map: dict[str, int] | None = None) -> Device:
-    name = _get_attr(device, "name")
-    model_name = _get_model_display_name(device) or _get_attr(device, "model")
-    model = _get_attr(device, "model")
-    mac = _get_attr(device, "mac")
-    ip = _get_attr(device, "ip") or _get_attr(device, "ip_address")
-    dev_type = _get_attr(device, "type") or _get_attr(device, "device_type")
-    version = _get_attr(device, "displayable_version") or _get_attr(device, "version")
-    lldp_info = _get_attr(device, "lldp_info")
+    name = get_field(device, "name")
+    model_name = _get_model_display_name(device) or get_field(device, "model")
+    model = get_field(device, "model")
+    mac = get_field(device, "mac")
+    ip = get_field(device, "ip") or get_field(device, "ip_address")
+    dev_type = get_field(device, "type") or get_field(device, "device_type")
+    version = get_field(device, "displayable_version") or get_field(device, "version")
+    lldp_info = get_field(device, "lldp_info")
     if lldp_info is None:
-        lldp_info = _get_attr(device, "lldp")
+        lldp_info = get_field(device, "lldp")
     if lldp_info is None:
-        lldp_info = _get_attr(device, "lldp_table")
+        lldp_info = get_field(device, "lldp_table")
 
     if not name or not mac:
         raise ValueError("Device missing name or mac")

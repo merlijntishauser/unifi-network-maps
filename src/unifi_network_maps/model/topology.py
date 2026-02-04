@@ -7,6 +7,7 @@ from collections import deque
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 
+from .helpers import get_field, normalize_mac
 from .labels import compose_port_label, order_edge_names
 from .lldp import LLDPEntry, local_port_label
 from .ports import extract_port_number
@@ -97,16 +98,6 @@ type ClientPortMap = dict[str, list[tuple[int, str]]]
 type VlanMap = dict[tuple[str, str], tuple[int, ...]]
 
 
-def _normalize_mac(value: str) -> str:
-    return value.strip().lower()
-
-
-def _device_field(device: object, name: str) -> object | None:
-    if isinstance(device, dict):
-        return device.get(name)
-    return getattr(device, name, None)
-
-
 def _lldp_candidates(entry: LLDPEntry) -> list[str]:
     candidates: list[str] = []
     if entry.local_port_name:
@@ -149,8 +140,8 @@ def _resolve_port_idx_from_lldp(lldp_entry: LLDPEntry, port_table: list[PortInfo
 
 
 def classify_device_type(device: object) -> str:
-    raw_type = _device_field(device, "type")
-    raw_name = _device_field(device, "name")
+    raw_type = get_field(device, "type")
+    raw_name = get_field(device, "name")
     value = raw_type.strip().lower() if isinstance(raw_type, str) else ""
     if not value:
         name = raw_name.strip().lower() if isinstance(raw_name, str) else ""
@@ -356,25 +347,19 @@ def build_tree_edges_by_topology(edges: Iterable[Edge], gateways: list[str]) -> 
 def build_device_index(devices: Iterable[Device]) -> dict[str, str]:
     index: dict[str, str] = {}
     for device in devices:
-        index[_normalize_mac(device.mac)] = device.name
+        index[normalize_mac(device.mac)] = device.name
     return index
 
 
-def _client_field(client: object, name: str) -> object | None:
-    if isinstance(client, dict):
-        return client.get(name)
-    return getattr(client, name, None)
-
-
 def _client_display_name(client: object) -> str | None:
-    raw_name = _client_field(client, "name")
+    raw_name = get_field(client, "name")
     if isinstance(raw_name, str) and raw_name.strip():
         return raw_name.strip()
     preferred = _client_ucore_display_name(client)
     if preferred:
         return preferred
     for key in ("hostname", "mac"):
-        value = _client_field(client, key)
+        value = get_field(client, key)
         if isinstance(value, str) and value.strip():
             return value.strip()
     return None
@@ -382,11 +367,11 @@ def _client_display_name(client: object) -> str | None:
 
 def _client_uplink_mac(client: object) -> str | None:
     for key in ("ap_mac", "sw_mac", "uplink_mac", "uplink_device_mac", "last_uplink_mac"):
-        value = _client_field(client, key)
+        value = get_field(client, key)
         if isinstance(value, str) and value.strip():
             return value.strip()
     for key in ("uplink", "last_uplink"):
-        nested = _client_field(client, key)
+        nested = get_field(client, key)
         if isinstance(nested, dict):
             value = nested.get("uplink_mac") or nested.get("uplink_device_mac")
             if isinstance(value, str) and value.strip():
@@ -404,9 +389,9 @@ def _client_uplink_port(client: object) -> int | None:
 
 def _client_port_values(client: object) -> Iterable[object | None]:
     for key in ("uplink_remote_port", "sw_port", "ap_port", "port_idx"):
-        yield _client_field(client, key)
+        yield get_field(client, key)
     for key in ("uplink", "last_uplink"):
-        nested = _client_field(client, key)
+        nested = get_field(client, key)
         if isinstance(nested, dict):
             for nested_key in ("uplink_remote_port", "port_idx"):
                 yield nested.get(nested_key)
@@ -424,12 +409,12 @@ def _parse_port_value(value: object | None) -> int | None:
 
 
 def _client_is_wired(client: object) -> bool:
-    return bool(_client_field(client, "is_wired"))
+    return bool(get_field(client, "is_wired"))
 
 
 def _client_unifi_flag(client: object) -> bool | None:
     for key in ("is_unifi", "is_unifi_device", "is_ubnt", "is_uap", "is_managed"):
-        value = _client_field(client, key)
+        value = get_field(client, key)
         if isinstance(value, bool):
             return value
         if isinstance(value, int):
@@ -439,14 +424,14 @@ def _client_unifi_flag(client: object) -> bool | None:
 
 def _client_vendor(client: object) -> str | None:
     for key in ("oui", "vendor", "vendor_name", "manufacturer", "manufacturer_name"):
-        value = _client_field(client, key)
+        value = get_field(client, key)
         if isinstance(value, str) and value.strip():
             return value.strip()
     return None
 
 
 def _client_ucore_info(client: object) -> dict[str, object] | None:
-    info = _client_field(client, "unifi_device_info_from_ucore")
+    info = get_field(client, "unifi_device_info_from_ucore")
     if isinstance(info, dict):
         return info
     return None
@@ -464,7 +449,7 @@ def _client_ucore_display_name(client: object) -> str | None:
 
 
 def _client_hostname_source(client: object) -> str | None:
-    value = _client_field(client, "hostname_source")
+    value = get_field(client, "hostname_source")
     if isinstance(value, str) and value.strip():
         return value.strip()
     return None
@@ -496,7 +481,7 @@ def _client_is_unifi(client: object) -> bool:
 
 def _client_channel(client: object) -> int | None:
     for key in ("channel", "radio_channel", "wifi_channel"):
-        value = _client_field(client, key)
+        value = get_field(client, key)
         if isinstance(value, int):
             return value
         if isinstance(value, str) and value.isdigit():
@@ -506,7 +491,7 @@ def _client_channel(client: object) -> int | None:
 
 def _client_vlan(client: object) -> int | None:
     for key in ("vlan", "vlan_id", "vlanId", "vlanid"):
-        value = _client_field(client, key)
+        value = get_field(client, key)
         if isinstance(value, int) and value > 0:
             return value
         if isinstance(value, str) and value.isdigit() and int(value) > 0:
@@ -548,7 +533,7 @@ def build_client_edges(
         uplink_mac = _client_uplink_mac(client)
         if not name or not uplink_mac:
             continue
-        device_name = device_index.get(_normalize_mac(uplink_mac))
+        device_name = device_index.get(normalize_mac(uplink_mac))
         if not device_name:
             continue
         label = None
@@ -705,7 +690,7 @@ def build_client_port_map(
         uplink_port = _client_uplink_port(client)
         if not name or not uplink_mac or uplink_port is None:
             continue
-        device_name = device_index.get(_normalize_mac(uplink_mac))
+        device_name = device_index.get(normalize_mac(uplink_mac))
         if not device_name:
             continue
         port_map.setdefault(device_name, []).append((uplink_port, name))
@@ -770,12 +755,12 @@ def _collect_lldp_links(
         for lldp_entry in sorted(
             device.lldp_info,
             key=lambda item: (
-                _normalize_mac(item.chassis_id),
+                normalize_mac(item.chassis_id),
                 str(item.port_id or ""),
                 str(item.port_desc or ""),
             ),
         ):
-            peer_mac = _normalize_mac(lldp_entry.chassis_id)
+            peer_mac = normalize_mac(lldp_entry.chassis_id)
             peer_name = index.get(peer_mac)
             if peer_name is None:
                 if only_unifi:
@@ -828,7 +813,7 @@ def _uplink_name(
     if not uplink:
         return None
     if uplink.mac:
-        resolved = index.get(_normalize_mac(uplink.mac))
+        resolved = index.get(normalize_mac(uplink.mac))
         if resolved:
             return resolved
     if uplink.name:

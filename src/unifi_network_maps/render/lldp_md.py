@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
+from ..model.helpers import get_field, normalize_mac
 from ..model.lldp import LLDPEntry, local_port_label
 from ..model.ports import extract_port_number
 from ..model.topology import Device, build_client_port_map, build_device_index, build_port_map
@@ -12,25 +13,15 @@ from .markdown_tables import markdown_table_lines
 from .templating import render_template
 
 
-def _normalize_mac(value: str) -> str:
-    return value.strip().lower()
-
-
-def _client_field(client: object, name: str) -> object | None:
-    if isinstance(client, dict):
-        return client.get(name)
-    return getattr(client, name, None)
-
-
 def _client_display_name(client: object) -> str | None:
-    raw_name = _client_field(client, "name")
+    raw_name = get_field(client, "name")
     if isinstance(raw_name, str) and raw_name.strip():
         return raw_name.strip()
     preferred = _client_ucore_display_name(client)
     if preferred:
         return preferred
     for key in ("hostname", "mac"):
-        value = _client_field(client, key)
+        value = get_field(client, key)
         if isinstance(value, str) and value.strip():
             return value.strip()
     return None
@@ -38,11 +29,11 @@ def _client_display_name(client: object) -> str | None:
 
 def _client_uplink_mac(client: object) -> str | None:
     for key in ("ap_mac", "sw_mac", "uplink_mac", "uplink_device_mac", "last_uplink_mac"):
-        value = _client_field(client, key)
+        value = get_field(client, key)
         if isinstance(value, str) and value.strip():
             return value.strip()
     for key in ("uplink", "last_uplink"):
-        nested = _client_field(client, key)
+        nested = get_field(client, key)
         if isinstance(nested, dict):
             value = nested.get("uplink_mac") or nested.get("uplink_device_mac")
             if isinstance(value, str) and value.strip():
@@ -60,9 +51,9 @@ def _client_uplink_port(client: object) -> int | None:
 
 def _client_port_values(client: object) -> Iterable[object | None]:
     for key in ("uplink_remote_port", "sw_port", "ap_port", "port_idx"):
-        yield _client_field(client, key)
+        yield get_field(client, key)
     for key in ("uplink", "last_uplink"):
-        nested = _client_field(client, key)
+        nested = get_field(client, key)
         if isinstance(nested, dict):
             for nested_key in ("uplink_remote_port", "port_idx"):
                 yield nested.get(nested_key)
@@ -80,12 +71,12 @@ def _parse_port_value(value: object | None) -> int | None:
 
 
 def _client_is_wired(client: object) -> bool:
-    return bool(_client_field(client, "is_wired"))
+    return bool(get_field(client, "is_wired"))
 
 
 def _client_unifi_flag(client: object) -> bool | None:
     for key in ("is_unifi", "is_unifi_device", "is_ubnt", "is_uap", "is_managed"):
-        value = _client_field(client, key)
+        value = get_field(client, key)
         if isinstance(value, bool):
             return value
         if isinstance(value, int):
@@ -95,14 +86,14 @@ def _client_unifi_flag(client: object) -> bool | None:
 
 def _client_vendor(client: object) -> str | None:
     for key in ("oui", "vendor", "vendor_name", "manufacturer", "manufacturer_name"):
-        value = _client_field(client, key)
+        value = get_field(client, key)
         if isinstance(value, str) and value.strip():
             return value.strip()
     return None
 
 
 def _client_ucore_info(client: object) -> dict[str, object] | None:
-    info = _client_field(client, "unifi_device_info_from_ucore")
+    info = get_field(client, "unifi_device_info_from_ucore")
     if isinstance(info, dict):
         return info
     return None
@@ -120,7 +111,7 @@ def _client_ucore_display_name(client: object) -> str | None:
 
 
 def _client_hostname_source(client: object) -> str | None:
-    value = _client_field(client, "hostname_source")
+    value = get_field(client, "hostname_source")
     if isinstance(value, str) and value.strip():
         return value.strip()
     return None
@@ -255,7 +246,7 @@ def _lldp_rows(
     rows: list[list[str]] = []
     for entry in sorted(entries, key=_lldp_sort_key):
         local_label = local_port_label(entry) or "?"
-        peer_name = device_index.get(_normalize_mac(entry.chassis_id), "")
+        peer_name = device_index.get(normalize_mac(entry.chassis_id), "")
         peer_port = entry.port_id or "?"
         port_desc = entry.port_desc or ""
         rows.append(
@@ -293,7 +284,7 @@ def _client_rows(
         uplink_mac = _client_uplink_mac(client)
         if not name or not uplink_mac:
             continue
-        device_name = device_index.get(_normalize_mac(uplink_mac))
+        device_name = device_index.get(normalize_mac(uplink_mac))
         if not device_name:
             continue
         port_label = None

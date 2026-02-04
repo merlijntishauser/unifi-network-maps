@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
+from .helpers import get_field
+
 
 def _as_list(value: object | None) -> list[object]:
     if value is None:
@@ -19,15 +21,9 @@ def _as_list(value: object | None) -> list[object]:
     return []
 
 
-def _get_attr(obj: object, name: str) -> object | None:
-    if isinstance(obj, dict):
-        return obj.get(name)
-    return getattr(obj, name, None)
-
-
 def _first_attr(obj: object, *names: str) -> object | None:
     for name in names:
-        value = _get_attr(obj, name)
+        value = get_field(obj, name)
         if value is not None:
             return value
     return None

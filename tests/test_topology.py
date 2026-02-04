@@ -2,6 +2,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from unifi_network_maps.model.helpers import get_field
 from unifi_network_maps.model.topology import (
     Device,
     Edge,
@@ -10,7 +11,6 @@ from unifi_network_maps.model.topology import (
     UplinkInfo,
     _client_channel,
     _client_display_name,
-    _client_field,
     _client_unifi_flag,
     _client_uplink_mac,
     _client_uplink_port,
@@ -535,7 +535,7 @@ def test_as_float_unknown_type_returns_zero():
 
 def test_client_field_attribute_fallback():
     client = SimpleNamespace(name="Client")
-    assert _client_field(client, "name") == "Client"
+    assert get_field(client, "name") == "Client"
 
 
 def test_client_display_name_missing_returns_none():

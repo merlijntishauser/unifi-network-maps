@@ -6,19 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.5.0] - 2026-02-04
 ### Added
 - Add SVG grouped layout mode (`--svg-layout-mode grouped`) with visual boundaries for network segments (#19)
 - Add VLAN information to edge metadata with color-coded visualization (#20)
 - Add `--theme` CLI argument for built-in themes: `unifi`, `unifi-dark`, `minimal`, `classic`, `classic-dark` (#22)
-- Add theme properties: background, text colors (primary/secondary), status indicators (online/offline), WAN globe colors
-- Add WAN upstream visualization with ISP label, link speed, and status indicator
+- Add theme properties: background, text colors, status indicators, WAN globe, grid color
+- Add WAN upstream visualization with ISP label, link speed, and status indicator (`--wan-label`, `--wan-speed`, `--wan2-label`, `--wan2-speed`)
 - Add `--icon-set` CLI argument for selectable icon sets: `isometric`, `modern` (#23)
-- Add modern icon set with minimalistic network device icons (gateway, switch, ap, client)
-- Theme YAML schema now supports `icon_set` field to set default icon set per theme
+- Add modern icon set with minimalistic isometric device icons
+- Add themeable isometric grid color (`grid_color`) for per-theme floor grid styling
+- Add `--max-vlan-colors` and `--include-vlan-legend` options for VLAN visualization
+- Add `--collapse-clients` to group clients by uplink into cluster nodes with count badges
+- Add theme matrix generator script (`make theme-matrix`) with composite PNG overview
+- Theme YAML schema now supports `icon_set` and `grid_color` fields
 
 ### Changed
+- Align UniFi light/dark themes with official ui.com color palette from techspecs.ui.com/brand
 - SVG renderer now uses theme-aware colors for background, text labels, and WAN box
 - WAN port detection uses `wan_networkconf_id` field instead of hardcoded port numbers
+- Light theme isometric grids use darker grid lines for better contrast (blue-tinted for UniFi, grey for others)
+
+### Removed
+- Remove flat (Heroicons) and outline (Lucide) icon sets; consolidate to `isometric` and `modern`
 
 ### Fixed
 - Normalize gateway WAN port speeds from Gbps to Mbps for correct display (e.g., "10GbE" instead of "10MbE")
@@ -224,7 +235,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Introduced SVG renderer and tree layout fixes.
 - Increased test coverage and added coverage tooling.
 
-[Unreleased]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.14...HEAD
+[Unreleased]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.15...v1.5.0
+[1.4.15]:https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.14...v1.4.15
 [1.4.14]:https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.11...v1.4.14
 [1.4.13]:https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.11...v1.4.13
 [1.4.12]:https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.11...v1.4.12

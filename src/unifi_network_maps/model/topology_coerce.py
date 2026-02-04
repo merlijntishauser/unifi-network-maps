@@ -28,8 +28,11 @@ def _as_float(value: object | None) -> float:
 def _as_int(value: object | None) -> int | None:
     if isinstance(value, int):
         return value
-    if isinstance(value, str) and value.isdigit():
-        return int(value)
+    if isinstance(value, str):
+        try:
+            return int(value)
+        except ValueError:
+            return None
     return None
 
 
@@ -71,18 +74,6 @@ def _aggregation_group(port_entry: object) -> object | None:
     return None
 
 
-def _parse_int_safe(value: object) -> int | None:
-    """Parse an int from various types, returning None on failure."""
-    if isinstance(value, int):
-        return value
-    if isinstance(value, str):
-        try:
-            return int(value)
-        except ValueError:
-            return None
-    return None
-
-
 def _coerce_vlan_list(
     value: object, network_vlan_map: dict[str, int] | None = None
 ) -> tuple[int, ...]:
@@ -95,14 +86,14 @@ def _coerce_vlan_list(
         if normalized in ("auto", "block_all", "all", "none", ""):
             return ()
         parts = [p.strip() for p in value.split(",") if p.strip()]
-        parsed = [_parse_int_safe(p) for p in parts]
+        parsed = [_as_int(p) for p in parts]
         return tuple(sorted(v for v in parsed if v is not None))
     if isinstance(value, int):
         return (value,)
     if isinstance(value, list | tuple):
         result: list[int] = []
         for item in value:
-            parsed_int = _parse_int_safe(item)
+            parsed_int = _as_int(item)
             if parsed_int is not None:
                 result.append(parsed_int)
             elif network_vlan_map and isinstance(item, str):

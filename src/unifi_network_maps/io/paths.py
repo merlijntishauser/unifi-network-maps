@@ -194,8 +194,10 @@ def resolve_output_path(path: str | Path, *, format_name: str | None) -> Path:
 
 
 def resolve_cache_dir(path: str | Path) -> Path:
-    resolved = _resolve_user_path(path)
+    # Check for symlinks on the original path before .resolve() follows them.
+    raw = Path(path).expanduser()
+    _ensure_no_symlink(raw, label="Cache directory")
+    _ensure_no_symlink_in_parents(raw, label="Cache directory")
+    resolved = raw.resolve(strict=False)
     _ensure_within_allowed(resolved, _allowed_roots(), label="Cache directory")
-    _ensure_no_symlink(resolved, label="Cache directory")
-    _ensure_no_symlink_in_parents(resolved, label="Cache directory")
     return resolved

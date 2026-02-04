@@ -309,18 +309,13 @@ def test_resolve_cache_dir_accepts_normal_dir(tmp_path: Path):
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Symlinks need special privileges on Windows")
-def test_resolve_cache_dir_resolves_symlink(tmp_path: Path):
-    """Symlink is resolved before the check, so it passes.
-
-    Note: _ensure_no_symlink is ineffective here because _resolve_user_path
-    calls .resolve() which follows symlinks before the check runs.
-    """
+def test_resolve_cache_dir_rejects_symlink(tmp_path: Path):
     real = tmp_path / "real"
     real.mkdir()
     link = tmp_path / "link"
     link.symlink_to(real)
-    result = resolve_cache_dir(str(link))
-    assert result == real.resolve()
+    with pytest.raises(ValueError, match="must not be a symlink"):
+        resolve_cache_dir(str(link))
 
 
 # --- Path traversal ---

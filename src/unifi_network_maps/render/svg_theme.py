@@ -112,102 +112,71 @@ DEFAULT_THEME = SvgTheme(
 )
 
 
+def _gradient(grad_id: str, colors: tuple[str, str], *, horizontal: bool = False) -> str:
+    """Build a single linearGradient element."""
+    x2, y2 = ("100%", "0%") if horizontal else ("100%", "100%")
+    return (
+        f'<linearGradient id="{grad_id}" x1="0%" y1="0%" x2="{x2}" y2="{y2}">'
+        f'<stop offset="0%" stop-color="{colors[0]}"/>'
+        f'<stop offset="100%" stop-color="{colors[1]}"/>'
+        "</linearGradient>"
+    )
+
+
 def svg_defs(prefix: str, theme: SvgTheme = DEFAULT_THEME) -> str:
     gradient_prefix = f"{prefix}-" if prefix else ""
     node_prefix = f"{prefix}-node-" if prefix else "node-"
     filter_prefix = f"{prefix}-" if prefix else ""
-    return (
-        "<defs>"
-        f'<linearGradient id="{gradient_prefix}link-standard" x1="0%" y1="0%" x2="100%" y2="0%">'
-        f'<stop offset="0%" stop-color="{theme.link_standard[0]}"/>'
-        f'<stop offset="100%" stop-color="{theme.link_standard[1]}"/>'
-        "</linearGradient>"
-        f'<linearGradient id="{gradient_prefix}link-poe" x1="0%" y1="0%" x2="100%" y2="0%">'
-        f'<stop offset="0%" stop-color="{theme.link_poe[0]}"/>'
-        f'<stop offset="100%" stop-color="{theme.link_poe[1]}"/>'
-        "</linearGradient>"
-        f'<linearGradient id="{node_prefix}gateway" x1="0%" y1="0%" x2="100%" y2="100%">'
-        f'<stop offset="0%" stop-color="{theme.node_gateway[0]}"/>'
-        f'<stop offset="100%" stop-color="{theme.node_gateway[1]}"/>'
-        "</linearGradient>"
-        f'<linearGradient id="{node_prefix}switch" x1="0%" y1="0%" x2="100%" y2="100%">'
-        f'<stop offset="0%" stop-color="{theme.node_switch[0]}"/>'
-        f'<stop offset="100%" stop-color="{theme.node_switch[1]}"/>'
-        "</linearGradient>"
-        f'<linearGradient id="{node_prefix}ap" x1="0%" y1="0%" x2="100%" y2="100%">'
-        f'<stop offset="0%" stop-color="{theme.node_ap[0]}"/>'
-        f'<stop offset="100%" stop-color="{theme.node_ap[1]}"/>'
-        "</linearGradient>"
-        f'<linearGradient id="{node_prefix}client" x1="0%" y1="0%" x2="100%" y2="100%">'
-        f'<stop offset="0%" stop-color="{theme.node_client[0]}"/>'
-        f'<stop offset="100%" stop-color="{theme.node_client[1]}"/>'
-        "</linearGradient>"
-        f'<linearGradient id="{node_prefix}client_cluster" x1="0%" y1="0%" x2="100%" y2="100%">'
-        f'<stop offset="0%" stop-color="{theme.node_client_cluster[0]}"/>'
-        f'<stop offset="100%" stop-color="{theme.node_client_cluster[1]}"/>'
-        "</linearGradient>"
-        f'<linearGradient id="{node_prefix}other" x1="0%" y1="0%" x2="100%" y2="100%">'
-        f'<stop offset="0%" stop-color="{theme.node_other[0]}"/>'
-        f'<stop offset="100%" stop-color="{theme.node_other[1]}"/>'
-        "</linearGradient>"
-        # Extended device types
-        f'<linearGradient id="{node_prefix}camera" x1="0%" y1="0%" x2="100%" y2="100%">'
-        f'<stop offset="0%" stop-color="{theme.node_camera[0]}"/>'
-        f'<stop offset="100%" stop-color="{theme.node_camera[1]}"/>'
-        "</linearGradient>"
-        f'<linearGradient id="{node_prefix}tv" x1="0%" y1="0%" x2="100%" y2="100%">'
-        f'<stop offset="0%" stop-color="{theme.node_tv[0]}"/>'
-        f'<stop offset="100%" stop-color="{theme.node_tv[1]}"/>'
-        "</linearGradient>"
-        f'<linearGradient id="{node_prefix}phone" x1="0%" y1="0%" x2="100%" y2="100%">'
-        f'<stop offset="0%" stop-color="{theme.node_phone[0]}"/>'
-        f'<stop offset="100%" stop-color="{theme.node_phone[1]}"/>'
-        "</linearGradient>"
-        f'<linearGradient id="{node_prefix}printer" x1="0%" y1="0%" x2="100%" y2="100%">'
-        f'<stop offset="0%" stop-color="{theme.node_printer[0]}"/>'
-        f'<stop offset="100%" stop-color="{theme.node_printer[1]}"/>'
-        "</linearGradient>"
-        f'<linearGradient id="{node_prefix}nas" x1="0%" y1="0%" x2="100%" y2="100%">'
-        f'<stop offset="0%" stop-color="{theme.node_nas[0]}"/>'
-        f'<stop offset="100%" stop-color="{theme.node_nas[1]}"/>'
-        "</linearGradient>"
-        f'<linearGradient id="{node_prefix}speaker" x1="0%" y1="0%" x2="100%" y2="100%">'
-        f'<stop offset="0%" stop-color="{theme.node_speaker[0]}"/>'
-        f'<stop offset="100%" stop-color="{theme.node_speaker[1]}"/>'
-        "</linearGradient>"
-        f'<linearGradient id="{node_prefix}game_console" x1="0%" y1="0%" x2="100%" y2="100%">'
-        f'<stop offset="0%" stop-color="{theme.node_game_console[0]}"/>'
-        f'<stop offset="100%" stop-color="{theme.node_game_console[1]}"/>'
-        "</linearGradient>"
-        f'<linearGradient id="{node_prefix}iot" x1="0%" y1="0%" x2="100%" y2="100%">'
-        f'<stop offset="0%" stop-color="{theme.node_iot[0]}"/>'
-        f'<stop offset="100%" stop-color="{theme.node_iot[1]}"/>'
-        "</linearGradient>"
+
+    parts = ["<defs>"]
+
+    # Link gradients (horizontal)
+    parts.append(_gradient(f"{gradient_prefix}link-standard", theme.link_standard, horizontal=True))
+    parts.append(_gradient(f"{gradient_prefix}link-poe", theme.link_poe, horizontal=True))
+
+    # Node gradients (diagonal)
+    node_types: list[tuple[str, tuple[str, str]]] = [
+        ("gateway", theme.node_gateway),
+        ("switch", theme.node_switch),
+        ("ap", theme.node_ap),
+        ("client", theme.node_client),
+        ("client_cluster", theme.node_client_cluster),
+        ("other", theme.node_other),
+        ("camera", theme.node_camera),
+        ("tv", theme.node_tv),
+        ("phone", theme.node_phone),
+        ("printer", theme.node_printer),
+        ("nas", theme.node_nas),
+        ("speaker", theme.node_speaker),
+        ("game_console", theme.node_game_console),
+        ("iot", theme.node_iot),
+    ]
+    for name, colors in node_types:
+        parts.append(_gradient(f"{node_prefix}{name}", colors))
+
+    # Filters
+    parts.append(
         f'<filter id="{filter_prefix}edge-glow" x="-50%" y="-50%" width="200%" height="200%">'
         '<feGaussianBlur stdDeviation="4" result="blur"/>'
         "</filter>"
-        # Emboss filter for icon decals - iOS glass effect
+    )
+    # Emboss filter for icon decals - iOS glass effect
+    parts.append(
         f'<filter id="{filter_prefix}icon-emboss" x="-50%" y="-50%" width="200%" height="200%">'
-        # Outer glow/shadow for depth
         '<feGaussianBlur in="SourceAlpha" stdDeviation="2.5" result="blur"/>'
         '<feOffset in="blur" dx="0" dy="2.5" result="dropShadow"/>'
         '<feFlood flood-color="#000000" flood-opacity="0.4" result="shadowColor"/>'
         '<feComposite in="shadowColor" in2="dropShadow" operator="in" result="shadow"/>'
-        # Top highlight edge (outside the icon)
         '<feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="blurLight"/>'
         '<feOffset in="blurLight" dx="-2" dy="-1.8" result="lightOffset"/>'
         '<feFlood flood-color="#ffffff" flood-opacity="0.9" result="lightColor"/>'
         '<feComposite in="lightColor" in2="lightOffset" operator="in" result="highlight"/>'
-        # Subtract original shape from highlight to keep only edge glow
         '<feComposite in="highlight" in2="SourceAlpha" operator="out" result="edgeHighlight"/>'
-        # Bottom shadow edge (outside the icon)
         '<feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="blurDark"/>'
         '<feOffset in="blurDark" dx="2" dy="1.8" result="darkOffset"/>'
         '<feFlood flood-color="#000000" flood-opacity="0.6" result="darkColor"/>'
         '<feComposite in="darkColor" in2="darkOffset" operator="in" result="innerShadow"/>'
-        # Subtract original shape from shadow to keep only edge shadow
         '<feComposite in="innerShadow" in2="SourceAlpha" operator="out" result="edgeShadow"/>'
-        # Combine: edges first, then full-strength icon on top
         "<feMerge>"
         '<feMergeNode in="shadow"/>'
         '<feMergeNode in="edgeHighlight"/>'
@@ -215,13 +184,15 @@ def svg_defs(prefix: str, theme: SvgTheme = DEFAULT_THEME) -> str:
         '<feMergeNode in="SourceGraphic"/>'
         "</feMerge>"
         "</filter>"
-        f'<linearGradient id="{gradient_prefix}globe" x1="0%" y1="0%" x2="100%" y2="100%">'
-        f'<stop offset="0%" stop-color="{theme.wan_globe[0]}"/>'
-        f'<stop offset="100%" stop-color="{theme.wan_globe[1]}"/>'
-        "</linearGradient>"
-        # Heroicon bolt for PoE indicator
+    )
+
+    # Globe gradient and PoE bolt symbol
+    parts.append(_gradient(f"{gradient_prefix}globe", theme.wan_globe))
+    parts.append(
         f'<symbol id="{filter_prefix}poe-bolt" viewBox="0 0 24 24">'
         '<path fill-rule="evenodd" d="M14.615 1.595a.75.75 0 0 1 .359.852L12.982 9.75h7.268a.75.75 0 0 1 .548 1.262l-10.5 11.25a.75.75 0 0 1-1.272-.71l1.992-7.302H3.75a.75.75 0 0 1-.548-1.262l10.5-11.25a.75.75 0 0 1 .913-.143Z" clip-rule="evenodd"/>'
         "</symbol>"
-        "</defs>"
     )
+    parts.append("</defs>")
+
+    return "".join(parts)

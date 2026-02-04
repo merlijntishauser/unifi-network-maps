@@ -384,15 +384,12 @@ def fetch_devices(
     site_name = site or config.site
     ttl_seconds = _cache_ttl_seconds()
     cache_path = _cache_dir() / f"devices_{_cache_key(config.url, site_name, str(detailed))}.json"
-    if use_cache and _is_cache_dir_safe(cache_path.parent):
+    cache_safe = use_cache and _is_cache_dir_safe(cache_path.parent)
+    if cache_safe:
         cached = _load_cache(cache_path, ttl_seconds)
-        stale_cached, cache_age = _load_cache_with_age(cache_path)
-    else:
-        cached = None
-        stale_cached, cache_age = None, None
-    if cached is not None:
-        logger.debug("Using cached devices (%d)", len(cached))
-        return cached
+        if cached is not None:
+            logger.debug("Using cached devices (%d)", len(cached))
+            return cached
 
     try:
         controller = _init_controller(config, is_udm_pro=True)
@@ -406,6 +403,7 @@ def fetch_devices(
     try:
         devices = _call_with_retries("device fetch", _fetch)
     except Exception as exc:  # noqa: BLE001 - fallback to cache
+        stale_cached, cache_age = _load_cache_with_age(cache_path) if cache_safe else (None, None)
         if stale_cached is not None:
             logger.warning(
                 "Device fetch failed; using stale cache (%ds old): %s",
@@ -435,15 +433,12 @@ def fetch_clients(
     site_name = site or config.site
     ttl_seconds = _cache_ttl_seconds()
     cache_path = _cache_dir() / f"clients_{_cache_key(config.url, site_name)}.json"
-    if use_cache and _is_cache_dir_safe(cache_path.parent):
+    cache_safe = use_cache and _is_cache_dir_safe(cache_path.parent)
+    if cache_safe:
         cached = _load_cache(cache_path, ttl_seconds)
-        stale_cached, cache_age = _load_cache_with_age(cache_path)
-    else:
-        cached = None
-        stale_cached, cache_age = None, None
-    if cached is not None:
-        logger.debug("Using cached clients (%d)", len(cached))
-        return cached
+        if cached is not None:
+            logger.debug("Using cached clients (%d)", len(cached))
+            return cached
 
     try:
         controller = _init_controller(config, is_udm_pro=True)
@@ -457,6 +452,7 @@ def fetch_clients(
     try:
         clients = _call_with_retries("client fetch", _fetch)
     except Exception as exc:  # noqa: BLE001 - fallback to cache
+        stale_cached, cache_age = _load_cache_with_age(cache_path) if cache_safe else (None, None)
         if stale_cached is not None:
             logger.warning(
                 "Client fetch failed; using stale cache (%ds old): %s",
@@ -486,15 +482,12 @@ def fetch_networks(
     site_name = site or config.site
     ttl_seconds = _cache_ttl_seconds()
     cache_path = _cache_dir() / f"networks_{_cache_key(config.url, site_name)}.json"
-    if use_cache and _is_cache_dir_safe(cache_path.parent):
+    cache_safe = use_cache and _is_cache_dir_safe(cache_path.parent)
+    if cache_safe:
         cached = _load_cache(cache_path, ttl_seconds)
-        stale_cached, cache_age = _load_cache_with_age(cache_path)
-    else:
-        cached = None
-        stale_cached, cache_age = None, None
-    if cached is not None:
-        logger.debug("Using cached networks (%d)", len(cached))
-        return cached
+        if cached is not None:
+            logger.debug("Using cached networks (%d)", len(cached))
+            return cached
 
     try:
         controller = _init_controller(config, is_udm_pro=True)
@@ -510,6 +503,7 @@ def fetch_networks(
     try:
         networks = _call_with_retries("network fetch", _fetch)
     except Exception as exc:  # noqa: BLE001 - fallback to cache
+        stale_cached, cache_age = _load_cache_with_age(cache_path) if cache_safe else (None, None)
         if stale_cached is not None:
             logger.warning(
                 "Network fetch failed; using stale cache (%ds old): %s",

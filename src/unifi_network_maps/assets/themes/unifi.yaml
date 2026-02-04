@@ -22,6 +22,7 @@ mermaid:
   standard_link_width: 2
   standard_link_arrow: "none"
 svg:
+  font_family: "Inter"
   icon_set: modern
   icon_decal: "#212327"
   grid_color: "#a0bde0"

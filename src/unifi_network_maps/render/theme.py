@@ -100,6 +100,13 @@ def _coerce_vlan_colors(value: object) -> dict[int, str]:
     return result
 
 
+def _coerce_font_family(value: object, default: str | None) -> str | None:
+    """Parse font_family from theme YAML."""
+    if isinstance(value, str) and value:
+        return value
+    return default
+
+
 def _coerce_icon_set(value: object, default: str) -> str:
     """Parse icon_set from theme YAML."""
     if isinstance(value, str) and value in ("isometric", "modern"):
@@ -132,6 +139,7 @@ def _svg_theme_from_dict(data: dict, base: SvgTheme) -> SvgTheme:
         poe_fill=_coerce_color(data.get("poe_fill"), base.poe_fill),
         poe_stroke=_coerce_color(data.get("poe_stroke"), base.poe_stroke),
         icon_set=_coerce_icon_set(data.get("icon_set"), base.icon_set),
+        font_family=_coerce_font_family(data.get("font_family"), base.font_family),
         icon_decal=_coerce_color(data.get("icon_decal"), base.icon_decal),
         grid_color=_coerce_color(data.get("grid_color"), base.grid_color),
         node_side_left=_coerce_color(data.get("node_side_left"), base.node_side_left),

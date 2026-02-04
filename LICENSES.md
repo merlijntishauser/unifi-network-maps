@@ -41,6 +41,26 @@ Icon symbols from [Heroicons](https://heroicons.com/) by Tailwind Labs.
 | client.svg | Cube | computer-desktop |
 | other.svg | Cube | server |
 
+## Fonts
+
+### Inter (SIL Open Font License 1.1)
+
+The [Inter](https://rsms.me/inter/) typeface by Rasmus Andersson is used in the UniFi and UniFi Dark themes.
+Variable WOFF2 files are vendored under `src/unifi_network_maps/assets/fonts/`.
+
+- Source: https://github.com/rsms/inter
+- License: SIL Open Font License 1.1
+- License file: `src/unifi_network_maps/assets/fonts/INTER_LICENSE`
+
+### Space Grotesk (SIL Open Font License 1.1)
+
+The [Space Grotesk](https://floriankarsten.github.io/space-grotesk/) typeface by Florian Karsten is used in the Minimal theme.
+Variable WOFF2 files are vendored under `src/unifi_network_maps/assets/fonts/`.
+
+- Source: https://github.com/floriankarsten/space-grotesk
+- License: SIL Open Font License 1.1
+- License file: `src/unifi_network_maps/assets/fonts/SPACE_GROTESK_LICENSE`
+
 ## License Compatibility
 
 When sourcing icons for this project, use license-compatible sources:

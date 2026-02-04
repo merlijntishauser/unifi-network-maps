@@ -12,6 +12,54 @@ from pathlib import Path
 from ..model.topology import Edge, WanInfo, WanInterface
 from .svg_theme import DEFAULT_THEME, SvgTheme, svg_defs
 
+_FONTS_DIR = Path(__file__).resolve().parents[1] / "assets" / "fonts"
+_SYSTEM_FONT_STACK = "Arial,Helvetica,sans-serif"
+
+
+def _build_font_style(font_family: str | None) -> tuple[str, str]:
+    """Build @font-face CSS and font-family stack for the given font.
+
+    Returns (font_face_css, font_family_css) where font_face_css may be empty.
+    """
+    if not font_family:
+        return "", _SYSTEM_FONT_STACK
+
+    slug = font_family.lower().replace(" ", "-")
+    font_face_parts: list[str] = []
+
+    for weight, suffix in ((400, "regular"), (600, "semibold")):
+        path = _FONTS_DIR / f"{slug}-{suffix}.woff2"
+        if not path.exists():
+            continue
+        b64 = base64.b64encode(path.read_bytes()).decode("ascii")
+        font_face_parts.append(
+            f"@font-face{{font-family:'{font_family}';font-weight:{weight};"
+            f"src:url(data:font/woff2;base64,{b64}) format('woff2');}}"
+        )
+
+    if not font_face_parts:
+        return "", _SYSTEM_FONT_STACK
+
+    font_face_css = "".join(font_face_parts)
+    family_css = f"'{font_family}',{_SYSTEM_FONT_STACK}"
+    return font_face_css, family_css
+
+
+def _svg_style_block(theme: SvgTheme, font_size: int, *, iso: bool = False) -> str:
+    """Build the <style> element for an SVG, including optional @font-face."""
+    font_face, family = _build_font_style(theme.font_family)
+    parts = [f"<style>{font_face}"]
+
+    if iso:
+        parts.append(f"text{{font-family:{family};}}")
+        parts.append(f"text:not(.group-label){{font-size:{font_size}px;}}")
+    else:
+        parts.append(f"text{{font-family:{family};font-size:{font_size}px;}}")
+
+    parts.append("text.node-label{font-weight:600;}")
+    parts.append("</style>")
+    return "".join(parts)
+
 
 @dataclass(frozen=True)
 class SvgOptions:
@@ -994,11 +1042,7 @@ def render_svg(
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{out_width}" height="{out_height}" '
         f'viewBox="0 0 {width} {height}">',
         svg_defs("", theme),
-        (
-            "<style>text{font-family:Arial,Helvetica,sans-serif;font-size:"
-            f"{options.font_size}px;"
-            "}</style>"
-        ),
+        _svg_style_block(theme, options.font_size),
         f'<rect width="100%" height="100%" fill="{theme.background}"/>',
     ]
 
@@ -1304,7 +1348,7 @@ def _render_svg_nodes(
                 lines.append(f'<tspan x="{text_x}" dy="{dy}">{_escape_text(line)}</tspan>')
             lines.append("</text>")
         lines.append(
-            f'<text x="{text_x}" y="{text_y}" fill="{theme.text_primary}" '
+            f'<text x="{text_x}" y="{text_y}" class="node-label" fill="{theme.text_primary}" '
             f'text-anchor="start">{safe_name}</text>'
         )
         lines.append("</g>")
@@ -1956,7 +2000,7 @@ def _render_iso_node(
         f"translate({-name_x} {-name_y})"
     )
     lines.append(
-        f'<text x="{name_x}" y="{name_y}" text-anchor="middle" fill="{theme.text_primary}" '
+        f'<text x="{name_x}" y="{name_y}" class="node-label" text-anchor="middle" fill="{theme.text_primary}" '
         f'font-size="{name_font_size}" transform="{name_transform}">{_escape_text(name)}</text>'
     )
     lines.append("</g>")
@@ -2240,11 +2284,7 @@ def render_svg_isometric(
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{out_width}" height="{out_height}" '
         f'viewBox="0 0 {layout_positions.width} {layout_positions.height}">',
         svg_defs("iso", theme),
-        (
-            "<style>text{font-family:Arial,Helvetica,sans-serif;}"
-            f"text:not(.group-label){{font-size:{options.font_size}px;}}"
-            "</style>"
-        ),
+        _svg_style_block(theme, options.font_size, iso=True),
         f'<rect width="100%" height="100%" fill="{theme.background}"/>',
     ]
 

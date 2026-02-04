@@ -59,6 +59,9 @@ class SvgTheme:
     # Icon set
     icon_set: str = "isometric"
 
+    # Font
+    font_family: str | None = None
+
     # Icon decal color (for modern icons rendered on node surface)
     icon_decal: str = "#5A6878"
 

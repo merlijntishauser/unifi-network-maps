@@ -486,13 +486,47 @@ def _load_icons(icon_set: str = "isometric", decal_color: str = "#1a1a1a") -> di
     return icons
 
 
+def _darken_hex(color: str, factor: float = 0.35) -> str:
+    """Darken a hex color by *factor* (0..1). Returns 6-digit hex."""
+    c = color.lstrip("#")
+    if len(c) != 6:
+        return color
+    r, g, b = int(c[0:2], 16), int(c[2:4], 16), int(c[4:6], 16)
+    m = 1.0 - factor
+    return f"#{int(r * m):02x}{int(g * m):02x}{int(b * m):02x}"
+
+
+def _build_decal_colors(theme: SvgTheme, factor: float = 0.35) -> dict[str, str]:
+    """Derive per-type icon decal colors by darkening each node's gradient end."""
+    node_attrs = {
+        "gateway": theme.node_gateway,
+        "switch": theme.node_switch,
+        "ap": theme.node_ap,
+        "client": theme.node_client,
+        "other": theme.node_other,
+        "camera": theme.node_camera,
+        "tv": theme.node_tv,
+        "phone": theme.node_phone,
+        "printer": theme.node_printer,
+        "nas": theme.node_nas,
+        "speaker": theme.node_speaker,
+        "game_console": theme.node_game_console,
+        "iot": theme.node_iot,
+        "client_cluster": theme.node_client_cluster,
+    }
+    return {name: _darken_hex(pair[1], factor) for name, pair in node_attrs.items()}
+
+
 def _load_isometric_icons(
-    icon_set: str = "isometric", decal_color: str = "#5A6878"
+    icon_set: str = "isometric",
+    decal_color: str = "#5A6878",
+    decal_colors: dict[str, str] | None = None,
 ) -> dict[str, str]:
     """Load isometric icons for the specified icon set.
 
     Falls back to isometric icons if the requested icon is not found in the set.
-    Modern icons use #DECAL0 as placeholder which gets replaced with decal_color.
+    Modern icons use #DECAL0 as placeholder which gets replaced with a per-type
+    color from *decal_colors* (falling back to *decal_color*).
     """
     base = Path(__file__).resolve().parents[1] / "assets" / "icons"
     icons: dict[str, str] = {}
@@ -512,8 +546,9 @@ def _load_isometric_icons(
             path = base / iso_subdir / filename
             if path.exists():
                 content = path.read_text(encoding="utf-8")
-                # Replace placeholder color with theme color
-                content = content.replace("#DECAL0", decal_color)
+                # Replace placeholder with per-type or fallback color
+                color = decal_colors.get(node_type, decal_color) if decal_colors else decal_color
+                content = content.replace("#DECAL0", color)
                 data = content.encode("utf-8")
                 encoded = base64.b64encode(data).decode("ascii")
                 icons[node_type] = f"data:image/svg+xml;base64,{encoded}"
@@ -2267,7 +2302,8 @@ def render_svg_isometric(
     wan_info: WanInfo | None = None,
 ) -> str:
     options = options or SvgOptions()
-    icons = _load_isometric_icons(theme.icon_set, theme.icon_decal)
+    per_type_decals = _build_decal_colors(theme)
+    icons = _load_isometric_icons(theme.icon_set, theme.icon_decal, per_type_decals)
     layout_positions = _iso_layout_positions(edges, node_types, options)
     layout = layout_positions.layout
     grid_positions = layout_positions.grid_positions

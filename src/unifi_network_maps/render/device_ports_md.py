@@ -113,7 +113,7 @@ def _build_port_rows(
         port.port_idx
         for ports in aggregated.values()
         for port in ports
-        if getattr(port, "port_idx", None) is not None
+        if port.port_idx is not None
     }
     rows: list[tuple[tuple[int, int], tuple[str, str, str, str, str]]] = []
     seen_ports: set[int] = set()
@@ -256,15 +256,11 @@ def _format_speed(speed: int | None) -> str:
     return f"{speed}M"
 
 
-def _format_poe_state(port: object) -> str:
-    poe_power = getattr(port, "poe_power", None)
-    poe_good = getattr(port, "poe_good", False)
-    poe_enable = getattr(port, "poe_enable", False)
-    port_poe = getattr(port, "port_poe", False)
-    if (poe_power or 0.0) > 0 or poe_good:
+def _format_poe_state(port: PortInfo) -> str:
+    if (port.poe_power or 0.0) > 0 or port.poe_good:
         return "active"
-    if port_poe or poe_enable:
-        if not poe_enable:
+    if port.port_poe or port.poe_enable:
+        if not port.poe_enable:
             return "disabled"
         return "capable"
     return "-"
@@ -284,12 +280,11 @@ def _port_index(port_idx: int | None, name: str | None) -> int | None:
     return None
 
 
-def _port_sort_key(port: object) -> tuple[int, str]:
-    port_idx = _port_index(getattr(port, "port_idx", None), getattr(port, "name", None))
+def _port_sort_key(port: PortInfo) -> tuple[int, str]:
+    port_idx = _port_index(port.port_idx, port.name)
     if port_idx is not None:
         return (0, f"{port_idx:04d}")
-    name = getattr(port, "name", "") or ""
-    return (1, name.lower())
+    return (1, (port.name or "").lower())
 
 
 def _render_device_details(device: Device) -> list[str]:
@@ -371,14 +366,12 @@ def _format_client_connections(clients: list[str]) -> str:
 def _aggregate_base_groups(port_table: list[PortInfo]) -> dict[str, list[PortInfo]]:
     groups: dict[str, list[PortInfo]] = defaultdict(list)
     for port in port_table:
-        group = getattr(port, "aggregation_group", None)
-        if group:
-            groups[str(group)].append(port)
+        if port.aggregation_group:
+            groups[str(port.aggregation_group)].append(port)
             continue
         if _looks_like_lag(port):
-            port_idx = getattr(port, "port_idx", None)
-            if port_idx is not None:
-                groups[f"lag-{port_idx}"].append(port)
+            if port.port_idx is not None:
+                groups[f"lag-{port.port_idx}"].append(port)
     return groups
 
 
@@ -403,8 +396,8 @@ def _extend_singleton_groups(
         candidates: list[PortInfo] = []
         for neighbor in (port_idx - 1, port_idx + 1):
             port = port_by_idx.get(neighbor)
-            if port and not getattr(port, "aggregation_group", None):
-                if getattr(port, "speed", None) == getattr(lone_port, "speed", None):
+            if port and not port.aggregation_group:
+                if port.speed == lone_port.speed:
                     candidates.append(port)
         if candidates:
             groups[group_id].extend(candidates)
@@ -417,8 +410,8 @@ def _aggregate_ports(port_table: list[PortInfo]) -> dict[str, list[PortInfo]]:
 
 
 def _looks_like_lag(port: PortInfo) -> bool:
-    name = (getattr(port, "name", "") or "").lower()
-    ifname = (getattr(port, "ifname", "") or "").lower()
+    name = (port.name or "").lower()
+    ifname = (port.ifname or "").lower()
     return "lag" in name or "lag" in ifname or "aggregate" in name
 
 
@@ -447,7 +440,7 @@ def _format_aggregate_connections(
 ) -> str:
     rendered: list[str] = []
     for port in group_ports:
-        port_idx = _port_index(getattr(port, "port_idx", None), getattr(port, "name", None))
+        port_idx = _port_index(port.port_idx, port.name)
         if port_idx is None:
             continue
         text = _format_connections(
@@ -463,7 +456,7 @@ def _format_aggregate_connections(
 
 
 def _format_aggregate_speed(group_ports: list[PortInfo]) -> str:
-    speeds = {getattr(port, "speed", None) for port in group_ports}
+    speeds = {port.speed for port in group_ports}
     speeds.discard(None)
     if not speeds:
         return "-"
@@ -484,5 +477,5 @@ def _format_aggregate_poe_state(group_ports: list[PortInfo]) -> str:
 
 
 def _format_aggregate_power(group_ports: list[PortInfo]) -> str:
-    total = sum(getattr(port, "poe_power", 0.0) or 0.0 for port in group_ports)
+    total = sum(port.poe_power or 0.0 for port in group_ports)
     return _format_poe_power(total)

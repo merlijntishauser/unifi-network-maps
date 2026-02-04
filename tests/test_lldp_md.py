@@ -11,6 +11,7 @@ from unifi_network_maps.model.topology import (
     _client_uplink_port,
 )
 from unifi_network_maps.render import lldp_md
+from unifi_network_maps.render.device_summary import uplink_summary
 from unifi_network_maps.render.lldp_md import render_lldp_md
 
 
@@ -179,7 +180,7 @@ def test_uplink_summary_formats_port():
         lldp_info=[],
         uplink=UplinkInfo(mac=None, name="Core", port=3),
     )
-    assert lldp_md._uplink_summary(device) == "Core (Port 3)"
+    assert uplink_summary(device) == "Core (Port 3)"
 
 
 def test_client_summary_truncates_samples():

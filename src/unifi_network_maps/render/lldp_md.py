@@ -17,6 +17,7 @@ from ..model.topology import (
     build_port_map,
 )
 from .device_ports_md import render_device_port_details
+from .device_summary import poe_summary, port_summary, uplink_summary
 from .markdown_tables import escape_markdown, markdown_table_lines
 from .templating import render_template
 
@@ -25,43 +26,6 @@ def _lldp_sort_key(entry: LLDPEntry) -> tuple[int, str, str]:
     port_label = local_port_label(entry) or ""
     port_number = "".join(ch for ch in port_label if ch.isdigit())
     return (int(port_number or 0), port_label, entry.port_id)
-
-
-def _port_summary(device: Device) -> str:
-    ports = [port for port in device.port_table if port.port_idx is not None]
-    if not ports:
-        return "-"
-    total_ports = len(ports)
-    poe_capable = sum(1 for port in ports if port.port_poe or port.poe_enable)
-    poe_active = sum(1 for port in ports if device.poe_ports.get(port.port_idx or -1))
-    total_power = sum(port.poe_power or 0.0 for port in ports)
-    summary = f"Total {total_ports}, PoE {poe_capable} (active {poe_active})"
-    if total_power > 0:
-        summary = f"{summary}, {total_power:.2f}W"
-    return summary
-
-
-def _poe_summary(device: Device) -> str:
-    ports = [port for port in device.port_table if port.port_idx is not None]
-    if not ports:
-        return "-"
-    poe_capable = sum(1 for port in ports if port.port_poe or port.poe_enable)
-    poe_active = sum(1 for port in ports if (port.poe_power or 0.0) > 0 or port.poe_good)
-    total_power = sum(port.poe_power or 0.0 for port in ports)
-    summary = f"{poe_capable} capable, {poe_active} active"
-    if total_power > 0:
-        summary = f"{summary}, {total_power:.2f}W"
-    return summary
-
-
-def _uplink_summary(device: Device) -> str:
-    uplink = device.uplink or device.last_uplink
-    if not uplink:
-        return "-"
-    name = uplink.name or uplink.mac or "Unknown"
-    if uplink.port is not None:
-        return f"{name} (Port {uplink.port})"
-    return name
 
 
 def _client_summary(
@@ -91,9 +55,9 @@ def _details_table_lines(
         ["IP", escape_markdown(device.ip or "-")],
         ["MAC", escape_markdown(device.mac or "-")],
         ["Firmware", escape_markdown(device.version or "-")],
-        ["Uplink", escape_markdown(_uplink_summary(device))],
-        ["Ports", escape_markdown(_port_summary(device))],
-        ["PoE", escape_markdown(_poe_summary(device))],
+        ["Uplink", escape_markdown(uplink_summary(device))],
+        ["Ports", escape_markdown(port_summary(device))],
+        ["PoE", escape_markdown(poe_summary(device))],
         [client_label, escape_markdown(wired_count)],
         ["Client examples", escape_markdown(client_sample)],
     ]

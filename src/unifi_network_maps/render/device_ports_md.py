@@ -7,6 +7,7 @@ from html import escape as _escape_html
 
 from ..model.ports import extract_port_number
 from ..model.topology import ClientPortMap, Device, PortInfo, PortMap, classify_device_type
+from .device_summary import poe_summary, port_summary, uplink_summary
 from .markdown_tables import escape_markdown, markdown_table_lines
 from .templating import render_template
 
@@ -298,52 +299,12 @@ def _render_device_details(device: Device) -> list[str]:
         f"| IP | {escape_markdown(device.ip or '-')} |",
         f"| MAC | {escape_markdown(device.mac or '-')} |",
         f"| Firmware | {escape_markdown(device.version or '-')} |",
-        f"| Uplink | {escape_markdown(_uplink_summary(device))} |",
-        f"| Ports | {escape_markdown(_port_summary(device))} |",
-        f"| PoE | {escape_markdown(_poe_summary(device))} |",
+        f"| Uplink | {escape_markdown(uplink_summary(device))} |",
+        f"| Ports | {escape_markdown(port_summary(device))} |",
+        f"| PoE | {escape_markdown(poe_summary(device))} |",
         "",
     ]
     return lines
-
-
-def _port_summary(device: Device) -> str:
-    ports = [port for port in device.port_table if port.port_idx is not None]
-    if not ports:
-        return "-"
-    total_ports = len(ports)
-    active_ports = sum(1 for port in ports if (port.speed or 0) > 0)
-    return f"{total_ports} total, {active_ports} active"
-
-
-def _poe_summary(device: Device) -> str:
-    ports = [port for port in device.port_table if port.port_idx is not None]
-    if not ports:
-        return "-"
-    poe_capable = sum(1 for port in ports if port.port_poe or port.poe_enable)
-    poe_active = sum(1 for port in ports if _format_poe_state(port) == "active")
-    total_power = sum(port.poe_power or 0.0 for port in ports)
-    summary = f"{poe_capable} capable, {poe_active} active"
-    if total_power > 0:
-        summary = f"{summary}, {total_power:.2f}W"
-    return summary
-
-
-def _uplink_summary(device: Device) -> str:
-    uplink = device.uplink or device.last_uplink
-    if not uplink:
-        if classify_device_type(device) == "gateway":
-            return "Internet"
-        return "-"
-    name = uplink.name or uplink.mac or "Unknown"
-    if classify_device_type(device) == "gateway":
-        lowered = name.lower()
-        if lowered in {"unknown", "wan", "internet"}:
-            name = "Internet"
-        elif lowered.startswith(("eth", "wan")):
-            name = "Internet"
-    if uplink.port is not None:
-        return f"{name} (Port {uplink.port})"
-    return name
 
 
 def _device_model_label(device: Device) -> str:

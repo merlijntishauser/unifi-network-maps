@@ -1085,15 +1085,12 @@ def render_svg(
     if use_grouped and group_bounds_list:
         _render_group_boundaries(lines, group_bounds_list, theme, options)
 
-    node_port_labels, node_port_prefix = _render_svg_edges(
-        lines, edges, positions, node_types, options, theme
-    )
+    node_port_labels, _ = _render_svg_edges(lines, edges, positions, node_types, options, theme)
     _render_svg_nodes(
         lines,
         positions,
         node_types,
         node_port_labels,
-        node_port_prefix,
         icons,
         options,
         node_data,
@@ -1328,7 +1325,6 @@ def _render_svg_nodes(
     positions: dict[str, tuple[float, float]],
     node_types: dict[str, str],
     node_port_labels: dict[str, str],
-    node_port_prefix: dict[str, str],
     icons: dict[str, str],
     options: SvgOptions,
     node_data: dict[str, dict[str, str]] | None,
@@ -1598,7 +1594,6 @@ def _render_iso_edges(
     grid_positions: dict[str, tuple[float, float]],
     node_types: dict[str, str],
     layout: IsoLayout,
-    options: SvgOptions,
     theme: SvgTheme,
     offset_x: float,
     offset_y: float,
@@ -2264,7 +2259,6 @@ def _render_iso_group_boundaries(
     lines: list[str],
     bounds_list: list[IsoGroupBounds],
     theme: SvgTheme,
-    font_size: int = 10,
 ) -> None:
     """Render isometric group boundaries as parallelograms."""
     label_size = 48  # Labels
@@ -2336,7 +2330,7 @@ def render_svg_isometric(
             layout_positions.offset_y,
             options,
         )
-        _render_iso_group_boundaries(lines, group_bounds_list, theme, options.font_size)
+        _render_iso_group_boundaries(lines, group_bounds_list, theme)
 
     grid_lines = _iso_grid_lines(grid_positions, layout, theme.grid_color)
     if grid_lines:
@@ -2353,7 +2347,6 @@ def render_svg_isometric(
         grid_positions=grid_positions,
         node_types=node_types,
         layout=layout,
-        options=options,
         theme=theme,
         offset_x=layout_positions.offset_x,
         offset_y=layout_positions.offset_y,

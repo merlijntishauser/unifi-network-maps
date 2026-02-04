@@ -1,71 +1,71 @@
 mermaid:
   nodes:
     gateway:
-      fill: "#1e3a5f"
-      stroke: "#3b82f6"
+      fill: "#0a3058"
+      stroke: "#4797ff"
     switch:
-      fill: "#14532d"
-      stroke: "#34d399"
+      fill: "#0f3524"
+      stroke: "#37be5f"
     ap:
-      fill: "#312e81"
-      stroke: "#818cf8"
+      fill: "#142952"
+      stroke: "#6baeff"
     client:
-      fill: "#334155"
-      stroke: "#94a3b8"
+      fill: "#2a2e33"
+      stroke: "#808893"
     other:
-      fill: "#374151"
-      stroke: "#6b7280"
-  node_text: "#f9fafb"
-  edge_label_border: "#e5e7eb"
+      fill: "#32373d"
+      stroke: "#50565e"
+  node_text: "#f9fafa"
+  edge_label_border: "#50565e"
   edge_label_border_width: 2
-  poe_link: "#34d399"
+  poe_link: "#37be5f"
   poe_link_width: 2
   poe_link_arrow: "none"
-  standard_link: "#3b82f6"
+  standard_link: "#4797ff"
   standard_link_width: 2
   standard_link_arrow: "none"
 svg:
   icon_set: modern
-  icon_decal: "#E8E4E5"
-  node_side_left: "#4b5563"
-  node_side_right: "#374151"
-  background: "#111827"
-  wan_background: "#1e3a5f"
+  icon_decal: "#e8e8e8"
+  node_side_left: "#3a3e44"
+  node_side_right: "#2e3238"
+  background: "#1c1e21"
+  wan_background: "#1a2a3d"
   text:
-    primary: "#f9fafb"
-    secondary: "#9ca3af"
+    primary: "#f9fafa"
+    secondary: "#808893"
   status:
-    online: "#34d399"
-    offline: "#f87171"
+    online: "#37be5f"
+    offline: "#ee6368"
   wan_globe:
-    from: "#38bdf8"
-    to: "#0284c7"
+    from: "#4797ff"
+    to: "#2d7ae0"
   links:
     standard:
-      from: "#3b82f6"
-      to: "#2563eb"
+      from: "#4797ff"
+      to: "#2d7ae0"
     poe:
-      from: "#34d399"
-      to: "#10b981"
+      from: "#37be5f"
+      to: "#2a9e4d"
   nodes:
     gateway:
-      from: "#1e3a5f"
-      to: "#0f2744"
+      from: "#0a3058"
+      to: "#061f3d"
     switch:
-      from: "#14532d"
-      to: "#0a3621"
+      from: "#0f3524"
+      to: "#09261a"
     ap:
-      from: "#312e81"
-      to: "#1e1b4b"
+      from: "#142952"
+      to: "#0c1d3d"
     client:
-      from: "#334155"
-      to: "#1e293b"
+      from: "#2a2e33"
+      to: "#1f2226"
     other:
-      from: "#374151"
-      to: "#1f2937"
+      from: "#32373d"
+      to: "#272b30"
   vlan_colors:
-    1: "#94a3b8"
-    10: "#f87171"
-    20: "#60a5fa"
-    30: "#fbbf24"
+    1: "#9ca3ab"
+    10: "#ee6368"
+    20: "#4797ff"
+    30: "#e79613"
     100: "#a78bfa"

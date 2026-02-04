@@ -1,21 +1,21 @@
 mermaid:
   nodes:
     gateway:
-      fill: "#cce4ff"
+      fill: "#e8f1ff"
       stroke: "#006fff"
     switch:
-      fill: "#ccf2e0"
-      stroke: "#00a86b"
+      fill: "#eaf7f0"
+      stroke: "#38cc65"
     ap:
-      fill: "#e0e0fc"
-      stroke: "#6366f1"
+      fill: "#edf3ff"
+      stroke: "#4797ff"
     client:
-      fill: "#e2e8f0"
-      stroke: "#64748b"
+      fill: "#f0f2f4"
+      stroke: "#808893"
     other:
-      fill: "#f1f5f9"
-      stroke: "#94a3b8"
-  poe_link: "#00a86b"
+      fill: "#f4f5f6"
+      stroke: "#c2c6cb"
+  poe_link: "#38cc65"
   poe_link_width: 2
   poe_link_arrow: "none"
   standard_link: "#006fff"
@@ -23,43 +23,43 @@ mermaid:
   standard_link_arrow: "none"
 svg:
   icon_set: modern
-  icon_decal: "#231F20"
-  background: "#ffffff"
+  icon_decal: "#212327"
+  background: "#f9fafa"
   text:
-    primary: "#1a1a1a"
-    secondary: "#6b7280"
+    primary: "#212327"
+    secondary: "#808893"
   status:
-    online: "#00a86b"
-    offline: "#ef4444"
+    online: "#38cc65"
+    offline: "#f0383b"
   wan_globe:
-    from: "#4fc3f7"
-    to: "#0288d1"
+    from: "#4797ff"
+    to: "#006fff"
   links:
     standard:
       from: "#006fff"
-      to: "#0052cc"
+      to: "#0560d4"
     poe:
-      from: "#00a86b"
-      to: "#007a4d"
+      from: "#38cc65"
+      to: "#2aaa52"
   nodes:
     gateway:
-      from: "#006fff"
-      to: "#0052cc"
+      from: "#2d8cff"
+      to: "#006fff"
     switch:
-      from: "#00a86b"
-      to: "#007a4d"
+      from: "#4dd88a"
+      to: "#38cc65"
     ap:
-      from: "#6366f1"
-      to: "#4f46e5"
+      from: "#6baeff"
+      to: "#4797ff"
     client:
-      from: "#94a3b8"
-      to: "#64748b"
+      from: "#c2c8ce"
+      to: "#aab2ba"
     other:
-      from: "#cbd5e1"
-      to: "#94a3b8"
+      from: "#d8dce0"
+      to: "#c2c8ce"
   vlan_colors:
-    1: "#64748b"
-    10: "#ef4444"
-    20: "#3b82f6"
-    30: "#eab308"
+    1: "#808893"
+    10: "#f0383b"
+    20: "#006fff"
+    30: "#f5a524"
     100: "#8b5cf6"

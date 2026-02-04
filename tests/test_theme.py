@@ -74,7 +74,7 @@ def test_resolve_themes_builtin_unifi():
     """Test that built-in unifi theme loads correctly."""
     mermaid_theme, svg_theme = resolve_themes(theme_name="unifi")
 
-    assert svg_theme.background == "#ffffff"
+    assert svg_theme.background == "#f9fafa"
     assert "#006fff" in mermaid_theme.node_gateway  # UniFi blue
 
 
@@ -82,8 +82,8 @@ def test_resolve_themes_builtin_unifi_dark():
     """Test that built-in unifi-dark theme loads correctly."""
     _mermaid_theme, svg_theme = resolve_themes(theme_name="unifi-dark")
 
-    assert svg_theme.background == "#111827"
-    assert svg_theme.text_primary == "#f9fafb"
+    assert svg_theme.background == "#1c1e21"
+    assert svg_theme.text_primary == "#f9fafa"
 
 
 def test_resolve_themes_builtin_minimal():

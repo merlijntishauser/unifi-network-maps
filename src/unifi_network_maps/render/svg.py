@@ -7,7 +7,7 @@ import functools
 import math
 from collections.abc import Callable
 from dataclasses import dataclass
-from html import escape as _escape_attr
+from html import escape as _escape_html
 from pathlib import Path
 
 from ..model.topology import Edge, WanInfo
@@ -364,7 +364,7 @@ def _render_group_boundaries(
     """Render group background rectangles and labels."""
     label_size = options.font_size + 4
     for bounds in group_bounds_list:
-        group_attr = _escape_attr(bounds.name, quote=True)
+        group_attr = _escape_html(bounds.name, quote=True)
         fill, stroke = theme.group_colors(bounds.name)
         lines.append(f'<g class="network-group" data-group-name="{group_attr}">')
         lines.append(
@@ -686,8 +686,8 @@ def _render_svg_edges(
                 f"M {src_cx} {src_bottom} L {src_cx} {mid_y} "
                 f"L {dst_cx} {mid_y} L {dst_cx} {dst_top}"
             )
-        left_attr = _escape_attr(edge.left, quote=True)
-        right_attr = _escape_attr(edge.right, quote=True)
+        left_attr = _escape_html(edge.left, quote=True)
+        right_attr = _escape_html(edge.right, quote=True)
         vlan_attrs = _vlan_data_attrs(edge)
         base_attrs = f'data-edge-left="{left_attr}" data-edge-right="{right_attr}"'
         if vlan_attrs:
@@ -860,5 +860,5 @@ def _svg_node_group_attrs(
                 attrs["class"] = f"{attrs['class']} {value}".strip()
             else:
                 attrs[key] = value
-    rendered = [f' {key}="{_escape_attr(value, quote=True)}"' for key, value in attrs.items()]
+    rendered = [f' {key}="{_escape_html(value, quote=True)}"' for key, value in attrs.items()]
     return "".join(rendered)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from html import escape as _escape_attr
+from html import escape as _escape_html
 
 from ..model.topology import Edge, WanInfo
 from .svg import (
@@ -407,8 +407,8 @@ def _render_iso_edges(
             dst_cy,
         )
         path = " ".join(path_cmds)
-        left_attr = _escape_attr(edge.left, quote=True)
-        right_attr = _escape_attr(edge.right, quote=True)
+        left_attr = _escape_html(edge.left, quote=True)
+        right_attr = _escape_html(edge.right, quote=True)
         vlan_attrs = _vlan_data_attrs(edge)
         base_attrs = f'data-edge-left="{left_attr}" data-edge-right="{right_attr}"'
         if vlan_attrs:
@@ -1038,7 +1038,7 @@ def _render_iso_group_boundaries(
     label_size = _ISO_GROUP_LABEL_SIZE
     iso_angle = _ISO_PERSPECTIVE_ANGLE
     for bounds in bounds_list:
-        group_attr = _escape_attr(bounds.name, quote=True)
+        group_attr = _escape_html(bounds.name, quote=True)
         fill, stroke = theme.group_colors(bounds.name)
         points_str = " ".join(f"{x},{y}" for x, y in bounds.points)
         lines.append(f'<g class="network-group" data-group-name="{group_attr}">')

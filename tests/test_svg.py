@@ -3,6 +3,7 @@ from pathlib import Path
 
 import unifi_network_maps.render.svg as svg_module
 import unifi_network_maps.render.svg_icons as svg_icons_module
+import unifi_network_maps.render.svg_labels as svg_labels_module
 from unifi_network_maps.model.topology import Edge
 
 
@@ -93,21 +94,24 @@ def test_render_svg_wraps_client_label():
 
 
 def test_extract_port_text_non_port_prefix():
-    assert svg_module._extract_port_text("eth0") is None
+    assert svg_labels_module._extract_port_text("eth0") is None
 
 
 def test_wrap_text_splits_without_space():
-    assert svg_module._wrap_text("ABCDEFGHI", max_len=4) == ["ABCD", "EFGHI"]
+    assert svg_labels_module._wrap_text("ABCDEFGHI", max_len=4) == ["ABCD", "EFGHI"]
 
 
 def test_label_metrics_empty_lines():
-    assert svg_module._label_metrics([], font_size=10, padding_x=4, padding_y=3) == (8.0, 6.0)
+    assert svg_labels_module._label_metrics([], font_size=10, padding_x=4, padding_y=3) == (
+        8.0,
+        6.0,
+    )
 
 
 def test_compact_edge_label_swaps_when_nodes_reversed():
     label = "B: Port 1 <-> A: Port 2"
     assert (
-        svg_module._compact_edge_label(label, left_node="A", right_node="B")
+        svg_labels_module._compact_edge_label(label, left_node="A", right_node="B")
         == "A Port 2 <-> Port 1"
     )
 
@@ -165,15 +169,15 @@ def test_render_svg_client_label_without_arrow():
 
 
 def test_compact_edge_label_right_port_only():
-    assert svg_module._compact_edge_label("Switch <-> Port 2") == "Port 2"
+    assert svg_labels_module._compact_edge_label("Switch <-> Port 2") == "Port 2"
 
 
 def test_compact_edge_label_left_port_only():
-    assert svg_module._compact_edge_label("Port 1 <-> Switch") == "Port 1"
+    assert svg_labels_module._compact_edge_label("Port 1 <-> Switch") == "Port 1"
 
 
 def test_compact_edge_label_no_ports_returns_label():
-    assert svg_module._compact_edge_label("A <-> B") == "A <-> B"
+    assert svg_labels_module._compact_edge_label("A <-> B") == "A <-> B"
 
 
 def test_render_svg_client_label_left_side():

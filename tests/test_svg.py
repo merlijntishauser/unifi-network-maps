@@ -2,6 +2,7 @@ import re
 from pathlib import Path
 
 import unifi_network_maps.render.svg as svg_module
+import unifi_network_maps.render.svg_icons as svg_icons_module
 from unifi_network_maps.model.topology import Edge
 
 
@@ -343,28 +344,28 @@ def test_load_icons_modern():
 
 
 def test_darken_hex_basic():
-    assert svg_module._darken_hex("#ffffff", 0.5) == "#7f7f7f"
-    assert svg_module._darken_hex("#000000", 0.5) == "#000000"
+    assert svg_icons_module._darken_hex("#ffffff", 0.5) == "#7f7f7f"
+    assert svg_icons_module._darken_hex("#000000", 0.5) == "#000000"
 
 
 def test_darken_hex_typical_factor():
-    result = svg_module._darken_hex("#006fff", 0.35)
+    result = svg_icons_module._darken_hex("#006fff", 0.35)
     assert result == "#0048a5"
 
 
 def test_darken_hex_zero_factor():
-    assert svg_module._darken_hex("#ff8000", 0.0) == "#ff8000"
+    assert svg_icons_module._darken_hex("#ff8000", 0.0) == "#ff8000"
 
 
 def test_darken_hex_invalid_input():
-    assert svg_module._darken_hex("not-a-color", 0.35) == "not-a-color"
-    assert svg_module._darken_hex("#fff", 0.35) == "#fff"
+    assert svg_icons_module._darken_hex("not-a-color", 0.35) == "not-a-color"
+    assert svg_icons_module._darken_hex("#fff", 0.35) == "#fff"
 
 
 def test_build_decal_colors_returns_all_node_types():
     from unifi_network_maps.render.svg_theme import DEFAULT_THEME
 
-    colors = svg_module._build_decal_colors(DEFAULT_THEME)
+    colors = svg_icons_module._build_decal_colors(DEFAULT_THEME)
     expected = {
         "gateway",
         "switch",
@@ -390,7 +391,7 @@ def test_build_decal_colors_returns_all_node_types():
 def test_build_decal_colors_are_darker_than_source():
     from unifi_network_maps.render.svg_theme import DEFAULT_THEME
 
-    colors = svg_module._build_decal_colors(DEFAULT_THEME)
+    colors = svg_icons_module._build_decal_colors(DEFAULT_THEME)
     # Gateway source "to" is #ffb15a, decal should be darker (lower RGB sum)
     source = DEFAULT_THEME.node_gateway[1]
     decal = colors["gateway"]

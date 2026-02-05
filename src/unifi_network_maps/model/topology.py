@@ -1093,6 +1093,60 @@ def _find_wan_port_by_idx(port_table: list[PortInfo], port_idx: int) -> PortInfo
     return None
 
 
+def _find_wan1_port(port_table: list[PortInfo]) -> PortInfo | None:
+    """Find WAN1 port by assignment, falling back to port 1."""
+    port = _find_wan_port_by_assignment(port_table, "WAN")
+    if not port:
+        port = _find_wan_port_by_assignment(port_table, "WAN1")
+    if not port:
+        port = _find_wan_port_by_idx(port_table, 1)
+    return port
+
+
+def _find_wan2_port(port_table: list[PortInfo]) -> PortInfo | None:
+    """Find WAN2 port by assignment, falling back to port 9 or 2."""
+    port = _find_wan_port_by_assignment(port_table, "WAN2")
+    if not port:
+        port = _find_wan_port_by_idx(port_table, 9)
+    if not port:
+        port = _find_wan_port_by_idx(port_table, 2)
+    return port
+
+
+def _build_wan_interface(
+    port: PortInfo,
+    default_idx: int,
+    ip_address: str | None,
+    label: str | None,
+    isp_speed: str | None,
+) -> WanInterface:
+    """Build a WAN interface from port info."""
+    speed = _normalize_wan_speed(port.speed)
+    return WanInterface(
+        port_idx=port.port_idx or default_idx,
+        link_speed=speed,
+        ip_address=ip_address,
+        enabled=speed is not None and speed > 0,
+        label=label,
+        isp_speed=isp_speed,
+    )
+
+
+def _should_include_wan2(
+    port: PortInfo | None,
+    label: str | None,
+    isp_speed: str | None,
+) -> bool:
+    """Determine if WAN2 should be included in the output."""
+    if not port:
+        return False
+    has_assignment = port.wan_networkconf_id is not None
+    has_cli_config = label is not None or isp_speed is not None
+    speed = _normalize_wan_speed(port.speed)
+    is_active = speed is not None and speed > 0
+    return has_assignment or has_cli_config or is_active
+
+
 def extract_wan_info(
     device: Device,
     *,
@@ -1106,65 +1160,26 @@ def extract_wan_info(
     Detects WAN ports by their wan_networkconf_id assignment field. Falls back
     to legacy port number detection (port 1 for WAN1, port 9/2 for WAN2) if
     no WAN assignment is found.
-
-    Args:
-        device: The gateway device to extract WAN info from.
-        wan1_label: Optional label for WAN1 (e.g., "KPN Fiber").
-        wan1_isp_speed: Optional ISP speed for WAN1 (e.g., "1 Gbps ↓↑").
-        wan2_label: Optional label for WAN2 (e.g., "Backup 4G").
-        wan2_isp_speed: Optional ISP speed for WAN2.
-
-    Returns:
-        WanInfo with WAN interface details, or None if not a gateway.
     """
-    device_type = classify_device_type(device)
-    if device_type != "gateway":
+    if classify_device_type(device) != "gateway":
+        return None
+    if not device.port_table:
         return None
 
-    port_table = device.port_table
-    if not port_table:
-        return None
-
-    # Find WAN1 port - first by assignment, then fallback to port 1
-    wan1_port = _find_wan_port_by_assignment(port_table, "WAN")
-    if not wan1_port:
-        wan1_port = _find_wan_port_by_assignment(port_table, "WAN1")
-    if not wan1_port:
-        wan1_port = _find_wan_port_by_idx(port_table, 1)
-
+    wan1_port = _find_wan1_port(device.port_table)
     wan1 = None
     if wan1_port:
-        wan1_speed = _normalize_wan_speed(wan1_port.speed)
-        wan1 = WanInterface(
-            port_idx=wan1_port.port_idx or 1,
-            link_speed=wan1_speed,
-            ip_address=device.ip if device.ip else None,
-            enabled=wan1_speed is not None and wan1_speed > 0,
-            label=wan1_label,
-            isp_speed=wan1_isp_speed,
-        )
+        wan1 = _build_wan_interface(wan1_port, 1, device.ip, wan1_label, wan1_isp_speed)
 
-    # Find WAN2 port - first by assignment, then fallback to port 9 or 2
-    wan2_port = _find_wan_port_by_assignment(port_table, "WAN2")
-    if not wan2_port:
-        wan2_port = _find_wan_port_by_idx(port_table, 9)
-    if not wan2_port:
-        wan2_port = _find_wan_port_by_idx(port_table, 2)
-
+    wan2_port = _find_wan2_port(device.port_table)
     wan2 = None
-    # Only include WAN2 if it has WAN assignment, or if label/speed specified, or active
-    has_wan2_assignment = wan2_port and wan2_port.wan_networkconf_id
-    has_wan2_cli_config = wan2_label or wan2_isp_speed
-    wan2_speed = _normalize_wan_speed(wan2_port.speed) if wan2_port else None
-    is_wan2_active = wan2_speed is not None and wan2_speed > 0
-    if wan2_port and (has_wan2_assignment or has_wan2_cli_config or is_wan2_active):
-        wan2 = WanInterface(
-            port_idx=wan2_port.port_idx or 9,
-            link_speed=wan2_speed,
-            ip_address=None,  # WAN2 IP typically not in standard device data
-            enabled=is_wan2_active,
-            label=wan2_label,
-            isp_speed=wan2_isp_speed,
+    if _should_include_wan2(wan2_port, wan2_label, wan2_isp_speed):
+        wan2 = _build_wan_interface(
+            wan2_port,  # type: ignore[arg-type]
+            9,
+            None,
+            wan2_label,
+            wan2_isp_speed,
         )
 
     if wan1 or wan2:

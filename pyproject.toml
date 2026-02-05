@@ -77,7 +77,7 @@ venv = ".venv"
 
 # Xenon enforces cyclomatic complexity thresholds:
 # A=1-5 (simple), B=6-10 (low), C=11-20 (moderate), D=21-30 (high), E=31-40 (very high), F=41+ (error-prone)
-# Run: xenon src/unifi_network_maps --max-absolute D --max-modules B --max-average A
+# Run: xenon src/unifi_network_maps --max-absolute C --max-modules B --max-average A
 # For detailed analysis: radon cc src/unifi_network_maps -a -s
 
 [tool.pytest.ini_options]

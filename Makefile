@@ -32,7 +32,7 @@ complexity:
 	@$(VENV)/radon mi src/unifi_network_maps -s -nb
 	@echo ""
 	@echo "=== Xenon Threshold Check ==="
-	$(VENV)/xenon src/unifi_network_maps --max-absolute D --max-modules B --max-average A
+	$(VENV)/xenon src/unifi_network_maps --max-absolute C --max-modules B --max-average A
 
 # Testing
 test:

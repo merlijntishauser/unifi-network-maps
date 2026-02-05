@@ -8,6 +8,7 @@ examples/themes/theme_matrix.png.
 
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -64,6 +65,16 @@ def _svg_filename(fmt: str, theme: str, icon_set: str) -> str:
     return f"{fmt}_{theme}_{icon_set}.svg"
 
 
+def _normalize_client_vlans() -> None:
+    """Set all client VLANs to 1 for uniform link colors in theme showcase."""
+    data = json.loads(MOCK_DATA.read_text())
+    for client in data.get("clients", []):
+        client["vlan"] = 1
+    # Also simplify vlan_info
+    data["vlan_info"] = [{"id": 1, "name": "LAN", "client_count": len(data.get("clients", []))}]
+    MOCK_DATA.write_text(json.dumps(data, indent=2, sort_keys=True))
+
+
 def generate_mock_data() -> None:
     """Generate mock data with a complex network topology."""
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -90,6 +101,8 @@ def generate_mock_data() -> None:
         check=True,
         env={**__import__("os").environ, "PYTHONPATH": str(ROOT / "src")},
     )
+    # Normalize all client VLANs to 1 for cleaner theme showcase
+    _normalize_client_vlans()
 
 
 def generate_svgs() -> list[Path]:

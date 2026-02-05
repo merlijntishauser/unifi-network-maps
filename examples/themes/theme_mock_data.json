@@ -5,28 +5,28 @@
       "name": "Living Room TV",
       "sw_mac": "3a:d8:10:0f:2f:6f",
       "sw_port": 6,
-      "vlan": 10
+      "vlan": 1
     },
     {
       "is_wired": true,
       "name": "Sonos One",
       "sw_mac": "3a:d8:10:0f:2f:6f",
       "sw_port": 7,
-      "vlan": 20
+      "vlan": 1
     },
     {
       "is_wired": true,
       "name": "Ring Doorbell",
       "sw_mac": "3a:d8:10:0f:2f:6f",
       "sw_port": 8,
-      "vlan": 30
+      "vlan": 1
     },
     {
       "is_wired": true,
       "name": "HP LaserJet",
       "sw_mac": "3a:d8:10:0f:2f:6f",
       "sw_port": 9,
-      "vlan": 100
+      "vlan": 1
     },
     {
       "ap_mac": "14:87:16:eb:3f:c1",
@@ -39,7 +39,7 @@
       "satisfaction": 95,
       "signal": -66,
       "tx_rate": 866,
-      "vlan": 10
+      "vlan": 1
     },
     {
       "ap_mac": "fc:62:23:17:74:94",
@@ -52,7 +52,7 @@
       "satisfaction": 80,
       "signal": -80,
       "tx_rate": 1200,
-      "vlan": 20
+      "vlan": 1
     },
     {
       "ap_mac": "14:87:16:eb:3f:c1",
@@ -65,7 +65,7 @@
       "satisfaction": 73,
       "signal": -63,
       "tx_rate": 144,
-      "vlan": 10
+      "vlan": 1
     }
   ],
   "devices": [
@@ -419,29 +419,9 @@
   ],
   "vlan_info": [
     {
-      "client_count": 0,
+      "client_count": 7,
       "id": 1,
       "name": "LAN"
-    },
-    {
-      "client_count": 3,
-      "id": 10,
-      "name": null
-    },
-    {
-      "client_count": 2,
-      "id": 20,
-      "name": "Guest"
-    },
-    {
-      "client_count": 1,
-      "id": 30,
-      "name": null
-    },
-    {
-      "client_count": 1,
-      "id": 100,
-      "name": null
     }
   ]
 }

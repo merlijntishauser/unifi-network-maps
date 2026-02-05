@@ -44,6 +44,7 @@ run_step "ruff" $VENV/ruff check .
 run_step "ruff-format" $VENV/ruff format --check .
 run_step "pyright" $VENV/pyright
 run_step "xenon" $VENV/xenon src/unifi_network_maps --max-absolute C --max-modules B --max-average A
+run_step "complexity-max" ./scripts/check_complexity.sh 14
 run_step "pytest" $VENV/pytest -q
 run_step "behave" $VENV/behave -q --no-capture
 run_step "smoketest-mock" make -s smoketest-mock

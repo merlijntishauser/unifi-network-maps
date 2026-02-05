@@ -17,6 +17,11 @@ repos:
         entry: .venv/bin/xenon src/unifi_network_maps --max-absolute C --max-modules B --max-average A
         language: system
         pass_filenames: false
+      - id: complexity-max
+        name: complexity max 14
+        entry: ./scripts/check_complexity.sh 14
+        language: system
+        pass_filenames: false
       - id: pytest
         name: pytest
         entry: .venv/bin/pytest

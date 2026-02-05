@@ -17,7 +17,14 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parent.parent
 OUTPUT_DIR = ROOT / "examples" / "themes"
-MOCK_DATA = ROOT / "examples" / "mock_data.json"
+MOCK_DATA = OUTPUT_DIR / "theme_mock_data.json"
+
+# Mock data generation settings for a more complex network
+MOCK_SEED = 42
+MOCK_SWITCHES = 3
+MOCK_APS = 2
+MOCK_WIRED_CLIENTS = 4
+MOCK_WIRELESS_CLIENTS = 3
 
 THEMES = ["unifi", "unifi-dark", "minimal", "classic", "classic-dark"]
 ICON_SETS = ["isometric", "modern"]
@@ -57,6 +64,34 @@ def _svg_filename(fmt: str, theme: str, icon_set: str) -> str:
     return f"{fmt}_{theme}_{icon_set}.svg"
 
 
+def generate_mock_data() -> None:
+    """Generate mock data with a complex network topology."""
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    python = sys.executable
+    cmd = [
+        python,
+        "-m",
+        "unifi_network_maps.cli",
+        "--generate-mock",
+        str(MOCK_DATA),
+        "--mock-seed",
+        str(MOCK_SEED),
+        "--mock-switches",
+        str(MOCK_SWITCHES),
+        "--mock-aps",
+        str(MOCK_APS),
+        "--mock-wired-clients",
+        str(MOCK_WIRED_CLIENTS),
+        "--mock-wireless-clients",
+        str(MOCK_WIRELESS_CLIENTS),
+    ]
+    subprocess.run(
+        cmd,
+        check=True,
+        env={**__import__("os").environ, "PYTHONPATH": str(ROOT / "src")},
+    )
+
+
 def generate_svgs() -> list[Path]:
     """Run the CLI to produce all 40 SVGs, return list of paths."""
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -75,7 +110,8 @@ def generate_svgs() -> list[Path]:
                     "--mock-data",
                     str(MOCK_DATA),
                     "--include-clients",
-                    "--only-unifi",
+                    "--client-scope",
+                    "all",
                     "--theme",
                     theme,
                     "--icon-set",
@@ -175,6 +211,9 @@ def assemble_composite() -> Path:
 
 
 def main() -> None:
+    print("Generating mock data with complex topology ...")
+    generate_mock_data()
+
     print(f"Generating {len(THEMES) * len(ICON_SETS) * len(FORMATS)} SVGs ...")
     generate_svgs()
 

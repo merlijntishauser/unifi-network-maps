@@ -1,0 +1,447 @@
+{
+  "clients": [
+    {
+      "is_wired": true,
+      "name": "Living Room TV",
+      "sw_mac": "3a:d8:10:0f:2f:6f",
+      "sw_port": 6,
+      "vlan": 10
+    },
+    {
+      "is_wired": true,
+      "name": "Sonos One",
+      "sw_mac": "3a:d8:10:0f:2f:6f",
+      "sw_port": 7,
+      "vlan": 20
+    },
+    {
+      "is_wired": true,
+      "name": "Ring Doorbell",
+      "sw_mac": "3a:d8:10:0f:2f:6f",
+      "sw_port": 8,
+      "vlan": 30
+    },
+    {
+      "is_wired": true,
+      "name": "HP LaserJet",
+      "sw_mac": "3a:d8:10:0f:2f:6f",
+      "sw_port": 9,
+      "vlan": 100
+    },
+    {
+      "ap_mac": "14:87:16:eb:3f:c1",
+      "ap_port": 1,
+      "channel": 1,
+      "is_wired": false,
+      "name": "Synology NAS",
+      "noise": -93,
+      "rx_rate": 288,
+      "satisfaction": 95,
+      "signal": -66,
+      "tx_rate": 866,
+      "vlan": 10
+    },
+    {
+      "ap_mac": "fc:62:23:17:74:94",
+      "ap_port": 1,
+      "channel": 6,
+      "is_wired": false,
+      "name": "PlayStation 5",
+      "noise": -98,
+      "rx_rate": 433,
+      "satisfaction": 80,
+      "signal": -80,
+      "tx_rate": 1200,
+      "vlan": 20
+    },
+    {
+      "ap_mac": "14:87:16:eb:3f:c1",
+      "ap_port": 1,
+      "channel": 11,
+      "is_wired": false,
+      "name": "iPhone",
+      "noise": -98,
+      "rx_rate": 288,
+      "satisfaction": 73,
+      "signal": -63,
+      "tx_rate": 144,
+      "vlan": 10
+    }
+  ],
+  "devices": [
+    {
+      "ip": "192.168.44.131",
+      "lldp_info": [
+        {
+          "chassis_id": "3a:d8:10:0f:2f:6f",
+          "local_port_idx": 9,
+          "local_port_name": "Port 9",
+          "port_desc": "Core Switch",
+          "port_id": "Port 1"
+        }
+      ],
+      "mac": "22:39:0c:8c:7d:72",
+      "model": "UDM-Pro",
+      "model_name": "UniFi Dream Machine Pro",
+      "name": "Cloud Gateway",
+      "port_table": [
+        {
+          "ifname": "eth9",
+          "is_uplink": false,
+          "name": "Port 9",
+          "native_vlan": 100,
+          "poe_class": 0,
+          "poe_current": 0.0,
+          "poe_enable": false,
+          "poe_good": false,
+          "poe_power": 0.0,
+          "poe_voltage": 0.0,
+          "port_idx": 9,
+          "port_poe": false,
+          "tagged_vlans": []
+        }
+      ],
+      "type": "udm",
+      "version": "3.1.0"
+    },
+    {
+      "ip": "192.168.101.206",
+      "lldp_info": [
+        {
+          "chassis_id": "22:39:0c:8c:7d:72",
+          "local_port_idx": 1,
+          "local_port_name": "Port 1",
+          "port_desc": "Cloud Gateway",
+          "port_id": "Port 9"
+        },
+        {
+          "chassis_id": "c2:d6:70:e5:8e:03",
+          "local_port_idx": 2,
+          "local_port_name": "Port 2",
+          "port_desc": "Switch Sense",
+          "port_id": "Port 1"
+        },
+        {
+          "chassis_id": "60:4f:6e:ac:34:2f",
+          "local_port_idx": 3,
+          "local_port_name": "Port 3",
+          "port_desc": "Switch Fall",
+          "port_id": "Port 1"
+        },
+        {
+          "chassis_id": "14:87:16:eb:3f:c1",
+          "local_port_idx": 4,
+          "local_port_name": "Port 4",
+          "port_desc": "AP Pm",
+          "port_id": "Port 1"
+        },
+        {
+          "chassis_id": "fc:62:23:17:74:94",
+          "local_port_idx": 5,
+          "local_port_name": "Port 5",
+          "port_desc": "AP Participant",
+          "port_id": "Port 1"
+        }
+      ],
+      "mac": "3a:d8:10:0f:2f:6f",
+      "model": "USW-24-PoE",
+      "model_name": "UniFi Switch 24 PoE",
+      "name": "Core Switch",
+      "port_table": [
+        {
+          "ifname": "eth1",
+          "is_uplink": false,
+          "name": "Port 1",
+          "native_vlan": 10,
+          "poe_class": 0,
+          "poe_current": 0.0,
+          "poe_enable": false,
+          "poe_good": false,
+          "poe_power": 0.0,
+          "poe_voltage": 0.0,
+          "port_idx": 1,
+          "port_poe": false,
+          "tagged_vlans": [
+            1,
+            20,
+            30,
+            100
+          ]
+        },
+        {
+          "ifname": "eth2",
+          "is_uplink": false,
+          "name": "Port 2",
+          "native_vlan": 20,
+          "poe_class": 0,
+          "poe_current": 0.0,
+          "poe_enable": false,
+          "poe_good": false,
+          "poe_power": 0.0,
+          "poe_voltage": 0.0,
+          "port_idx": 2,
+          "port_poe": false,
+          "tagged_vlans": []
+        },
+        {
+          "ifname": "eth3",
+          "is_uplink": false,
+          "name": "Port 3",
+          "native_vlan": 30,
+          "poe_class": 0,
+          "poe_current": 0.0,
+          "poe_enable": false,
+          "poe_good": false,
+          "poe_power": 0.0,
+          "poe_voltage": 0.0,
+          "port_idx": 3,
+          "port_poe": false,
+          "tagged_vlans": []
+        },
+        {
+          "ifname": "eth4",
+          "is_uplink": false,
+          "name": "Port 4",
+          "native_vlan": 100,
+          "poe_class": 4,
+          "poe_current": 0.052,
+          "poe_enable": true,
+          "poe_good": true,
+          "poe_power": 4.18,
+          "poe_voltage": 48.7,
+          "port_idx": 4,
+          "port_poe": true,
+          "tagged_vlans": []
+        },
+        {
+          "ifname": "eth5",
+          "is_uplink": false,
+          "name": "Port 5",
+          "native_vlan": 1,
+          "poe_class": 4,
+          "poe_current": 0.088,
+          "poe_enable": true,
+          "poe_good": true,
+          "poe_power": 2.8,
+          "poe_voltage": 49.2,
+          "port_idx": 5,
+          "port_poe": true,
+          "tagged_vlans": []
+        },
+        {
+          "ifname": "eth6",
+          "is_uplink": false,
+          "name": "Port 6",
+          "native_vlan": 10,
+          "poe_class": 0,
+          "poe_current": 0.0,
+          "poe_enable": false,
+          "poe_good": false,
+          "poe_power": 0.0,
+          "poe_voltage": 0.0,
+          "port_idx": 6,
+          "port_poe": false,
+          "tagged_vlans": []
+        },
+        {
+          "ifname": "eth7",
+          "is_uplink": false,
+          "name": "Port 7",
+          "native_vlan": 20,
+          "poe_class": 0,
+          "poe_current": 0.0,
+          "poe_enable": false,
+          "poe_good": false,
+          "poe_power": 0.0,
+          "poe_voltage": 0.0,
+          "port_idx": 7,
+          "port_poe": false,
+          "tagged_vlans": []
+        },
+        {
+          "ifname": "eth8",
+          "is_uplink": false,
+          "name": "Port 8",
+          "native_vlan": 30,
+          "poe_class": 0,
+          "poe_current": 0.0,
+          "poe_enable": false,
+          "poe_good": false,
+          "poe_power": 0.0,
+          "poe_voltage": 0.0,
+          "port_idx": 8,
+          "port_poe": false,
+          "tagged_vlans": []
+        },
+        {
+          "ifname": "eth9",
+          "is_uplink": false,
+          "name": "Port 9",
+          "native_vlan": 100,
+          "poe_class": 0,
+          "poe_current": 0.0,
+          "poe_enable": false,
+          "poe_good": false,
+          "poe_power": 0.0,
+          "poe_voltage": 0.0,
+          "port_idx": 9,
+          "port_poe": false,
+          "tagged_vlans": []
+        }
+      ],
+      "type": "usw",
+      "version": "7.0.0"
+    },
+    {
+      "ip": "10.174.53.80",
+      "lldp_info": [
+        {
+          "chassis_id": "3a:d8:10:0f:2f:6f",
+          "local_port_idx": 1,
+          "local_port_name": "Port 1",
+          "port_desc": "Core Switch",
+          "port_id": "Port 2"
+        }
+      ],
+      "mac": "c2:d6:70:e5:8e:03",
+      "model": "USW-Lite-8-PoE",
+      "model_name": "UniFi Switch Lite 8 PoE",
+      "name": "Switch Sense",
+      "port_table": [],
+      "type": "usw",
+      "version": "7.1.2"
+    },
+    {
+      "ip": "10.176.26.246",
+      "lldp_info": [
+        {
+          "chassis_id": "3a:d8:10:0f:2f:6f",
+          "local_port_idx": 1,
+          "local_port_name": "Port 1",
+          "port_desc": "Core Switch",
+          "port_id": "Port 3"
+        }
+      ],
+      "mac": "60:4f:6e:ac:34:2f",
+      "model": "USW-Lite-8-PoE",
+      "model_name": "UniFi Switch Lite 8 PoE",
+      "name": "Switch Fall",
+      "port_table": [],
+      "type": "usw",
+      "version": "7.0.0"
+    },
+    {
+      "ip": "192.168.185.40",
+      "lldp_info": [
+        {
+          "chassis_id": "3a:d8:10:0f:2f:6f",
+          "local_port_idx": 1,
+          "local_port_name": "Port 1",
+          "port_desc": "Core Switch",
+          "port_id": "Port 4"
+        }
+      ],
+      "mac": "14:87:16:eb:3f:c1",
+      "model": "U6-Lite",
+      "model_name": "UniFi AP 6 Lite",
+      "name": "AP Pm",
+      "port_table": [
+        {
+          "ifname": "eth1",
+          "is_uplink": false,
+          "name": "Port 1",
+          "native_vlan": 10,
+          "poe_class": 4,
+          "poe_current": 0.102,
+          "poe_enable": true,
+          "poe_good": true,
+          "poe_power": 2.56,
+          "poe_voltage": 44.8,
+          "port_idx": 1,
+          "port_poe": true,
+          "tagged_vlans": []
+        }
+      ],
+      "type": "uap",
+      "version": "6.6.55"
+    },
+    {
+      "ip": "10.51.182.117",
+      "lldp_info": [
+        {
+          "chassis_id": "3a:d8:10:0f:2f:6f",
+          "local_port_idx": 1,
+          "local_port_name": "Port 1",
+          "port_desc": "Core Switch",
+          "port_id": "Port 5"
+        }
+      ],
+      "mac": "fc:62:23:17:74:94",
+      "model": "U6-Lite",
+      "model_name": "UniFi AP 6 Lite",
+      "name": "AP Participant",
+      "port_table": [
+        {
+          "ifname": "eth1",
+          "is_uplink": false,
+          "name": "Port 1",
+          "native_vlan": 10,
+          "poe_class": 4,
+          "poe_current": 0.052,
+          "poe_enable": true,
+          "poe_good": true,
+          "poe_power": 2.87,
+          "poe_voltage": 48.0,
+          "port_idx": 1,
+          "port_poe": true,
+          "tagged_vlans": []
+        }
+      ],
+      "type": "uap",
+      "version": "6.6.55"
+    }
+  ],
+  "networks": [
+    {
+      "name": "LAN",
+      "network_id": null,
+      "purpose": "corporate",
+      "vlan_enabled": false,
+      "vlan_id": 1
+    },
+    {
+      "name": "Guest",
+      "network_id": null,
+      "purpose": "guest",
+      "vlan_enabled": true,
+      "vlan_id": 20
+    }
+  ],
+  "vlan_info": [
+    {
+      "client_count": 0,
+      "id": 1,
+      "name": "LAN"
+    },
+    {
+      "client_count": 3,
+      "id": 10,
+      "name": null
+    },
+    {
+      "client_count": 2,
+      "id": 20,
+      "name": "Guest"
+    },
+    {
+      "client_count": 1,
+      "id": 30,
+      "name": null
+    },
+    {
+      "client_count": 1,
+      "id": 100,
+      "name": null
+    }
+  ]
+}

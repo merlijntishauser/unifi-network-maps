@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate a composite theme x icon-set matrix image.
 
-Produces 20 individual SVGs (5 themes x 2 icon sets x 2 formats) and
+Produces 24 individual SVGs (6 themes x 2 icon sets x 2 formats) and
 assembles them into a single labeled PNG grid at
 examples/themes/theme_matrix.png.
 """
@@ -107,7 +107,7 @@ def generate_mock_data() -> None:
 
 
 def generate_svgs() -> list[Path]:
-    """Run the CLI to produce all 40 SVGs, return list of paths."""
+    """Run the CLI to produce all SVGs, return list of paths."""
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     python = sys.executable

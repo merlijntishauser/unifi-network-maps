@@ -6,7 +6,7 @@ Quick reference for AI assistants working on this codebase.
 
 **unifi-network-maps** - A Python CLI tool that generates network diagrams (Mermaid, SVG, MkDocs) from UniFi Network Controller data via LLDP topology.
 
-- **Version**: 1.4.15
+- **Version**: 1.5.0
 - **Python**: 3.12+ (3.13 preferred)
 - **License**: MIT
 - **PyPI**: `pip install unifi-network-maps`
@@ -31,11 +31,15 @@ src/unifi_network_maps/
 │   └── unifi.py         # UniFi API adapter
 ├── model/
 │   ├── topology.py      # Core topology model
+│   ├── clients.py       # Client device handling
+│   ├── connection.py    # Wireless connection quality
 │   ├── lldp.py          # LLDP parsing
 │   ├── labels.py        # Label generation
 │   ├── ports.py         # Port handling
 │   ├── vlans.py         # VLAN inventory
-│   └── mock.py          # Mock data structures
+│   ├── mock.py          # Mock data structures
+│   ├── snapshot.py      # Topology serialization
+│   └── diff.py          # Topology change detection
 ├── render/
 │   ├── mermaid.py       # Mermaid output
 │   ├── mermaid_theme.py # Mermaid theming
@@ -50,6 +54,7 @@ src/unifi_network_maps/
 │   ├── export.py        # File export
 │   ├── mock_data.py     # Mock data loading
 │   ├── mock_generate.py # Mock generation (uses Faker)
+│   ├── paths.py         # Path resolution utilities
 │   └── debug.py         # Debug dump utilities
 └── assets/
     ├── icons/           # SVG device icons

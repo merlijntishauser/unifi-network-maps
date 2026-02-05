@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.5.0] - 2026-02-05
 ### Added
+- Add wireless connection quality metrics to edge data for Home Assistant integration (#24)
+  - Signal strength (dBm), noise floor, TX/RX rates, satisfaction score
+  - Automatic quality classification (excellent/good/fair/poor)
+- Add `minimal-dark` theme with grayscale monochromatic styling
 - Add topology diff API for change detection (#21)
   - New `Topology` class with `to_dict()`, `from_dict()`, and `diff()` methods
   - `compare_topologies()` function for stateless comparison

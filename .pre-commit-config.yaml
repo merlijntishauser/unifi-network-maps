@@ -17,3 +17,18 @@ repos:
         entry: .venv/bin/pytest
         language: system
         pass_filenames: false
+      - id: behave
+        name: behave
+        entry: .venv/bin/behave -q --no-capture
+        language: system
+        pass_filenames: false
+      - id: smoketest-mock
+        name: smoketest-mock
+        entry: make -s smoketest-mock
+        language: system
+        pass_filenames: false
+      - id: smoketest-validate
+        name: smoketest-validate
+        entry: .venv/bin/pytest tests/test_smoketest_validation.py -q
+        language: system
+        pass_filenames: false

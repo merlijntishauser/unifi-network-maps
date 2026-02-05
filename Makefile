@@ -1,6 +1,6 @@
 .PHONY: venv install lint format typecheck complexity test test-unit test-integration test-contract \
         test-acceptance bdd coverage smoketest smoketest-mock smoketest-validate visual-regression \
-        visual-baselines mock-data ci version version-sync version-bump theme-matrix help
+        visual-baselines mock-data update-examples ci version version-sync version-bump theme-matrix help
 
 VERSION_FILE = VERSION
 VENV = .venv/bin
@@ -89,6 +89,10 @@ visual-baselines:
 
 mock-data:
 	@$(CLI) --generate-mock examples/mock_data.json --mock-seed 1337
+	@$(CLI) --mock-data examples/mock_data.json --include-ports --include-clients --format svg-iso --output examples/output/network_ports_clients_iso.svg
+
+update-examples:
+	@mkdir -p examples/output
 	@$(CLI) --mock-data examples/mock_data.json --include-ports --include-clients --format svg-iso --output examples/output/network_ports_clients_iso.svg
 
 # CI

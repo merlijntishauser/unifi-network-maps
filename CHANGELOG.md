@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-02-05
+### Fixed
+- Skip path security check for built-in themes
+
 ## [1.5.0] - 2026-02-05
 ### Added
 - Add wireless connection quality metrics to edge data for Home Assistant integration (#24)
@@ -244,7 +248,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Introduced SVG renderer and tree layout fixes.
 - Increased test coverage and added coverage tooling.
 
-[Unreleased]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.5.1...HEAD
+[1.5.1]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.15...v1.5.0
 [1.4.15]:https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.14...v1.4.15
 [1.4.14]:https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.11...v1.4.14

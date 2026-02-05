@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from ..model.topology import Device, PortInfo, classify_device_type
+from ..model.classify import classify_device_type
+from ..model.topology import Device, PortInfo
 
 
 def port_summary(device: Device) -> str:

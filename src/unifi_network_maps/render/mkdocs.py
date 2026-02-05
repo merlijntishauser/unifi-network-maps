@@ -7,7 +7,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from ..model.topology import ClientPortMap, Device, PortMap, build_node_type_map
+from ..model.clients import build_node_type_map
+from ..model.topology import ClientPortMap, Device, PortMap
 from .device_ports_md import render_device_port_overview
 from .mermaid import render_legend, render_legend_compact, render_mermaid
 from .mermaid_theme import MermaidTheme

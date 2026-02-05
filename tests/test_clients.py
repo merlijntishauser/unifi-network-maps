@@ -1,4 +1,5 @@
-from unifi_network_maps.model.topology import Device, build_client_edges, build_node_type_map
+from unifi_network_maps.model.clients import build_client_edges, build_node_type_map
+from unifi_network_maps.model.topology import Device
 
 
 def test_build_client_edges_maps_ap_mac():

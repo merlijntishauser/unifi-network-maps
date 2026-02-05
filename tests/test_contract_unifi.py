@@ -10,12 +10,9 @@ from tests.contract_helpers import (
     load_fixture,
 )
 from unifi_network_maps.io.mock_data import load_mock_data
-from unifi_network_maps.model.topology import (
-    build_client_edges,
-    build_client_port_map,
-    build_device_index,
-    build_edges,
-)
+from unifi_network_maps.model.clients import build_client_edges, build_client_port_map
+from unifi_network_maps.model.edges import build_edges
+from unifi_network_maps.model.topology import build_device_index
 from unifi_network_maps.model.topology_coerce import normalize_devices
 
 pytestmark = pytest.mark.contract

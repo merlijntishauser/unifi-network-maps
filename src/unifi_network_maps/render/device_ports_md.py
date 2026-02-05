@@ -5,8 +5,9 @@ from __future__ import annotations
 from collections import defaultdict
 from html import escape as _escape_html
 
+from ..model.classify import classify_device_type
 from ..model.ports import extract_port_number
-from ..model.topology import ClientPortMap, Device, PortInfo, PortMap, classify_device_type
+from ..model.topology import ClientPortMap, Device, PortInfo, PortMap
 from .device_summary import poe_summary, port_summary, uplink_summary
 from .markdown_tables import escape_markdown, markdown_table_lines
 from .templating import render_template

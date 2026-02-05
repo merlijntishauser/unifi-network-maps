@@ -6,7 +6,8 @@ import json
 import logging
 from collections.abc import Iterable, Sequence
 
-from ..model.topology import Device, group_devices_by_type
+from ..model.edges import group_devices_by_type
+from ..model.topology import Device
 
 logger = logging.getLogger(__name__)
 

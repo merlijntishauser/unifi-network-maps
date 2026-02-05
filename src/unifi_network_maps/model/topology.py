@@ -188,28 +188,6 @@ class Topology:
         )
 
 
-# Re-export commonly used functions for backward compatibility
-# These imports are at the end to avoid circular imports
-from .classify import (  # noqa: E402
-    classify_client_type,
-    classify_device_type,
-)
-from .clients import (  # noqa: E402
-    build_client_edges,
-    build_client_port_map,
-    build_node_type_map,
-    collapse_client_edges,
-)
-from .edges import (  # noqa: E402
-    build_edges,
-    build_port_map,
-    build_topology,
-    build_tree_edges_by_topology,
-    enrich_edges_with_active_vlans,
-    group_devices_by_type,
-)
-from .wan import extract_wan_info  # noqa: E402
-
 __all__ = [
     # Data classes
     "Device",
@@ -227,19 +205,6 @@ __all__ = [
     "PortMap",
     "SpeedMap",
     "VlanMap",
-    # Functions (re-exported for backward compatibility)
-    "build_client_edges",
-    "build_client_port_map",
+    # Functions
     "build_device_index",
-    "build_edges",
-    "build_node_type_map",
-    "build_port_map",
-    "build_topology",
-    "build_tree_edges_by_topology",
-    "classify_client_type",
-    "classify_device_type",
-    "collapse_client_edges",
-    "enrich_edges_with_active_vlans",
-    "extract_wan_info",
-    "group_devices_by_type",
 ]

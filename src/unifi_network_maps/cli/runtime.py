@@ -9,17 +9,9 @@ from pathlib import Path
 from ..adapters.config import Config
 from ..adapters.unifi import fetch_clients, fetch_devices, fetch_networks
 from ..io.debug import debug_dump_devices
-from ..model.topology import (
-    ClientPortMap,
-    Device,
-    TopologyResult,
-    build_client_edges,
-    build_client_port_map,
-    build_device_index,
-    build_topology,
-    enrich_edges_with_active_vlans,
-    group_devices_by_type,
-)
+from ..model.clients import build_client_edges, build_client_port_map
+from ..model.edges import build_topology, enrich_edges_with_active_vlans, group_devices_by_type
+from ..model.topology import ClientPortMap, Device, TopologyResult, build_device_index
 from ..model.topology_coerce import normalize_devices
 from ..model.vlans import build_network_vlan_map
 from ..render.mermaid_theme import MermaidTheme

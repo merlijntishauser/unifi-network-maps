@@ -9,18 +9,11 @@ from ..adapters.config import Config
 from ..adapters.unifi import fetch_clients
 from ..io.export import write_output
 from ..io.mkdocs_assets import write_mkdocs_sidebar_assets
-from ..model.topology import (
-    Device,
-    Edge,
-    TopologyResult,
-    WanInfo,
-    build_node_type_map,
-    build_port_map,
-    classify_device_type,
-    collapse_client_edges,
-    extract_wan_info,
-    group_devices_by_type,
-)
+from ..model.classify import classify_device_type
+from ..model.clients import build_node_type_map, collapse_client_edges
+from ..model.edges import build_port_map, group_devices_by_type
+from ..model.topology import Device, Edge, TopologyResult, WanInfo
+from ..model.wan import extract_wan_info
 from ..render.legend import resolve_legend_style
 from ..render.lldp_md import render_lldp_md
 from ..render.mermaid import render_mermaid

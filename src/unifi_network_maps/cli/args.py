@@ -126,7 +126,7 @@ def add_svg_args(parser: argparse._ArgumentGroup) -> None:
     parser.add_argument("--theme-file", default=None, help="Path to theme YAML file")
     parser.add_argument(
         "--theme",
-        choices=["unifi", "unifi-dark", "minimal", "classic", "classic-dark"],
+        choices=["unifi", "unifi-dark", "minimal", "minimal-dark", "classic", "classic-dark"],
         default=None,
         help="Built-in theme name (--theme-file takes priority if both specified)",
     )

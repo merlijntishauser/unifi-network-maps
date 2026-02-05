@@ -1,0 +1,98 @@
+mermaid:
+  nodes:
+    gateway:
+      fill: "#374151"
+      stroke: "#6b7280"
+    switch:
+      fill: "#374151"
+      stroke: "#6b7280"
+    ap:
+      fill: "#374151"
+      stroke: "#6b7280"
+    client:
+      fill: "#4b5563"
+      stroke: "#6b7280"
+    other:
+      fill: "#4b5563"
+      stroke: "#6b7280"
+  node_text: "#f3f4f6"
+  edge_label_border: "#6b7280"
+  edge_label_border_width: 2
+  poe_link: "#9ca3af"
+  poe_link_width: 2
+  poe_link_arrow: "none"
+  standard_link: "#6b7280"
+  standard_link_width: 2
+  standard_link_arrow: "none"
+svg:
+  font_family: "Space Grotesk"
+  icon_set: isometric
+  icon_decal: "#d1d5db"
+  grid_color: "#3f4550"
+  node_side_left: "#4b5563"
+  node_side_right: "#374151"
+  background: "#18181b"
+  wan_background: "#1f2937"
+  text:
+    primary: "#f3f4f6"
+    secondary: "#9ca3af"
+  status:
+    online: "#9ca3af"
+    offline: "#6b7280"
+  wan_globe:
+    from: "#6b7280"
+    to: "#4b5563"
+  links:
+    standard:
+      from: "#6b7280"
+      to: "#4b5563"
+    poe:
+      from: "#9ca3af"
+      to: "#6b7280"
+  nodes:
+    gateway:
+      from: "#6b7280"
+      to: "#4b5563"
+    switch:
+      from: "#6b7280"
+      to: "#4b5563"
+    ap:
+      from: "#6b7280"
+      to: "#4b5563"
+    client:
+      from: "#9ca3af"
+      to: "#6b7280"
+    other:
+      from: "#9ca3af"
+      to: "#6b7280"
+    # Extended device types - all grayscale for minimal-dark theme
+    camera:
+      from: "#9ca3af"
+      to: "#6b7280"
+    tv:
+      from: "#9ca3af"
+      to: "#6b7280"
+    phone:
+      from: "#9ca3af"
+      to: "#6b7280"
+    printer:
+      from: "#9ca3af"
+      to: "#6b7280"
+    nas:
+      from: "#9ca3af"
+      to: "#6b7280"
+    speaker:
+      from: "#9ca3af"
+      to: "#6b7280"
+    game_console:
+      from: "#9ca3af"
+      to: "#6b7280"
+    iot:
+      from: "#9ca3af"
+      to: "#6b7280"
+  vlan_colors:
+    1: "#6b7280"
+    10: "#6b7280"
+    20: "#6b7280"
+    30: "#6b7280"
+    100: "#6b7280"

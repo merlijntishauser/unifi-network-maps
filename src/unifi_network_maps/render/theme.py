@@ -17,6 +17,7 @@ BUILTIN_THEMES = {
     "unifi": "unifi.yaml",
     "unifi-dark": "unifi-dark.yaml",
     "minimal": "minimal.yaml",
+    "minimal-dark": "minimal-dark.yaml",
     "classic": "default.yaml",
     "classic-dark": "dark.yaml",
 }

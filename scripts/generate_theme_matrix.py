@@ -27,7 +27,7 @@ MOCK_APS = 2
 MOCK_WIRED_CLIENTS = 4
 MOCK_WIRELESS_CLIENTS = 3
 
-THEMES = ["unifi", "unifi-dark", "minimal", "classic", "classic-dark"]
+THEMES = ["unifi", "unifi-dark", "minimal", "minimal-dark", "classic", "classic-dark"]
 ICON_SETS = ["isometric", "modern"]
 FORMATS = ["svg", "svg-iso"]
 
@@ -35,6 +35,7 @@ THEME_LABELS = {
     "unifi": "UniFi",
     "unifi-dark": "UniFi Dark",
     "minimal": "Minimal",
+    "minimal-dark": "Minimal Dark",
     "classic": "Classic",
     "classic-dark": "Classic Dark",
 }

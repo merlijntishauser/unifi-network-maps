@@ -7,15 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-02-05
 ### Added
 - Add topology diff API for change detection (#21)
   - New `Topology` class with `to_dict()`, `from_dict()`, and `diff()` methods
   - `compare_topologies()` function for stateless comparison
   - Event-style change list with human-readable descriptions
   - JSON serialization support for persistence and MQTT transmission
-
-## [1.5.0] - 2026-02-04
-### Added
 - Add SVG grouped layout mode (`--svg-layout-mode grouped`) with visual boundaries for network segments (#19)
 - Add VLAN information to edge metadata with color-coded visualization (#20)
 - Add `--theme` CLI argument for built-in themes: `unifi`, `unifi-dark`, `minimal`, `classic`, `classic-dark` (#22)

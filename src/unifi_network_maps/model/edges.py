@@ -79,24 +79,30 @@ def _resolve_port_idx_from_lldp(lldp_entry: LLDPEntry, port_table: list[PortInfo
     return _match_port_by_number(candidates, port_table)
 
 
-def _port_speed_by_idx(port_table: list[PortInfo], port_idx: int) -> int | None:
-    """Get port speed by index."""
+def _find_port_by_idx(port_table: list[PortInfo], port_idx: int) -> PortInfo | None:
+    """Find port entry by index."""
     for port in port_table:
         if port.port_idx == port_idx:
-            return port.speed
+            return port
     return None
+
+
+def _port_speed_by_idx(port_table: list[PortInfo], port_idx: int) -> int | None:
+    """Get port speed by index."""
+    port = _find_port_by_idx(port_table, port_idx)
+    return port.speed if port else None
 
 
 def _port_vlans_by_idx(port_table: list[PortInfo], port_idx: int) -> tuple[int, ...]:
     """Get all VLANs configured on a port (native + tagged)."""
-    for port in port_table:
-        if port.port_idx == port_idx:
-            vlans: list[int] = []
-            if port.native_vlan is not None:
-                vlans.append(port.native_vlan)
-            vlans.extend(port.tagged_vlans)
-            return tuple(sorted(set(vlans)))
-    return ()
+    port = _find_port_by_idx(port_table, port_idx)
+    if not port:
+        return ()
+    vlans: list[int] = []
+    if port.native_vlan is not None:
+        vlans.append(port.native_vlan)
+    vlans.extend(port.tagged_vlans)
+    return tuple(sorted(set(vlans)))
 
 
 def _populate_port_maps(
@@ -213,7 +219,6 @@ def _maybe_add_uplink_link(
     upstream_name: str,
     *,
     uplink: UplinkInfo | None,
-    device_by_name: dict[str, Device],
     port_map: PortMap,
     raw_links: list[tuple[str, str]],
     seen: set[frozenset[str]],
@@ -256,7 +261,6 @@ def _collect_uplink_links(
             device,
             upstream_name,
             uplink=uplink,
-            device_by_name=device_by_name,
             port_map=port_map,
             raw_links=raw_links,
             seen=seen,
@@ -297,7 +301,10 @@ def _build_ordered_edges(
         poe = poe_map.get((left_name, right_name), False) or poe_map.get(
             (right_name, left_name), False
         )
-        speed = speed_map.get((left_name, right_name)) or speed_map.get((right_name, left_name))
+        # Use None-aware lookup to handle speed=0 correctly
+        speed = speed_map.get((left_name, right_name))
+        if speed is None:
+            speed = speed_map.get((right_name, left_name))
         label = compose_port_label(left_name, right_name, port_map) if include_ports else None
         vlans_lr = vlan_map.get((left_name, right_name), ())
         vlans_rl = vlan_map.get((right_name, left_name), ())

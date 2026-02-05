@@ -305,10 +305,15 @@ def _next_core_port(state: _MockState) -> int:
     return port_idx
 
 
-def _unique_name(state: _MockState, prefix: str) -> str:
+def _unique_name(state: _MockState, prefix: str, max_attempts: int = 100) -> str:
     name = prefix
-    while name in state.used_names:
-        name = f"{prefix} {state.rng.randint(2, 9)}"
+    for _ in range(max_attempts):
+        if name not in state.used_names:
+            state.used_names.add(name)
+            return name
+        name = f"{prefix} {state.rng.randint(2, 99)}"
+    # Fallback with random suffix
+    name = f"{prefix}_{state.rng.randint(1000, 9999)}"
     state.used_names.add(name)
     return name
 
@@ -334,7 +339,7 @@ _DEVICE_NAME_TEMPLATES = [
 ]
 
 
-def _unique_client_name(state: _MockState, client_index: int = 0) -> str:
+def _unique_client_name(state: _MockState, client_index: int = 0, max_attempts: int = 100) -> str:
     # Use device names for first N clients to ensure variety in mock output
     # This guarantees different device types appear in smoketests
     if client_index < len(_DEVICE_NAME_TEMPLATES):
@@ -343,32 +348,48 @@ def _unique_client_name(state: _MockState, client_index: int = 0) -> str:
             state.used_names.add(name)
             return name
     # Fall back to person names for additional clients
-    name = state.fake.first_name()
-    while name in state.used_names:
+    for _ in range(max_attempts):
         name = state.fake.first_name()
+        if name not in state.used_names:
+            state.used_names.add(name)
+            return name
+    # Fallback with random suffix
+    name = f"Client_{state.rng.randint(1000, 9999)}"
     state.used_names.add(name)
     return name
 
 
-def _unique_room(state: _MockState) -> str:
-    room = state.fake.word().title()
-    while room in state.used_rooms:
+def _unique_room(state: _MockState, max_attempts: int = 100) -> str:
+    for _ in range(max_attempts):
         room = state.fake.word().title()
+        if room not in state.used_rooms:
+            state.used_rooms.add(room)
+            return room
+    # Fallback with random suffix
+    room = f"Room_{state.rng.randint(1000, 9999)}"
     state.used_rooms.add(room)
     return room
 
 
-def _unique_mac(state: _MockState) -> str:
-    mac = state.fake.mac_address()
-    while mac in state.used_macs:
+def _unique_mac(state: _MockState, max_attempts: int = 1000) -> str:
+    for _ in range(max_attempts):
         mac = state.fake.mac_address()
+        if mac not in state.used_macs:
+            state.used_macs.add(mac)
+            return mac
+    # Fallback - extremely unlikely to reach here
+    mac = f"99:{state.rng.randint(10, 99)}:{state.rng.randint(10, 99)}:{state.rng.randint(10, 99)}:{state.rng.randint(10, 99)}:{state.rng.randint(10, 99)}"
     state.used_macs.add(mac)
     return mac
 
 
-def _unique_ip(state: _MockState) -> str:
-    ip = state.fake.ipv4_private()
-    while ip in state.used_ips:
+def _unique_ip(state: _MockState, max_attempts: int = 1000) -> str:
+    for _ in range(max_attempts):
         ip = state.fake.ipv4_private()
+        if ip not in state.used_ips:
+            state.used_ips.add(ip)
+            return ip
+    # Fallback - extremely unlikely to reach here
+    ip = f"10.{state.rng.randint(0, 255)}.{state.rng.randint(0, 255)}.{state.rng.randint(1, 254)}"
     state.used_ips.add(ip)
     return ip

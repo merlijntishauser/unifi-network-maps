@@ -40,14 +40,13 @@ run_step() {
 echo "Running CI pipeline..."
 echo ""
 
-run_step "Lint (ruff check)" $VENV/ruff check .
-run_step "Format (ruff format)" $VENV/ruff format --check .
-run_step "Typecheck (pyright)" $VENV/pyright
-run_step "Unit tests (pytest)" $VENV/pytest -q
+# Pre-commit runs: ruff, ruff-format, pyright, pytest
+run_step "Pre-commit hooks" $VENV/pre-commit run --all-files
+
+# Additional checks not in pre-commit
 run_step "BDD tests (behave)" $VENV/behave -q --no-capture
 run_step "Smoketest mock" make -s smoketest-mock
 run_step "Smoketest validate" $VENV/pytest tests/test_smoketest_validation.py -q
-run_step "Pre-commit hooks" $VENV/pre-commit run --all-files
 
 echo ""
 echo -e "${GREEN}All CI checks passed!${NC}"

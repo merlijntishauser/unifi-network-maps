@@ -12,6 +12,11 @@ repos:
         entry: .venv/bin/pyright
         language: system
         pass_filenames: false
+      - id: xenon
+        name: xenon complexity check
+        entry: .venv/bin/xenon src/unifi_network_maps --max-absolute D --max-modules B --max-average A
+        language: system
+        pass_filenames: false
       - id: pytest
         name: pytest
         entry: .venv/bin/pytest

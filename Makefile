@@ -1,4 +1,4 @@
-.PHONY: venv install lint format typecheck test bdd coverage smoketest smoketest-mock \
+.PHONY: venv install lint format typecheck complexity test bdd coverage smoketest smoketest-mock \
         smoketest-validate visual-regression visual-baselines mock-data ci version \
         version-sync version-bump theme-matrix help
 
@@ -23,6 +23,16 @@ format:
 
 typecheck:
 	$(VENV)/pyright
+
+complexity:
+	@echo "=== Cyclomatic Complexity (C+ rated functions) ==="
+	@$(VENV)/radon cc src/unifi_network_maps -a -nc -s
+	@echo ""
+	@echo "=== Maintainability Index (B or lower) ==="
+	@$(VENV)/radon mi src/unifi_network_maps -s -nb
+	@echo ""
+	@echo "=== Xenon Threshold Check ==="
+	$(VENV)/xenon src/unifi_network_maps --max-absolute D --max-modules B --max-average A
 
 # Testing
 test:

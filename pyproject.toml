@@ -46,7 +46,9 @@ dev = [
   "pytest==9.0.2",
   "pytest-cov==7.0.0",
   "pyright==1.1.408",
-  "ruff==0.15.0"
+  "radon==6.0.1",
+  "ruff==0.15.0",
+  "xenon==0.9.3"
 ]
 
 [project.scripts]
@@ -68,10 +70,15 @@ line-ending = "lf"
 
 [tool.pyright]
 pythonVersion = "3.13"
-typeCheckingMode = "basic"
+typeCheckingMode = "standard"
 include = ["src", "tests"]
 venvPath = "."
 venv = ".venv"
+
+# Xenon enforces cyclomatic complexity thresholds:
+# A=1-5 (simple), B=6-10 (low), C=11-20 (moderate), D=21-30 (high), E=31-40 (very high), F=41+ (error-prone)
+# Run: xenon src/unifi_network_maps --max-absolute D --max-modules B --max-average A
+# For detailed analysis: radon cc src/unifi_network_maps -a -s
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

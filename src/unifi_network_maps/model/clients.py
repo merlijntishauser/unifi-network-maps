@@ -10,6 +10,7 @@ from .classify import (
     client_display_name,
     client_is_unifi,
 )
+from .connection import ConnectionInfo, classify_signal_quality
 from .helpers import first_string_field, get_field, normalize_mac
 from .ports import extract_port_number
 from .topology import ClientPortMap, Device, Edge
@@ -90,6 +91,33 @@ def _client_vlan(client: object) -> int | None:
     return None
 
 
+def _extract_connection_info(client: object) -> ConnectionInfo | None:
+    """Extract connection quality metrics for wireless clients."""
+    if _client_is_wired(client):
+        return None
+
+    signal = get_field(client, "signal")
+    noise = get_field(client, "noise")
+    tx_rate = get_field(client, "tx_rate")
+    rx_rate = get_field(client, "rx_rate")
+    satisfaction = get_field(client, "satisfaction")
+
+    signal_dbm = int(signal) if isinstance(signal, int | float) else None
+    noise_dbm = int(noise) if isinstance(noise, int | float) else None
+    tx_rate_mbps = int(tx_rate) if isinstance(tx_rate, int | float) else None
+    rx_rate_mbps = int(rx_rate) if isinstance(rx_rate, int | float) else None
+    satisfaction_val = int(satisfaction) if isinstance(satisfaction, int | float) else None
+
+    return ConnectionInfo(
+        signal_dbm=signal_dbm,
+        noise_dbm=noise_dbm,
+        tx_rate_mbps=tx_rate_mbps,
+        rx_rate_mbps=rx_rate_mbps,
+        satisfaction=satisfaction_val,
+        quality=classify_signal_quality(signal_dbm),
+    )
+
+
 def _client_matches_mode(client: object, mode: str) -> bool:
     """Check if client matches wired/wireless mode filter."""
     wired = _client_is_wired(client)
@@ -142,6 +170,7 @@ def build_client_edges(
         channel = _client_channel(client) if is_wireless else None
         client_vlan = _client_vlan(client)
         vlans = (client_vlan,) if client_vlan else ()
+        connection = _extract_connection_info(client)
         edges.append(
             Edge(
                 left=device_name,
@@ -152,6 +181,7 @@ def build_client_edges(
                 vlans=vlans,
                 active_vlans=vlans,
                 is_trunk=False,
+                connection=connection,
             )
         )
         seen.add(key)

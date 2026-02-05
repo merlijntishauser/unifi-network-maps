@@ -159,10 +159,19 @@ def _build_wireless_clients(
     clients = []
     # Wireless VLANs - typically IoT or guest networks
     wireless_vlans = [10, 20]
+    # Wireless channels (2.4GHz and 5GHz)
+    channels = [1, 6, 11, 36, 44, 149]
     for idx in range(max(0, count)):
         ap = aps[idx % len(aps)]
         name = _unique_client_name(state, client_index=start_index + idx)
         client_vlan = wireless_vlans[idx % len(wireless_vlans)]
+        channel = channels[idx % len(channels)]
+        # Generate realistic signal quality metrics
+        signal = state.rng.randint(-80, -40)
+        noise = state.rng.randint(-100, -90)
+        tx_rate = state.rng.choice([72, 144, 288, 433, 866, 1200])
+        rx_rate = state.rng.choice([72, 144, 288, 433, 866, 1200])
+        satisfaction = state.rng.randint(70, 100)
         clients.append(
             {
                 "name": name,
@@ -170,6 +179,12 @@ def _build_wireless_clients(
                 "ap_mac": ap["mac"],
                 "ap_port": 1,
                 "vlan": client_vlan,
+                "channel": channel,
+                "signal": signal,
+                "noise": noise,
+                "tx_rate": tx_rate,
+                "rx_rate": rx_rate,
+                "satisfaction": satisfaction,
             }
         )
     return clients

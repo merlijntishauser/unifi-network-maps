@@ -8,6 +8,7 @@ from __future__ import annotations
 from dataclasses import fields, is_dataclass
 from typing import Any, TypeVar
 
+from .connection import ConnectionInfo
 from .lldp import LLDPEntry
 from .topology import Device, Edge, PortInfo, UplinkInfo, WanInfo, WanInterface
 
@@ -194,6 +195,26 @@ def device_from_dict(data: dict[str, Any]) -> Device:
     )
 
 
+# --- ConnectionInfo ---
+
+
+def connection_info_to_dict(conn: ConnectionInfo) -> dict[str, Any]:
+    """Serialize a ConnectionInfo to a dictionary."""
+    return _dataclass_to_dict(conn)
+
+
+def connection_info_from_dict(data: dict[str, Any]) -> ConnectionInfo:
+    """Deserialize a ConnectionInfo from a dictionary."""
+    return ConnectionInfo(
+        signal_dbm=data.get("signal_dbm"),
+        noise_dbm=data.get("noise_dbm"),
+        tx_rate_mbps=data.get("tx_rate_mbps"),
+        rx_rate_mbps=data.get("rx_rate_mbps"),
+        satisfaction=data.get("satisfaction"),
+        quality=data.get("quality"),
+    )
+
+
 # --- Edge ---
 
 
@@ -210,11 +231,15 @@ def edge_to_dict(edge: Edge) -> dict[str, Any]:
         "vlans": list(edge.vlans),
         "active_vlans": list(edge.active_vlans),
         "is_trunk": edge.is_trunk,
+        "connection": connection_info_to_dict(edge.connection) if edge.connection else None,
     }
 
 
 def edge_from_dict(data: dict[str, Any]) -> Edge:
     """Deserialize an Edge from a dictionary."""
+    connection = None
+    if data.get("connection"):
+        connection = connection_info_from_dict(data["connection"])
     return Edge(
         left=data.get("left", ""),
         right=data.get("right", ""),
@@ -226,6 +251,7 @@ def edge_from_dict(data: dict[str, Any]) -> Edge:
         vlans=tuple(data.get("vlans", [])),
         active_vlans=tuple(data.get("active_vlans", [])),
         is_trunk=data.get("is_trunk", False),
+        connection=connection,
     )
 
 
@@ -252,6 +278,9 @@ def client_to_dict(client: dict[str, Any]) -> dict[str, Any]:
         "uplink_remote_port",
         "channel",
         "signal",
+        "noise",
+        "tx_rate",
+        "rx_rate",
         "satisfaction",
         "oui",
         "vendor",

@@ -18,6 +18,7 @@ from .helpers import normalize_mac
 from .lldp import LLDPEntry
 
 if TYPE_CHECKING:
+    from .connection import ConnectionInfo
     from .diff import TopologyDiff
 
 
@@ -80,6 +81,7 @@ class Edge:
     vlans: tuple[int, ...] = ()
     active_vlans: tuple[int, ...] = ()
     is_trunk: bool = False
+    connection: ConnectionInfo | None = None
 
 
 @dataclass(frozen=True)

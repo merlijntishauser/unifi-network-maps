@@ -121,6 +121,54 @@ unifi-network-maps --format json --output ./payload.json
 The live Home Assistant integration (Config Flow + coordinator + custom card) lives in a separate repo:
 - https://github.com/merlijntishauser/unifi-network-maps-ha
 
+## Programmatic API
+
+Beyond the CLI, you can use the library programmatically for topology comparison and change detection.
+
+### Topology Diff API
+
+Compare two topology snapshots to detect network changes:
+
+```python
+from unifi_network_maps.model.topology import Topology
+
+# Create or load topologies
+old_topology = Topology.from_dict(json.load(open("old_snapshot.json")))
+new_topology = Topology(devices=devices, clients=clients, edges=edges)
+
+# Compare and get structured change events
+diff = old_topology.diff(new_topology)
+
+for event in diff.events:
+    print(f"{event.event_type}: {event.description}")
+    # Example: "node_added: Device 'switch-2' appeared on network"
+    # Example: "node_changed: Client 'laptop' changed VLAN from 10 to 20"
+
+# Serialize for persistence or MQTT
+json_str = diff.to_json()
+```
+
+Event types:
+- `node_added` / `node_removed` / `node_changed` - Device or client changes
+- `edge_added` / `edge_removed` / `edge_changed` - Connection changes
+
+Each event includes:
+- `event_type`, `entity_type` (device/client), `identifier` (MAC)
+- `name`, `description` (human-readable)
+- `details` (full snapshot or change dict)
+
+Serialize topology snapshots for storage:
+
+```python
+# Save snapshot
+snapshot = topology.to_dict()
+json.dump(snapshot, open("topology.json", "w"))
+
+# Load snapshot
+data = json.load(open("topology.json"))
+topology = Topology.from_dict(data)
+```
+
 ## Examples (mock data)
 
 These examples are generated from `examples/mock_data.json` (safe, anonymized fixture).

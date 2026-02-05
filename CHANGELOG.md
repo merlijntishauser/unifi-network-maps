@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Add topology diff API for change detection (#21)
+  - New `Topology` class with `to_dict()`, `from_dict()`, and `diff()` methods
+  - `compare_topologies()` function for stateless comparison
+  - Event-style change list with human-readable descriptions
+  - JSON serialization support for persistence and MQTT transmission
+
 ## [1.5.0] - 2026-02-04
 ### Added
 - Add SVG grouped layout mode (`--svg-layout-mode grouped`) with visual boundaries for network segments (#19)

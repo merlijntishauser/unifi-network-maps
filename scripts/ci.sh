@@ -45,10 +45,12 @@ run_step "ruff-format" $VENV/ruff format --check .
 run_step "pyright" $VENV/pyright
 run_step "xenon" $VENV/xenon src/unifi_network_maps --max-absolute C --max-modules B --max-average A
 run_step "complexity-max" ./scripts/check_complexity.sh 14
-run_step "pytest" $VENV/pytest -q
+run_step "pytest-unit" $VENV/pytest -q -m unit
+run_step "pytest-integration" $VENV/pytest -q -m integration
+run_step "pytest-contract" $VENV/pytest -q -m contract
 run_step "behave" $VENV/behave -q --no-capture
 run_step "smoketest-mock" make -s smoketest-mock
-run_step "smoketest-validate" $VENV/pytest tests/test_smoketest_validation.py -q
+run_step "pytest-acceptance" $VENV/pytest -q -m acceptance
 
 echo ""
 echo -e "${GREEN}All CI checks passed!${NC}"

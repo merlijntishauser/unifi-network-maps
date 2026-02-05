@@ -10,6 +10,8 @@ import pytest
 from unifi_network_maps.adapters import unifi
 from unifi_network_maps.adapters.config import Config
 
+pytestmark = pytest.mark.integration
+
 
 def test_fetch_devices_falls_back_on_auth_error(monkeypatch):
     class FakeAuthError(Exception):

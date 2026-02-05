@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from tests.contract_helpers import (
     assert_client_contract,
     assert_device_contract,
@@ -15,6 +17,8 @@ from unifi_network_maps.model.topology import (
     build_edges,
 )
 from unifi_network_maps.model.topology_coerce import normalize_devices
+
+pytestmark = pytest.mark.contract
 
 FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
 

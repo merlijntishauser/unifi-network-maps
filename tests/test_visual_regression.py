@@ -18,6 +18,8 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 
+pytestmark = pytest.mark.acceptance
+
 if TYPE_CHECKING:
     from collections.abc import Generator
 

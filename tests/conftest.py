@@ -22,3 +22,12 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         default=False,
         help="Update visual regression baseline images instead of comparing",
     )
+
+
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    """Automatically mark tests without specific markers as unit tests."""
+    specific_markers = {"integration", "contract", "acceptance"}
+    for item in items:
+        item_markers = {marker.name for marker in item.iter_markers()}
+        if not item_markers & specific_markers:
+            item.add_marker(pytest.mark.unit)

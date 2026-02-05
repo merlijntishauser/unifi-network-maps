@@ -17,10 +17,13 @@ import pytest
 SMOKETEST_DIR = Path(__file__).parent.parent / "smoketest-mock"
 
 # Skip all tests in this module if smoketest-mock directory doesn't exist
-pytestmark = pytest.mark.skipif(
-    not SMOKETEST_DIR.exists(),
-    reason="smoketest-mock directory not found. Run 'make smoketest-mock' first.",
-)
+pytestmark = [
+    pytest.mark.acceptance,
+    pytest.mark.skipif(
+        not SMOKETEST_DIR.exists(),
+        reason="smoketest-mock directory not found. Run 'make smoketest-mock' first.",
+    ),
+]
 
 
 # --- SVG Validation ---

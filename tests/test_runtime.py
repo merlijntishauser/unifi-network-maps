@@ -17,6 +17,8 @@ from unifi_network_maps.cli.runtime import (
 )
 from unifi_network_maps.model.topology import Device, Edge, TopologyResult, UplinkInfo
 
+pytestmark = pytest.mark.integration
+
 
 def _make_minimal_device(
     name: str,

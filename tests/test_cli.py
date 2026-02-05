@@ -9,6 +9,8 @@ import pytest
 
 from unifi_network_maps.model.topology import Device, Edge, TopologyResult
 
+pytestmark = pytest.mark.integration
+
 cli_module = importlib.import_module("unifi_network_maps.cli.main")
 runtime_module = importlib.import_module("unifi_network_maps.cli.runtime")
 render_module = importlib.import_module("unifi_network_maps.cli.render")

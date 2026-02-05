@@ -85,6 +85,12 @@ testpaths = ["tests"]
 norecursedirs = ["src/unifi_network_maps/assets"]
 # Remove --cov from here so it doesn't conflict with PyCharm's runner
 addopts = "-ra"
+markers = [
+    "unit: Pure unit tests with no external dependencies",
+    "integration: Tests involving multiple components working together",
+    "contract: API contract verification tests",
+    "acceptance: End-to-end validation (visual regression, smoketests)",
+]
 
 [tool.coverage.run]
 branch = true

@@ -1,6 +1,6 @@
-.PHONY: venv install lint format typecheck complexity test bdd coverage smoketest smoketest-mock \
-        smoketest-validate visual-regression visual-baselines mock-data ci version \
-        version-sync version-bump theme-matrix help
+.PHONY: venv install lint format typecheck complexity test test-unit test-integration test-contract \
+        test-acceptance bdd coverage smoketest smoketest-mock smoketest-validate visual-regression \
+        visual-baselines mock-data ci version version-sync version-bump theme-matrix help
 
 VERSION_FILE = VERSION
 VENV = .venv/bin
@@ -38,6 +38,18 @@ complexity:
 # Testing
 test:
 	$(VENV)/pytest
+
+test-unit:
+	$(VENV)/pytest -m unit
+
+test-integration:
+	$(VENV)/pytest -m integration
+
+test-contract:
+	$(VENV)/pytest -m contract
+
+test-acceptance:
+	$(VENV)/pytest -m acceptance
 
 bdd:
 	$(VENV)/behave

@@ -8,6 +8,8 @@ from tests.contract_helpers import assert_client_contract, assert_device_contrac
 from unifi_network_maps.adapters.config import Config
 from unifi_network_maps.adapters.unifi import fetch_clients, fetch_devices
 
+pytestmark = pytest.mark.contract
+
 LIVE_FLAG = os.environ.get("UNIFI_CONTRACT_LIVE") == "1"
 
 

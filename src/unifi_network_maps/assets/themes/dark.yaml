@@ -34,8 +34,8 @@ svg:
   status:
     online: "#66bb6a"
     offline: "#ef5350"
-  node_side_left: "#4a4a4a"
-  node_side_right: "#3a3a3a"
+  node_side_left: "#5a5a5a"
+  node_side_right: "#4a4a4a"
   links:
     standard:
       from: "#66bb6a"
@@ -45,45 +45,45 @@ svg:
       to: "#1e88e5"
   nodes:
     gateway:
-      from: "#5c3b00"
-      to: "#3e2a00"
+      from: "#ffb347"
+      to: "#e69530"
     switch:
-      from: "#0f2b3d"
-      to: "#0a1f2c"
+      from: "#5dade2"
+      to: "#3498db"
     ap:
-      from: "#0f3b2d"
-      to: "#0b2a20"
+      from: "#58d68d"
+      to: "#2ecc71"
     client:
-      from: "#2b1f3b"
-      to: "#20162b"
+      from: "#bb8fce"
+      to: "#9b59b6"
     other:
-      from: "#2a2a2a"
-      to: "#1f1f1f"
-    # Extended device types - use client colors for consistency
+      from: "#7f8c8d"
+      to: "#6a7b7c"
+    # Extended device types - purple tint for consistency
     camera:
-      from: "#2b1f3b"
-      to: "#20162b"
+      from: "#bb8fce"
+      to: "#9b59b6"
     tv:
-      from: "#2b1f3b"
-      to: "#20162b"
+      from: "#bb8fce"
+      to: "#9b59b6"
     phone:
-      from: "#2b1f3b"
-      to: "#20162b"
+      from: "#bb8fce"
+      to: "#9b59b6"
     printer:
-      from: "#2b1f3b"
-      to: "#20162b"
+      from: "#bb8fce"
+      to: "#9b59b6"
     nas:
-      from: "#2b1f3b"
-      to: "#20162b"
+      from: "#bb8fce"
+      to: "#9b59b6"
     speaker:
-      from: "#2b1f3b"
-      to: "#20162b"
+      from: "#bb8fce"
+      to: "#9b59b6"
     game_console:
-      from: "#2b1f3b"
-      to: "#20162b"
+      from: "#bb8fce"
+      to: "#9b59b6"
     iot:
-      from: "#2b1f3b"
-      to: "#20162b"
+      from: "#bb8fce"
+      to: "#9b59b6"
   # VLAN color overrides (brighter for dark mode)
   vlan_colors:
     1: "#95a5a6"      # Default/management - light gray

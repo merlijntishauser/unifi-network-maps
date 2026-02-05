@@ -54,36 +54,36 @@ svg:
       from: "#6baeff"
       to: "#4797ff"
     client:
-      from: "#c2c8ce"
-      to: "#aab2ba"
+      from: "#a8c8ff"
+      to: "#8ab4f8"
     other:
-      from: "#d8dce0"
-      to: "#c2c8ce"
-    # Extended device types - use client colors for consistency
+      from: "#c8d8f0"
+      to: "#b0c4e8"
+    # Extended device types - subtle blue tint for consistency
     camera:
-      from: "#c2c8ce"
-      to: "#aab2ba"
+      from: "#a8c8ff"
+      to: "#8ab4f8"
     tv:
-      from: "#c2c8ce"
-      to: "#aab2ba"
+      from: "#a8c8ff"
+      to: "#8ab4f8"
     phone:
-      from: "#c2c8ce"
-      to: "#aab2ba"
+      from: "#a8c8ff"
+      to: "#8ab4f8"
     printer:
-      from: "#c2c8ce"
-      to: "#aab2ba"
+      from: "#a8c8ff"
+      to: "#8ab4f8"
     nas:
-      from: "#c2c8ce"
-      to: "#aab2ba"
+      from: "#a8c8ff"
+      to: "#8ab4f8"
     speaker:
-      from: "#c2c8ce"
-      to: "#aab2ba"
+      from: "#a8c8ff"
+      to: "#8ab4f8"
     game_console:
-      from: "#c2c8ce"
-      to: "#aab2ba"
+      from: "#a8c8ff"
+      to: "#8ab4f8"
     iot:
-      from: "#c2c8ce"
-      to: "#aab2ba"
+      from: "#a8c8ff"
+      to: "#8ab4f8"
   vlan_colors:
     1: "#808893"
     10: "#f0383b"

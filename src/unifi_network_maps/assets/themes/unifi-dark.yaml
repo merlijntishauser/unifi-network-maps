@@ -28,8 +28,8 @@ svg:
   font_family: "Inter"
   icon_set: modern
   icon_decal: "#e8e8e8"
-  node_side_left: "#3a3e44"
-  node_side_right: "#2e3238"
+  node_side_left: "#4a5060"
+  node_side_right: "#3a4050"
   background: "#1c1e21"
   wan_background: "#1a2a3d"
   text:
@@ -50,45 +50,45 @@ svg:
       to: "#2a9e4d"
   nodes:
     gateway:
-      from: "#0a3058"
-      to: "#061f3d"
+      from: "#4797ff"
+      to: "#2d7ae0"
     switch:
-      from: "#0f3524"
-      to: "#09261a"
+      from: "#4dd88a"
+      to: "#37be5f"
     ap:
-      from: "#142952"
-      to: "#0c1d3d"
+      from: "#6baeff"
+      to: "#4797ff"
     client:
-      from: "#2a2e33"
-      to: "#1f2226"
+      from: "#6b9fff"
+      to: "#4a7fd9"
     other:
-      from: "#32373d"
-      to: "#272b30"
-    # Extended device types - dark theme colors
+      from: "#5a6a7a"
+      to: "#4a5a6a"
+    # Extended device types - brighter blue tint
     camera:
-      from: "#2a2e33"
-      to: "#1f2226"
+      from: "#6b9fff"
+      to: "#4a7fd9"
     tv:
-      from: "#2a2e33"
-      to: "#1f2226"
+      from: "#6b9fff"
+      to: "#4a7fd9"
     phone:
-      from: "#2a2e33"
-      to: "#1f2226"
+      from: "#6b9fff"
+      to: "#4a7fd9"
     printer:
-      from: "#2a2e33"
-      to: "#1f2226"
+      from: "#6b9fff"
+      to: "#4a7fd9"
     nas:
-      from: "#2a2e33"
-      to: "#1f2226"
+      from: "#6b9fff"
+      to: "#4a7fd9"
     speaker:
-      from: "#2a2e33"
-      to: "#1f2226"
+      from: "#6b9fff"
+      to: "#4a7fd9"
     game_console:
-      from: "#2a2e33"
-      to: "#1f2226"
+      from: "#6b9fff"
+      to: "#4a7fd9"
     iot:
-      from: "#2a2e33"
-      to: "#1f2226"
+      from: "#6b9fff"
+      to: "#4a7fd9"
   vlan_colors:
     1: "#9ca3ab"
     10: "#ee6368"

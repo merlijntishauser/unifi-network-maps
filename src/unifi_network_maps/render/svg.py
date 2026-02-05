@@ -471,6 +471,38 @@ def _render_wan_upstream(
     lines.append("</g>")
 
 
+def _apply_wan_offset(
+    positions: dict[str, tuple[float, float]],
+    group_bounds_list: list[GroupBounds],
+    height: float,
+    wan_offset_y: float,
+) -> tuple[dict[str, tuple[float, float]], list[GroupBounds], float]:
+    """Shift positions and group bounds down to make room for WAN box."""
+    shifted_positions = {name: (x, y + wan_offset_y) for name, (x, y) in positions.items()}
+    shifted_bounds = [
+        GroupBounds(
+            name=gb.name,
+            x=gb.x,
+            y=gb.y + wan_offset_y,
+            width=gb.width,
+            height=gb.height,
+        )
+        for gb in group_bounds_list
+    ]
+    return shifted_positions, shifted_bounds, height + wan_offset_y
+
+
+def _find_gateway_position(
+    node_types: dict[str, str],
+    positions: dict[str, tuple[float, float]],
+) -> tuple[float, float] | None:
+    """Find the position of the gateway node."""
+    for name, ntype in node_types.items():
+        if ntype == "gateway" and name in positions:
+            return positions[name]
+    return None
+
+
 def render_svg(
     edges: list[Edge],
     *,
@@ -494,28 +526,11 @@ def render_svg(
     else:
         positions, width, height = _layout_nodes(edges, node_types, options)
 
-    # Add space at top for WAN box if present
-    wan_offset_y = 0.0
     if wan_info:
-        wan_box_height = (
-            36 + 3 * (options.font_size + 4) + 30 + 30
-        )  # globe + labels + padding + gap
-        wan_offset_y = wan_box_height
-        height += wan_offset_y
-        # Shift all positions down
-        positions = {name: (x, y + wan_offset_y) for name, (x, y) in positions.items()}
-        # Shift group bounds down
-        if group_bounds_list:
-            group_bounds_list = [
-                GroupBounds(
-                    name=gb.name,
-                    x=gb.x,
-                    y=gb.y + wan_offset_y,
-                    width=gb.width,
-                    height=gb.height,
-                )
-                for gb in group_bounds_list
-            ]
+        wan_box_height = 36 + 3 * (options.font_size + 4) + 30 + 30
+        positions, group_bounds_list, height = _apply_wan_offset(
+            positions, group_bounds_list, height, wan_box_height
+        )
 
     out_width = options.width or width
     out_height = options.height or height
@@ -544,16 +559,10 @@ def render_svg(
         groups=groups,
     )
 
-    # Render WAN upstream visualization
     if wan_info:
-        # Find gateway position
-        gateway_name = None
-        for name, ntype in node_types.items():
-            if ntype == "gateway":
-                gateway_name = name
-                break
-        if gateway_name and gateway_name in positions:
-            _render_wan_upstream(lines, wan_info, positions[gateway_name], options, theme)
+        gateway_pos = _find_gateway_position(node_types, positions)
+        if gateway_pos:
+            _render_wan_upstream(lines, wan_info, gateway_pos, options, theme)
 
     lines.append("</svg>")
     return "\n".join(lines) + "\n"
@@ -651,6 +660,51 @@ def _render_vlan_striped_edge(
         )
 
 
+def _compute_elbow_path(
+    src_cx: float, src_bottom: float, dst_cx: float, dst_top: float, mid_y: float
+) -> str:
+    """Compute SVG path for an elbow connector between two nodes."""
+    if math.isclose(src_cx, dst_cx, abs_tol=0.01):
+        elbow_x = src_cx + 0.5
+        return (
+            f"M {src_cx} {src_bottom} L {src_cx} {mid_y} "
+            f"L {elbow_x} {mid_y} L {dst_cx} {mid_y} L {dst_cx} {dst_top}"
+        )
+    return f"M {src_cx} {src_bottom} L {src_cx} {mid_y} L {dst_cx} {mid_y} L {dst_cx} {dst_top}"
+
+
+def _render_poe_icon(
+    lines: list[str], dst_cx: float, mid_y: float, dst_top: float, theme: SvgTheme
+) -> None:
+    """Render PoE lightning bolt icon on an edge."""
+    poe_size = 16
+    icon_x = dst_cx - poe_size / 2
+    icon_center_y = mid_y + 0.8 * (dst_top - mid_y)
+    icon_y = icon_center_y - poe_size / 2
+    lines.append(
+        f'<use href="#poe-bolt" x="{icon_x}" y="{icon_y}" '
+        f'width="{poe_size}" height="{poe_size}" '
+        f'fill="{theme.poe_fill}" stroke="{theme.poe_stroke}" stroke-width="0.5"/>'
+    )
+
+
+def _render_standard_edge(
+    lines: list[str],
+    path: str,
+    edge: Edge,
+    opacity_attr: str,
+    base_attrs: str,
+) -> None:
+    """Render a standard edge (no VLAN coloring)."""
+    color = "url(#link-poe)" if edge.poe else "url(#link-standard)"
+    dash = ' stroke-dasharray="6 4"' if edge.wireless else ""
+    width_px = 2 if edge.poe else 1
+    lines.append(
+        f'<path d="{path}" stroke="{color}" stroke-width="{width_px}" '
+        f'fill="none"{dash}{opacity_attr} {base_attrs}/>'
+    )
+
+
 def _render_svg_edges(
     lines: list[str],
     edges: list[Edge],
@@ -675,17 +729,8 @@ def _render_svg_edges(
         dst_top = dst_y
         mid_y = (src_bottom + dst_top) / 2
         width_px = 2 if edge.poe else 1
-        if math.isclose(src_cx, dst_cx, abs_tol=0.01):
-            elbow_x = src_cx + 0.5
-            path = (
-                f"M {src_cx} {src_bottom} L {src_cx} {mid_y} "
-                f"L {elbow_x} {mid_y} L {dst_cx} {mid_y} L {dst_cx} {dst_top}"
-            )
-        else:
-            path = (
-                f"M {src_cx} {src_bottom} L {src_cx} {mid_y} "
-                f"L {dst_cx} {mid_y} L {dst_cx} {dst_top}"
-            )
+
+        path = _compute_elbow_path(src_cx, src_bottom, dst_cx, dst_top, mid_y)
         left_attr = _escape_html(edge.left, quote=True)
         right_attr = _escape_html(edge.right, quote=True)
         vlan_attrs = _vlan_data_attrs(edge)
@@ -703,31 +748,15 @@ def _render_svg_edges(
         opacity_attr = f' opacity="{opacity}"' if opacity < 1.0 else ""
 
         if display_vlans:
-            # Render striped VLAN edge
             _render_vlan_striped_edge(
                 lines, path, display_vlans, theme, width_px, edge.wireless, base_attrs, opacity
             )
-            # Render VLAN endpoint markers at destination
             _render_vlan_endpoint_markers(lines, dst_cx, dst_top + 4, display_vlans, theme)
         else:
-            # Render standard edge (no VLAN info or no active VLANs)
-            color = "url(#link-poe)" if edge.poe else "url(#link-standard)"
-            dash = ' stroke-dasharray="6 4"' if edge.wireless else ""
-            lines.append(
-                f'<path d="{path}" stroke="{color}" stroke-width="{width_px}" '
-                f'fill="none"{dash}{opacity_attr} {base_attrs}/>'
-            )
+            _render_standard_edge(lines, path, edge, opacity_attr, base_attrs)
+
         if edge.poe:
-            poe_size = 16
-            # Position icon on the vertical line segment, 80% from mid_y to dst_top
-            icon_x = dst_cx - poe_size / 2
-            icon_center_y = mid_y + 0.8 * (dst_top - mid_y)
-            icon_y = icon_center_y - poe_size / 2
-            lines.append(
-                f'<use href="#poe-bolt" x="{icon_x}" y="{icon_y}" '
-                f'width="{poe_size}" height="{poe_size}" '
-                f'fill="{theme.poe_fill}" stroke="{theme.poe_stroke}" stroke-width="0.5"/>'
-            )
+            _render_poe_icon(lines, dst_cx, mid_y, dst_top, theme)
     return node_port_labels, node_port_prefix
 
 

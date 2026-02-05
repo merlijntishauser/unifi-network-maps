@@ -360,6 +360,62 @@ def _render_iso_vlan_striped_edge(
         )
 
 
+def _render_iso_poe_icon(
+    lines: list[str],
+    layout: IsoLayout,
+    offset_x: float,
+    offset_y: float,
+    src_gx: float,
+    src_gy: float,
+    dst_gx: float,
+    dst_gy: float,
+    src_cx: float,
+    src_cy: float,
+    dst_cx: float,
+    dst_cy: float,
+    theme: SvgTheme,
+) -> None:
+    """Render PoE icon on an edge path."""
+    poe_size = 30
+    dx = dst_gx - src_gx
+    dy = dst_gy - src_gy
+    if dx == 0 or dy == 0:
+        seg_start_x, seg_start_y = src_cx, src_cy
+    else:
+        elbow_cx, elbow_cy = _iso_front_anchor(
+            layout, gx=dst_gx, gy=src_gy, offset_x=offset_x, offset_y=offset_y
+        )
+        seg_start_x, seg_start_y = elbow_cx, elbow_cy
+    t = 0.6
+    icon_center_x = seg_start_x + t * (dst_cx - seg_start_x)
+    icon_center_y = seg_start_y + t * (dst_cy - seg_start_y)
+    icon_x = icon_center_x - poe_size / 2
+    icon_y = icon_center_y - poe_size / 2
+    lines.append(
+        f'<use href="#iso-poe-bolt" x="{icon_x}" y="{icon_y}" '
+        f'width="{poe_size}" height="{poe_size}" '
+        f'fill="{theme.poe_fill}" stroke="{theme.poe_stroke}" stroke-width="1"/>'
+    )
+
+
+def _render_iso_standard_edge(
+    lines: list[str],
+    path: str,
+    edge: Edge,
+    width_px: int,
+    base_attrs: str,
+    opacity_attr: str,
+) -> None:
+    """Render a standard (non-VLAN) edge path."""
+    color = "url(#iso-link-poe)" if edge.poe else "url(#iso-link-standard)"
+    dash = ' stroke-dasharray="8 6"' if edge.wireless else ""
+    lines.append(
+        f'<path d="{path}" stroke="{color}" stroke-width="{width_px}" '
+        f'fill="none" stroke-linecap="round" stroke-linejoin="round"{dash}{opacity_attr} '
+        f"{base_attrs}/>"
+    )
+
+
 def _render_iso_edges(
     lines: list[str],
     edges: list[Edge],
@@ -414,12 +470,10 @@ def _render_iso_edges(
         if vlan_attrs:
             base_attrs = f"{base_attrs} {vlan_attrs}"
 
-        # Determine VLANs to visualize
         display_vlans = edge.active_vlans
         if max_vlan_colors and len(display_vlans) > max_vlan_colors:
             display_vlans = display_vlans[:max_vlan_colors]
 
-        # Client edges are semi-transparent to reduce visual clutter
         opacity = _edge_opacity(node_types, edge)
         opacity_attr = f' opacity="{opacity}"' if opacity < 1.0 else ""
 
@@ -427,41 +481,27 @@ def _render_iso_edges(
             _render_iso_vlan_striped_edge(
                 lines, path, display_vlans, theme, width_px, edge.wireless, base_attrs, opacity
             )
-            # Render VLAN endpoint markers at destination
             marker_x = dst_cx + layout.tile_width * 0.3
             marker_y = dst_cy - layout.tile_height * 0.2
             _render_vlan_endpoint_markers(lines, marker_x, marker_y, display_vlans, theme)
         else:
-            color = "url(#iso-link-poe)" if edge.poe else "url(#iso-link-standard)"
-            dash = ' stroke-dasharray="8 6"' if edge.wireless else ""
-            lines.append(
-                f'<path d="{path}" stroke="{color}" stroke-width="{width_px}" '
-                f'fill="none" stroke-linecap="round" stroke-linejoin="round"{dash}{opacity_attr} '
-                f"{base_attrs}/>"
-            )
+            _render_iso_standard_edge(lines, path, edge, width_px, base_attrs, opacity_attr)
+
         if edge.poe:
-            poe_size = 30
-            # Position icon on the last segment of the path
-            dx = dst_gx - src_gx
-            dy = dst_gy - src_gy
-            if dx == 0 or dy == 0:
-                # Straight line: interpolate from src to dst
-                seg_start_x, seg_start_y = src_cx, src_cy
-            else:
-                # Path has elbow: interpolate on last segment (elbow to dst)
-                elbow_cx, elbow_cy = _iso_front_anchor(
-                    layout, gx=dst_gx, gy=src_gy, offset_x=offset_x, offset_y=offset_y
-                )
-                seg_start_x, seg_start_y = elbow_cx, elbow_cy
-            t = 0.6  # 60% from elbow towards node
-            icon_center_x = seg_start_x + t * (dst_cx - seg_start_x)
-            icon_center_y = seg_start_y + t * (dst_cy - seg_start_y)
-            icon_x = icon_center_x - poe_size / 2
-            icon_y = icon_center_y - poe_size / 2
-            lines.append(
-                f'<use href="#iso-poe-bolt" x="{icon_x}" y="{icon_y}" '
-                f'width="{poe_size}" height="{poe_size}" '
-                f'fill="{theme.poe_fill}" stroke="{theme.poe_stroke}" stroke-width="1"/>'
+            _render_iso_poe_icon(
+                lines,
+                layout,
+                offset_x,
+                offset_y,
+                src_gx,
+                src_gy,
+                dst_gx,
+                dst_gy,
+                src_cx,
+                src_cy,
+                dst_cx,
+                dst_cy,
+                theme,
             )
 
 

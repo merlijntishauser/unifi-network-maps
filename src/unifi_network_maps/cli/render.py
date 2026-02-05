@@ -11,7 +11,9 @@ from ..io.export import write_output
 from ..io.mkdocs_assets import write_mkdocs_sidebar_assets
 from ..model.topology import (
     Device,
+    Edge,
     TopologyResult,
+    WanInfo,
     build_node_type_map,
     build_port_map,
     classify_device_type,
@@ -80,6 +82,42 @@ def render_mermaid_output(
     return content
 
 
+def _extract_gateway_wan_info(
+    devices: list[Device],
+    args: argparse.Namespace,
+) -> WanInfo | None:
+    """Extract WAN info from the first gateway device."""
+    for device in devices:
+        if classify_device_type(device) == "gateway":
+            return extract_wan_info(
+                device,
+                wan1_label=getattr(args, "wan_label", None),
+                wan1_isp_speed=getattr(args, "wan_speed", None),
+                wan2_label=getattr(args, "wan2_label", None),
+                wan2_isp_speed=getattr(args, "wan2_speed", None),
+            )
+    return None
+
+
+def _apply_client_clustering(
+    edges: list[Edge],
+    node_types: dict[str, str],
+    layout_mode: str,
+    groups: dict[str, list[str]] | None,
+    group_order: list[str] | None,
+) -> tuple[list[Edge], dict[str, list[str]] | None, list[str] | None]:
+    """Apply client clustering and update groups if needed."""
+    edges, _counts = collapse_client_edges(edges, node_types)
+    if layout_mode == "grouped" and group_order and "client_cluster" not in group_order:
+        group_order = [*group_order, "client_cluster"]
+        if groups is not None:
+            groups = {
+                **groups,
+                "client_cluster": [n for n, t in node_types.items() if t == "client_cluster"],
+            }
+    return edges, groups, group_order
+
+
 def render_svg_output(
     args: argparse.Namespace,
     devices: list[Device],
@@ -92,19 +130,11 @@ def render_svg_output(
 ) -> str:
     edges, _has_tree = select_edges(topology)
     edges, clients = build_edges_with_clients(
-        args,
-        edges,
-        devices,
-        config,
-        site,
-        clients_override=clients_override,
+        args, edges, devices, config, site, clients_override=clients_override
     )
     layout_mode = getattr(args, "svg_layout_mode", "physical")
-    options = SvgOptions(
-        width=args.svg_width,
-        height=args.svg_height,
-        layout_mode=layout_mode,
-    )
+    options = SvgOptions(width=args.svg_width, height=args.svg_height, layout_mode=layout_mode)
+
     groups = None
     group_order = None
     if layout_mode == "grouped":
@@ -114,36 +144,17 @@ def render_svg_output(
             client_names = [c.get("name") or c.get("hostname", "") for c in clients]
             groups["client"] = [n for n in client_names if n]
             group_order.append("client")
+
     node_types = build_node_type_map(
-        devices,
-        clients,
-        client_mode=args.client_scope,
-        only_unifi=args.only_unifi,
+        devices, clients, client_mode=args.client_scope, only_unifi=args.only_unifi
     )
 
-    # Apply client clustering if requested
     if getattr(args, "collapse_clients", False):
-        edges, _client_counts = collapse_client_edges(edges, node_types)
-        # Add client_cluster to group order if using grouped layout
-        if layout_mode == "grouped" and group_order and "client_cluster" not in group_order:
-            group_order.append("client_cluster")
-            if groups is not None:
-                groups["client_cluster"] = [
-                    name for name, ntype in node_types.items() if ntype == "client_cluster"
-                ]
+        edges, groups, group_order = _apply_client_clustering(
+            edges, node_types, layout_mode, groups, group_order
+        )
 
-    # Extract WAN info from gateway device
-    wan_info = None
-    for device in devices:
-        if classify_device_type(device) == "gateway":
-            wan_info = extract_wan_info(
-                device,
-                wan1_label=getattr(args, "wan_label", None),
-                wan1_isp_speed=getattr(args, "wan_speed", None),
-                wan2_label=getattr(args, "wan2_label", None),
-                wan2_isp_speed=getattr(args, "wan2_speed", None),
-            )
-            break
+    wan_info = _extract_gateway_wan_info(devices, args)
 
     if args.format == "svg-iso":
         from ..render.svg_isometric import render_svg_isometric

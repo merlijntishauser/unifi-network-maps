@@ -74,33 +74,44 @@ def _aggregation_group(port_entry: object) -> object | None:
     return None
 
 
+def _coerce_vlan_string(value: str) -> tuple[int, ...]:
+    """Parse a comma-separated VLAN string to tuple of ints."""
+    normalized = value.strip().lower()
+    if normalized in ("auto", "block_all", "all", "none", ""):
+        return ()
+    parts = [p.strip() for p in value.split(",") if p.strip()]
+    parsed = [_as_int(p) for p in parts]
+    return tuple(sorted(v for v in parsed if v is not None))
+
+
+def _coerce_vlan_sequence(
+    items: list | tuple, network_vlan_map: dict[str, int] | None
+) -> tuple[int, ...]:
+    """Convert a sequence of VLAN IDs or network names to tuple of ints."""
+    result: list[int] = []
+    for item in items:
+        parsed_int = _as_int(item)
+        if parsed_int is not None:
+            result.append(parsed_int)
+        elif network_vlan_map and isinstance(item, str):
+            vlan_id = network_vlan_map.get(item)
+            if vlan_id is not None:
+                result.append(vlan_id)
+    return tuple(sorted(set(result)))
+
+
 def _coerce_vlan_list(
     value: object, network_vlan_map: dict[str, int] | None = None
 ) -> tuple[int, ...]:
     """Convert a VLAN list from various formats to a tuple of ints."""
     if value is None:
         return ()
-    # Handle special string values from UniFi that are not VLAN lists
     if isinstance(value, str):
-        normalized = value.strip().lower()
-        if normalized in ("auto", "block_all", "all", "none", ""):
-            return ()
-        parts = [p.strip() for p in value.split(",") if p.strip()]
-        parsed = [_as_int(p) for p in parts]
-        return tuple(sorted(v for v in parsed if v is not None))
+        return _coerce_vlan_string(value)
     if isinstance(value, int):
         return (value,)
     if isinstance(value, list | tuple):
-        result: list[int] = []
-        for item in value:
-            parsed_int = _as_int(item)
-            if parsed_int is not None:
-                result.append(parsed_int)
-            elif network_vlan_map and isinstance(item, str):
-                vlan_id = network_vlan_map.get(item)
-                if vlan_id is not None:
-                    result.append(vlan_id)
-        return tuple(sorted(set(result)))
+        return _coerce_vlan_sequence(value, network_vlan_map)
     return ()
 
 
@@ -194,19 +205,31 @@ def _poe_ports_from_device(
     return poe_ports
 
 
-def _parse_uplink(value: object | None) -> UplinkInfo | None:
-    if value is None:
-        return None
+def _extract_uplink_fields(value: object) -> tuple[object, object, object]:
+    """Extract mac, name, and port from uplink data (dict or object)."""
     if isinstance(value, dict):
         mac = value.get("uplink_mac") or value.get("uplink_device_mac")
         name = value.get("uplink_device_name") or value.get("uplink_name")
-        port = _as_int(value.get("uplink_remote_port") or value.get("port_idx"))
+        port_raw = value.get("uplink_remote_port") or value.get("port_idx")
     else:
         mac = get_field(value, "uplink_mac") or get_field(value, "uplink_device_mac")
         name = get_field(value, "uplink_device_name") or get_field(value, "uplink_name")
-        port = _as_int(get_field(value, "uplink_remote_port") or get_field(value, "port_idx"))
-    mac_value = str(mac).strip() if isinstance(mac, str) and mac.strip() else None
-    name_value = str(name).strip() if isinstance(name, str) and name.strip() else None
+        port_raw = get_field(value, "uplink_remote_port") or get_field(value, "port_idx")
+    return mac, name, port_raw
+
+
+def _coerce_uplink_string(value: object) -> str | None:
+    """Coerce a value to a stripped string or None."""
+    return str(value).strip() if isinstance(value, str) and value.strip() else None
+
+
+def _parse_uplink(value: object | None) -> UplinkInfo | None:
+    if value is None:
+        return None
+    mac, name, port_raw = _extract_uplink_fields(value)
+    mac_value = _coerce_uplink_string(mac)
+    name_value = _coerce_uplink_string(name)
+    port = _as_int(port_raw)
     if mac_value is None and name_value is None and port is None:
         return None
     return UplinkInfo(mac=mac_value, name=name_value, port=port)
@@ -251,32 +274,46 @@ def _get_model_display_name(device: DeviceSource) -> str | None:
     return None
 
 
+def _get_lldp_info(device: DeviceSource) -> object | None:
+    """Try multiple field names to get LLDP info from device."""
+    for field_name in ("lldp_info", "lldp", "lldp_table"):
+        lldp = get_field(device, field_name)
+        if lldp is not None:
+            return lldp
+    return None
+
+
+def _resolve_lldp_info(
+    device: DeviceSource,
+    name: object,
+    uplink: UplinkInfo | None,
+    last_uplink: UplinkInfo | None,
+) -> list[object]:
+    """Resolve LLDP info, falling back to empty list if uplink exists."""
+    lldp_info = _get_lldp_info(device)
+    if lldp_info is not None:
+        return as_list(lldp_info)
+    if uplink or last_uplink:
+        logger.warning("Device %s missing LLDP info; using uplink fallback", name)
+        return []
+    raise ValueError(f"Device {name} missing LLDP info")
+
+
 def coerce_device(device: DeviceSource, network_vlan_map: dict[str, int] | None = None) -> Device:
     name = get_field(device, "name")
+    mac = get_field(device, "mac")
+    if not name or not mac:
+        raise ValueError("Device missing name or mac")
+
     model_name = _get_model_display_name(device) or get_field(device, "model")
     model = get_field(device, "model")
-    mac = get_field(device, "mac")
     ip = get_field(device, "ip") or get_field(device, "ip_address")
     dev_type = get_field(device, "type") or get_field(device, "device_type")
     version = get_field(device, "displayable_version") or get_field(device, "version")
-    lldp_info = get_field(device, "lldp_info")
-    if lldp_info is None:
-        lldp_info = get_field(device, "lldp")
-    if lldp_info is None:
-        lldp_info = get_field(device, "lldp_table")
 
-    if not name or not mac:
-        raise ValueError("Device missing name or mac")
     uplink, last_uplink = _uplink_info(device)
-    if lldp_info is None:
-        if uplink or last_uplink:
-            logger.warning("Device %s missing LLDP info; using uplink fallback", name)
-            lldp_info = []
-        else:
-            raise ValueError(f"Device {name} missing LLDP info")
-
-    lldp_entries = as_list(lldp_info)
-    coerced_lldp = [coerce_lldp(lldp_entry) for lldp_entry in lldp_entries]
+    lldp_entries = _resolve_lldp_info(device, name, uplink, last_uplink)
+    coerced_lldp = [coerce_lldp(entry) for entry in lldp_entries]
     port_table = _coerce_port_table(device, network_vlan_map)
     poe_ports = _poe_ports_from_device(device, network_vlan_map)
 

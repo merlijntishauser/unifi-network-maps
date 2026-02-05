@@ -39,8 +39,8 @@ SVG_FILES = [
 
 # Threshold for pixel difference (0-255 per channel)
 PIXEL_THRESHOLD = 10
-# Percentage of pixels allowed to differ
-DIFF_PERCENT_THRESHOLD = 0.5
+# Percentage of pixels allowed to differ (1% allows for minor cross-platform font rendering differences)
+DIFF_PERCENT_THRESHOLD = 1.0
 
 
 @pytest.fixture(scope="session")

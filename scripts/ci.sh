@@ -8,20 +8,29 @@ GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 NC='\033[0m' # No Color
 
+# Width for the dotted line (matches pre-commit style)
+LINE_WIDTH=73
+
 run_step() {
     local name="$1"
     shift
     local output
     local exit_code
 
-    printf "%-30s" "$name..."
+    # Calculate dots needed to fill the line
+    local name_len=${#name}
+    local dots_needed=$((LINE_WIDTH - name_len))
+    local dots=$(printf '.%.0s' $(seq 1 $dots_needed))
+
+    # Print name and dots without newline
+    printf "%s%s" "$name" "$dots"
 
     if output=$("$@" 2>&1); then
-        echo -e "${GREEN}OK${NC}"
+        echo -e "${GREEN}Passed${NC}"
         return 0
     else
         exit_code=$?
-        echo -e "${RED}FAILED${NC}"
+        echo -e "${RED}Failed${NC}"
         echo -e "${YELLOW}Output:${NC}"
         echo "$output"
         return $exit_code

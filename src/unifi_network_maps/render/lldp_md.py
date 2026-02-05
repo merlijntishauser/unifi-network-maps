@@ -4,18 +4,17 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from ..model.helpers import normalize_mac
-from ..model.lldp import LLDPEntry, local_port_label
-from ..model.topology import (
-    Device,
-    _client_display_name,
-    _client_matches_filters,
+from ..model.classify import client_display_name
+from ..model.clients import (
     _client_uplink_mac,
     _client_uplink_port,
     build_client_port_map,
-    build_device_index,
-    build_port_map,
+    client_matches_filters,
 )
+from ..model.edges import build_device_index, build_port_map
+from ..model.helpers import normalize_mac
+from ..model.lldp import LLDPEntry, local_port_label
+from ..model.topology import Device
 from .device_ports_md import render_device_port_details
 from .device_summary import poe_summary, port_summary, uplink_summary
 from .markdown_tables import escape_markdown, markdown_table_lines
@@ -98,9 +97,9 @@ def _client_rows(
 ) -> dict[str, list[tuple[str, str | None]]]:
     rows_by_device: dict[str, list[tuple[str, str | None]]] = {}
     for client in clients:
-        if not _client_matches_filters(client, client_mode=client_mode, only_unifi=only_unifi):
+        if not client_matches_filters(client, client_mode=client_mode, only_unifi=only_unifi):
             continue
-        name = _client_display_name(client)
+        name = client_display_name(client)
         uplink_mac = _client_uplink_mac(client)
         if not name or not uplink_mac:
             continue

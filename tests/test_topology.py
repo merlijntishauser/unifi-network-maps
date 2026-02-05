@@ -2,34 +2,32 @@ from types import SimpleNamespace
 
 import pytest
 
-from unifi_network_maps.model.helpers import as_bool, as_list, get_field
-from unifi_network_maps.model.topology import (
-    Device,
-    Edge,
-    LLDPEntry,
-    PortInfo,
-    UplinkInfo,
-    _client_channel,
-    _client_display_name,
+from unifi_network_maps.model.classify import (
     _client_unifi_flag,
+    classify_client_type,
+    classify_device_type,
+    client_display_name,
+)
+from unifi_network_maps.model.clients import (
+    _client_channel,
     _client_uplink_mac,
     _client_uplink_port,
-    _find_wan_port_by_assignment,
-    _normalize_wan_speed,
+    build_client_edges,
+    build_client_port_map,
+    build_node_type_map,
+)
+from unifi_network_maps.model.edges import (
     _port_speed_by_idx,
     _resolve_port_idx_from_lldp,
     _tree_edges_from_parent,
     _uplink_name,
-    build_client_edges,
-    build_client_port_map,
     build_edges,
-    build_node_type_map,
     build_topology,
     build_tree_edges_by_topology,
-    classify_client_type,
-    classify_device_type,
-    extract_wan_info,
 )
+from unifi_network_maps.model.helpers import as_bool, as_list, get_field
+from unifi_network_maps.model.lldp import LLDPEntry
+from unifi_network_maps.model.topology import Device, Edge, PortInfo, UplinkInfo
 from unifi_network_maps.model.topology_coerce import (
     _aggregation_group,
     _as_float,
@@ -41,6 +39,11 @@ from unifi_network_maps.model.topology_coerce import (
     _uplink_info,
     coerce_device,
     normalize_devices,
+)
+from unifi_network_maps.model.wan import (
+    _find_wan_port_by_assignment,
+    _normalize_wan_speed,
+    extract_wan_info,
 )
 
 
@@ -538,7 +541,7 @@ def test_client_field_attribute_fallback():
 
 def test_client_display_name_missing_returns_none():
     client = {"name": " ", "hostname": "", "mac": ""}
-    assert _client_display_name(client) is None
+    assert client_display_name(client) is None
 
 
 def test_client_uplink_port_direct_int():

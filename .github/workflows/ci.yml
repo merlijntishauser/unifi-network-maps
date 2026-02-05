@@ -213,7 +213,21 @@ jobs:
           python -m pip install -e . -c constraints.txt
           python -m pip install -r requirements-dev.txt -c constraints.txt
       - name: Generate smoketest files
-        run: make smoketest-mock
+        run: |
+          mkdir -p smoketest-mock
+          python -m unifi_network_maps.cli --mock-data examples/mock_data.json --include-ports --stdout > smoketest-mock/network_ports.mmd
+          python -m unifi_network_maps.cli --mock-data examples/mock_data.json --include-ports --include-clients --format svg-iso --output smoketest-mock/network_ports_clients_iso.svg
+          python -m unifi_network_maps.cli --mock-data examples/mock_data.json --format svg --svg-layout-mode grouped --output smoketest-mock/network_grouped.svg
+          python -m unifi_network_maps.cli --mock-data examples/mock_data.json --format svg-iso --svg-layout-mode grouped --output smoketest-mock/network_grouped_iso.svg
+          python -m unifi_network_maps.cli --mock-data examples/mock_data.json --format mkdocs --include-clients --mkdocs-dual-theme --mkdocs-sidebar-legend --output smoketest-mock/unifi-network-dual-theme-and-clients.md
+          python -m unifi_network_maps.cli --mock-data examples/mock_data.json --format svg --wan-label "Odido" --wan-speed "1 Gbps" --output smoketest-mock/network_wan.svg
+          python -m unifi_network_maps.cli --mock-data examples/mock_data.json --format svg-iso --wan-label "Odido" --wan-speed "1 Gbps" --wan2-label "Backup SFP+" --output smoketest-mock/network_wan_dual_iso.svg
+          python -m unifi_network_maps.cli --mock-data examples/mock_data.json --theme unifi --format svg-iso --output smoketest-mock/theme_unifi_iso.svg
+          python -m unifi_network_maps.cli --mock-data examples/mock_data.json --theme unifi-dark --format svg-iso --output smoketest-mock/theme_unifi_dark_iso.svg
+          python -m unifi_network_maps.cli --mock-data examples/mock_data.json --theme minimal --format svg-iso --output smoketest-mock/theme_minimal_iso.svg
+          python -m unifi_network_maps.cli --mock-data examples/mock_data.json --theme unifi --stdout > smoketest-mock/theme_unifi.mmd
+          python -m unifi_network_maps.cli --mock-data examples/mock_data.json --format svg-iso --icon-set isometric --output smoketest-mock/iconset_isometric_iso.svg
+          python -m unifi_network_maps.cli --mock-data examples/mock_data.json --format svg-iso --icon-set modern --output smoketest-mock/iconset_modern_iso.svg
       - name: Acceptance tests (visual regression, smoketest validation)
         run: pytest -q -m acceptance
 

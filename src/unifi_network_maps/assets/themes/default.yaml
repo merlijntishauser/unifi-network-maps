@@ -47,6 +47,31 @@ svg:
     other:
       from: "#eeeeee"
       to: "#d7d7d7"
+    # Extended device types - use client colors for consistency
+    camera:
+      from: "#f2e5ff"
+      to: "#e0c9ff"
+    tv:
+      from: "#f2e5ff"
+      to: "#e0c9ff"
+    phone:
+      from: "#f2e5ff"
+      to: "#e0c9ff"
+    printer:
+      from: "#f2e5ff"
+      to: "#e0c9ff"
+    nas:
+      from: "#f2e5ff"
+      to: "#e0c9ff"
+    speaker:
+      from: "#f2e5ff"
+      to: "#e0c9ff"
+    game_console:
+      from: "#f2e5ff"
+      to: "#e0c9ff"
+    iot:
+      from: "#f2e5ff"
+      to: "#e0c9ff"
   # VLAN color overrides (auto-generated colors used for unlisted VLANs)
   vlan_colors:
     1: "#6c757d"      # Default/management - gray

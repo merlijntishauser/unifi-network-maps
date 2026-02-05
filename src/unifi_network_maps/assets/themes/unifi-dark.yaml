@@ -64,6 +64,31 @@ svg:
     other:
       from: "#32373d"
       to: "#272b30"
+    # Extended device types - dark theme colors
+    camera:
+      from: "#2a2e33"
+      to: "#1f2226"
+    tv:
+      from: "#2a2e33"
+      to: "#1f2226"
+    phone:
+      from: "#2a2e33"
+      to: "#1f2226"
+    printer:
+      from: "#2a2e33"
+      to: "#1f2226"
+    nas:
+      from: "#2a2e33"
+      to: "#1f2226"
+    speaker:
+      from: "#2a2e33"
+      to: "#1f2226"
+    game_console:
+      from: "#2a2e33"
+      to: "#1f2226"
+    iot:
+      from: "#2a2e33"
+      to: "#1f2226"
   vlan_colors:
     1: "#9ca3ab"
     10: "#ee6368"

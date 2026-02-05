@@ -59,6 +59,31 @@ svg:
     other:
       from: "#f3f4f6"
       to: "#e5e7eb"
+    # Extended device types - all grayscale for minimal theme
+    camera:
+      from: "#f3f4f6"
+      to: "#e5e7eb"
+    tv:
+      from: "#f3f4f6"
+      to: "#e5e7eb"
+    phone:
+      from: "#f3f4f6"
+      to: "#e5e7eb"
+    printer:
+      from: "#f3f4f6"
+      to: "#e5e7eb"
+    nas:
+      from: "#f3f4f6"
+      to: "#e5e7eb"
+    speaker:
+      from: "#f3f4f6"
+      to: "#e5e7eb"
+    game_console:
+      from: "#f3f4f6"
+      to: "#e5e7eb"
+    iot:
+      from: "#f3f4f6"
+      to: "#e5e7eb"
   vlan_colors:
     1: "#9ca3af"
     10: "#9ca3af"

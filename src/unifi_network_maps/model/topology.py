@@ -6,8 +6,12 @@ import logging
 from collections import deque
 from collections.abc import Iterable
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from .helpers import first_string_field, get_field, normalize_mac
+
+if TYPE_CHECKING:
+    from .diff import TopologyDiff
 from .labels import compose_port_label, order_edge_names
 from .lldp import LLDPEntry, local_port_label
 from .ports import extract_port_number
@@ -1166,3 +1170,102 @@ def extract_wan_info(
     if wan1 or wan2:
         return WanInfo(wan1=wan1, wan2=wan2)
     return None
+
+
+# --- Topology class for serialization and diff ---
+
+
+@dataclass
+class Topology:
+    """A complete network topology snapshot for serialization and comparison.
+
+    This class wraps devices, clients, and edges into a single object that can
+    be serialized to JSON and compared against other snapshots to detect changes.
+
+    Example:
+        # Create from API data
+        topology = Topology(devices=devices, clients=clients, edges=edges)
+
+        # Serialize for persistence
+        snapshot = topology.to_dict()
+        json.dump(snapshot, open("topology.json", "w"))
+
+        # Load from persistence
+        old_topology = Topology.from_dict(json.load(open("topology.json")))
+
+        # Compare snapshots
+        diff = old_topology.diff(new_topology)
+        for event in diff.events:
+            print(event.description)
+    """
+
+    devices: list[Device] = field(default_factory=list)
+    clients: list[dict[str, object]] = field(default_factory=list)
+    edges: list[Edge] = field(default_factory=list)
+    timestamp: str | None = None
+
+    def to_dict(self) -> dict[str, object]:
+        """Serialize topology to a JSON-compatible dictionary.
+
+        Returns:
+            Dictionary with version, timestamp, devices, clients, and edges.
+        """
+        from .snapshot import client_to_dict, device_to_dict, edge_to_dict
+
+        return {
+            "version": 1,
+            "timestamp": self.timestamp,
+            "devices": [device_to_dict(d) for d in self.devices],
+            "clients": [client_to_dict(c) for c in self.clients],  # type: ignore[arg-type]
+            "edges": [edge_to_dict(e) for e in self.edges],
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, object]) -> Topology:
+        """Deserialize topology from a dictionary.
+
+        Args:
+            data: Dictionary from to_dict() or equivalent JSON.
+
+        Returns:
+            Topology instance with restored devices, clients, and edges.
+        """
+        from .snapshot import client_from_dict, device_from_dict, edge_from_dict
+
+        devices_data = data.get("devices", [])
+        clients_data = data.get("clients", [])
+        edges_data = data.get("edges", [])
+
+        devices = [device_from_dict(d) for d in devices_data]  # type: ignore[arg-type]
+        clients = [client_from_dict(c) for c in clients_data]  # type: ignore[arg-type]
+        edges = [edge_from_dict(e) for e in edges_data]  # type: ignore[arg-type]
+
+        timestamp = data.get("timestamp")
+        return cls(
+            devices=devices,
+            clients=clients,
+            edges=edges,
+            timestamp=timestamp if isinstance(timestamp, str) else None,
+        )
+
+    def diff(self, other: Topology) -> TopologyDiff:
+        """Compare this topology with another and return differences.
+
+        Args:
+            other: The newer topology to compare against.
+
+        Returns:
+            TopologyDiff containing all detected changes.
+        """
+        from .diff import compare_topologies
+
+        return compare_topologies(
+            old_devices=self.devices,
+            new_devices=other.devices,
+            old_clients=self.clients,  # type: ignore[arg-type]
+            new_clients=other.clients,  # type: ignore[arg-type]
+            old_edges=self.edges,
+            new_edges=other.edges,
+            old_timestamp=self.timestamp,
+            new_timestamp=other.timestamp,
+        )

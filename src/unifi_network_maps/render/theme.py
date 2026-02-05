@@ -157,8 +157,11 @@ def _svg_theme_from_dict(data: dict, base: SvgTheme) -> SvgTheme:
     )
 
 
-def load_theme(path: str | Path) -> tuple[MermaidTheme, SvgTheme]:
-    theme_path = resolve_theme_path(path, require_exists=False)
+def _load_theme_from_path(theme_path: Path) -> tuple[MermaidTheme, SvgTheme]:
+    """Load theme from a path without security validation.
+
+    Internal function for loading built-in themes bundled with the package.
+    """
     payload = yaml.safe_load(theme_path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
         raise ValueError("Theme file must contain a YAML mapping")
@@ -169,6 +172,16 @@ def load_theme(path: str | Path) -> tuple[MermaidTheme, SvgTheme]:
     mermaid_theme = _mermaid_theme_from_dict(mermaid_data, DEFAULT_MERMAID_THEME)
     svg_theme = _svg_theme_from_dict(svg_data, DEFAULT_SVG_THEME)
     return mermaid_theme, svg_theme
+
+
+def load_theme(path: str | Path) -> tuple[MermaidTheme, SvgTheme]:
+    """Load a custom theme from a user-provided file path.
+
+    The path is validated to be within allowed directories for security.
+    For built-in themes, use resolve_themes(theme_name=...) instead.
+    """
+    theme_path = resolve_theme_path(path, require_exists=False)
+    return _load_theme_from_path(theme_path)
 
 
 def resolve_themes(
@@ -191,5 +204,5 @@ def resolve_themes(
             valid = ", ".join(sorted(BUILTIN_THEMES.keys()))
             raise ValueError(f"Unknown theme: {theme_name}. Valid themes: {valid}")
         builtin_path = _ASSETS_DIR / BUILTIN_THEMES[theme_name]
-        return load_theme(builtin_path)
+        return _load_theme_from_path(builtin_path)
     return DEFAULT_MERMAID_THEME, DEFAULT_SVG_THEME

@@ -198,13 +198,6 @@ __all__ = [
     "UplinkInfo",
     "WanInfo",
     "WanInterface",
-    # Type aliases
-    "ClientPortMap",
-    "DeviceSource",
-    "PoeMap",
-    "PortMap",
-    "SpeedMap",
-    "VlanMap",
     # Functions
     "build_device_index",
 ]

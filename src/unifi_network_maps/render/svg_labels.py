@@ -142,7 +142,7 @@ def _format_wan_interface_line(
     speed_str = " / ".join(speed_parts) if speed_parts else ""
 
     if not wan.enabled and prefix == "WAN2":
-        return f"{prefix}: {label} (disabled) {status}"
+        return f"{prefix}: {label} (disabled)"
 
     if is_dual:
         line = f"{prefix}: {label}"

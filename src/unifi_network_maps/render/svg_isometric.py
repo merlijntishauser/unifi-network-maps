@@ -375,6 +375,8 @@ def _render_iso_poe_icon(
     dst_cx: float,
     dst_cy: float,
     theme: SvgTheme,
+    *,
+    has_port_labels: bool = False,
 ) -> None:
     """Render PoE icon on an edge path."""
     poe_size = 30
@@ -387,7 +389,7 @@ def _render_iso_poe_icon(
             layout, gx=dst_gx, gy=src_gy, offset_x=offset_x, offset_y=offset_y
         )
         seg_start_x, seg_start_y = elbow_cx, elbow_cy
-    t = 0.6
+    t = 0.15 if has_port_labels else 0.6
     icon_center_x = seg_start_x + t * (dst_cx - seg_start_x)
     icon_center_y = seg_start_y + t * (dst_cy - seg_start_y)
     icon_x = icon_center_x - poe_size / 2
@@ -489,6 +491,7 @@ def _render_iso_edges(
             _render_iso_standard_edge(lines, path, edge, width_px, base_attrs, opacity_attr)
 
         if edge.poe:
+            dst_has_label = edge.right in node_port_labels
             _render_iso_poe_icon(
                 lines,
                 layout,
@@ -503,6 +506,7 @@ def _render_iso_edges(
                 dst_cx,
                 dst_cy,
                 theme,
+                has_port_labels=dst_has_label,
             )
 
 

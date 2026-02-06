@@ -173,6 +173,12 @@ def add_svg_args(parser: argparse._ArgumentGroup) -> None:
         default=None,
         help="Icon set to use (default: determined by theme, or 'isometric' if no theme)",
     )
+    parser.add_argument(
+        "--wan2-disabled",
+        choices=["auto", "true", "false"],
+        default="auto",
+        help="WAN2 disabled state: auto (detect from controller), true, or false (default: auto)",
+    )
 
 
 def add_general_render_args(parser: argparse._ArgumentGroup) -> None:

@@ -6,6 +6,7 @@ from unifi_network_maps.model.vlans import (
     build_network_vlan_map,
     build_vlan_info,
     build_vlan_names,
+    build_wan_enabled_map,
     normalize_networks,
 )
 
@@ -61,6 +62,53 @@ class TestNormalizeNetworks:
         networks = [{"name": "Corp", "purpose": "corporate", "vlan": 100}]
         result = normalize_networks(networks)
         assert result[0]["purpose"] == "corporate"
+
+    def test_enabled_field_present(self):
+        networks = [{"name": "WAN", "purpose": "wan", "enabled": True}]
+        result = normalize_networks(networks)
+        assert result[0]["enabled"] is True
+
+    def test_enabled_field_false(self):
+        networks = [{"name": "WAN2", "purpose": "wan2", "enabled": False}]
+        result = normalize_networks(networks)
+        assert result[0]["enabled"] is False
+
+    def test_enabled_field_absent(self):
+        networks = [{"name": "LAN", "purpose": "corporate"}]
+        result = normalize_networks(networks)
+        assert result[0]["enabled"] is None
+
+
+# --- build_wan_enabled_map ---
+
+
+class TestBuildWanEnabledMap:
+    def test_empty_networks(self):
+        assert build_wan_enabled_map([]) == {}
+
+    def test_wan_enabled_wan2_disabled(self):
+        networks = [
+            {"name": "WAN", "purpose": "wan", "enabled": True},
+            {"name": "WAN2", "purpose": "wan2", "enabled": False},
+        ]
+        result = build_wan_enabled_map(networks)
+        assert result == {"wan": True, "wan2": False}
+
+    def test_ignores_non_wan_networks(self):
+        networks = [
+            {"name": "LAN", "purpose": "corporate", "enabled": True},
+            {"name": "WAN", "purpose": "wan", "enabled": True},
+        ]
+        result = build_wan_enabled_map(networks)
+        assert result == {"wan": True}
+
+    def test_skips_networks_without_enabled(self):
+        networks = [
+            {"name": "WAN", "purpose": "wan"},
+            {"name": "WAN2", "purpose": "wan2", "enabled": False},
+        ]
+        result = build_wan_enabled_map(networks)
+        assert result == {"wan2": False}
 
 
 # --- build_vlan_info ---

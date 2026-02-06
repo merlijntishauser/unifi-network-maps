@@ -6,13 +6,14 @@ import argparse
 import logging
 
 from ..adapters.config import Config
-from ..adapters.unifi import fetch_clients
+from ..adapters.unifi import fetch_clients, fetch_networks
 from ..io.export import write_output
 from ..io.mkdocs_assets import write_mkdocs_sidebar_assets
 from ..model.classify import classify_device_type
 from ..model.clients import build_node_type_map, collapse_client_edges
 from ..model.edges import build_port_map, group_devices_by_type
 from ..model.topology import Device, Edge, TopologyResult, WanInfo
+from ..model.vlans import build_wan_enabled_map
 from ..model.wan import extract_wan_info
 from ..render.legend import resolve_legend_style
 from ..render.lldp_md import render_lldp_md
@@ -78,8 +79,12 @@ def render_mermaid_output(
 def _extract_gateway_wan_info(
     devices: list[Device],
     args: argparse.Namespace,
+    *,
+    networks: list[object] | None = None,
 ) -> WanInfo | None:
     """Extract WAN info from the first gateway device."""
+    wan_enabled_map = build_wan_enabled_map(networks) if networks else None
+    wan2_disabled = getattr(args, "wan2_disabled", "auto")
     for device in devices:
         if classify_device_type(device) == "gateway":
             return extract_wan_info(
@@ -88,6 +93,8 @@ def _extract_gateway_wan_info(
                 wan1_isp_speed=getattr(args, "wan_speed", None),
                 wan2_label=getattr(args, "wan2_label", None),
                 wan2_isp_speed=getattr(args, "wan2_speed", None),
+                wan_enabled_map=wan_enabled_map,
+                wan2_disabled=wan2_disabled,
             )
     return None
 
@@ -111,6 +118,23 @@ def _apply_client_clustering(
     return edges, groups, group_order
 
 
+def _fetch_networks_for_wan(
+    config: Config | None,
+    site: str,
+    *,
+    networks_override: list[object] | None = None,
+) -> list[object] | None:
+    """Fetch networks for WAN status detection, with cache fallback."""
+    if networks_override is not None:
+        return networks_override
+    if config is None:
+        return None
+    try:
+        return list(fetch_networks(config, site=site, use_cache=True))
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def render_svg_output(
     args: argparse.Namespace,
     devices: list[Device],
@@ -120,6 +144,7 @@ def render_svg_output(
     svg_theme: SvgTheme,
     *,
     clients_override: list[object] | None = None,
+    networks_override: list[object] | None = None,
 ) -> str:
     edges, _has_tree = select_edges(topology)
     edges, clients = build_edges_with_clients(
@@ -147,7 +172,8 @@ def render_svg_output(
             edges, node_types, layout_mode, groups, group_order
         )
 
-    wan_info = _extract_gateway_wan_info(devices, args)
+    networks = _fetch_networks_for_wan(config, site, networks_override=networks_override)
+    wan_info = _extract_gateway_wan_info(devices, args, networks=networks)
 
     if args.format == "svg-iso":
         from ..render.svg_isometric import render_svg_isometric
@@ -315,6 +341,7 @@ def render_standard_format(
             site,
             svg_theme,
             clients_override=mock_clients,
+            networks_override=mock_networks,
         )
     else:
         logging.error("Unsupported format: %s", args.format)

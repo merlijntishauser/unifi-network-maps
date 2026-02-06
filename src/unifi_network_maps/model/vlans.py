@@ -31,6 +31,7 @@ def normalize_networks(networks: Iterable[object]) -> list[dict[str, object]]:
     for network in as_list(networks):
         if network is None:
             continue
+        raw_enabled = first_attr(network, "enabled", "wan_enabled")
         normalized.append(
             {
                 "network_id": first_attr(network, "_id", "id", "network_id", "networkId"),
@@ -38,9 +39,25 @@ def normalize_networks(networks: Iterable[object]) -> list[dict[str, object]]:
                 "vlan_id": _network_vlan_id(network),
                 "vlan_enabled": as_bool(first_attr(network, "vlan_enabled", "vlanEnabled")),
                 "purpose": first_attr(network, "purpose"),
+                "enabled": as_bool(raw_enabled) if raw_enabled is not None else None,
             }
         )
     return normalized
+
+
+def build_wan_enabled_map(networks: Iterable[object]) -> dict[str, bool]:
+    """Build a mapping from WAN purpose to enabled state.
+
+    Returns e.g. ``{"wan": True, "wan2": False}``.  Only includes entries
+    where the ``enabled`` field is explicitly set in the network config.
+    """
+    result: dict[str, bool] = {}
+    for network in normalize_networks(networks):
+        purpose = network.get("purpose")
+        enabled = network.get("enabled")
+        if isinstance(purpose, str) and purpose.startswith("wan") and enabled is not None:
+            result[purpose] = bool(enabled)
+    return result
 
 
 def build_vlan_info(

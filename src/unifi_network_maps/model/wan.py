@@ -64,10 +64,15 @@ def _build_wan_interface(
     ip_address: str | None,
     label: str | None,
     isp_speed: str | None,
+    *,
+    enabled_override: bool | None = None,
 ) -> WanInterface:
     """Build a WAN interface from port info."""
     speed = _normalize_wan_speed(port.speed)
-    enabled = speed is not None and speed > 0
+    if enabled_override is not None:
+        enabled = enabled_override
+    else:
+        enabled = speed is not None and speed > 0
     return WanInterface(
         port_idx=port.port_idx or default_idx,
         link_speed=speed,
@@ -93,6 +98,23 @@ def _should_include_wan2(
     return has_assignment or has_cli_config or is_active
 
 
+def _resolve_wan2_enabled(
+    wan2_disabled: str,
+    wan_enabled_map: dict[str, bool] | None,
+) -> bool | None:
+    """Resolve the WAN2 enabled state from CLI override and network config.
+
+    Returns True/False for explicit state, or None for speed-based fallback.
+    """
+    if wan2_disabled == "true":
+        return False
+    if wan2_disabled == "false":
+        return True
+    if wan_enabled_map and "wan2" in wan_enabled_map:
+        return wan_enabled_map["wan2"]
+    return None
+
+
 def extract_wan_info(
     device: Device,
     *,
@@ -100,12 +122,19 @@ def extract_wan_info(
     wan1_isp_speed: str | None = None,
     wan2_label: str | None = None,
     wan2_isp_speed: str | None = None,
+    wan_enabled_map: dict[str, bool] | None = None,
+    wan2_disabled: str = "auto",
 ) -> WanInfo | None:
     """Extract WAN interface information from a gateway device.
 
     Detects WAN ports by their wan_networkconf_id assignment field. Falls back
     to legacy port number detection (port 1 for WAN1, port 9/2 for WAN2) if
     no WAN assignment is found.
+
+    The ``wan2_disabled`` parameter accepts ``"auto"``, ``"true"``, or
+    ``"false"`` to override WAN2 enabled detection.  When ``"auto"``, the
+    ``wan_enabled_map`` (built from network configs) is consulted first,
+    falling back to speed-based detection.
     """
     if classify_device_type(device) != "gateway":
         return None
@@ -120,12 +149,14 @@ def extract_wan_info(
     wan2_port = _find_wan2_port(device.port_table)
     wan2 = None
     if _should_include_wan2(wan2_port, wan2_label, wan2_isp_speed):
+        wan2_enabled = _resolve_wan2_enabled(wan2_disabled, wan_enabled_map)
         wan2 = _build_wan_interface(
             wan2_port,  # type: ignore[arg-type]
             9,
             None,
             wan2_label,
             wan2_isp_speed,
+            enabled_override=wan2_enabled,
         )
 
     if wan1 or wan2:

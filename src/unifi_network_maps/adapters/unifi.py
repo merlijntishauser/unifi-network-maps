@@ -169,6 +169,7 @@ def _serialize_network_for_cache(network: object) -> dict[str, object]:
         "vlan": first_attr(network, "vlan", "vlan_id", "vlanId", "vlanid"),
         "vlan_enabled": first_attr(network, "vlan_enabled", "vlanEnabled"),
         "purpose": first_attr(network, "purpose"),
+        "enabled": first_attr(network, "enabled", "wan_enabled"),
     }
 
 

@@ -983,6 +983,113 @@ def test_extract_wan_info_fallback_to_port_idx():
     assert result.wan1.link_speed == 2500
 
 
+def _gateway_with_dual_wan(wan2_speed: int | None = 10) -> Device:
+    """Helper: gateway with WAN1 (10G active) and WAN2 (SFP+ with given speed)."""
+    return Device(
+        name="Gateway",
+        model_name="UDM Pro Max",
+        model="UDMPROMAX",
+        mac="aa:bb:cc:dd:ee:ff",
+        ip="85.145.111.204",
+        type="udm",
+        lldp_info=[],
+        port_table=[
+            PortInfo(
+                port_idx=5,
+                name="Port 5",
+                ifname="eth4",
+                speed=10,
+                aggregation_group=None,
+                port_poe=False,
+                poe_enable=False,
+                poe_good=False,
+                poe_power=None,
+                wan_networkconf_id="WAN",
+            ),
+            PortInfo(
+                port_idx=7,
+                name="SFP+ 2",
+                ifname="eth6",
+                speed=wan2_speed,
+                aggregation_group=None,
+                port_poe=False,
+                poe_enable=False,
+                poe_good=False,
+                poe_power=None,
+                wan_networkconf_id="WAN2",
+            ),
+        ],
+    )
+
+
+def test_extract_wan_info_wan2_disabled_via_network_config():
+    """WAN2 with link speed should show disabled when network config says so."""
+    device = _gateway_with_dual_wan(wan2_speed=10)
+    result = extract_wan_info(
+        device,
+        wan_enabled_map={"wan": True, "wan2": False},
+    )
+    assert result is not None
+    assert result.wan1 is not None
+    assert result.wan1.enabled is True
+    assert result.wan2 is not None
+    assert result.wan2.enabled is False
+    assert result.wan2.link_speed == 10000  # link speed still reported
+
+
+def test_extract_wan_info_wan2_enabled_via_network_config():
+    """WAN2 with link speed should show enabled when network config says so."""
+    device = _gateway_with_dual_wan(wan2_speed=10)
+    result = extract_wan_info(
+        device,
+        wan_enabled_map={"wan": True, "wan2": True},
+    )
+    assert result is not None
+    assert result.wan2 is not None
+    assert result.wan2.enabled is True
+
+
+def test_extract_wan_info_wan2_disabled_cli_override():
+    """CLI --wan2-disabled=true should force WAN2 disabled regardless of network config."""
+    device = _gateway_with_dual_wan(wan2_speed=10)
+    result = extract_wan_info(
+        device,
+        wan_enabled_map={"wan": True, "wan2": True},
+        wan2_disabled="true",
+    )
+    assert result is not None
+    assert result.wan2 is not None
+    assert result.wan2.enabled is False
+
+
+def test_extract_wan_info_wan2_enabled_cli_override():
+    """CLI --wan2-disabled=false should force WAN2 enabled."""
+    device = _gateway_with_dual_wan(wan2_speed=10)
+    result = extract_wan_info(
+        device,
+        wan_enabled_map={"wan": True, "wan2": False},
+        wan2_disabled="false",
+    )
+    assert result is not None
+    assert result.wan2 is not None
+    assert result.wan2.enabled is True
+
+
+def test_extract_wan_info_wan2_auto_fallback_to_speed():
+    """With no network config, auto mode should fall back to speed-based detection."""
+    device = _gateway_with_dual_wan(wan2_speed=10)
+    result = extract_wan_info(device, wan2_disabled="auto")
+    assert result is not None
+    assert result.wan2 is not None
+    assert result.wan2.enabled is True  # has link speed, so enabled
+
+    device_no_speed = _gateway_with_dual_wan(wan2_speed=None)
+    result2 = extract_wan_info(device_no_speed, wan2_disabled="auto")
+    assert result2 is not None
+    assert result2.wan2 is not None
+    assert result2.wan2.enabled is False  # no speed, so disabled
+
+
 # --- Client classification tests ---
 
 

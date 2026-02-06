@@ -7,6 +7,7 @@ change events for integration with monitoring systems like Home Assistant.
 from __future__ import annotations
 
 import json
+from collections.abc import Callable, Hashable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
@@ -191,6 +192,91 @@ def _compare_properties(
     return changes
 
 
+@dataclass(frozen=True)
+class EntityCompareSpec[T]:
+    """Specification for comparing a particular entity type."""
+
+    entity_type: str
+    event_prefix: str
+    key: Callable[[T], Hashable | None]
+    sort_key: Callable[[Any], Any]
+    name: Callable[[T], str | None]
+    identifier: Callable[[T, Hashable], str]
+    properties: Callable[[T], dict[str, Any]]
+    serialize: Callable[[T], dict[str, Any]]
+    describe_added: Callable[[T], str]
+    describe_removed: Callable[[T], str]
+    describe_changed: Callable[[T, dict[str, dict[str, Any]]], str]
+
+
+def _build_entity_map[T](
+    items: list[T], key_fn: Callable[[T], Hashable | None]
+) -> dict[Hashable, T]:
+    """Build a lookup map from items, skipping any whose key is None."""
+    return {k: item for item in items if (k := key_fn(item)) is not None}
+
+
+def _compare_entities[T](
+    old_items: list[T],
+    new_items: list[T],
+    spec: EntityCompareSpec[T],
+    events: list[TopologyChangeEvent],
+    timestamp: str,
+) -> None:
+    """Compare two entity lists and emit change events."""
+    old_map = _build_entity_map(old_items, spec.key)
+    new_map = _build_entity_map(new_items, spec.key)
+    old_keys = set(old_map)
+    new_keys = set(new_map)
+
+    for key in sorted(new_keys - old_keys, key=spec.sort_key):
+        item = new_map[key]
+        events.append(
+            TopologyChangeEvent(
+                event_type=f"{spec.event_prefix}_added",
+                entity_type=spec.entity_type,
+                identifier=spec.identifier(item, key),
+                name=spec.name(item),
+                description=spec.describe_added(item),
+                details=spec.serialize(item),
+                timestamp=timestamp,
+            )
+        )
+
+    for key in sorted(old_keys - new_keys, key=spec.sort_key):
+        item = old_map[key]
+        events.append(
+            TopologyChangeEvent(
+                event_type=f"{spec.event_prefix}_removed",
+                entity_type=spec.entity_type,
+                identifier=spec.identifier(item, key),
+                name=spec.name(item),
+                description=spec.describe_removed(item),
+                details=spec.serialize(item),
+                timestamp=timestamp,
+            )
+        )
+
+    for key in sorted(old_keys & new_keys, key=spec.sort_key):
+        new_item = new_map[key]
+        changes = _compare_properties(spec.properties(old_map[key]), spec.properties(new_item))
+        if changes:
+            events.append(
+                TopologyChangeEvent(
+                    event_type=f"{spec.event_prefix}_changed",
+                    entity_type=spec.entity_type,
+                    identifier=spec.identifier(new_item, key),
+                    name=spec.name(new_item),
+                    description=spec.describe_changed(new_item, changes),
+                    details={"changes": changes},
+                    timestamp=timestamp,
+                )
+            )
+
+
+# --- Node comparison ---
+
+
 def _describe_device_added(device: Device) -> str:
     """Generate description for device added event."""
     return f"Device '{device.name}' appeared on network"
@@ -301,6 +387,61 @@ def _describe_edge_changed(edge: Edge, changes: dict[str, dict[str, Any]]) -> st
     return f"Connection {edge.left} <-> {edge.right} changed"
 
 
+# --- Entity comparison specs ---
+
+
+def _client_key(client: dict[str, Any]) -> Hashable | None:
+    mac = client.get("mac")
+    return normalize_mac(mac) if mac else None
+
+
+def _client_name(client: dict[str, Any]) -> str | None:
+    return client.get("name") or client.get("hostname")
+
+
+_DEVICE_SPEC: EntityCompareSpec[Device] = EntityCompareSpec(
+    entity_type="device",
+    event_prefix="node",
+    key=lambda d: normalize_mac(d.mac),
+    sort_key=lambda k: k,
+    name=lambda d: d.name,
+    identifier=lambda _d, k: str(k),
+    properties=_device_properties,
+    serialize=device_to_dict,
+    describe_added=_describe_device_added,
+    describe_removed=_describe_device_removed,
+    describe_changed=_describe_device_changed,
+)
+
+_CLIENT_SPEC: EntityCompareSpec[dict[str, Any]] = EntityCompareSpec(
+    entity_type="client",
+    event_prefix="node",
+    key=_client_key,
+    sort_key=lambda k: k,
+    name=_client_name,
+    identifier=lambda _c, k: str(k),
+    properties=_client_properties,
+    serialize=_client_properties,
+    describe_added=_describe_client_added,
+    describe_removed=_describe_client_removed,
+    describe_changed=_describe_client_changed,
+)
+
+_EDGE_SPEC: EntityCompareSpec[Edge] = EntityCompareSpec(
+    entity_type="device",
+    event_prefix="edge",
+    key=_edge_key,
+    sort_key=lambda k: tuple(sorted(k)),
+    name=lambda _e: None,
+    identifier=lambda e, _k: f"{e.left}:{e.right}",
+    properties=_edge_properties,
+    serialize=edge_to_dict,
+    describe_added=_describe_edge_added,
+    describe_removed=_describe_edge_removed,
+    describe_changed=_describe_edge_changed,
+)
+
+
 # --- Main comparison function ---
 
 
@@ -333,16 +474,13 @@ def compare_topologies(
     events: list[TopologyChangeEvent] = []
     timestamp = new_timestamp or datetime.now(UTC).isoformat()
 
-    # Compare devices
-    _compare_devices(old_devices, new_devices, events, timestamp)
+    _compare_entities(old_devices, new_devices, _DEVICE_SPEC, events, timestamp)
 
-    # Compare clients
     if old_clients is not None and new_clients is not None:
-        _compare_clients(old_clients, new_clients, events, timestamp)
+        _compare_entities(old_clients, new_clients, _CLIENT_SPEC, events, timestamp)
 
-    # Compare edges
     if old_edges is not None and new_edges is not None:
-        _compare_edges(old_edges, new_edges, events, timestamp)
+        _compare_entities(old_edges, new_edges, _EDGE_SPEC, events, timestamp)
 
     return TopologyDiff(
         events=events,
@@ -350,195 +488,3 @@ def compare_topologies(
         new_timestamp=new_timestamp,
         summary=_build_summary(events),
     )
-
-
-def _compare_devices(
-    old_devices: list[Device],
-    new_devices: list[Device],
-    events: list[TopologyChangeEvent],
-    timestamp: str,
-) -> None:
-    """Compare device lists and add events."""
-    old_by_mac = {normalize_mac(d.mac): d for d in old_devices}
-    new_by_mac = {normalize_mac(d.mac): d for d in new_devices}
-
-    old_macs = set(old_by_mac.keys())
-    new_macs = set(new_by_mac.keys())
-
-    # Added devices
-    for mac in sorted(new_macs - old_macs):
-        device = new_by_mac[mac]
-        events.append(
-            TopologyChangeEvent(
-                event_type="node_added",
-                entity_type="device",
-                identifier=mac,
-                name=device.name,
-                description=_describe_device_added(device),
-                details=device_to_dict(device),
-                timestamp=timestamp,
-            )
-        )
-
-    # Removed devices
-    for mac in sorted(old_macs - new_macs):
-        device = old_by_mac[mac]
-        events.append(
-            TopologyChangeEvent(
-                event_type="node_removed",
-                entity_type="device",
-                identifier=mac,
-                name=device.name,
-                description=_describe_device_removed(device),
-                details=device_to_dict(device),
-                timestamp=timestamp,
-            )
-        )
-
-    # Changed devices
-    for mac in sorted(old_macs & new_macs):
-        old_device = old_by_mac[mac]
-        new_device = new_by_mac[mac]
-        old_props = _device_properties(old_device)
-        new_props = _device_properties(new_device)
-        changes = _compare_properties(old_props, new_props)
-        if changes:
-            events.append(
-                TopologyChangeEvent(
-                    event_type="node_changed",
-                    entity_type="device",
-                    identifier=mac,
-                    name=new_device.name,
-                    description=_describe_device_changed(new_device, changes),
-                    details={"changes": changes},
-                    timestamp=timestamp,
-                )
-            )
-
-
-def _compare_clients(
-    old_clients: list[dict[str, Any]],
-    new_clients: list[dict[str, Any]],
-    events: list[TopologyChangeEvent],
-    timestamp: str,
-) -> None:
-    """Compare client lists and add events."""
-    old_by_mac = {normalize_mac(c.get("mac", "")): c for c in old_clients if c.get("mac")}
-    new_by_mac = {normalize_mac(c.get("mac", "")): c for c in new_clients if c.get("mac")}
-
-    old_macs = set(old_by_mac.keys())
-    new_macs = set(new_by_mac.keys())
-
-    # Added clients
-    for mac in sorted(new_macs - old_macs):
-        client = new_by_mac[mac]
-        events.append(
-            TopologyChangeEvent(
-                event_type="node_added",
-                entity_type="client",
-                identifier=mac,
-                name=client.get("name") or client.get("hostname"),
-                description=_describe_client_added(client),
-                details=_client_properties(client),
-                timestamp=timestamp,
-            )
-        )
-
-    # Removed clients
-    for mac in sorted(old_macs - new_macs):
-        client = old_by_mac[mac]
-        events.append(
-            TopologyChangeEvent(
-                event_type="node_removed",
-                entity_type="client",
-                identifier=mac,
-                name=client.get("name") or client.get("hostname"),
-                description=_describe_client_removed(client),
-                details=_client_properties(client),
-                timestamp=timestamp,
-            )
-        )
-
-    # Changed clients
-    for mac in sorted(old_macs & new_macs):
-        old_client = old_by_mac[mac]
-        new_client = new_by_mac[mac]
-        old_props = _client_properties(old_client)
-        new_props = _client_properties(new_client)
-        changes = _compare_properties(old_props, new_props)
-        if changes:
-            events.append(
-                TopologyChangeEvent(
-                    event_type="node_changed",
-                    entity_type="client",
-                    identifier=mac,
-                    name=new_client.get("name") or new_client.get("hostname"),
-                    description=_describe_client_changed(new_client, changes),
-                    details={"changes": changes},
-                    timestamp=timestamp,
-                )
-            )
-
-
-def _compare_edges(
-    old_edges: list[Edge],
-    new_edges: list[Edge],
-    events: list[TopologyChangeEvent],
-    timestamp: str,
-) -> None:
-    """Compare edge lists and add events."""
-    old_by_key = {_edge_key(e): e for e in old_edges}
-    new_by_key = {_edge_key(e): e for e in new_edges}
-
-    old_keys = set(old_by_key.keys())
-    new_keys = set(new_by_key.keys())
-
-    # Added edges
-    for key in sorted(new_keys - old_keys, key=lambda k: tuple(sorted(k))):
-        edge = new_by_key[key]
-        events.append(
-            TopologyChangeEvent(
-                event_type="edge_added",
-                entity_type="device",  # Could be client edge, but entity_type is for filtering
-                identifier=f"{edge.left}:{edge.right}",
-                name=None,
-                description=_describe_edge_added(edge),
-                details=edge_to_dict(edge),
-                timestamp=timestamp,
-            )
-        )
-
-    # Removed edges
-    for key in sorted(old_keys - new_keys, key=lambda k: tuple(sorted(k))):
-        edge = old_by_key[key]
-        events.append(
-            TopologyChangeEvent(
-                event_type="edge_removed",
-                entity_type="device",
-                identifier=f"{edge.left}:{edge.right}",
-                name=None,
-                description=_describe_edge_removed(edge),
-                details=edge_to_dict(edge),
-                timestamp=timestamp,
-            )
-        )
-
-    # Changed edges
-    for key in sorted(old_keys & new_keys, key=lambda k: tuple(sorted(k))):
-        old_edge = old_by_key[key]
-        new_edge = new_by_key[key]
-        old_props = _edge_properties(old_edge)
-        new_props = _edge_properties(new_edge)
-        changes = _compare_properties(old_props, new_props)
-        if changes:
-            events.append(
-                TopologyChangeEvent(
-                    event_type="edge_changed",
-                    entity_type="device",
-                    identifier=f"{new_edge.left}:{new_edge.right}",
-                    name=None,
-                    description=_describe_edge_changed(new_edge, changes),
-                    details={"changes": changes},
-                    timestamp=timestamp,
-                )
-            )

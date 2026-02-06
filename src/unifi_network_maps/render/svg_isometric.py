@@ -148,23 +148,16 @@ def _render_iso_text(
     text_lines: list[str],
     font_size: int,
     fill: str,
-    stroke: str | None = None,
-    stroke_width: int = 3,
 ) -> None:
     line_height = font_size + 2
     start_y = text_y - (len(text_lines) - 1) * line_height / 2
     text_transform = (
         f"translate({text_x} {start_y}) rotate({angle}) skewX(30) translate({-text_x} {-start_y})"
     )
-    stroke_attrs = (
-        f' stroke="{stroke}" stroke-width="{stroke_width}" paint-order="stroke fill"'
-        if stroke
-        else ""
-    )
     lines.append(
         f'<text x="{text_x}" y="{start_y}" text-anchor="middle" fill="{fill}" '
         f'font-size="{font_size}" font-style="normal" '
-        f'transform="{text_transform}"{stroke_attrs}>'
+        f'transform="{text_transform}">'
     )
     for idx, line in enumerate(text_lines):
         dy = 0 if idx == 0 else line_height
@@ -706,9 +699,7 @@ def _render_iso_port_label(
             angle=edge_angle,
             text_lines=front_lines,
             font_size=font_size,
-            fill=theme.text_secondary,
-            stroke=theme.background,
-            stroke_width=3,
+            fill=theme.text_primary,
         )
     return label_center_x, label_center_y
 

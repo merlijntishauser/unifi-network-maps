@@ -848,7 +848,8 @@ def _render_svg_nodes(
             wrapped = _wrap_text(port_label)
             lines.append(
                 f'<text x="{text_x}" y="{port_y}" class="node-port" '
-                f'text-anchor="start" fill="{theme.text_secondary}" font-size="{font_size}">'
+                f'text-anchor="start" fill="{theme.text_secondary}" font-size="{font_size}" '
+                f'stroke="{theme.background}" stroke-width="3" paint-order="stroke fill">'
             )
             for idx, line in enumerate(wrapped):
                 dy = 0 if idx == 0 else line_height

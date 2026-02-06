@@ -73,3 +73,17 @@ def test_isometric_label_truncates_long_text():
     max_len = max(len(text) for text in unescaped)
     max_chars = int((160 * 1.5 * 0.6) / (8 * 0.6))
     assert max_len <= max_chars
+
+
+def test_isometric_port_label_uses_device_name_not_local():
+    """Port label on isometric tiles should show the upstream device name
+    (e.g. 'Switch TV Kast Port 5'), not 'local: Port 5'."""
+    output = render_svg_isometric(
+        [Edge("GW", "Switch TV Kast", label="GW: Port 1 <-> Switch TV Kast: Port 5")],
+        node_types={"GW": "gateway", "Switch TV Kast": "switch"},
+    )
+    tspans = re.findall(r"<tspan[^>]*>([^<]+)</tspan>", output)
+    label_text = " ".join(tspans)
+    assert "local" not in label_text.lower()
+    # The upstream device name should appear in the port label
+    assert "GW" in label_text

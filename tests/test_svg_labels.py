@@ -100,16 +100,13 @@ class TestCompactEdgeLabel:
 
 class TestFormatPortLabelLines:
     def test_single_port(self):
-        lines = _format_port_label_lines(
-            "Port 24", node_type="switch", prefix="uplink", max_chars=30
-        )
+        lines = _format_port_label_lines("Port 24", prefix="uplink", max_chars=30)
         assert len(lines) == 1
         assert "Port 24" in lines[0]
 
     def test_bidirectional_creates_two_lines(self):
         lines = _format_port_label_lines(
             "Switch: Port 1 <-> AP: Port 0",
-            node_type="switch",
             prefix="uplink",
             max_chars=30,
         )
@@ -118,17 +115,14 @@ class TestFormatPortLabelLines:
     def test_truncates_long_labels(self):
         lines = _format_port_label_lines(
             "Very Long Device Name: Port 24",
-            node_type="switch",
             prefix="uplink",
             max_chars=20,
         )
         # Should truncate to max_chars
         assert all(len(line) <= 20 for line in lines)
 
-    def test_client_prefix_used_for_client_type(self):
-        lines = _format_port_label_lines(
-            "Port 5", node_type="client", prefix="switch", max_chars=30
-        )
+    def test_prefix_used_in_label(self):
+        lines = _format_port_label_lines("Port 5", prefix="switch", max_chars=30)
         assert "switch" in lines[0]
 
 

@@ -630,7 +630,6 @@ def _render_iso_port_label(
     lines: list[str],
     *,
     port_label: str,
-    node_type: str,
     prefix: str,
     center_x: float,
     center_y: float,
@@ -686,7 +685,6 @@ def _render_iso_port_label(
     max_chars = max(6, int((edge_len * 0.85) / (font_size * 0.6)))
     front_lines = _format_port_label_lines(
         port_label,
-        node_type=node_type,
         prefix=prefix,
         max_chars=max_chars,
     )
@@ -797,7 +795,6 @@ def _render_iso_node(
         icon_center_x, icon_center_y = _render_iso_port_label(
             lines,
             port_label=port_label,
-            node_type=node_type,
             prefix=prefix,
             center_x=center_x,
             center_y=center_y,

@@ -51,7 +51,6 @@ def _compact_edge_label(
 def _format_port_label_lines(
     port_label: str,
     *,
-    node_type: str,
     prefix: str,
     max_chars: int,
 ) -> list[str]:
@@ -71,11 +70,9 @@ def _format_port_label_lines(
     if "<->" in port_label:
         left_part, right_part = (part.strip() for part in port_label.split("<->", 1))
         front_text = _truncate(f"{prefix}: {_port_only(left_part)}")
-        side_prefix = prefix if node_type == "client" else "local"
-        side_text = _truncate(f"{side_prefix}: {_port_only(right_part)}")
+        side_text = _truncate(f"{prefix}: {_port_only(right_part)}")
         return [line for line in (front_text, side_text) if line]
-    side_prefix = prefix if node_type == "client" else "local"
-    side_text = _truncate(f"{side_prefix}: {_port_only(port_label)}")
+    side_text = _truncate(f"{prefix}: {_port_only(port_label)}")
     return [side_text]
 
 

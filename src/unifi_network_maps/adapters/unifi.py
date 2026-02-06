@@ -18,6 +18,8 @@ from typing import IO, TYPE_CHECKING
 
 from ..io.paths import resolve_cache_dir
 from ..model.helpers import as_list, first_attr, get_field
+from ..model.lldp import coerce_lldp
+from ..model.snapshot import lldp_entry_to_dict
 from ..model.vlans import build_vlan_info, normalize_networks
 from .config import Config
 
@@ -39,23 +41,14 @@ def _cache_dir() -> Path:
         return resolve_cache_dir(".cache/unifi_network_maps")
 
 
-def _serialize_lldp_entry(entry: object) -> dict[str, object]:
-    return {
-        "chassis_id": first_attr(entry, "chassis_id", "chassisId"),
-        "port_id": first_attr(entry, "port_id", "portId"),
-        "port_desc": first_attr(entry, "port_desc", "portDesc", "port_descr", "portDescr"),
-        "local_port_name": first_attr(entry, "local_port_name", "localPortName"),
-        "local_port_idx": first_attr(entry, "local_port_idx", "localPortIdx"),
-    }
-
-
 def _serialize_lldp_entries(value: object | None) -> list[dict[str, object]]:
-    entries = as_list(value)
     serialized: list[dict[str, object]] = []
-    for entry in entries:
-        data = _serialize_lldp_entry(entry)
-        if data.get("chassis_id") and data.get("port_id"):
-            serialized.append(data)
+    for entry in as_list(value):
+        try:
+            lldp = coerce_lldp(entry)
+        except ValueError:
+            continue
+        serialized.append(lldp_entry_to_dict(lldp))
     return serialized
 
 

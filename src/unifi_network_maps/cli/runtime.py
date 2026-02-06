@@ -6,6 +6,8 @@ import argparse
 import logging
 from pathlib import Path
 
+import yaml
+
 from ..adapters.config import Config
 from ..adapters.unifi import fetch_clients, fetch_devices, fetch_networks
 from ..io.debug import debug_dump_devices
@@ -147,7 +149,7 @@ def load_dark_mermaid_theme() -> MermaidTheme | None:
     dark_theme_path = Path(__file__).resolve().parents[1] / "assets" / "themes" / "dark.yaml"
     try:
         dark_theme, _ = load_theme(dark_theme_path)
-    except Exception as exc:  # noqa: BLE001
+    except (FileNotFoundError, ValueError, yaml.YAMLError) as exc:
         logger.warning("Failed to load dark theme: %s", exc)
         return None
     return dark_theme

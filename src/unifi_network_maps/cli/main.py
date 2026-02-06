@@ -7,6 +7,8 @@ import json
 import logging
 from pathlib import Path
 
+import yaml
+
 from ..adapters.config import Config
 from ..adapters.unifi import fetch_payload
 from ..io.export import write_output
@@ -110,7 +112,7 @@ def _load_runtime_context(
     if args.mock_data:
         try:
             mock_devices, mock_clients, mock_networks = load_mock_data(args.mock_data)
-        except Exception as exc:  # noqa: BLE001
+        except (OSError, ValueError) as exc:
             raise ValueError(f"Failed to load mock data: {exc}") from exc
         return None, "mock", mock_devices, mock_clients, mock_networks
     config = _load_config(args)
@@ -175,7 +177,7 @@ def main(argv: list[str] | None = None) -> int:
             theme_name=args.theme,
             theme_file=args.theme_file,
         )
-    except Exception as exc:  # noqa: BLE001
+    except (FileNotFoundError, ValueError, yaml.YAMLError) as exc:
         logging.error("Failed to load theme: %s", exc)
         return 2
 

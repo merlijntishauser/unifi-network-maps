@@ -90,7 +90,7 @@ def _timestamp_line(timestamp_zone: str) -> str:
         return ""
     try:
         zone = ZoneInfo(timestamp_zone)
-    except Exception as exc:  # noqa: BLE001
+    except KeyError as exc:
         logger.warning("Invalid mkdocs timestamp zone '%s': %s", timestamp_zone, exc)
         return ""
     generated_at = datetime.now(zone).strftime("%Y-%m-%d %H:%M:%S %Z")

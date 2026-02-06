@@ -248,7 +248,7 @@ class TestLoadDarkMermaidTheme:
 
         with patch(
             "unifi_network_maps.cli.runtime.load_theme",
-            side_effect=Exception("Load error"),
+            side_effect=ValueError("Load error"),
         ):
             with caplog.at_level(logging.WARNING):
                 theme = load_dark_mermaid_theme()

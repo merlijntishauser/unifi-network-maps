@@ -42,7 +42,7 @@ class SvgTheme:
     # Background & text
     background: str = "#ffffff"
     text_primary: str = "#1a1a1a"
-    text_secondary: str = "#6b7280"
+    text_secondary: str = "#1a1a1a"
 
     # Status indicators
     status_online: str = "#00a86b"

@@ -29,7 +29,7 @@ svg:
   background: "#f9fafa"
   text:
     primary: "#212327"
-    secondary: "#808893"
+    secondary: "#212327"
   status:
     online: "#38cc65"
     offline: "#f0383b"

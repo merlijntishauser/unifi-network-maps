@@ -34,7 +34,7 @@ svg:
   wan_background: "#1a2a3d"
   text:
     primary: "#f9fafa"
-    secondary: "#808893"
+    secondary: "#f9fafa"
   status:
     online: "#37be5f"
     offline: "#ee6368"

@@ -699,7 +699,7 @@ def _render_iso_port_label(
             angle=edge_angle,
             text_lines=front_lines,
             font_size=font_size,
-            fill=theme.text_primary,
+            fill=theme.text_secondary,
         )
     return label_center_x, label_center_y
 

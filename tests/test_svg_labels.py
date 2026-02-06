@@ -125,6 +125,24 @@ class TestFormatPortLabelLines:
         lines = _format_port_label_lines("Port 5", prefix="switch", max_chars=30)
         assert "switch" in lines[0]
 
+    def test_bidirectional_second_line_uses_local(self):
+        """Second line of bidirectional label is the node's own port, so
+        it should use 'local' as prefix, not the upstream device name."""
+        lines = _format_port_label_lines(
+            "Switch A: Port 4 <-> Switch B: Port 8",
+            prefix="Switch A",
+            max_chars=30,
+        )
+        assert len(lines) == 2
+        assert "Switch A" in lines[0]
+        assert lines[1].startswith("local:")
+
+    def test_unidirectional_uses_prefix_not_local(self):
+        """Unidirectional label should use the upstream device name, not 'local'."""
+        lines = _format_port_label_lines("Port 5", prefix="Switch TV Kast", max_chars=30)
+        assert "Switch TV Kast" in lines[0]
+        assert "local" not in lines[0].lower()
+
 
 # --- _wrap_text ---
 

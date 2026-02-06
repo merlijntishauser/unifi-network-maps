@@ -70,7 +70,7 @@ def _format_port_label_lines(
     if "<->" in port_label:
         left_part, right_part = (part.strip() for part in port_label.split("<->", 1))
         front_text = _truncate(f"{prefix}: {_port_only(left_part)}")
-        side_text = _truncate(f"{prefix}: {_port_only(right_part)}")
+        side_text = _truncate(f"local: {_port_only(right_part)}")
         return [line for line in (front_text, side_text) if line]
     side_text = _truncate(f"{prefix}: {_port_only(port_label)}")
     return [side_text]

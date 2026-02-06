@@ -76,14 +76,26 @@ def test_isometric_label_truncates_long_text():
 
 
 def test_isometric_port_label_uses_device_name_not_local():
-    """Port label on isometric tiles should show the upstream device name
-    (e.g. 'Switch TV Kast Port 5'), not 'local: Port 5'."""
+    """Unidirectional port label should show the upstream device name,
+    not 'local: Port 5'."""
     output = render_svg_isometric(
-        [Edge("GW", "Switch TV Kast", label="GW: Port 1 <-> Switch TV Kast: Port 5")],
-        node_types={"GW": "gateway", "Switch TV Kast": "switch"},
+        [Edge("Switch TV Kast", "Client", label="Switch TV Kast: Port 5")],
+        node_types={"Switch TV Kast": "switch", "Client": "client"},
     )
     tspans = re.findall(r"<tspan[^>]*>([^<]+)</tspan>", output)
     label_text = " ".join(tspans)
     assert "local" not in label_text.lower()
-    # The upstream device name should appear in the port label
+    assert "Switch TV" in label_text
+
+
+def test_isometric_bidirectional_label_uses_local_for_own_port():
+    """Bidirectional port label: first line shows upstream prefix,
+    second line shows 'local' for the node's own port."""
+    output = render_svg_isometric(
+        [Edge("GW", "Switch", label="GW: Port 1 <-> Switch: Port 5")],
+        node_types={"GW": "gateway", "Switch": "switch"},
+    )
+    tspans = re.findall(r"<tspan[^>]*>([^<]+)</tspan>", output)
+    label_text = " ".join(tspans)
     assert "GW" in label_text
+    assert "local" in label_text.lower()

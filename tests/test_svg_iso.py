@@ -99,3 +99,16 @@ def test_isometric_bidirectional_label_uses_local_for_own_port():
     label_text = " ".join(tspans)
     assert "GW" in label_text
     assert "local" in label_text.lower()
+
+
+def test_isometric_ap_drops_local_port():
+    """APs have a single port, so the 'local: Port 0' line is redundant
+    and should be omitted."""
+    output = render_svg_isometric(
+        [Edge("Switch", "AP", label="Switch: Port 4 <-> AP: Port 0")],
+        node_types={"Switch": "switch", "AP": "ap"},
+    )
+    tspans = re.findall(r"<tspan[^>]*>([^<]+)</tspan>", output)
+    label_text = " ".join(tspans)
+    assert "Switch" in label_text
+    assert "local" not in label_text.lower()

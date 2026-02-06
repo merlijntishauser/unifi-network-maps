@@ -22,6 +22,7 @@ from .svg_labels import (
     _escape_text,
     _extract_device_name,
     _extract_port_text,
+    _strip_local_port,
     _wrap_text,
 )
 from .svg_theme import DEFAULT_THEME, SvgTheme, svg_defs
@@ -791,6 +792,7 @@ def _record_edge_labels(
     upstream_name = _extract_device_name(upstream_part) or edge.left
     if label_text.lower().startswith("port "):
         label_text = f"{upstream_name} {label_text}"
+    label_text = _strip_local_port(label_text, right_type)
     node_port_labels.setdefault(edge.right, label_text)
     node_port_prefix.setdefault(edge.right, upstream_name)
 

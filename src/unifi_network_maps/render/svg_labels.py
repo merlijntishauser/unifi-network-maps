@@ -23,6 +23,13 @@ def _extract_device_name(side: str) -> str | None:
     return name or None
 
 
+def _strip_local_port(label: str, node_type: str) -> str:
+    """Strip the local port from a bidirectional label for single-port devices (APs)."""
+    if node_type == "ap" and "<->" in label:
+        return label.split("<->", 1)[0].strip()
+    return label
+
+
 def _compact_edge_label(
     label: str, *, left_node: str | None = None, right_node: str | None = None
 ) -> str:

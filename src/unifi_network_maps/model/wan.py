@@ -67,11 +67,16 @@ def _build_wan_interface(
 ) -> WanInterface:
     """Build a WAN interface from port info."""
     speed = _normalize_wan_speed(port.speed)
+    # Use the port 'up' field when available; fall back to speed-based detection
+    if port.up is not None:
+        enabled = port.up
+    else:
+        enabled = speed is not None and speed > 0
     return WanInterface(
         port_idx=port.port_idx or default_idx,
         link_speed=speed,
         ip_address=ip_address,
-        enabled=speed is not None and speed > 0,
+        enabled=enabled,
         label=label,
         isp_speed=isp_speed,
     )

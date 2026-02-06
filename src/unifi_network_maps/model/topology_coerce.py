@@ -145,6 +145,7 @@ def _port_info_from_entry(
         name = port_entry.get("name")
         ifname = port_entry.get("ifname")
         speed = port_entry.get("speed")
+        up = port_entry.get("up")
         aggregation_group = _aggregation_group(port_entry)
         port_poe = as_bool(port_entry.get("port_poe"))
         poe_enable = as_bool(port_entry.get("poe_enable"))
@@ -157,6 +158,7 @@ def _port_info_from_entry(
         name = get_field(port_entry, "name")
         ifname = get_field(port_entry, "ifname")
         speed = get_field(port_entry, "speed")
+        up = get_field(port_entry, "up")
         aggregation_group = _aggregation_group(port_entry)
         port_poe = as_bool(get_field(port_entry, "port_poe"))
         poe_enable = as_bool(get_field(port_entry, "poe_enable"))
@@ -164,6 +166,9 @@ def _port_info_from_entry(
         poe_power = _as_float(get_field(port_entry, "poe_power"))
         native_vlan = get_field(port_entry, "native_vlan")
         tagged_vlans = get_field(port_entry, "tagged_vlans")
+    up_bool: bool | None = None
+    if up is not None:
+        up_bool = as_bool(up)
     return PortInfo(
         port_idx=_as_int(port_idx),
         name=str(name) if isinstance(name, str) and name.strip() else None,
@@ -174,6 +179,7 @@ def _port_info_from_entry(
         poe_enable=poe_enable,
         poe_good=poe_good,
         poe_power=poe_power,
+        up=up_bool,
         native_vlan=_resolve_vlan_id(native_vlan, network_vlan_map),
         tagged_vlans=_coerce_vlan_list(tagged_vlans, network_vlan_map),
         wan_networkconf_id=_extract_wan_networkconf_id(port_entry),

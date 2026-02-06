@@ -132,7 +132,7 @@ def _format_wan_interface_line(
     include_speed: bool = True,
 ) -> str:
     """Format a single WAN interface line."""
-    status = "●" if wan.enabled else "○"
+    status = "(active)" if wan.enabled else "(disabled)"
     label = wan.label or prefix
     speed_parts = []
     if include_speed and wan.link_speed and wan.enabled:

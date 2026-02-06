@@ -44,6 +44,7 @@ class PortInfo:
     poe_enable: bool
     poe_good: bool
     poe_power: float | None
+    up: bool | None = None
     native_vlan: int | None = None
     tagged_vlans: tuple[int, ...] = ()
     wan_networkconf_id: str | None = None

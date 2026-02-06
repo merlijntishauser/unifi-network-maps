@@ -93,6 +93,7 @@ def _serialize_port_entry(entry: object) -> dict[str, object]:
         "name": first_attr(entry, "name"),
         "ifname": first_attr(entry, "ifname"),
         "speed": first_attr(entry, "speed"),
+        "up": first_attr(entry, "up"),
         "aggregation_group": aggregation_group,
         "port_poe": first_attr(entry, "port_poe"),
         "poe_enable": first_attr(entry, "poe_enable"),
@@ -100,6 +101,7 @@ def _serialize_port_entry(entry: object) -> dict[str, object]:
         "poe_power": first_attr(entry, "poe_power"),
         "native_vlan": native_vlan,
         "tagged_vlans": tagged_vlans,
+        "wan_networkconf_id": first_attr(entry, "wan_networkconf_id"),
     }
 
 

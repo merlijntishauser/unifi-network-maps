@@ -61,6 +61,7 @@ def port_info_from_dict(data: dict[str, Any]) -> PortInfo:
         poe_enable=data.get("poe_enable", False),
         poe_good=data.get("poe_good", False),
         poe_power=data.get("poe_power"),
+        up=data.get("up"),
         native_vlan=data.get("native_vlan"),
         tagged_vlans=tuple(data.get("tagged_vlans", [])),
         wan_networkconf_id=data.get("wan_networkconf_id"),

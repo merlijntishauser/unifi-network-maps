@@ -75,6 +75,20 @@ eval $CLI --theme classic --format svg-iso --output smoketest/themes/svg_iso_cla
 eval $CLI --theme classic-dark --format svg-iso --output smoketest/themes/svg_iso_classic_dark.svg
 eval $CLI --theme unifi --legend-only --stdout > smoketest/themes/legend_unifi.mmd
 eval $CLI --theme unifi-dark --legend-only --stdout > smoketest/themes/legend_unifi_dark.mmd
+# Dark themes with ports, wired clients, WAN info (modern icon set)
+eval $CLI --theme unifi-dark --format svg --include-ports --include-clients --client-scope wired --wan-label Odido --wan-speed 1Gbps --icon-set modern --output smoketest/themes/svg_unifi_dark_ports_wan_modern.svg
+eval $CLI --theme unifi-dark --format svg-iso --include-ports --include-clients --client-scope wired --wan-label Odido --wan-speed 1Gbps --icon-set modern --output smoketest/themes/svg_iso_unifi_dark_ports_wan_modern.svg
+eval $CLI --theme classic-dark --format svg --include-ports --include-clients --client-scope wired --wan-label Odido --wan-speed 1Gbps --icon-set modern --output smoketest/themes/svg_classic_dark_ports_wan_modern.svg
+eval $CLI --theme classic-dark --format svg-iso --include-ports --include-clients --client-scope wired --wan-label Odido --wan-speed 1Gbps --icon-set modern --output smoketest/themes/svg_iso_classic_dark_ports_wan_modern.svg
+eval $CLI --theme minimal-dark --format svg --include-ports --include-clients --client-scope wired --wan-label Odido --wan-speed 1Gbps --icon-set modern --output smoketest/themes/svg_minimal_dark_ports_wan_modern.svg
+eval $CLI --theme minimal-dark --format svg-iso --include-ports --include-clients --client-scope wired --wan-label Odido --wan-speed 1Gbps --icon-set modern --output smoketest/themes/svg_iso_minimal_dark_ports_wan_modern.svg
+# Dark themes with ports, wired clients, WAN info (isometric icon set)
+eval $CLI --theme unifi-dark --format svg --include-ports --include-clients --client-scope wired --wan-label Odido --wan-speed 1Gbps --icon-set isometric --output smoketest/themes/svg_unifi_dark_ports_wan_isometric.svg
+eval $CLI --theme unifi-dark --format svg-iso --include-ports --include-clients --client-scope wired --wan-label Odido --wan-speed 1Gbps --icon-set isometric --output smoketest/themes/svg_iso_unifi_dark_ports_wan_isometric.svg
+eval $CLI --theme classic-dark --format svg --include-ports --include-clients --client-scope wired --wan-label Odido --wan-speed 1Gbps --icon-set isometric --output smoketest/themes/svg_classic_dark_ports_wan_isometric.svg
+eval $CLI --theme classic-dark --format svg-iso --include-ports --include-clients --client-scope wired --wan-label Odido --wan-speed 1Gbps --icon-set isometric --output smoketest/themes/svg_iso_classic_dark_ports_wan_isometric.svg
+eval $CLI --theme minimal-dark --format svg --include-ports --include-clients --client-scope wired --wan-label Odido --wan-speed 1Gbps --icon-set isometric --output smoketest/themes/svg_minimal_dark_ports_wan_isometric.svg
+eval $CLI --theme minimal-dark --format svg-iso --include-ports --include-clients --client-scope wired --wan-label Odido --wan-speed 1Gbps --icon-set isometric --output smoketest/themes/svg_iso_minimal_dark_ports_wan_isometric.svg
 
 # WAN variants
 mkdir -p smoketest/wan

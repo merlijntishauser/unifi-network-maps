@@ -77,6 +77,20 @@ smoketest-mock:
 	@# Icon set variants
 	@$(CLI) --mock-data examples/mock_data.json --format svg-iso --icon-set isometric --output smoketest-mock/iconset_isometric_iso.svg
 	@$(CLI) --mock-data examples/mock_data.json --format svg-iso --icon-set modern --output smoketest-mock/iconset_modern_iso.svg
+	@# Dark themes with ports, wired clients, WAN info (modern icon set)
+	@$(CLI) --mock-data examples/mock_data.json --theme unifi-dark --format svg --include-ports --include-clients --client-scope wired --wan-label "Odido" --wan-speed "1 Gbps ↓↑" --icon-set modern --output smoketest-mock/theme_unifi_dark_ports_wan_modern.svg
+	@$(CLI) --mock-data examples/mock_data.json --theme unifi-dark --format svg-iso --include-ports --include-clients --client-scope wired --wan-label "Odido" --wan-speed "1 Gbps ↓↑" --icon-set modern --output smoketest-mock/theme_unifi_dark_ports_wan_modern_iso.svg
+	@$(CLI) --mock-data examples/mock_data.json --theme classic-dark --format svg --include-ports --include-clients --client-scope wired --wan-label "Odido" --wan-speed "1 Gbps ↓↑" --icon-set modern --output smoketest-mock/theme_classic_dark_ports_wan_modern.svg
+	@$(CLI) --mock-data examples/mock_data.json --theme classic-dark --format svg-iso --include-ports --include-clients --client-scope wired --wan-label "Odido" --wan-speed "1 Gbps ↓↑" --icon-set modern --output smoketest-mock/theme_classic_dark_ports_wan_modern_iso.svg
+	@$(CLI) --mock-data examples/mock_data.json --theme minimal-dark --format svg --include-ports --include-clients --client-scope wired --wan-label "Odido" --wan-speed "1 Gbps ↓↑" --icon-set modern --output smoketest-mock/theme_minimal_dark_ports_wan_modern.svg
+	@$(CLI) --mock-data examples/mock_data.json --theme minimal-dark --format svg-iso --include-ports --include-clients --client-scope wired --wan-label "Odido" --wan-speed "1 Gbps ↓↑" --icon-set modern --output smoketest-mock/theme_minimal_dark_ports_wan_modern_iso.svg
+	@# Dark themes with ports, wired clients, WAN info (isometric icon set)
+	@$(CLI) --mock-data examples/mock_data.json --theme unifi-dark --format svg --include-ports --include-clients --client-scope wired --wan-label "Odido" --wan-speed "1 Gbps ↓↑" --icon-set isometric --output smoketest-mock/theme_unifi_dark_ports_wan_isometric.svg
+	@$(CLI) --mock-data examples/mock_data.json --theme unifi-dark --format svg-iso --include-ports --include-clients --client-scope wired --wan-label "Odido" --wan-speed "1 Gbps ↓↑" --icon-set isometric --output smoketest-mock/theme_unifi_dark_ports_wan_isometric_iso.svg
+	@$(CLI) --mock-data examples/mock_data.json --theme classic-dark --format svg --include-ports --include-clients --client-scope wired --wan-label "Odido" --wan-speed "1 Gbps ↓↑" --icon-set isometric --output smoketest-mock/theme_classic_dark_ports_wan_isometric.svg
+	@$(CLI) --mock-data examples/mock_data.json --theme classic-dark --format svg-iso --include-ports --include-clients --client-scope wired --wan-label "Odido" --wan-speed "1 Gbps ↓↑" --icon-set isometric --output smoketest-mock/theme_classic_dark_ports_wan_isometric_iso.svg
+	@$(CLI) --mock-data examples/mock_data.json --theme minimal-dark --format svg --include-ports --include-clients --client-scope wired --wan-label "Odido" --wan-speed "1 Gbps ↓↑" --icon-set isometric --output smoketest-mock/theme_minimal_dark_ports_wan_isometric.svg
+	@$(CLI) --mock-data examples/mock_data.json --theme minimal-dark --format svg-iso --include-ports --include-clients --client-scope wired --wan-label "Odido" --wan-speed "1 Gbps ↓↑" --icon-set isometric --output smoketest-mock/theme_minimal_dark_ports_wan_isometric_iso.svg
 
 smoketest-validate:
 	@$(VENV)/pytest tests/test_smoketest_validation.py -q

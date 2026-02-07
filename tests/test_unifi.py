@@ -411,3 +411,94 @@ def test_serialize_uplink_reads_fallback_fields():
 def test_serialize_port_entry_reads_aggregation_group():
     data = unifi._serialize_port_entry({"port_idx": 1, "agg_id": "agg2"})
     assert data["aggregation_group"] == "agg2"
+
+
+def test_is_rate_limited_detects_429():
+    assert unifi._is_rate_limited(Exception("HTTP 429 Too Many Requests"))
+    assert not unifi._is_rate_limited(Exception("Invalid credentials"))
+
+
+def test_rate_limited_auth_error_skips_legacy_retry(monkeypatch, tmp_path):
+    """A 429 wrapped as UnifiAuthenticationError should NOT retry legacy auth."""
+
+    class FakeAuthError(Exception):
+        pass
+
+    fake_module = SimpleNamespace(UnifiAuthenticationError=FakeAuthError)
+    monkeypatch.setitem(sys.modules, "unifi_controller_api", fake_module)
+    monkeypatch.setenv("UNIFI_CACHE_DIR", str(tmp_path))
+    monkeypatch.setenv("UNIFI_CACHE_TTL_SECONDS", "1")
+
+    calls = {"init_count": 0}
+
+    def fake_init_controller(config, *, is_udm_pro):
+        calls["init_count"] += 1
+        raise FakeAuthError("HTTP 429 Too Many Requests")
+
+    monkeypatch.setattr(unifi, "_init_controller", fake_init_controller)
+
+    config = Config(
+        url="https://example", site="default", user="user", password="pass", verify_ssl=True
+    )
+    cache_path = tmp_path / f"devices_{unifi._cache_key(config.url, config.site, 'True')}.json"
+    cache_path.write_text(
+        json.dumps({"timestamp": time.time() - 3600, "data": [{"stale": True}]}),
+        encoding="utf-8",
+    )
+
+    devices = list(unifi.fetch_devices(config))
+    assert calls["init_count"] == 1  # Only one attempt, no legacy retry
+    device = devices[0]
+    assert isinstance(device, dict)
+    assert device["stale"] is True  # Fell back to stale cache
+
+
+def test_rate_limited_auth_error_raises_without_cache(monkeypatch, tmp_path):
+    """A 429 without stale cache should propagate the error."""
+
+    class FakeAuthError(Exception):
+        pass
+
+    fake_module = SimpleNamespace(UnifiAuthenticationError=FakeAuthError)
+    monkeypatch.setitem(sys.modules, "unifi_controller_api", fake_module)
+    monkeypatch.setenv("UNIFI_CACHE_DIR", str(tmp_path))
+    monkeypatch.setenv("UNIFI_CACHE_TTL_SECONDS", "1")
+
+    def fake_init_controller(config, *, is_udm_pro):
+        raise FakeAuthError("HTTP 429 Too Many Requests")
+
+    monkeypatch.setattr(unifi, "_init_controller", fake_init_controller)
+
+    config = Config(
+        url="https://example", site="default", user="user", password="pass", verify_ssl=True
+    )
+    with pytest.raises(FakeAuthError, match="429"):
+        unifi.fetch_devices(config)
+
+
+def test_non_429_auth_error_retries_legacy(monkeypatch, tmp_path):
+    """A non-429 UnifiAuthenticationError should still try legacy auth."""
+
+    class FakeAuthError(Exception):
+        pass
+
+    fake_module = SimpleNamespace(UnifiAuthenticationError=FakeAuthError)
+    monkeypatch.setitem(sys.modules, "unifi_controller_api", fake_module)
+    monkeypatch.setenv("UNIFI_CACHE_DIR", str(tmp_path))
+
+    def fake_init_controller(config, *, is_udm_pro):
+        if is_udm_pro:
+            raise FakeAuthError("Invalid credentials")
+
+        class Controller:
+            def get_unifi_site_device(self, site_name, detailed, raw):
+                return [{"ok": True}]
+
+        return Controller()
+
+    monkeypatch.setattr(unifi, "_init_controller", fake_init_controller)
+    config = Config(
+        url="https://example", site="default", user="user", password="pass", verify_ssl=True
+    )
+    devices = list(unifi.fetch_devices(config))
+    assert len(devices) == 1

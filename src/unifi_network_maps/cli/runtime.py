@@ -98,7 +98,11 @@ def build_edges_with_clients(
         if clients_override is None:
             if config is None:
                 raise ValueError("Config required to fetch clients")
-            clients = list(fetch_clients(config, site=site, use_cache=not args.no_cache))
+            try:
+                clients = list(fetch_clients(config, site=site, use_cache=not args.no_cache))
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("Failed to fetch clients; skipping client edges: %s", exc)
+                return edges, None
         else:
             clients = clients_override
         device_index = build_device_index(devices)
@@ -167,7 +171,11 @@ def resolve_mkdocs_client_ports(
     if mock_clients is None:
         if config is None:
             return None, 2
-        clients = list(fetch_clients(config, site=site))
+        try:
+            clients = list(fetch_clients(config, site=site))
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Failed to fetch clients for MkDocs: %s", exc)
+            return None, None
     else:
         clients = mock_clients
     client_ports = build_client_port_map(

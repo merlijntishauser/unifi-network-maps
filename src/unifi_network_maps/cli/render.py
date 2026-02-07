@@ -272,7 +272,11 @@ def render_lldp_format(
         if config is None:
             logging.error("Mock data required for client rendering")
             return 2
-        clients = list(fetch_clients(config, site=site))
+        try:
+            clients = list(fetch_clients(config, site=site))
+        except Exception as exc:  # noqa: BLE001
+            logging.warning("Failed to fetch clients; rendering without client data: %s", exc)
+            clients = []
     else:
         clients = mock_clients
     content = render_lldp_md(

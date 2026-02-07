@@ -361,6 +361,34 @@ def _init_controller(config: Config, *, is_udm_pro: bool) -> UnifiController:
     )
 
 
+def _is_rate_limited(exc: Exception) -> bool:
+    return "429" in str(exc)
+
+
+def _connect_and_fetch(
+    config: Config,
+    operation: str,
+    fetch_fn: Callable[[UnifiController], Callable[[], Sequence[object]]],
+) -> Sequence[object]:
+    """Authenticate and fetch data, with UDM Pro / legacy auth fallback.
+
+    On ``UnifiAuthenticationError`` that isn't rate-limited, retries with
+    legacy auth.  Any other error (rate limit, network, etc.) propagates
+    to the caller's stale-cache handler.
+    """
+    from unifi_controller_api import UnifiAuthenticationError
+
+    try:
+        controller = _init_controller(config, is_udm_pro=True)
+    except UnifiAuthenticationError as exc:
+        if _is_rate_limited(exc):
+            raise
+        logger.debug("UDM Pro authentication failed, retrying legacy auth")
+        controller = _init_controller(config, is_udm_pro=False)
+
+    return _call_with_retries(operation, fetch_fn(controller))
+
+
 def fetch_devices(
     config: Config,
     *,
@@ -373,7 +401,7 @@ def fetch_devices(
     Uses `unifi-controller-api` to authenticate and return device objects.
     """
     try:
-        from unifi_controller_api import UnifiAuthenticationError
+        import unifi_controller_api  # noqa: F401
     except ImportError as exc:
         raise RuntimeError("Missing dependency: unifi-controller-api") from exc
 
@@ -387,17 +415,14 @@ def fetch_devices(
             logger.debug("Using cached devices (%d)", len(cached))
             return cached
 
-    try:
-        controller = _init_controller(config, is_udm_pro=True)
-    except UnifiAuthenticationError:
-        logger.debug("UDM Pro authentication failed, retrying legacy auth")
-        controller = _init_controller(config, is_udm_pro=False)
+    def _make_fetch(ctrl: UnifiController) -> Callable[[], Sequence[object]]:
+        def _fetch() -> Sequence[object]:
+            return ctrl.get_unifi_site_device(site_name=site_name, detailed=detailed, raw=False)
 
-    def _fetch() -> Sequence[object]:
-        return controller.get_unifi_site_device(site_name=site_name, detailed=detailed, raw=False)
+        return _fetch
 
     try:
-        devices = _call_with_retries("device fetch", _fetch)
+        devices = _connect_and_fetch(config, "device fetch", _make_fetch)
     except Exception as exc:  # noqa: BLE001 - fallback to cache
         stale_cached, cache_age = _load_cache_with_age(cache_path) if cache_safe else (None, None)
         if stale_cached is not None:
@@ -422,7 +447,7 @@ def fetch_clients(
 ) -> Sequence[object]:
     """Fetch active clients from UniFi Controller."""
     try:
-        from unifi_controller_api import UnifiAuthenticationError
+        import unifi_controller_api  # noqa: F401
     except ImportError as exc:
         raise RuntimeError("Missing dependency: unifi-controller-api") from exc
 
@@ -436,17 +461,14 @@ def fetch_clients(
             logger.debug("Using cached clients (%d)", len(cached))
             return cached
 
-    try:
-        controller = _init_controller(config, is_udm_pro=True)
-    except UnifiAuthenticationError:
-        logger.debug("UDM Pro authentication failed, retrying legacy auth")
-        controller = _init_controller(config, is_udm_pro=False)
+    def _make_fetch(ctrl: UnifiController) -> Callable[[], Sequence[object]]:
+        def _fetch() -> Sequence[object]:
+            return ctrl.get_unifi_site_client(site_name=site_name, raw=True)
 
-    def _fetch() -> Sequence[object]:
-        return controller.get_unifi_site_client(site_name=site_name, raw=True)
+        return _fetch
 
     try:
-        clients = _call_with_retries("client fetch", _fetch)
+        clients = _connect_and_fetch(config, "client fetch", _make_fetch)
     except Exception as exc:  # noqa: BLE001 - fallback to cache
         stale_cached, cache_age = _load_cache_with_age(cache_path) if cache_safe else (None, None)
         if stale_cached is not None:
@@ -471,7 +493,7 @@ def fetch_networks(
 ) -> Sequence[object]:
     """Fetch network inventory from UniFi Controller."""
     try:
-        from unifi_controller_api import UnifiAuthenticationError
+        import unifi_controller_api  # noqa: F401
     except ImportError as exc:
         raise RuntimeError("Missing dependency: unifi-controller-api") from exc
 
@@ -485,19 +507,16 @@ def fetch_networks(
             logger.debug("Using cached networks (%d)", len(cached))
             return cached
 
-    try:
-        controller = _init_controller(config, is_udm_pro=True)
-    except UnifiAuthenticationError:
-        logger.debug("UDM Pro authentication failed, retrying legacy auth")
-        controller = _init_controller(config, is_udm_pro=False)
+    def _make_fetch(ctrl: UnifiController) -> Callable[[], Sequence[object]]:
+        def _fetch() -> Sequence[object]:
+            # Always use raw=True to avoid model parsing issues with disabled WAN interfaces
+            # (the UnifiNetworkConf model requires an 'enabled' field that may be absent)
+            return ctrl.get_unifi_site_networkconf(site_name=site_name, raw=True)
 
-    def _fetch() -> Sequence[object]:
-        # Always use raw=True to avoid model parsing issues with disabled WAN interfaces
-        # (the UnifiNetworkConf model requires an 'enabled' field that may be absent)
-        return controller.get_unifi_site_networkconf(site_name=site_name, raw=True)
+        return _fetch
 
     try:
-        networks = _call_with_retries("network fetch", _fetch)
+        networks = _connect_and_fetch(config, "network fetch", _make_fetch)
     except Exception as exc:  # noqa: BLE001 - fallback to cache
         stale_cached, cache_age = _load_cache_with_age(cache_path) if cache_safe else (None, None)
         if stale_cached is not None:

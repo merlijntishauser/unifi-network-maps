@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.2] - 2026-02-07
+### Added
+- Detect WAN2 disabled state from network config and add `--wan2-disabled` flag
+- Make port label color themeable via `text_secondary` theme property
+
+### Fixed
+- Handle 429 (Too Many Requests) from UniFi controller gracefully instead of crashing with a traceback
+- Fix PoE icon hidden by tall nodes in isometric view
+- Fix port label contrast on dark themes
+- Fix isometric port labels showing "local" instead of device name
+- Fix bidirectional port labels: use "local" for own port
+- Drop redundant local port label for APs
+- Fix WAN status detection and Unicode glyph rendering
+- Fix WAN1 incorrectly showing as disabled
+
+### Changed
+- Use `text_primary` for port labels instead of stroke halo
+- Use specific exception types instead of broad `Exception` catches
+- Refactor: split long rendering functions into focused helpers
+- Refactor: extract generic comparison function in diff.py
+- Refactor: reuse `coerce_lldp()` in unifi.py serialization
+
 ## [1.5.1] - 2026-02-05
 ### Fixed
 - Skip path security check for built-in themes
@@ -248,7 +270,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Introduced SVG renderer and tree layout fixes.
 - Increased test coverage and added coverage tooling.
 
-[Unreleased]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.5.1...HEAD
+[Unreleased]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.5.2...HEAD
+[1.5.2]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.5.0...v1.5.2
 [1.5.1]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.15...v1.5.0
 [1.4.15]:https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.14...v1.4.15

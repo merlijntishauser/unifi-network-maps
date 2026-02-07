@@ -384,58 +384,27 @@ def _render_group_boundaries(
         lines.append("</g>")
 
 
-def _render_wan_upstream(
-    lines: list[str],
-    wan_info: WanInfo,
-    gateway_position: tuple[float, float],
-    options: SvgOptions,
-    theme: SvgTheme,
-) -> None:
-    """Render WAN upstream visualization (orthogonal view)."""
-    gx, gy = gateway_position
-    font_size = options.font_size
-
-    # Build label lines to calculate box size
-    label_lines = _build_wan_label_lines(wan_info)
-
-    # Calculate box dimensions based on content
+def _wan_box_dimensions(
+    label_lines: list[str],
+    font_size: int,
+) -> tuple[int, int, int, float, float]:
+    """Calculate WAN box dimensions from label content."""
     globe_size = 36
     padding = 10
     line_height = font_size + 4
     max_text_width = max((len(line) for line in label_lines), default=10) * font_size * 0.55
     box_width = max(globe_size + padding * 2, max_text_width + padding * 2)
     box_height = globe_size + len(label_lines) * line_height + padding * 3
+    return globe_size, padding, line_height, box_width, box_height
 
-    # Position box above the gateway (free-standing)
-    box_x = gx + options.node_width / 2 - box_width / 2
-    box_y = gy - box_height - 30
 
-    # Connection points
-    gateway_connect_x = gx + options.node_width / 2
-    gateway_connect_y = gy
-    box_connect_x = box_x + box_width / 2
-    box_connect_y = box_y + box_height
-
-    lines.append('<g class="wan-upstream">')
-
-    # Draw connector line from gateway to box
-    lines.append(
-        f'<path d="M {gateway_connect_x} {gateway_connect_y} '
-        f'L {box_connect_x} {box_connect_y}" '
-        f'stroke="#0288d1" stroke-width="2" fill="none" '
-        f'stroke-linecap="round" opacity="0.8"/>'
-    )
-
-    # Draw bounding box with rounded corners
-    lines.append(
-        f'<rect x="{box_x}" y="{box_y}" width="{box_width}" height="{box_height}" '
-        f'rx="6" ry="6" fill="{theme.wan_background}" stroke="{theme.wan_globe[1]}" stroke-width="1.5"/>'
-    )
-
-    # Draw globe icon inline with gradient fill
-    globe_cx = box_x + box_width / 2
-    globe_cy = box_y + padding + globe_size / 2
-    globe_r = globe_size / 2 - 2
+def _render_wan_globe(
+    lines: list[str],
+    globe_cx: float,
+    globe_cy: float,
+    globe_r: float,
+) -> None:
+    """Render the WAN globe icon with gradient fill."""
     lines.append(f'<g transform="translate({globe_cx}, {globe_cy})">')
     lines.append(
         f'<circle cx="0" cy="0" r="{globe_r}" fill="none" stroke="url(#globe)" stroke-width="1.5"/>'
@@ -458,9 +427,17 @@ def _render_wan_upstream(
     )
     lines.append("</g>")
 
-    # Render label lines
-    text_x = box_x + box_width / 2
-    text_y = box_y + padding + globe_size + padding + font_size
+
+def _render_wan_labels(
+    lines: list[str],
+    label_lines: list[str],
+    text_x: float,
+    text_y: float,
+    line_height: int,
+    font_size: int,
+    theme: SvgTheme,
+) -> None:
+    """Render WAN status text labels."""
     for i, label_text in enumerate(label_lines):
         y = text_y + i * line_height
         lines.append(
@@ -468,6 +445,52 @@ def _render_wan_upstream(
             f'fill="{theme.text_primary}" font-size="{font_size}">'
             f"{_escape_text(label_text)}</text>"
         )
+
+
+def _render_wan_upstream(
+    lines: list[str],
+    wan_info: WanInfo,
+    gateway_position: tuple[float, float],
+    options: SvgOptions,
+    theme: SvgTheme,
+) -> None:
+    """Render WAN upstream visualization (orthogonal view)."""
+    gx, gy = gateway_position
+    font_size = options.font_size
+    label_lines = _build_wan_label_lines(wan_info)
+    globe_size, padding, line_height, box_width, box_height = _wan_box_dimensions(
+        label_lines, font_size
+    )
+
+    # Position box above the gateway
+    box_x = gx + options.node_width / 2 - box_width / 2
+    box_y = gy - box_height - 30
+
+    # Connection points
+    gw_cx = gx + options.node_width / 2
+    gw_cy = gy
+    box_cx = box_x + box_width / 2
+    box_cy = box_y + box_height
+
+    lines.append('<g class="wan-upstream">')
+    lines.append(
+        f'<path d="M {gw_cx} {gw_cy} L {box_cx} {box_cy}" '
+        f'stroke="#0288d1" stroke-width="2" fill="none" '
+        f'stroke-linecap="round" opacity="0.8"/>'
+    )
+    lines.append(
+        f'<rect x="{box_x}" y="{box_y}" width="{box_width}" height="{box_height}" '
+        f'rx="6" ry="6" fill="{theme.wan_background}" stroke="{theme.wan_globe[1]}" stroke-width="1.5"/>'
+    )
+
+    globe_cx = box_x + box_width / 2
+    globe_cy = box_y + padding + globe_size / 2
+    globe_r = globe_size / 2 - 2
+    _render_wan_globe(lines, globe_cx, globe_cy, globe_r)
+
+    text_x = box_x + box_width / 2
+    text_y = box_y + padding + globe_size + padding + font_size
+    _render_wan_labels(lines, label_lines, text_x, text_y, line_height, font_size, theme)
 
     lines.append("</g>")
 

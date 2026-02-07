@@ -740,6 +740,99 @@ def _iso_front_face_label_position(
     return label_x, label_y, angle
 
 
+def _render_iso_node_icon(
+    lines: list[str],
+    *,
+    icon_href: str | None,
+    center_x: float,
+    center_y: float,
+    tile_w: float,
+    tile_h: float,
+    node_type: str,
+    is_client: bool,
+    port_label: str | None,
+    port_prefix: str | None,
+    fill: str,
+    stroke: str,
+    left_fill: str,
+    right_fill: str,
+    options: SvgOptions,
+    theme: SvgTheme,
+) -> None:
+    """Render the icon for an isometric node, including port label tile if needed."""
+    icon_center_x = center_x
+    icon_center_y = center_y
+    iso_icon_size = min(tile_w, tile_h) * 1.26
+    if port_label:
+        font_size = max(options.font_size - 2, 8)
+        prefix = port_prefix or "switch"
+        icon_center_x, icon_center_y = _render_iso_port_label(
+            lines,
+            port_label=port_label,
+            prefix=prefix,
+            center_x=center_x,
+            center_y=center_y,
+            tile_w=tile_w,
+            tile_h=tile_h,
+            fill=fill,
+            stroke=stroke,
+            left_fill=left_fill,
+            right_fill=right_fill,
+            font_size=font_size,
+            theme=theme,
+        )
+    if node_type == "ap":
+        icon_center_y -= tile_h * 0.4
+    if icon_href:
+        icon_x = icon_center_x - iso_icon_size / 2
+        icon_lift = tile_h * (0.02 if port_label else 0.04)
+        icon_y = icon_center_y - iso_icon_size / 2 - icon_lift - tile_h * 0.05
+        if is_client:
+            icon_y -= tile_h * 0.05
+        lines.append(
+            f'<image href="{icon_href}" x="{icon_x}" y="{icon_y}" '
+            f'width="{iso_icon_size}" height="{iso_icon_size}" '
+            f'preserveAspectRatio="xMidYMid meet" filter="url(#iso-icon-emboss)"/>'
+        )
+
+
+def _render_iso_node_name(
+    lines: list[str],
+    *,
+    name: str,
+    top: list[tuple[float, float]],
+    left: list[tuple[float, float]],
+    tile_w: float,
+    tile_h: float,
+    port_label: str | None,
+    node_depth: float,
+    font_size: int,
+    theme: SvgTheme,
+) -> None:
+    """Render the name label for an isometric node."""
+    if not port_label and node_depth > 0:
+        name_x, name_y, name_angle = _iso_front_face_label_position(
+            left,
+            tile_height=tile_h,
+            font_size=font_size,
+        )
+    else:
+        name_x, name_y, name_angle = _iso_name_label_position(
+            top,
+            tile_width=tile_w,
+            tile_height=tile_h,
+            font_size=font_size,
+        )
+    name_transform = (
+        f"translate({name_x} {name_y}) rotate({name_angle}) skewX(30) "
+        f"translate({-name_x} {-name_y})"
+    )
+    lines.append(
+        f'<text x="{name_x}" y="{name_y}" class="node-label" text-anchor="middle" fill="{theme.text_primary}" '
+        f'font-size="{font_size}" transform="{name_transform}">{_escape_text(name)}</text>'
+    )
+
+
 def _render_iso_node(
     lines: list[str],
     *,
@@ -789,69 +882,35 @@ def _render_iso_node(
         right_fill=right_fill,
         node_depth=node_depth,
     )
-    icon_href = icons.get(node_type, icons.get("other"))
-    center_x = x + tile_w / 2
-    center_y = y + tile_h / 2
-    icon_center_x = center_x
-    icon_center_y = center_y
-    iso_icon_size = min(tile_w, tile_h) * 1.26
-    if port_label:
-        font_size = max(options.font_size - 2, 8)
-        prefix = port_prefix or "switch"
-        icon_center_x, icon_center_y = _render_iso_port_label(
-            lines,
-            port_label=port_label,
-            prefix=prefix,
-            center_x=center_x,
-            center_y=center_y,
-            tile_w=tile_w,
-            tile_h=tile_h,
-            fill=fill,
-            stroke=stroke,
-            left_fill=left_fill,
-            right_fill=right_fill,
-            font_size=font_size,
-            theme=theme,
-        )
-    if node_type == "ap":
-        icon_center_y -= tile_h * 0.4
-    if icon_href:
-        icon_x = icon_center_x - iso_icon_size / 2
-        icon_lift = tile_h * (0.02 if port_label else 0.04)
-        icon_y = icon_center_y - iso_icon_size / 2 - icon_lift - tile_h * 0.05
-        if is_client:
-            icon_y -= tile_h * 0.05
-        lines.append(
-            f'<image href="{icon_href}" x="{icon_x}" y="{icon_y}" '
-            f'width="{iso_icon_size}" height="{iso_icon_size}" '
-            f'preserveAspectRatio="xMidYMid meet" filter="url(#iso-icon-emboss)"/>'
-        )
-
-    # Position name label
-    name_font_size = max(options.font_size - 2, 8)
-    if not port_label and node_depth > 0:
-        # Nodes without port labels: render name on front (left) face
-        name_x, name_y, name_angle = _iso_front_face_label_position(
-            left,
-            tile_height=tile_h,
-            font_size=name_font_size,
-        )
-    else:
-        # Nodes with port labels: render name on bottom edge of top face
-        name_x, name_y, name_angle = _iso_name_label_position(
-            top,
-            tile_width=tile_w,
-            tile_height=tile_h,
-            font_size=name_font_size,
-        )
-
-    name_transform = (
-        f"translate({name_x} {name_y}) rotate({name_angle}) skewX(30) "
-        f"translate({-name_x} {-name_y})"
+    _render_iso_node_icon(
+        lines,
+        icon_href=icons.get(node_type, icons.get("other")),
+        center_x=x + tile_w / 2,
+        center_y=y + tile_h / 2,
+        tile_w=tile_w,
+        tile_h=tile_h,
+        node_type=node_type,
+        is_client=is_client,
+        port_label=port_label,
+        port_prefix=port_prefix,
+        fill=fill,
+        stroke=stroke,
+        left_fill=left_fill,
+        right_fill=right_fill,
+        options=options,
+        theme=theme,
     )
-    lines.append(
-        f'<text x="{name_x}" y="{name_y}" class="node-label" text-anchor="middle" fill="{theme.text_primary}" '
-        f'font-size="{name_font_size}" transform="{name_transform}">{_escape_text(name)}</text>'
+    _render_iso_node_name(
+        lines,
+        name=name,
+        top=top,
+        left=left,
+        tile_w=tile_w,
+        tile_h=tile_h,
+        port_label=port_label,
+        node_depth=node_depth,
+        font_size=max(options.font_size - 2, 8),
+        theme=theme,
     )
     lines.append("</g>")
 

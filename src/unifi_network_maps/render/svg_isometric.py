@@ -1168,6 +1168,37 @@ def _render_iso_group_boundaries(
         lines.append("</g>")
 
 
+def _expand_viewbox_for_wan(
+    width: float,
+    height: float,
+    wan_info: WanInfo,
+    node_types: dict[str, str],
+    positions: dict[str, tuple[float, float]],
+    layout: IsoLayout,
+    options: SvgOptions,
+) -> tuple[float, float]:
+    """Expand viewBox dimensions to fit the WAN upstream box if needed."""
+    gateway_name = next((name for name, ntype in node_types.items() if ntype == "gateway"), None)
+    if not gateway_name or gateway_name not in positions:
+        return width, height
+
+    gx, gy = positions[gateway_name]
+    label_lines = _build_wan_label_lines(wan_info)
+    font_size = max(options.font_size - 1, 8)
+    globe_size = 40
+    padding = 12
+    line_height = font_size + 4
+    max_text_width = max((len(line) for line in label_lines), default=10) * font_size * 0.55
+    box_width = max(globe_size + padding * 2, max_text_width + padding * 2)
+    box_height = globe_size + len(label_lines) * line_height + padding * 3
+
+    box_right = gx + layout.tile_width + 60 + box_width + padding
+    box_top = gy - layout.tile_height / 2 - box_height / 2 + 38
+    box_bottom = box_top + box_height + padding
+
+    return max(width, box_right), max(height, box_bottom)
+
+
 def render_svg_isometric(
     edges: list[Edge],
     *,
@@ -1186,12 +1217,19 @@ def render_svg_isometric(
     grid_positions = layout_positions.grid_positions
     positions = layout_positions.positions
 
-    out_width = options.width or int(layout_positions.width)
-    out_height = options.height or int(layout_positions.height)
+    view_width = layout_positions.width
+    view_height = layout_positions.height
+    if wan_info:
+        view_width, view_height = _expand_viewbox_for_wan(
+            view_width, view_height, wan_info, node_types, positions, layout, options
+        )
+
+    out_width = options.width or int(view_width)
+    out_height = options.height or int(view_height)
 
     lines = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{out_width}" height="{out_height}" '
-        f'viewBox="0 0 {layout_positions.width} {layout_positions.height}">',
+        f'viewBox="0 0 {view_width} {view_height}">',
         svg_defs("iso", theme),
         _svg_style_block(theme, options.font_size, iso=True),
         f'<rect width="100%" height="100%" fill="{theme.background}"/>',

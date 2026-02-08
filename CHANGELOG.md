@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.3] - 2026-02-08
+### Fixed
+- Fix isometric WAN upstream box clipped by viewBox (#33)
+
 ## [1.5.2] - 2026-02-07
 ### Added
 - Detect WAN2 disabled state from network config and add `--wan2-disabled` flag
@@ -270,7 +274,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Introduced SVG renderer and tree layout fixes.
 - Increased test coverage and added coverage tooling.
 
-[Unreleased]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.5.2...HEAD
+[Unreleased]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.5.3...HEAD
+[1.5.3]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.5.2...v1.5.3
 [1.5.2]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.5.0...v1.5.2
 [1.5.1]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.15...v1.5.0

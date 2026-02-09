@@ -6,8 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Add WAN upstream visualization to Mermaid output
+- Formalize public API with `__all__` exports on adapters, model, and render sub-packages (#37)
 
-## [1.5.3] - 2026-02-08
 ### Fixed
 - Fix isometric WAN upstream box clipped by viewBox (#33)
 

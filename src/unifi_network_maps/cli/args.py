@@ -132,9 +132,9 @@ def add_svg_args(parser: argparse._ArgumentGroup) -> None:
     )
     parser.add_argument(
         "--svg-layout-mode",
-        choices=["physical", "grouped"],
+        choices=["physical", "grouped", "vlan"],
         default="physical",
-        help="SVG layout mode: physical (default) or grouped by network segment",
+        help="SVG layout mode: physical (default), grouped by device type, or vlan by VLAN membership",
     )
     parser.add_argument(
         "--max-vlan-colors",

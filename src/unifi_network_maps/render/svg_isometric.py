@@ -17,6 +17,7 @@ from .svg import (
     _svg_style_block,
     _tree_layout_indices,
     _vlan_data_attrs,
+    _vlan_group_colors,
 )
 from .svg_icons import _TYPE_COLORS, _build_decal_colors, _load_isometric_icons
 from .svg_labels import (
@@ -1137,13 +1138,15 @@ def _render_iso_group_boundaries(
     lines: list[str],
     bounds_list: list[IsoGroupBounds],
     theme: SvgTheme,
+    *,
+    group_vlan_ids: dict[str, int] | None = None,
 ) -> None:
     """Render isometric group boundaries as parallelograms."""
     label_size = _ISO_GROUP_LABEL_SIZE
     iso_angle = _ISO_PERSPECTIVE_ANGLE
     for bounds in bounds_list:
         group_attr = _escape_html(bounds.name, quote=True)
-        fill, stroke = theme.group_colors(bounds.name)
+        fill, stroke = _vlan_group_colors(bounds.name, theme, group_vlan_ids)
         points_str = " ".join(f"{x},{y}" for x, y in bounds.points)
         lines.append(f'<g class="network-group" data-group-name="{group_attr}">')
         lines.append(
@@ -1207,6 +1210,7 @@ def render_svg_isometric(
     theme: SvgTheme = DEFAULT_THEME,
     groups: dict[str, list[str]] | None = None,
     group_order: list[str] | None = None,
+    group_vlan_ids: dict[str, int] | None = None,
     wan_info: WanInfo | None = None,
 ) -> str:
     options = options or SvgOptions()
@@ -1246,7 +1250,7 @@ def render_svg_isometric(
             layout_positions.offset_y,
             options,
         )
-        _render_iso_group_boundaries(lines, group_bounds_list, theme)
+        _render_iso_group_boundaries(lines, group_bounds_list, theme, group_vlan_ids=group_vlan_ids)
 
     grid_lines = _iso_grid_lines(grid_positions, layout, theme.grid_color)
     if grid_lines:

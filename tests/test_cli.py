@@ -464,7 +464,15 @@ def test_main_svg_uses_size_overrides(monkeypatch):
     ]
 
     def fake_render_svg(
-        edges, *, node_types, options, theme=None, groups=None, group_order=None, wan_info=None
+        edges,
+        *,
+        node_types,
+        options,
+        theme=None,
+        groups=None,
+        group_order=None,
+        group_vlan_ids=None,
+        wan_info=None,
     ):
         captured["width"] = options.width
         captured["height"] = options.height

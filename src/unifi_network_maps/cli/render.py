@@ -11,9 +11,9 @@ from ..io.export import write_output
 from ..io.mkdocs_assets import write_mkdocs_sidebar_assets
 from ..model.classify import classify_device_type
 from ..model.clients import build_node_type_map, collapse_client_edges
-from ..model.edges import build_port_map, group_devices_by_type
+from ..model.edges import build_port_map, group_devices_by_type, group_nodes_by_vlan
 from ..model.topology import Device, Edge, TopologyResult, WanInfo
-from ..model.vlans import build_wan_enabled_map
+from ..model.vlans import build_vlan_names, build_wan_enabled_map
 from ..model.wan import extract_wan_info
 from ..render.legend import resolve_legend_style
 from ..render.lldp_md import render_lldp_md
@@ -112,7 +112,7 @@ def _apply_client_clustering(
 ) -> tuple[list[Edge], dict[str, list[str]] | None, list[str] | None]:
     """Apply client clustering and update groups if needed."""
     edges, _counts = collapse_client_edges(edges, node_types)
-    if layout_mode == "grouped" and group_order and "client_cluster" not in group_order:
+    if layout_mode in ("grouped", "vlan") and group_order and "client_cluster" not in group_order:
         group_order = [*group_order, "client_cluster"]
         if groups is not None:
             groups = {
@@ -155,10 +155,14 @@ def render_svg_output(
         args, edges, devices, config, site, clients_override=clients_override
     )
     layout_mode = getattr(args, "svg_layout_mode", "physical")
-    options = SvgOptions(width=args.svg_width, height=args.svg_height, layout_mode=layout_mode)
+    effective_layout = "grouped" if layout_mode == "vlan" else layout_mode
+    options = SvgOptions(width=args.svg_width, height=args.svg_height, layout_mode=effective_layout)
 
     groups = None
     group_order = None
+    group_vlan_ids: dict[str, int] | None = None
+    networks = _fetch_networks_for_wan(config, site, networks_override=networks_override)
+
     if layout_mode == "grouped":
         groups = group_devices_by_type(devices)
         group_order = ["gateway", "switch", "ap", "other"]
@@ -166,6 +170,9 @@ def render_svg_output(
             client_names = [c.get("name") or c.get("hostname", "") for c in clients]
             groups["client"] = [n for n in client_names if n]
             group_order.append("client")
+    elif layout_mode == "vlan":
+        vlan_names = build_vlan_names(networks) if networks else {}
+        groups, group_order, group_vlan_ids = group_nodes_by_vlan(edges, vlan_names)
 
     node_types = build_node_type_map(
         devices, clients, client_mode=args.client_scope, only_unifi=args.only_unifi
@@ -176,7 +183,6 @@ def render_svg_output(
             edges, node_types, layout_mode, groups, group_order
         )
 
-    networks = _fetch_networks_for_wan(config, site, networks_override=networks_override)
     wan_info = _extract_gateway_wan_info(devices, args, networks=networks)
 
     if args.format == "svg-iso":
@@ -189,6 +195,7 @@ def render_svg_output(
             theme=svg_theme,
             groups=groups,
             group_order=group_order,
+            group_vlan_ids=group_vlan_ids,
             wan_info=wan_info,
         )
     return render_svg(
@@ -198,6 +205,7 @@ def render_svg_output(
         theme=svg_theme,
         groups=groups,
         group_order=group_order,
+        group_vlan_ids=group_vlan_ids,
         wan_info=wan_info,
     )
 

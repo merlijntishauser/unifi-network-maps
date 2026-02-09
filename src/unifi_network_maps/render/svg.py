@@ -356,17 +356,31 @@ def _layout_grouped_nodes(
     return all_positions, group_bounds_list, total_width, total_height
 
 
+def _vlan_group_colors(
+    group_name: str,
+    theme: SvgTheme,
+    group_vlan_ids: dict[str, int] | None,
+) -> tuple[str, str]:
+    """Return (fill, stroke) for a group, using VLAN color when available."""
+    if group_vlan_ids and group_name in group_vlan_ids:
+        color = theme.vlan_color(group_vlan_ids[group_name])
+        return color, color
+    return theme.group_colors(group_name)
+
+
 def _render_group_boundaries(
     lines: list[str],
     group_bounds_list: list[GroupBounds],
     theme: SvgTheme,
     options: SvgOptions,
+    *,
+    group_vlan_ids: dict[str, int] | None = None,
 ) -> None:
     """Render group background rectangles and labels."""
     label_size = options.font_size + 4
     for bounds in group_bounds_list:
         group_attr = _escape_html(bounds.name, quote=True)
-        fill, stroke = theme.group_colors(bounds.name)
+        fill, stroke = _vlan_group_colors(bounds.name, theme, group_vlan_ids)
         lines.append(f'<g class="network-group" data-group-name="{group_attr}">')
         lines.append(
             f'<rect class="group-boundary" x="{bounds.x}" y="{bounds.y}" '
@@ -536,6 +550,7 @@ def render_svg(
     theme: SvgTheme = DEFAULT_THEME,
     groups: dict[str, list[str]] | None = None,
     group_order: list[str] | None = None,
+    group_vlan_ids: dict[str, int] | None = None,
     wan_info: WanInfo | None = None,
 ) -> str:
     options = options or SvgOptions()
@@ -568,7 +583,9 @@ def render_svg(
     ]
 
     if use_grouped and group_bounds_list:
-        _render_group_boundaries(lines, group_bounds_list, theme, options)
+        _render_group_boundaries(
+            lines, group_bounds_list, theme, options, group_vlan_ids=group_vlan_ids
+        )
 
     node_port_labels, _ = _render_svg_edges(lines, edges, positions, node_types, options, theme)
     _render_svg_nodes(

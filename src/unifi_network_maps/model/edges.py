@@ -556,3 +556,65 @@ def group_devices_by_type(devices: Iterable[Device]) -> dict[str, list[str]]:
         group = classify_device_type(device)
         groups[group].append(device.name)
     return groups
+
+
+def _primary_vlan_for_node(
+    node: str,
+    edges: list[Edge],
+) -> int | None:
+    """Find the primary VLAN for a node from its edges.
+
+    Uses active_vlans first, falls back to vlans, picks lowest VLAN ID.
+    """
+    vlans: set[int] = set()
+    for edge in edges:
+        if edge.left != node and edge.right != node:
+            continue
+        if edge.active_vlans:
+            vlans.update(edge.active_vlans)
+        elif edge.vlans:
+            vlans.update(edge.vlans)
+    return min(vlans) if vlans else None
+
+
+def group_nodes_by_vlan(
+    edges: list[Edge],
+    vlan_names: dict[int, str] | None = None,
+) -> tuple[dict[str, list[str]], list[str], dict[str, int]]:
+    """Group nodes by their primary VLAN membership.
+
+    Returns (groups, group_order, group_vlan_ids) where groups maps VLAN name
+    to node list, group_order sorts by VLAN ID ascending with "Unassigned" last,
+    and group_vlan_ids maps group name to its VLAN ID.
+    """
+    vlan_names = vlan_names or {}
+    nodes: set[str] = set()
+    for edge in edges:
+        nodes.add(edge.left)
+        nodes.add(edge.right)
+
+    vlan_groups: dict[int, list[str]] = {}
+    unassigned: list[str] = []
+
+    for node in sorted(nodes):
+        vlan_id = _primary_vlan_for_node(node, edges)
+        if vlan_id is None:
+            unassigned.append(node)
+        else:
+            vlan_groups.setdefault(vlan_id, []).append(node)
+
+    groups: dict[str, list[str]] = {}
+    group_vlan_ids: dict[str, int] = {}
+    group_order: list[str] = []
+
+    for vlan_id in sorted(vlan_groups):
+        name = vlan_names.get(vlan_id, f"VLAN {vlan_id}")
+        groups[name] = vlan_groups[vlan_id]
+        group_vlan_ids[name] = vlan_id
+        group_order.append(name)
+
+    if unassigned:
+        groups["Unassigned"] = unassigned
+        group_order.append("Unassigned")
+
+    return groups, group_order, group_vlan_ids

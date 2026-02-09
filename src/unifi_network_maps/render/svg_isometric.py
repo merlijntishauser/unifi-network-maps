@@ -10,14 +10,13 @@ from ..model.topology import Edge, WanInfo
 from .svg import (
     SvgOptions,
     _build_node_to_group_map,
-    _edge_opacity,
-    _render_vlan_endpoint_markers,
-    _resolve_group_order,
     _svg_node_group_attrs,
     _svg_style_block,
-    _tree_layout_indices,
+)
+from .svg_edges import (
+    _edge_opacity,
+    _render_vlan_endpoint_markers,
     _vlan_data_attrs,
-    _vlan_group_colors,
 )
 from .svg_icons import _TYPE_COLORS, _build_decal_colors, _load_isometric_icons
 from .svg_labels import (
@@ -30,7 +29,12 @@ from .svg_labels import (
     _shorten_prefix,
     _strip_local_port,
 )
+from .svg_layout import (
+    _resolve_group_order,
+    _tree_layout_indices,
+)
 from .svg_theme import DEFAULT_THEME, SvgTheme, svg_defs
+from .svg_wan import _vlan_group_colors
 
 # Isometric layout constants (module-level for discoverability)
 _ISO_NW_PADDING = 300  # North-west padding for iso layout

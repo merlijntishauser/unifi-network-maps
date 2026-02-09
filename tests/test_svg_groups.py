@@ -2,6 +2,7 @@
 
 import unifi_network_maps.render.svg as svg_module
 import unifi_network_maps.render.svg_isometric as svg_iso_module
+import unifi_network_maps.render.svg_layout as svg_layout_module
 from unifi_network_maps.model.topology import Edge
 
 
@@ -158,21 +159,21 @@ def test_assign_nodes_to_groups():
     """Test _assign_nodes_to_groups helper."""
     nodes = {"A", "B", "C"}
     groups = {"G1": ["A", "B"], "G2": ["C"]}
-    result = svg_module._assign_nodes_to_groups(nodes, groups)
+    result = svg_layout_module._assign_nodes_to_groups(nodes, groups)
     assert result == {"A": "G1", "B": "G1", "C": "G2"}
 
 
 def test_resolve_group_order_with_order():
     """Test _resolve_group_order with explicit order."""
     groups = {"B": ["x"], "A": ["y"], "C": ["z"]}
-    result = svg_module._resolve_group_order(groups, ["A", "B", "C"])
+    result = svg_layout_module._resolve_group_order(groups, ["A", "B", "C"])
     assert result == ["A", "B", "C"]
 
 
 def test_resolve_group_order_without_order():
     """Test _resolve_group_order without explicit order."""
     groups = {"B": ["x"], "A": ["y"]}
-    result = svg_module._resolve_group_order(groups, None)
+    result = svg_layout_module._resolve_group_order(groups, None)
     assert result == ["A", "B"]
 
 
@@ -180,7 +181,7 @@ def test_filter_edges_for_group():
     """Test _filter_edges_for_group helper."""
     edges = [Edge("A", "B"), Edge("A", "C"), Edge("C", "D")]
     group_nodes = {"A", "B"}
-    result = svg_module._filter_edges_for_group(edges, group_nodes)
+    result = svg_layout_module._filter_edges_for_group(edges, group_nodes)
     assert len(result) == 1
     assert result[0].left == "A" and result[0].right == "B"
 

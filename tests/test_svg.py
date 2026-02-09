@@ -5,6 +5,7 @@ import unifi_network_maps.render.svg as svg_module
 import unifi_network_maps.render.svg_icons as svg_icons_module
 import unifi_network_maps.render.svg_isometric as svg_iso_module
 import unifi_network_maps.render.svg_labels as svg_labels_module
+import unifi_network_maps.render.svg_layout as svg_layout_module
 from unifi_network_maps.model.topology import Edge
 
 
@@ -144,7 +145,7 @@ def test_load_isometric_icons_missing_files_returns_empty(monkeypatch):
 
 
 def test_tree_layout_indices_cycle_returns_nodes():
-    positions, _levels = svg_module._tree_layout_indices(
+    positions, _levels = svg_layout_module._tree_layout_indices(
         [Edge("A", "B"), Edge("B", "A")],
         {"A": "switch", "B": "switch"},
     )
@@ -152,7 +153,7 @@ def test_tree_layout_indices_cycle_returns_nodes():
 
 
 def test_tree_layout_indices_empty_returns_empty():
-    positions, _levels = svg_module._tree_layout_indices([], {})
+    positions, _levels = svg_layout_module._tree_layout_indices([], {})
     assert positions == {}
 
 

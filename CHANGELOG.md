@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Add `render_dual()` for producing physical + VLAN-grouped SVGs in a single call (#35)
 - Add `--svg-layout-mode vlan` to group SVG nodes by VLAN membership (#34)
 - Add WAN upstream visualization to Mermaid output
 - Formalize public API with `__all__` exports on adapters, model, and render sub-packages (#37)

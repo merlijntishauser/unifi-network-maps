@@ -430,6 +430,68 @@ def _expand_viewbox_for_wan(
     return max(width, box_right), max(height, box_bottom)
 
 
+def _find_gateway_position(
+    node_types: dict[str, str],
+    positions: dict[str, tuple[float, float]],
+) -> tuple[float, float] | None:
+    for name, ntype in node_types.items():
+        if ntype == "gateway" and name in positions:
+            return positions[name]
+    return None
+
+
+def _maybe_render_wan_upstream(
+    lines: list[str],
+    wan_info: WanInfo | None,
+    node_types: dict[str, str],
+    positions: dict[str, tuple[float, float]],
+    layout: IsoLayout,
+    options: SvgOptions,
+    theme: SvgTheme,
+) -> None:
+    if not wan_info:
+        return
+    gateway_pos = _find_gateway_position(node_types, positions)
+    if gateway_pos:
+        _render_iso_wan_upstream(lines, wan_info, gateway_pos, layout, options, theme)
+
+
+def _render_grouped_boundaries(
+    lines: list[str],
+    grid_positions: dict[str, tuple[float, float]],
+    groups: dict[str, list[str]],
+    group_order: list[str] | None,
+    group_vlan_ids: dict[str, int] | None,
+    layout: IsoLayout,
+    layout_positions: IsoLayoutPositions,
+    options: SvgOptions,
+    theme: SvgTheme,
+) -> None:
+    group_bounds_list = _compute_iso_group_bounds(
+        grid_positions,
+        groups,
+        group_order,
+        layout,
+        layout_positions.offset_x,
+        layout_positions.offset_y,
+        options,
+    )
+    _render_iso_group_boundaries(lines, group_bounds_list, theme, group_vlan_ids=group_vlan_ids)
+
+
+def _render_iso_grid(
+    lines: list[str],
+    grid_positions: dict[str, tuple[float, float]],
+    layout: IsoLayout,
+    theme: SvgTheme,
+) -> None:
+    grid_lines = _iso_grid_lines(grid_positions, layout, theme.grid_color)
+    if grid_lines:
+        lines.append('<g class="iso-grid" opacity="0.7">')
+        lines.extend(grid_lines)
+        lines.append("</g>")
+
+
 def render_svg_isometric(
     edges: list[Edge],
     *,
@@ -467,24 +529,20 @@ def render_svg_isometric(
         f'<rect width="100%" height="100%" fill="{theme.background}"/>',
     ]
 
-    use_grouped = options.layout_mode == "grouped" and groups
-    if use_grouped and groups:
-        group_bounds_list = _compute_iso_group_bounds(
+    if options.layout_mode == "grouped" and groups:
+        _render_grouped_boundaries(
+            lines,
             grid_positions,
             groups,
             group_order,
+            group_vlan_ids,
             layout,
-            layout_positions.offset_x,
-            layout_positions.offset_y,
+            layout_positions,
             options,
+            theme,
         )
-        _render_iso_group_boundaries(lines, group_bounds_list, theme, group_vlan_ids=group_vlan_ids)
 
-    grid_lines = _iso_grid_lines(grid_positions, layout, theme.grid_color)
-    if grid_lines:
-        lines.append('<g class="iso-grid" opacity="0.7">')
-        lines.extend(grid_lines)
-        lines.append("</g>")
+    _render_iso_grid(lines, grid_positions, layout, theme)
 
     node_port_labels: dict[str, str] = {}
     node_port_prefix: dict[str, str] = {}
@@ -513,18 +571,7 @@ def render_svg_isometric(
         theme=theme,
     )
 
-    # Render WAN upstream visualization
-    if wan_info:
-        # Find gateway position
-        gateway_name = None
-        for name, ntype in node_types.items():
-            if ntype == "gateway":
-                gateway_name = name
-                break
-        if gateway_name and gateway_name in positions:
-            _render_iso_wan_upstream(
-                lines, wan_info, positions[gateway_name], layout, options, theme
-            )
+    _maybe_render_wan_upstream(lines, wan_info, node_types, positions, layout, options, theme)
 
     lines.append("</svg>")
     return "\n".join(lines) + "\n"

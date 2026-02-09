@@ -30,6 +30,19 @@ def _strip_local_port(label: str, node_type: str) -> str:
     return label
 
 
+def _format_compact_ports(
+    left_name: str | None,
+    left_port: str | None,
+    right_port: str | None,
+    label: str,
+) -> str:
+    if left_port and right_port:
+        if left_name:
+            return f"{left_name} {left_port} <-> {right_port}"
+        return f"{left_port} <-> {right_port}"
+    return left_port or right_port or label
+
+
 def _compact_edge_label(
     label: str, *, left_node: str | None = None, right_node: str | None = None
 ) -> str:
@@ -44,15 +57,7 @@ def _compact_edge_label(
         if right_name and right_name == left_node and left_name == right_node:
             left_name, right_name = right_name, left_name
             left_port, right_port = right_port, left_port
-    if left_port and right_port:
-        if left_name:
-            return f"{left_name} {left_port} <-> {right_port}"
-        return f"{left_port} <-> {right_port}"
-    if left_port:
-        return left_port
-    if right_port:
-        return right_port
-    return label
+    return _format_compact_ports(left_name, left_port, right_port, label)
 
 
 def _format_port_label_lines(

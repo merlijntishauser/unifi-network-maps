@@ -167,6 +167,101 @@ def _iso_edge_path(
     ]
 
 
+def _resolve_edge_coords(
+    edge: Edge,
+    grid_positions: dict[str, tuple[float, float]],
+    layout: IsoLayout,
+    offset_x: float,
+    offset_y: float,
+) -> tuple[float, float, float, float, float, float, float, float] | None:
+    src_grid = grid_positions.get(edge.left)
+    dst_grid = grid_positions.get(edge.right)
+    if not src_grid or not dst_grid:
+        return None
+    src_gx, src_gy = float(src_grid[0]), float(src_grid[1])
+    dst_gx, dst_gy = float(dst_grid[0]), float(dst_grid[1])
+    src_cx, src_cy = _iso_front_anchor(
+        layout, gx=src_gx, gy=src_gy, offset_x=offset_x, offset_y=offset_y
+    )
+    dst_cx, dst_cy = _iso_front_anchor(
+        layout, gx=dst_gx, gy=dst_gy, offset_x=offset_x, offset_y=offset_y
+    )
+    return src_gx, src_gy, dst_gx, dst_gy, src_cx, src_cy, dst_cx, dst_cy
+
+
+def _render_single_iso_edge(
+    lines: list[str],
+    edge: Edge,
+    coords: tuple[float, float, float, float, float, float, float, float],
+    *,
+    node_types: dict[str, str],
+    layout: IsoLayout,
+    theme: SvgTheme,
+    offset_x: float,
+    offset_y: float,
+    node_port_labels: dict[str, str],
+    max_vlan_colors: int | None,
+) -> None:
+    src_gx, src_gy, dst_gx, dst_gy, src_cx, src_cy, dst_cx, dst_cy = coords
+    width_px = 5 if edge.poe else 4
+    path_cmds = _iso_edge_path(
+        layout,
+        offset_x,
+        offset_y,
+        src_gx,
+        src_gy,
+        dst_gx,
+        dst_gy,
+        src_cx,
+        src_cy,
+        dst_cx,
+        dst_cy,
+    )
+    path = " ".join(path_cmds)
+    left_attr = _escape_html(edge.left, quote=True)
+    right_attr = _escape_html(edge.right, quote=True)
+    vlan_attrs = _vlan_data_attrs(edge)
+    base_attrs = f'data-edge-left="{left_attr}" data-edge-right="{right_attr}"'
+    if vlan_attrs:
+        base_attrs = f"{base_attrs} {vlan_attrs}"
+
+    display_vlans = edge.active_vlans
+    if max_vlan_colors and len(display_vlans) > max_vlan_colors:
+        display_vlans = display_vlans[:max_vlan_colors]
+
+    opacity = _edge_opacity(node_types, edge)
+    opacity_attr = f' opacity="{opacity}"' if opacity < 1.0 else ""
+
+    if display_vlans:
+        _render_iso_vlan_striped_edge(
+            lines, path, display_vlans, theme, width_px, edge.wireless, base_attrs, opacity
+        )
+        marker_x = dst_cx + layout.tile_width * 0.3
+        marker_y = dst_cy - layout.tile_height * 0.2
+        _render_vlan_endpoint_markers(lines, marker_x, marker_y, display_vlans, theme)
+    else:
+        _render_iso_standard_edge(lines, path, edge, width_px, base_attrs, opacity_attr)
+
+    if edge.poe:
+        dst_has_label = edge.right in node_port_labels
+        _render_iso_poe_icon(
+            lines,
+            layout,
+            offset_x,
+            offset_y,
+            src_gx,
+            src_gy,
+            dst_gx,
+            dst_gy,
+            src_cx,
+            src_cy,
+            dst_cx,
+            dst_cy,
+            theme,
+            has_port_labels=dst_has_label,
+        )
+
+
 def _render_iso_edges(
     lines: list[str],
     edges: list[Edge],
@@ -187,75 +282,21 @@ def _render_iso_edges(
     for edge in sorted(edges, key=lambda item: item.poe):
         if edge.left not in positions or edge.right not in positions:
             continue
-        src_grid = grid_positions.get(edge.left)
-        dst_grid = grid_positions.get(edge.right)
-        if not src_grid or not dst_grid:
+        coords = _resolve_edge_coords(edge, grid_positions, layout, offset_x, offset_y)
+        if not coords:
             continue
-        width_px = 5 if edge.poe else 4
-        src_gx, src_gy = float(src_grid[0]), float(src_grid[1])
-        dst_gx, dst_gy = float(dst_grid[0]), float(dst_grid[1])
-        src_cx, src_cy = _iso_front_anchor(
-            layout, gx=src_gx, gy=src_gy, offset_x=offset_x, offset_y=offset_y
+        _render_single_iso_edge(
+            lines,
+            edge,
+            coords,
+            node_types=node_types,
+            layout=layout,
+            theme=theme,
+            offset_x=offset_x,
+            offset_y=offset_y,
+            node_port_labels=node_port_labels,
+            max_vlan_colors=max_vlan_colors,
         )
-        dst_cx, dst_cy = _iso_front_anchor(
-            layout, gx=dst_gx, gy=dst_gy, offset_x=offset_x, offset_y=offset_y
-        )
-        path_cmds = _iso_edge_path(
-            layout,
-            offset_x,
-            offset_y,
-            src_gx,
-            src_gy,
-            dst_gx,
-            dst_gy,
-            src_cx,
-            src_cy,
-            dst_cx,
-            dst_cy,
-        )
-        path = " ".join(path_cmds)
-        left_attr = _escape_html(edge.left, quote=True)
-        right_attr = _escape_html(edge.right, quote=True)
-        vlan_attrs = _vlan_data_attrs(edge)
-        base_attrs = f'data-edge-left="{left_attr}" data-edge-right="{right_attr}"'
-        if vlan_attrs:
-            base_attrs = f"{base_attrs} {vlan_attrs}"
-
-        display_vlans = edge.active_vlans
-        if max_vlan_colors and len(display_vlans) > max_vlan_colors:
-            display_vlans = display_vlans[:max_vlan_colors]
-
-        opacity = _edge_opacity(node_types, edge)
-        opacity_attr = f' opacity="{opacity}"' if opacity < 1.0 else ""
-
-        if display_vlans:
-            _render_iso_vlan_striped_edge(
-                lines, path, display_vlans, theme, width_px, edge.wireless, base_attrs, opacity
-            )
-            marker_x = dst_cx + layout.tile_width * 0.3
-            marker_y = dst_cy - layout.tile_height * 0.2
-            _render_vlan_endpoint_markers(lines, marker_x, marker_y, display_vlans, theme)
-        else:
-            _render_iso_standard_edge(lines, path, edge, width_px, base_attrs, opacity_attr)
-
-        if edge.poe:
-            dst_has_label = edge.right in node_port_labels
-            _render_iso_poe_icon(
-                lines,
-                layout,
-                offset_x,
-                offset_y,
-                src_gx,
-                src_gy,
-                dst_gx,
-                dst_gy,
-                src_cx,
-                src_cy,
-                dst_cx,
-                dst_cy,
-                theme,
-                has_port_labels=dst_has_label,
-            )
 
 
 def _record_iso_edge_label(

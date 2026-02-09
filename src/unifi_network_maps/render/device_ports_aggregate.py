@@ -26,6 +26,21 @@ def aggregate_base_groups(port_table: list[PortInfo]) -> dict[str, list[PortInfo
     return groups
 
 
+def _find_lag_neighbors(
+    lone_port: PortInfo,
+    port_by_idx: dict[int, PortInfo],
+) -> list[PortInfo]:
+    port_idx = lone_port.port_idx
+    if port_idx is None:
+        return []
+    candidates: list[PortInfo] = []
+    for neighbor_idx in (port_idx - 1, port_idx + 1):
+        port = port_by_idx.get(neighbor_idx)
+        if port and not port.aggregation_group and port.speed == lone_port.speed:
+            candidates.append(port)
+    return candidates
+
+
 def extend_singleton_groups(
     groups: dict[str, list[PortInfo]],
     port_table: list[PortInfo],
@@ -36,20 +51,12 @@ def extend_singleton_groups(
         port.port_idx: port for port in port_table if port.port_idx is not None
     }
     for group_id, group_ports in list(groups.items()):
-        if len(group_ports) > 1:
+        if len(group_ports) != 1:
             continue
         lone_port = group_ports[0]
         if not looks_like_lag(lone_port):
             continue
-        port_idx = lone_port.port_idx
-        if port_idx is None:
-            continue
-        candidates: list[PortInfo] = []
-        for neighbor in (port_idx - 1, port_idx + 1):
-            port = port_by_idx.get(neighbor)
-            if port and not port.aggregation_group:
-                if port.speed == lone_port.speed:
-                    candidates.append(port)
+        candidates = _find_lag_neighbors(lone_port, port_by_idx)
         if candidates:
             groups[group_id].extend(candidates)
 

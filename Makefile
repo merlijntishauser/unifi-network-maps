@@ -31,9 +31,9 @@ complexity:
 	@echo "=== Maintainability Index (B or lower) ==="
 	@$(VENV)/radon mi src/unifi_network_maps -s -nb
 	@echo ""
-	@echo "=== Threshold Checks (max function: 14, max module avg: B, overall avg: A) ==="
+	@echo "=== Threshold Checks (max function: 12, max module avg: B, overall avg: A) ==="
 	$(VENV)/xenon src/unifi_network_maps --max-absolute C --max-modules B --max-average A
-	@./scripts/check_complexity.sh 14
+	@./scripts/check_complexity.sh 12
 
 # Testing
 test:

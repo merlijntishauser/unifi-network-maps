@@ -18,8 +18,8 @@ repos:
         language: system
         pass_filenames: false
       - id: complexity-max
-        name: complexity max 14
-        entry: ./scripts/check_complexity.sh 14
+        name: complexity max 12
+        entry: ./scripts/check_complexity.sh 12
         language: system
         pass_filenames: false
       - id: pytest

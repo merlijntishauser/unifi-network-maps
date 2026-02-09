@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Iterable
 
-from .helpers import as_bool, as_list, get_field
+from .helpers import as_bool, as_list, first_attr, get_field
 from .lldp import coerce_lldp
 from .topology import Device, DeviceSource, PortInfo, UplinkInfo
 
@@ -313,9 +313,9 @@ def coerce_device(device: DeviceSource, network_vlan_map: dict[str, int] | None 
 
     model_name = _get_model_display_name(device) or get_field(device, "model")
     model = get_field(device, "model")
-    ip = get_field(device, "ip") or get_field(device, "ip_address")
-    dev_type = get_field(device, "type") or get_field(device, "device_type")
-    version = get_field(device, "displayable_version") or get_field(device, "version")
+    ip = first_attr(device, "ip", "ip_address")
+    dev_type = first_attr(device, "type", "device_type")
+    version = first_attr(device, "displayable_version", "version")
 
     uplink, last_uplink = _uplink_info(device)
     lldp_entries = _resolve_lldp_info(device, name, uplink, last_uplink)

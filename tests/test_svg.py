@@ -226,7 +226,7 @@ def test_render_svg_isometric_without_icons(monkeypatch):
 
 
 def test_render_svg_isometric_skips_missing_positions(monkeypatch):
-    monkeypatch.setattr(svg_iso_module, "_tree_layout_indices", lambda _e, _n: ({}, {}))
+    monkeypatch.setattr(svg_layout_module, "_tree_layout_indices", lambda _e, _n: ({}, {}))
     output = svg_iso_module.render_svg_isometric(
         [Edge("A", "B")], node_types={"A": "switch", "B": "switch"}
     )

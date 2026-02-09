@@ -12,10 +12,8 @@ from unifi_network_maps.render.svg_edges import (
     _render_vlan_endpoint_markers,
     _vlan_data_attrs,
 )
-from unifi_network_maps.render.svg_isometric import (
-    _render_iso_vlan_striped_edge,
-    render_svg_isometric,
-)
+from unifi_network_maps.render.svg_iso_edges import _render_iso_vlan_striped_edge
+from unifi_network_maps.render.svg_isometric import render_svg_isometric
 from unifi_network_maps.render.svg_theme import DEFAULT_THEME
 
 # --- VLAN data attributes ---

@@ -69,6 +69,7 @@ def _mermaid_theme_from_dict(data: dict, base: MermaidTheme) -> MermaidTheme:
         node_ap=_node("ap"),
         node_client=_node("client"),
         node_other=_node("other"),
+        node_wan=_node("wan"),
         poe_link=_coerce_color(data.get("poe_link"), base.poe_link),
         poe_link_width=int(data.get("poe_link_width", base.poe_link_width)),
         poe_link_arrow=_coerce_color(data.get("poe_link_arrow"), base.poe_link_arrow),

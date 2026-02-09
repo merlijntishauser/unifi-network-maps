@@ -41,6 +41,7 @@ def render_mermaid_output(
     mermaid_theme: MermaidTheme,
     *,
     clients_override: list[object] | None = None,
+    networks_override: list[object] | None = None,
 ) -> str:
     edges, _has_tree = select_edges(topology)
     edges, clients = build_edges_with_clients(
@@ -56,6 +57,8 @@ def render_mermaid_output(
     if args.group_by_type:
         groups = group_devices_by_type(devices)
         group_order = ["gateway", "switch", "ap", "other"]
+    networks = _fetch_networks_for_wan(config, site, networks_override=networks_override)
+    wan_info = _extract_gateway_wan_info(devices, args, networks=networks)
     content = render_mermaid(
         edges,
         direction=args.direction,
@@ -68,6 +71,7 @@ def render_mermaid_output(
             only_unifi=args.only_unifi,
         ),
         theme=mermaid_theme,
+        wan_info=wan_info,
     )
     if args.markdown:
         content = f"""```mermaid
@@ -323,6 +327,7 @@ def render_standard_format(
             site,
             mermaid_theme,
             clients_override=mock_clients,
+            networks_override=mock_networks,
         )
     elif args.format == "mkdocs":
         content = render_mkdocs_format(

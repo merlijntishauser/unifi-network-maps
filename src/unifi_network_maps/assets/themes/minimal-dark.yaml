@@ -15,6 +15,9 @@ mermaid:
     other:
       fill: "#4b5563"
       stroke: "#6b7280"
+    wan:
+      fill: "#374151"
+      stroke: "#6b7280"
   node_text: "#f3f4f6"
   edge_label_border: "#6b7280"
   edge_label_border_width: 2

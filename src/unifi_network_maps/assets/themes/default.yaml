@@ -15,6 +15,9 @@ mermaid:
     other:
       fill: "#eeeeee"
       stroke: "#8f8f8f"
+    wan:
+      fill: "#e0f0ff"
+      stroke: "#0288d1"
   poe_link: "#1e88e5"
   poe_link_width: 2
   poe_link_arrow: "none"

@@ -18,6 +18,7 @@ class MermaidTheme:
     standard_link: str
     standard_link_width: int
     standard_link_arrow: str
+    node_wan: tuple[str, str] = ("#e0f0ff", "#0288d1")
     node_text: str | None = None
     edge_label_border: str | None = None
     edge_label_border_width: int | None = None
@@ -29,6 +30,7 @@ DEFAULT_THEME = MermaidTheme(
     node_ap=("#d7f5e7", "#27ae60"),
     node_client=("#f2e5ff", "#7f3fbf"),
     node_other=("#eeeeee", "#8f8f8f"),
+    node_wan=("#e0f0ff", "#0288d1"),
     poe_link="#1e88e5",
     poe_link_width=2,
     poe_link_arrow="none",
@@ -52,5 +54,6 @@ def class_defs(theme: MermaidTheme = DEFAULT_THEME) -> list[str]:
         node_def("node_ap", theme.node_ap[0], theme.node_ap[1]),
         node_def("node_client", theme.node_client[0], theme.node_client[1]),
         node_def("node_other", theme.node_other[0], theme.node_other[1]),
+        node_def("node_wan", theme.node_wan[0], theme.node_wan[1]),
         "  classDef node_legend font-size:10px;",
     ]

@@ -1,6 +1,7 @@
 %%{init: {"flowchart": {"nodeSpacing": {{ node_spacing }}, "rankSpacing": {{ rank_spacing }}}, "themeVariables": {"fontSize": "{{ legend_font_size }}px", "nodePadding": {{ node_padding }}}}}%%
 graph TB
   subgraph legend["Legend"];
+    legend_wan(["WAN"]);
     legend_gateway["Gateway"];
     legend_switch["Switch"];
     legend_ap["AP"];
@@ -15,6 +16,7 @@ graph TB
     linkStyle 0 arrowhead:none;
     linkStyle 1 arrowhead:none;
   end
+  class legend_wan node_wan;
   class legend_gateway node_gateway;
   class legend_switch node_switch;
   class legend_ap node_ap;

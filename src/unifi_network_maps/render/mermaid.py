@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from collections.abc import Iterable
 
-from ..model.topology import Edge
+from ..model.topology import Edge, WanInfo, WanInterface
 from .mermaid_theme import DEFAULT_THEME, MermaidTheme, class_defs
 from .templating import render_template
 
@@ -163,6 +163,83 @@ def _render_link_styles(
         lines.append(f"  linkStyle {index} stroke-dasharray: 5 4;")
 
 
+def _format_wan_speed(speed_mbps: int | None) -> str | None:
+    if speed_mbps is None or speed_mbps == 0:
+        return None
+    if speed_mbps >= 1000:
+        gbps = speed_mbps / 1000
+        if gbps == int(gbps):
+            return f"{int(gbps)}GbE"
+        return f"{gbps:.1f}GbE"
+    return f"{speed_mbps}MbE"
+
+
+def _format_wan_interface(wan: WanInterface, prefix: str, *, is_dual: bool) -> list[str]:
+    """Format a single WAN interface for a Mermaid node label."""
+    parts: list[str] = []
+    label = wan.label or prefix
+    if is_dual:
+        label = f"{prefix}: {label}"
+    parts.append(label)
+    speed_parts: list[str] = []
+    if wan.link_speed and wan.enabled:
+        formatted = _format_wan_speed(wan.link_speed)
+        if formatted:
+            speed_parts.append(formatted)
+    if wan.isp_speed:
+        speed_parts.append(wan.isp_speed)
+    if speed_parts:
+        parts.append(" / ".join(speed_parts))
+    if not wan.enabled and is_dual:
+        parts.append("(disabled)")
+    return parts
+
+
+def _build_wan_node_label(wan_info: WanInfo) -> str:
+    """Build a concise label for the WAN node."""
+    parts: list[str] = []
+    is_dual = wan_info.wan2 is not None
+    if wan_info.wan1:
+        parts.extend(_format_wan_interface(wan_info.wan1, "WAN1", is_dual=is_dual))
+    if wan_info.wan2:
+        if parts:
+            parts.append("|")
+        parts.extend(_format_wan_interface(wan_info.wan2, "WAN2", is_dual=is_dual))
+    return " ".join(parts)
+
+
+def _find_gateway_name(
+    node_types: dict[str, str] | None,
+    edges: list[Edge],
+) -> str | None:
+    """Find the gateway node name to connect the WAN node to."""
+    if node_types:
+        for name, ntype in node_types.items():
+            if ntype == "gateway":
+                return name
+    return None
+
+
+def _render_wan_node(
+    lines: list[str],
+    wan_info: WanInfo,
+    gateway_name: str,
+    *,
+    id_map: dict[str, str],
+    use_node_labels: bool,
+) -> None:
+    """Render a WAN upstream node connected to the gateway."""
+    wan_id = id_map["__wan__"]
+    label = _escape(_build_wan_node_label(wan_info))
+    lines.append(f'  {wan_id}(["{label}"]);')
+    if use_node_labels:
+        gw = _node_ref(gateway_name, id_map[gateway_name])
+    else:
+        gw = id_map[gateway_name]
+    lines.append(f"  {wan_id} --- {gw};")
+    lines.append(f"  class {wan_id} node_wan;")
+
+
 def render_mermaid(
     edges: Iterable[Edge],
     direction: str = "LR",
@@ -171,9 +248,12 @@ def render_mermaid(
     group_order: list[str] | None = None,
     node_types: dict[str, str] | None = None,
     theme: MermaidTheme = DEFAULT_THEME,
+    wan_info: WanInfo | None = None,
 ) -> str:
     edge_list = list(edges)
-    id_map = _build_id_map(edge_list, _group_nodes(groups))
+    gateway_name = _find_gateway_name(node_types, edge_list) if wan_info else None
+    extra_nodes = ["__wan__"] if wan_info and gateway_name else []
+    id_map = _build_id_map(edge_list, [*_group_nodes(groups), *extra_nodes])
     theme_vars: dict[str, object] = {}
     if theme.edge_label_border:
         theme_vars["edgeLabelBorderColor"] = theme.edge_label_border
@@ -183,6 +263,14 @@ def render_mermaid(
     if theme_vars:
         lines.append(f'%%{{init: {{"themeVariables": {json.dumps(theme_vars)}}}}}%%')
     lines.append(f"graph {direction}")
+    if wan_info and gateway_name:
+        _render_wan_node(
+            lines,
+            wan_info,
+            gateway_name,
+            id_map=id_map,
+            use_node_labels=not groups,
+        )
     if groups:
         _render_group_sections(lines, groups, group_order=group_order, id_map=id_map)
     use_node_labels = not groups
@@ -224,6 +312,12 @@ def render_legend(theme: MermaidTheme = DEFAULT_THEME, *, legend_scale: float = 
 
 def render_legend_compact(theme: MermaidTheme = DEFAULT_THEME) -> str:
     rows = [
+        {
+            "kind": "swatch",
+            "fill": theme.node_wan[0],
+            "stroke": theme.node_wan[1],
+            "label": "WAN",
+        },
         {
             "kind": "swatch",
             "fill": theme.node_gateway[0],

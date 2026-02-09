@@ -109,29 +109,24 @@ def _render_device_ports(
     return lines
 
 
-def _build_port_rows(
+_SortedRow = tuple[tuple[int, int], tuple[str, str, str, str, str]]
+
+
+def _build_individual_port_rows(
     device: Device,
+    aggregated_indices: set[int],
+    connections: dict[int, list[str]],
+    client_connections: dict[int, list[str]],
     port_map: PortMap,
-    client_ports: ClientPortMap | None,
-) -> list[tuple[str, str, str, str, str]]:
-    connections = _device_port_connections(device.name, port_map)
-    client_connections = _device_client_connections(device.name, client_ports)
-    aggregated = aggregate_ports(device.port_table)
-    aggregated_indices = {
-        port.port_idx
-        for ports in aggregated.values()
-        for port in ports
-        if port.port_idx is not None
-    }
-    rows: list[tuple[tuple[int, int], tuple[str, str, str, str, str]]] = []
+) -> tuple[list[_SortedRow], set[int]]:
+    rows: list[_SortedRow] = []
     seen_ports: set[int] = set()
     for port in sorted(device.port_table, key=_port_sort_key):
+        idx = port_index(port.port_idx, port.name)
         if port.port_idx in aggregated_indices:
-            idx = port_index(port.port_idx, port.name)
             if idx is not None:
                 seen_ports.add(idx)
             continue
-        idx = port_index(port.port_idx, port.name)
         if idx is not None:
             seen_ports.add(idx)
         port_label = _format_port_label(idx, port.name)
@@ -154,11 +149,20 @@ def _build_port_rows(
                 ),
             )
         )
+    return rows, seen_ports
+
+
+def _build_aggregate_rows(
+    device_name: str,
+    aggregated: dict[str, list[PortInfo]],
+    connections: dict[int, list[str]],
+    client_connections: dict[int, list[str]],
+    port_map: PortMap,
+) -> list[_SortedRow]:
+    rows: list[_SortedRow] = []
     for _group_id, group_ports in aggregated.items():
-        group_label = format_aggregate_label(group_ports)
-        group_sort = aggregate_sort_key(group_ports)
         group_connections = _format_aggregate_connections(
-            device.name,
+            device_name,
             group_ports,
             connections,
             client_connections,
@@ -166,9 +170,9 @@ def _build_port_rows(
         )
         rows.append(
             (
-                (0, group_sort),
+                (0, aggregate_sort_key(group_ports)),
                 (
-                    group_label,
+                    format_aggregate_label(group_ports),
                     group_connections,
                     _format_aggregate_speed(group_ports),
                     _format_aggregate_poe_state(group_ports),
@@ -176,18 +180,73 @@ def _build_port_rows(
                 ),
             )
         )
+    return rows
+
+
+def _build_orphan_connection_rows(
+    device_name: str,
+    connections: dict[int, list[str]],
+    client_connections: dict[int, list[str]],
+    seen_ports: set[int],
+    port_map: PortMap,
+) -> list[_SortedRow]:
+    rows: list[_SortedRow] = []
     for pidx in sorted(connections):
         if pidx in seen_ports:
             continue
         port_label = _format_port_label(pidx, None)
         connected = _format_connections(
-            device.name,
+            device_name,
             pidx,
             connections,
             client_connections,
             port_map,
         )
         rows.append(((2, pidx), (port_label, connected, "-", "-", "-")))
+    return rows
+
+
+def _build_port_rows(
+    device: Device,
+    port_map: PortMap,
+    client_ports: ClientPortMap | None,
+) -> list[tuple[str, str, str, str, str]]:
+    connections = _device_port_connections(device.name, port_map)
+    client_connections = _device_client_connections(device.name, client_ports)
+    aggregated = aggregate_ports(device.port_table)
+    aggregated_indices = {
+        port.port_idx
+        for ports in aggregated.values()
+        for port in ports
+        if port.port_idx is not None
+    }
+    rows: list[_SortedRow] = []
+    individual, seen_ports = _build_individual_port_rows(
+        device,
+        aggregated_indices,
+        connections,
+        client_connections,
+        port_map,
+    )
+    rows.extend(individual)
+    rows.extend(
+        _build_aggregate_rows(
+            device.name,
+            aggregated,
+            connections,
+            client_connections,
+            port_map,
+        )
+    )
+    rows.extend(
+        _build_orphan_connection_rows(
+            device.name,
+            connections,
+            client_connections,
+            seen_ports,
+            port_map,
+        )
+    )
     return [row for _key, row in sorted(rows, key=lambda item: item[0])]
 
 

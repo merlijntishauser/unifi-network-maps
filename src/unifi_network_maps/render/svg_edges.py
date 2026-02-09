@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 from html import escape as _escape_html
+from typing import TYPE_CHECKING
 
 from ..model.topology import Edge
 from .svg_labels import (
@@ -14,7 +15,6 @@ from .svg_labels import (
 )
 from .svg_theme import SvgTheme
 
-TYPE_CHECKING = False
 if TYPE_CHECKING:
     from .svg import SvgOptions
 

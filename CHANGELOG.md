@@ -16,7 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add WAN upstream visualization to Mermaid output
 - Formalize public API with `__all__` exports on adapters, model, and render sub-packages (#37)
 
+### Changed
+- Refactor: decompose svg.py, svg_isometric.py, and device_ports_md.py into focused sub-modules
+- Tighten max cyclomatic complexity threshold from 14 to 12
+- Export `render_device_inventory_table` from render public API
+
 ### Fixed
+- Fix eager import of faker (dev-only dependency) via model package init
 - Fix isometric WAN upstream box clipped by viewBox (#33)
 
 ## [1.5.2] - 2026-02-07

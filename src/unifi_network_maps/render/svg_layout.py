@@ -5,11 +5,11 @@ from __future__ import annotations
 import math
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from ..model.topology import Edge
 from .svg_icons import _TYPE_ORDER
 
-TYPE_CHECKING = False
 if TYPE_CHECKING:
     from .svg import SvgOptions
 

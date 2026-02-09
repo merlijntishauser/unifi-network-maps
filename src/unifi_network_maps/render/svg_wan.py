@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from html import escape as _escape_html
+from typing import TYPE_CHECKING
 
 from ..model.topology import WanInfo
 from .svg_labels import _build_wan_label_lines, _escape_text
 from .svg_layout import GroupBounds
 from .svg_theme import SvgTheme
 
-TYPE_CHECKING = False
 if TYPE_CHECKING:
     from .svg import SvgOptions
 

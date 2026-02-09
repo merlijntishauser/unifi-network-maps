@@ -1,0 +1,61 @@
+site_name: unifi-network-maps
+site_description: Generate network diagrams from UniFi Controller data
+site_url: https://merlijntishauser.github.io/unifi-network-maps
+repo_url: https://github.com/merlijntishauser/unifi-network-maps
+repo_name: merlijntishauser/unifi-network-maps
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: blue grey
+      accent: teal
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: blue grey
+      accent: teal
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - content.code.copy
+    - navigation.sections
+    - navigation.expand
+    - search.highlight
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: false
+            show_root_heading: true
+            show_root_full_path: false
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            members_order: source
+            docstring_style: google
+            merge_init_into_class: true
+            show_if_no_docstring: false
+            heading_level: 3
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - API Reference:
+      - Overview: api/index.md
+      - adapters: api/adapters.md
+      - model: api/model.md
+      - render: api/render.md

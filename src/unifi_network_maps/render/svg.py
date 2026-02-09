@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import dataclasses
 import functools
 import math
 from collections.abc import Callable
@@ -933,3 +934,106 @@ def _svg_node_group_attrs(
                 attrs[key] = value
     rendered = [f' {key}="{_escape_html(value, quote=True)}"' for key, value in attrs.items()]
     return "".join(rendered)
+
+
+# --- Dual rendering ---
+
+
+def _groups_from_vlan_node_map(
+    vlan_node_map: dict[str, int | None],
+    vlan_names: dict[int, str] | None = None,
+) -> tuple[dict[str, list[str]], list[str], dict[str, int]]:
+    """Convert a node-to-VLAN mapping into group structures.
+
+    Returns (groups, group_order, group_vlan_ids) matching the format
+    returned by group_nodes_by_vlan().
+    """
+    vlan_names = vlan_names or {}
+    vlan_groups: dict[int, list[str]] = {}
+    unassigned: list[str] = []
+
+    for node in sorted(vlan_node_map):
+        vlan_id = vlan_node_map[node]
+        if vlan_id is None:
+            unassigned.append(node)
+        else:
+            vlan_groups.setdefault(vlan_id, []).append(node)
+
+    groups: dict[str, list[str]] = {}
+    group_vlan_ids: dict[str, int] = {}
+    group_order: list[str] = []
+
+    for vlan_id in sorted(vlan_groups):
+        name = vlan_names.get(vlan_id, f"VLAN {vlan_id}")
+        groups[name] = vlan_groups[vlan_id]
+        group_vlan_ids[name] = vlan_id
+        group_order.append(name)
+
+    if unassigned:
+        groups["Unassigned"] = unassigned
+        group_order.append("Unassigned")
+
+    return groups, group_order, group_vlan_ids
+
+
+def render_dual(
+    edges: list[Edge],
+    *,
+    node_types: dict[str, str],
+    options: SvgOptions | None = None,
+    theme: SvgTheme = DEFAULT_THEME,
+    vlan_names: dict[int, str] | None = None,
+    vlan_node_map: dict[str, int | None] | None = None,
+    wan_info: WanInfo | None = None,
+    isometric: bool = False,
+) -> dict[str, str | None]:
+    """Render both physical and VLAN-grouped SVGs from shared topology data.
+
+    Returns {"physical": svg_str, "vlan": svg_str_or_none}.
+    The "vlan" value is None when no VLAN data is available.
+    """
+    from ..model.edges import group_nodes_by_vlan
+
+    options = options or SvgOptions()
+    physical_options = dataclasses.replace(options, layout_mode="physical")
+
+    if isometric:
+        from .svg_isometric import render_svg_isometric
+
+        render_fn = render_svg_isometric
+    else:
+        render_fn = render_svg
+
+    physical_svg = render_fn(
+        edges,
+        node_types=node_types,
+        options=physical_options,
+        theme=theme,
+        wan_info=wan_info,
+    )
+
+    # Build VLAN groups
+    if vlan_node_map:
+        groups, group_order, group_vlan_ids = _groups_from_vlan_node_map(vlan_node_map, vlan_names)
+    elif vlan_names:
+        groups, group_order, group_vlan_ids = group_nodes_by_vlan(edges, vlan_names)
+    else:
+        return {"physical": physical_svg, "vlan": None}
+
+    if not groups:
+        return {"physical": physical_svg, "vlan": None}
+
+    grouped_options = dataclasses.replace(options, layout_mode="grouped")
+
+    vlan_svg = render_fn(
+        edges,
+        node_types=node_types,
+        options=grouped_options,
+        theme=theme,
+        groups=groups,
+        group_order=group_order,
+        group_vlan_ids=group_vlan_ids,
+        wan_info=wan_info,
+    )
+
+    return {"physical": physical_svg, "vlan": vlan_svg}

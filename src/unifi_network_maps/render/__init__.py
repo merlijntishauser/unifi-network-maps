@@ -1,6 +1,6 @@
 """Rendering backends for network diagrams."""
 
-from .svg import SvgOptions, render_svg
+from .svg import SvgOptions, render_dual, render_svg
 from .svg_isometric import render_svg_isometric
 from .svg_theme import DEFAULT_THEME as DEFAULT_SVG_THEME
 from .svg_theme import SvgTheme
@@ -10,6 +10,7 @@ __all__ = [
     "DEFAULT_SVG_THEME",
     "SvgOptions",
     "SvgTheme",
+    "render_dual",
     "render_svg",
     "render_svg_isometric",
     "resolve_themes",

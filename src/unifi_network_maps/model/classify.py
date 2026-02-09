@@ -132,24 +132,26 @@ def _client_unifi_flag(client: object) -> bool | None:
     return None
 
 
+def _ucore_has_device_info(ucore: dict[str, object]) -> bool:
+    """Check whether a ucore dict contains any meaningful UniFi device data."""
+    managed = ucore.get("managed")
+    if isinstance(managed, bool) and managed:
+        return True
+    for key in ("product_line", "product_shortname", "name", "computed_model", "product_model"):
+        value = ucore.get(key)
+        if isinstance(value, str) and value.strip():
+            return True
+    return False
+
+
 def client_is_unifi(client: object) -> bool:
     """Determine if a client is a UniFi device."""
     flag = _client_unifi_flag(client)
     if flag is not None:
         return flag
     ucore = _client_ucore_info(client)
-    if ucore:
-        managed = ucore.get("managed")
-        if isinstance(managed, bool) and managed:
-            return True
-        if isinstance(ucore.get("product_line"), str) and ucore.get("product_line"):
-            return True
-        if isinstance(ucore.get("product_shortname"), str) and ucore.get("product_shortname"):
-            return True
-        for key in ("name", "computed_model", "product_model"):
-            value = ucore.get(key)
-            if isinstance(value, str) and value.strip():
-                return True
+    if ucore and _ucore_has_device_info(ucore):
+        return True
     vendor = _client_vendor(client)
     if not vendor:
         return False

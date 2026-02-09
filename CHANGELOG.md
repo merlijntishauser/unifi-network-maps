@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Add device inventory table to MkDocs output with model, IP, hostname, MAC, and firmware
+- Add `--resolve-hostnames` / `--no-resolve-hostnames` for reverse DNS hostname resolution via the controller
+- Add `DeviceInfo` dataclass and `build_device_inventory()` to the public API
+- Add `resolve_hostnames()` adapter using dnspython for PTR lookups
 - Add `render_dual()` for producing physical + VLAN-grouped SVGs in a single call (#35)
 - Add `--svg-layout-mode vlan` to group SVG nodes by VLAN membership (#34)
 - Add WAN upstream visualization to Mermaid output

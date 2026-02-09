@@ -92,6 +92,12 @@ def add_functional_args(parser: argparse._ArgumentGroup) -> None:
         action="store_true",
         help="Disable UniFi API cache reads and writes",
     )
+    parser.add_argument(
+        "--resolve-hostnames",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Resolve device IPs to hostnames via reverse DNS (default: on for mkdocs)",
+    )
 
 
 def add_mermaid_args(parser: argparse._ArgumentGroup) -> None:

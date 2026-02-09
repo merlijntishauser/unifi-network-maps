@@ -25,6 +25,7 @@ class MkdocsRenderOptions:
     timestamp_zone: str
     client_scope: str
     dual_theme: bool
+    infrastructure_table: str = ""
 
 
 def render_mkdocs(
@@ -78,6 +79,7 @@ def render_mkdocs(
         map_block=map_block,
         legend_title=legend_title,
         legend_block=legend_block,
+        infrastructure_table=options.infrastructure_table,
         device_overview=render_device_port_overview(
             devices, port_map, client_ports=client_ports
         ).rstrip()

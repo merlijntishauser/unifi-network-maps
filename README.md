@@ -247,6 +247,7 @@ Functional:
 - `--collapse-clients`: group clients by uplink device into cluster nodes with count badges.
 - `--only-unifi`: only include neighbors that are UniFi devices; when clients are included, filters to UniFi-managed clients.
 - `--no-cache`: disable UniFi API cache reads and writes.
+- `--resolve-hostnames` / `--no-resolve-hostnames`: resolve device IPs to hostnames via reverse DNS against the controller (default: on for mkdocs, off otherwise).
 
 Mermaid:
 - `--direction LR|TB`: diagram direction (default TB).
@@ -260,7 +261,7 @@ SVG:
 - `--theme`: built-in theme (`unifi`, `unifi-dark`, `minimal`, `classic`, `classic-dark`).
 - `--theme-file`: custom theme YAML (takes priority over `--theme`; see `examples/theme.yaml`).
 - `--icon-set isometric|modern`: icon set to use (default: determined by theme, or `isometric`).
-- `--svg-layout-mode physical|grouped`: layout mode for SVG output (default physical).
+- `--svg-layout-mode physical|grouped|vlan`: layout mode for SVG output (default physical).
 - `--wan-label/--wan-speed`: WAN1 ISP name and provisioned speed.
 - `--wan2-label/--wan2-speed`: WAN2 ISP name and provisioned speed.
 - `--max-vlan-colors`: limit VLAN colors shown on edges (default: no limit).

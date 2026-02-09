@@ -6,15 +6,18 @@ import argparse
 import logging
 
 from ..adapters.config import Config
+from ..adapters.dns import resolve_hostnames
 from ..adapters.unifi import fetch_clients, fetch_networks
 from ..io.export import write_output
 from ..io.mkdocs_assets import write_mkdocs_sidebar_assets
 from ..model.classify import classify_device_type
 from ..model.clients import build_node_type_map, collapse_client_edges
 from ..model.edges import build_port_map, group_devices_by_type, group_nodes_by_vlan
+from ..model.inventory import build_device_inventory
 from ..model.topology import Device, Edge, TopologyResult, WanInfo
 from ..model.vlans import build_vlan_names, build_wan_enabled_map
 from ..model.wan import extract_wan_info
+from ..render.inventory import render_device_inventory_table
 from ..render.legend import resolve_legend_style
 from ..render.lldp_md import render_lldp_md
 from ..render.mermaid import render_mermaid
@@ -139,6 +142,43 @@ def _fetch_networks_for_wan(
         return None
 
 
+def _extract_dns_server(config: Config | None) -> str | None:
+    """Extract the DNS server host from the controller URL."""
+    if config is None:
+        return None
+    from urllib.parse import urlparse
+
+    parsed = urlparse(config.url)
+    return parsed.hostname
+
+
+def _should_resolve_hostnames(args: argparse.Namespace) -> bool:
+    """Determine whether to resolve hostnames based on args and format."""
+    flag = getattr(args, "resolve_hostnames", None)
+    if flag is not None:
+        return flag
+    return getattr(args, "format", "") == "mkdocs"
+
+
+def _build_infrastructure_table(
+    args: argparse.Namespace,
+    devices: list[Device],
+    config: Config | None,
+) -> str:
+    """Build the infrastructure inventory table for MkDocs output."""
+    do_resolve = _should_resolve_hostnames(args)
+    hostnames: dict[str, str] | None = None
+    if do_resolve:
+        dns_server = _extract_dns_server(config)
+        if dns_server:
+            device_ips = [d.ip for d in devices if d.ip]
+            hostnames = resolve_hostnames(device_ips, dns_server)
+    inventory = build_device_inventory(devices, hostnames)
+    if not inventory:
+        return ""
+    return render_device_inventory_table(inventory, include_hostname=do_resolve)
+
+
 def render_svg_output(
     args: argparse.Namespace,
     devices: list[Device],
@@ -238,6 +278,9 @@ def render_mkdocs_format(
         return None
     dark_mermaid_theme = load_dark_mermaid_theme() if args.mkdocs_dual_theme else None
     edges, _has_tree = select_edges(topology)
+
+    infrastructure_table = _build_infrastructure_table(args, devices, config)
+
     options = MkdocsRenderOptions(
         direction=args.direction,
         legend_style=resolve_legend_style(
@@ -248,6 +291,7 @@ def render_mkdocs_format(
         timestamp_zone=args.mkdocs_timestamp_zone,
         client_scope=args.client_scope,
         dual_theme=args.mkdocs_dual_theme,
+        infrastructure_table=infrastructure_table,
     )
     return render_mkdocs(
         edges,

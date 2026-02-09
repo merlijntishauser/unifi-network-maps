@@ -85,6 +85,12 @@ def _svg_style_block(theme: SvgTheme, font_size: int, *, iso: bool = False) -> s
 
 @dataclass(frozen=True)
 class SvgOptions:
+    """Configuration for SVG diagram rendering.
+
+    Controls node dimensions, spacing, layout algorithm, and canvas size.
+    Pass to :func:`render_svg` or :func:`render_svg_isometric` to customize output.
+    """
+
     node_width: int = 160
     node_height: int = 48
     h_gap: int = 80

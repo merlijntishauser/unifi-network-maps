@@ -7,6 +7,12 @@ from dataclasses import dataclass, field
 
 @dataclass(frozen=True)
 class SvgTheme:
+    """Color and styling theme for SVG diagrams.
+
+    Each color field is a CSS color string. Node colors are ``(fill, stroke)``
+    tuples. Load from YAML with :func:`~unifi_network_maps.render.resolve_themes`.
+    """
+
     # Links
     link_standard: tuple[str, str]
     link_poe: tuple[str, str]

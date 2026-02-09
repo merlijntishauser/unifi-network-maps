@@ -503,6 +503,11 @@ def render_svg_isometric(
     group_vlan_ids: dict[str, int] | None = None,
     wan_info: WanInfo | None = None,
 ) -> str:
+    """Render an isometric (2.5D) SVG network diagram.
+
+    Same interface as :func:`~unifi_network_maps.render.render_svg` but produces
+    a 30-degree isometric projection with 3D-style device tiles and grid floor.
+    """
     options = options or SvgOptions()
     per_type_decals = _build_decal_colors(theme)
     icons = _load_isometric_icons(theme.icon_set, theme.icon_decal, per_type_decals)

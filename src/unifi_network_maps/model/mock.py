@@ -14,6 +14,12 @@ from .vlans import build_vlan_info, normalize_networks
 
 @dataclass(frozen=True)
 class MockOptions:
+    """Options for generating mock UniFi controller data.
+
+    Used with :func:`generate_mock_payload` to produce deterministic test
+    fixtures without a live controller. Requires the ``faker`` package.
+    """
+
     seed: int = 1337
     switch_count: int = 1
     ap_count: int = 2

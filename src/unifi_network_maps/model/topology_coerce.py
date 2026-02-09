@@ -342,4 +342,5 @@ def coerce_device(device: DeviceSource, network_vlan_map: dict[str, int] | None 
 def normalize_devices(
     devices: Iterable[DeviceSource], network_vlan_map: dict[str, int] | None = None
 ) -> list[Device]:
+    """Coerce raw device dicts/objects into typed :class:`Device` instances."""
     return [coerce_device(device, network_vlan_map) for device in devices]

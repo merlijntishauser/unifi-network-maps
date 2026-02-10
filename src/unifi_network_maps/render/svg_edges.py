@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import math
 from html import escape as _escape_html
-from typing import TYPE_CHECKING
 
 from ..model.topology import Edge
 from .svg_labels import (
@@ -13,10 +12,7 @@ from .svg_labels import (
     _extract_port_text,
     _strip_local_port,
 )
-from .svg_theme import SvgTheme
-
-if TYPE_CHECKING:
-    from .svg import SvgOptions
+from .svg_theme import SvgOptions, SvgTheme
 
 
 def _vlan_data_attrs(edge: Edge) -> str:

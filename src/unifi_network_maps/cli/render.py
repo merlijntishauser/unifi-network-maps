@@ -23,8 +23,8 @@ from ..render.lldp_md import render_lldp_md
 from ..render.mermaid import render_mermaid
 from ..render.mermaid_theme import MermaidTheme
 from ..render.mkdocs import MkdocsRenderOptions, render_mkdocs
-from ..render.svg import SvgOptions, render_svg
-from ..render.svg_theme import SvgTheme
+from ..render.svg import render_svg
+from ..render.svg_theme import SvgOptions, SvgTheme
 from .runtime import (
     build_edges_with_clients,
     load_dark_mermaid_theme,

@@ -6,6 +6,7 @@ import unifi_network_maps.render.svg_icons as svg_icons_module
 import unifi_network_maps.render.svg_isometric as svg_iso_module
 import unifi_network_maps.render.svg_labels as svg_labels_module
 import unifi_network_maps.render.svg_layout as svg_layout_module
+import unifi_network_maps.render.svg_theme as svg_theme_module
 from unifi_network_maps.model.topology import Edge
 
 
@@ -407,19 +408,19 @@ def test_build_decal_colors_are_darker_than_source():
 
 
 def test_build_font_style_none():
-    face, family = svg_module._build_font_style(None)
+    face, family = svg_theme_module._build_font_style(None)
     assert face == ""
     assert family == "Arial,Helvetica,sans-serif"
 
 
 def test_build_font_style_unknown_font():
-    face, family = svg_module._build_font_style("Nonexistent Font")
+    face, family = svg_theme_module._build_font_style("Nonexistent Font")
     assert face == ""
     assert family == "Arial,Helvetica,sans-serif"
 
 
 def test_build_font_style_inter():
-    face, family = svg_module._build_font_style("Inter")
+    face, family = svg_theme_module._build_font_style("Inter")
     assert "@font-face" in face
     assert "font-weight:400" in face
     assert "font-weight:600" in face
@@ -427,7 +428,7 @@ def test_build_font_style_inter():
 
 
 def test_build_font_style_space_grotesk():
-    face, family = svg_module._build_font_style("Space Grotesk")
+    face, family = svg_theme_module._build_font_style("Space Grotesk")
     assert "@font-face" in face
     assert "'Space Grotesk'" in family
 
@@ -435,7 +436,7 @@ def test_build_font_style_space_grotesk():
 def test_svg_style_block_no_font():
     from unifi_network_maps.render.svg_theme import DEFAULT_THEME
 
-    block = svg_module._svg_style_block(DEFAULT_THEME, 12)
+    block = svg_theme_module._svg_style_block(DEFAULT_THEME, 12)
     assert "<style>" in block
     assert "font-weight:600" in block
     assert "@font-face" not in block
@@ -447,7 +448,7 @@ def test_svg_style_block_with_font():
     from unifi_network_maps.render.svg_theme import DEFAULT_THEME
 
     theme = replace(DEFAULT_THEME, font_family="Inter")
-    block = svg_module._svg_style_block(theme, 12)
+    block = svg_theme_module._svg_style_block(theme, 12)
     assert "@font-face" in block
     assert "'Inter'" in block
     assert "node-label" in block
@@ -456,7 +457,7 @@ def test_svg_style_block_with_font():
 def test_svg_style_block_iso_mode():
     from unifi_network_maps.render.svg_theme import DEFAULT_THEME
 
-    block = svg_module._svg_style_block(DEFAULT_THEME, 12, iso=True)
+    block = svg_theme_module._svg_style_block(DEFAULT_THEME, 12, iso=True)
     assert "not(.group-label)" in block
 
 

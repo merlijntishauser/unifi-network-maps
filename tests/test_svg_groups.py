@@ -189,5 +189,5 @@ def test_filter_edges_for_group():
 def test_build_node_to_group_map():
     """Test _build_node_to_group_map helper."""
     groups = {"G1": ["A", "B"], "G2": ["C"]}
-    result = svg_module._build_node_to_group_map(groups)
+    result = svg_layout_module._build_node_to_group_map(groups)
     assert result == {"A": "G1", "B": "G1", "C": "G2"}

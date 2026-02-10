@@ -5,13 +5,11 @@ from __future__ import annotations
 import math
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from html import escape as _escape_html
 
 from ..model.topology import Edge
 from .svg_icons import _TYPE_ORDER
-
-if TYPE_CHECKING:
-    from .svg import SvgOptions
+from .svg_theme import SvgOptions
 
 
 @dataclass(frozen=True)
@@ -274,3 +272,35 @@ def _layout_grouped_nodes(
     total_width = int(current_x - options.group_gap + options.padding)
     total_height = int(max_height)
     return all_positions, group_bounds_list, total_width, total_height
+
+
+def _build_node_to_group_map(groups: dict[str, list[str]]) -> dict[str, str]:
+    """Build reverse mapping from node to group name."""
+    result: dict[str, str] = {}
+    for group_name, members in groups.items():
+        for node in members:
+            result[node] = group_name
+    return result
+
+
+def _svg_node_group_attrs(
+    node_data: dict[str, dict[str, str]] | None,
+    name: str,
+    node_type: str,
+    group_name: str | None = None,
+) -> str:
+    attrs: dict[str, str] = {
+        "class": "unm-node",
+        "data-node-id": name,
+        "data-node-type": node_type,
+    }
+    if group_name:
+        attrs["data-group"] = group_name
+    if node_data and (extra := node_data.get(name)):
+        for key, value in extra.items():
+            if key == "class":
+                attrs["class"] = f"{attrs['class']} {value}".strip()
+            else:
+                attrs[key] = value
+    rendered = [f' {key}="{_escape_html(value, quote=True)}"' for key, value in attrs.items()]
+    return "".join(rendered)

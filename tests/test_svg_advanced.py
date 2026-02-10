@@ -3,10 +3,7 @@
 from __future__ import annotations
 
 from unifi_network_maps.model.topology import Edge, WanInfo, WanInterface
-from unifi_network_maps.render.svg import (
-    SvgOptions,
-    render_svg,
-)
+from unifi_network_maps.render.svg import render_svg
 from unifi_network_maps.render.svg_edges import (
     _edge_opacity,
     _render_vlan_endpoint_markers,
@@ -14,7 +11,7 @@ from unifi_network_maps.render.svg_edges import (
 )
 from unifi_network_maps.render.svg_iso_edges import _render_iso_vlan_striped_edge
 from unifi_network_maps.render.svg_isometric import render_svg_isometric
-from unifi_network_maps.render.svg_theme import DEFAULT_THEME
+from unifi_network_maps.render.svg_theme import DEFAULT_THEME, SvgOptions
 
 # --- VLAN data attributes ---
 

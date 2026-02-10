@@ -7,11 +7,6 @@ from dataclasses import dataclass
 from html import escape as _escape_html
 
 from ..model.topology import Edge, WanInfo
-from .svg import (
-    SvgOptions,
-    _build_node_to_group_map,
-    _svg_style_block,
-)
 from .svg_icons import _build_decal_colors, _load_isometric_icons
 from .svg_iso_edges import _render_iso_edges
 from .svg_iso_geometry import IsoLayout, _iso_project, _iso_project_center
@@ -20,8 +15,8 @@ from .svg_labels import (
     _build_wan_label_lines,
     _escape_text,
 )
-from .svg_layout import _resolve_group_order
-from .svg_theme import DEFAULT_THEME, SvgTheme, svg_defs
+from .svg_layout import _build_node_to_group_map, _resolve_group_order
+from .svg_theme import DEFAULT_THEME, SvgOptions, SvgTheme, _svg_style_block, svg_defs
 from .svg_wan import _vlan_group_colors
 
 # Re-export IsoLayout for external consumers

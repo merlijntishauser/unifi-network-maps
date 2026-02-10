@@ -2,12 +2,7 @@
 
 from __future__ import annotations
 
-import base64
 import dataclasses
-import functools
-from dataclasses import dataclass
-from html import escape as _escape_html
-from pathlib import Path
 
 from ..model.topology import Edge, WanInfo
 from .svg_edges import _render_svg_edges
@@ -21,88 +16,18 @@ from .svg_labels import (
 )
 from .svg_layout import (
     GroupBounds,
+    _build_node_to_group_map,
     _layout_grouped_nodes,
     _layout_nodes,
+    _svg_node_group_attrs,
 )
-from .svg_theme import DEFAULT_THEME, SvgTheme, svg_defs
+from .svg_theme import DEFAULT_THEME, SvgOptions, SvgTheme, _svg_style_block, svg_defs
 from .svg_wan import (
     _apply_wan_offset,
     _find_gateway_position,
     _render_group_boundaries,
     _render_wan_upstream,
 )
-
-_FONTS_DIR = Path(__file__).resolve().parents[1] / "assets" / "fonts"
-_SYSTEM_FONT_STACK = "Arial,Helvetica,sans-serif"
-
-
-@functools.lru_cache(maxsize=4)
-def _build_font_style(font_family: str | None) -> tuple[str, str]:
-    """Build @font-face CSS and font-family stack for the given font.
-
-    Results are cached to avoid repeated disk I/O for the same font family.
-    Returns (font_face_css, font_family_css) where font_face_css may be empty.
-    """
-    if not font_family:
-        return "", _SYSTEM_FONT_STACK
-
-    slug = font_family.lower().replace(" ", "-")
-    font_face_parts: list[str] = []
-
-    for weight, suffix in ((400, "regular"), (600, "semibold")):
-        path = _FONTS_DIR / f"{slug}-{suffix}.woff2"
-        if not path.exists():
-            continue
-        b64 = base64.b64encode(path.read_bytes()).decode("ascii")
-        font_face_parts.append(
-            f"@font-face{{font-family:'{font_family}';font-weight:{weight};"
-            f"src:url(data:font/woff2;base64,{b64}) format('woff2');}}"
-        )
-
-    if not font_face_parts:
-        return "", _SYSTEM_FONT_STACK
-
-    font_face_css = "".join(font_face_parts)
-    family_css = f"'{font_family}',{_SYSTEM_FONT_STACK}"
-    return font_face_css, family_css
-
-
-def _svg_style_block(theme: SvgTheme, font_size: int, *, iso: bool = False) -> str:
-    """Build the <style> element for an SVG, including optional @font-face."""
-    font_face, family = _build_font_style(theme.font_family)
-    parts = [f"<style>{font_face}"]
-
-    if iso:
-        parts.append(f"text{{font-family:{family};}}")
-        parts.append(f"text:not(.group-label){{font-size:{font_size}px;}}")
-    else:
-        parts.append(f"text{{font-family:{family};font-size:{font_size}px;}}")
-
-    parts.append("text.node-label{font-weight:600;}")
-    parts.append("</style>")
-    return "".join(parts)
-
-
-@dataclass(frozen=True)
-class SvgOptions:
-    """Configuration for SVG diagram rendering.
-
-    Controls node dimensions, spacing, layout algorithm, and canvas size.
-    Pass to :func:`render_svg` or :func:`render_svg_isometric` to customize output.
-    """
-
-    node_width: int = 160
-    node_height: int = 48
-    h_gap: int = 80
-    v_gap: int = 80
-    padding: int = 40
-    font_size: int = 10
-    icon_size: int = 18
-    width: int | None = None
-    height: int | None = None
-    layout_mode: str = "physical"  # "physical" | "grouped"
-    group_padding: int = 20
-    group_gap: int = 40
 
 
 def _compute_svg_layout(
@@ -256,38 +181,6 @@ def _render_svg_nodes(
             f'text-anchor="start">{safe_name}</text>'
         )
         lines.append("</g>")
-
-
-def _build_node_to_group_map(groups: dict[str, list[str]]) -> dict[str, str]:
-    """Build reverse mapping from node to group name."""
-    result: dict[str, str] = {}
-    for group_name, members in groups.items():
-        for node in members:
-            result[node] = group_name
-    return result
-
-
-def _svg_node_group_attrs(
-    node_data: dict[str, dict[str, str]] | None,
-    name: str,
-    node_type: str,
-    group_name: str | None = None,
-) -> str:
-    attrs: dict[str, str] = {
-        "class": "unm-node",
-        "data-node-id": name,
-        "data-node-type": node_type,
-    }
-    if group_name:
-        attrs["data-group"] = group_name
-    if node_data and (extra := node_data.get(name)):
-        for key, value in extra.items():
-            if key == "class":
-                attrs["class"] = f"{attrs['class']} {value}".strip()
-            else:
-                attrs[key] = value
-    rendered = [f' {key}="{_escape_html(value, quote=True)}"' for key, value in attrs.items()]
-    return "".join(rendered)
 
 
 # --- Dual rendering ---

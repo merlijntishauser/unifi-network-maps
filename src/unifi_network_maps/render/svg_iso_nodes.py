@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import math
 
-from .svg import SvgOptions, _svg_node_group_attrs
 from .svg_icons import _TYPE_COLORS
 from .svg_iso_geometry import (
     IsoLayout,
@@ -18,7 +17,8 @@ from .svg_labels import (
     _escape_text,
     _format_port_label_lines,
 )
-from .svg_theme import SvgTheme
+from .svg_layout import _svg_node_group_attrs
+from .svg_theme import SvgOptions, SvgTheme
 
 
 def _iso_node_polygons(

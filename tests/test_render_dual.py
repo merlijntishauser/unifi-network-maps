@@ -1,7 +1,8 @@
 """Tests for dual SVG rendering (physical + VLAN)."""
 
 from unifi_network_maps.model.topology import Edge
-from unifi_network_maps.render.svg import SvgOptions, render_dual
+from unifi_network_maps.render.svg import render_dual
+from unifi_network_maps.render.svg_theme import SvgOptions
 
 
 def _basic_edges() -> list[Edge]:

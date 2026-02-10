@@ -1,8 +1,11 @@
-"""Shared SVG defs and theming."""
+"""Shared SVG defs, theming, and configuration dataclasses."""
 
 from __future__ import annotations
 
+import base64
+import functools
 from dataclasses import dataclass, field
+from pathlib import Path
 
 
 @dataclass(frozen=True)
@@ -201,4 +204,77 @@ def svg_defs(prefix: str, theme: SvgTheme = DEFAULT_THEME) -> str:
     )
     parts.append("</defs>")
 
+    return "".join(parts)
+
+
+@dataclass(frozen=True)
+class SvgOptions:
+    """Configuration for SVG diagram rendering.
+
+    Controls node dimensions, spacing, layout algorithm, and canvas size.
+    Pass to :func:`render_svg` or :func:`render_svg_isometric` to customize output.
+    """
+
+    node_width: int = 160
+    node_height: int = 48
+    h_gap: int = 80
+    v_gap: int = 80
+    padding: int = 40
+    font_size: int = 10
+    icon_size: int = 18
+    width: int | None = None
+    height: int | None = None
+    layout_mode: str = "physical"  # "physical" | "grouped"
+    group_padding: int = 20
+    group_gap: int = 40
+
+
+_FONTS_DIR = Path(__file__).resolve().parents[1] / "assets" / "fonts"
+_SYSTEM_FONT_STACK = "Arial,Helvetica,sans-serif"
+
+
+@functools.lru_cache(maxsize=4)
+def _build_font_style(font_family: str | None) -> tuple[str, str]:
+    """Build @font-face CSS and font-family stack for the given font.
+
+    Results are cached to avoid repeated disk I/O for the same font family.
+    Returns (font_face_css, font_family_css) where font_face_css may be empty.
+    """
+    if not font_family:
+        return "", _SYSTEM_FONT_STACK
+
+    slug = font_family.lower().replace(" ", "-")
+    font_face_parts: list[str] = []
+
+    for weight, suffix in ((400, "regular"), (600, "semibold")):
+        path = _FONTS_DIR / f"{slug}-{suffix}.woff2"
+        if not path.exists():
+            continue
+        b64 = base64.b64encode(path.read_bytes()).decode("ascii")
+        font_face_parts.append(
+            f"@font-face{{font-family:'{font_family}';font-weight:{weight};"
+            f"src:url(data:font/woff2;base64,{b64}) format('woff2');}}"
+        )
+
+    if not font_face_parts:
+        return "", _SYSTEM_FONT_STACK
+
+    font_face_css = "".join(font_face_parts)
+    family_css = f"'{font_family}',{_SYSTEM_FONT_STACK}"
+    return font_face_css, family_css
+
+
+def _svg_style_block(theme: SvgTheme, font_size: int, *, iso: bool = False) -> str:
+    """Build the <style> element for an SVG, including optional @font-face."""
+    font_face, family = _build_font_style(theme.font_family)
+    parts = [f"<style>{font_face}"]
+
+    if iso:
+        parts.append(f"text{{font-family:{family};}}")
+        parts.append(f"text:not(.group-label){{font-size:{font_size}px;}}")
+    else:
+        parts.append(f"text{{font-family:{family};font-size:{font_size}px;}}")
+
+    parts.append("text.node-label{font-weight:600;}")
+    parts.append("</style>")
     return "".join(parts)

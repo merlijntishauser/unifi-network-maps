@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.6.0] - 2026-02-10
 ### Added
 - Add device inventory table to MkDocs output with model, IP, hostname, MAC, and firmware
 - Add `--resolve-hostnames` / `--no-resolve-hostnames` for reverse DNS hostname resolution via the controller
@@ -15,14 +17,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `--svg-layout-mode vlan` to group SVG nodes by VLAN membership (#34)
 - Add WAN upstream visualization to Mermaid output
 - Formalize public API with `__all__` exports on adapters, model, and render sub-packages (#37)
+- Add API documentation with mkdocstrings and GitHub Pages deployment
+- Add docstrings to all public API exports
 
 ### Changed
 - Refactor: decompose svg.py, svg_isometric.py, and device_ports_md.py into focused sub-modules
+- Refactor: relocate `SvgOptions` and shared helpers to leaf modules to eliminate cyclic imports
 - Tighten max cyclomatic complexity threshold from 14 to 12
 - Export `render_device_inventory_table` from render public API
 
 ### Fixed
 - Fix eager import of faker (dev-only dependency) via model package init
+
+## [1.5.3] - 2026-02-08
+### Fixed
 - Fix isometric WAN upstream box clipped by viewBox (#33)
 
 ## [1.5.2] - 2026-02-07
@@ -288,7 +296,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Introduced SVG renderer and tree layout fixes.
 - Increased test coverage and added coverage tooling.
 
-[Unreleased]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.5.3...HEAD
+[Unreleased]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.5.2...v1.6.0
 [1.5.3]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.5.2...v1.5.3
 [1.5.2]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.5.0...v1.5.2
 [1.5.1]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.5.0...v1.5.1

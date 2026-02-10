@@ -370,9 +370,7 @@ def test_darken_hex_invalid_input():
 
 
 def test_build_decal_colors_returns_all_node_types():
-    from unifi_network_maps.render.svg_theme import DEFAULT_THEME
-
-    colors = svg_icons_module._build_decal_colors(DEFAULT_THEME)
+    colors = svg_icons_module._build_decal_colors(svg_theme_module.DEFAULT_THEME)
     expected = {
         "gateway",
         "switch",
@@ -396,11 +394,9 @@ def test_build_decal_colors_returns_all_node_types():
 
 
 def test_build_decal_colors_are_darker_than_source():
-    from unifi_network_maps.render.svg_theme import DEFAULT_THEME
-
-    colors = svg_icons_module._build_decal_colors(DEFAULT_THEME)
+    colors = svg_icons_module._build_decal_colors(svg_theme_module.DEFAULT_THEME)
     # Gateway source "to" is #ffb15a, decal should be darker (lower RGB sum)
-    source = DEFAULT_THEME.node_gateway[1]
+    source = svg_theme_module.DEFAULT_THEME.node_gateway[1]
     decal = colors["gateway"]
     src_sum = sum(int(source[i : i + 2], 16) for i in (1, 3, 5))
     dec_sum = sum(int(decal[i : i + 2], 16) for i in (1, 3, 5))
@@ -434,9 +430,7 @@ def test_build_font_style_space_grotesk():
 
 
 def test_svg_style_block_no_font():
-    from unifi_network_maps.render.svg_theme import DEFAULT_THEME
-
-    block = svg_theme_module._svg_style_block(DEFAULT_THEME, 12)
+    block = svg_theme_module._svg_style_block(svg_theme_module.DEFAULT_THEME, 12)
     assert "<style>" in block
     assert "font-weight:600" in block
     assert "@font-face" not in block
@@ -445,9 +439,7 @@ def test_svg_style_block_no_font():
 def test_svg_style_block_with_font():
     from dataclasses import replace
 
-    from unifi_network_maps.render.svg_theme import DEFAULT_THEME
-
-    theme = replace(DEFAULT_THEME, font_family="Inter")
+    theme = replace(svg_theme_module.DEFAULT_THEME, font_family="Inter")
     block = svg_theme_module._svg_style_block(theme, 12)
     assert "@font-face" in block
     assert "'Inter'" in block
@@ -455,9 +447,7 @@ def test_svg_style_block_with_font():
 
 
 def test_svg_style_block_iso_mode():
-    from unifi_network_maps.render.svg_theme import DEFAULT_THEME
-
-    block = svg_theme_module._svg_style_block(DEFAULT_THEME, 12, iso=True)
+    block = svg_theme_module._svg_style_block(svg_theme_module.DEFAULT_THEME, 12, iso=True)
     assert "not(.group-label)" in block
 
 
@@ -465,9 +455,7 @@ def test_render_svg_uses_theme_icon_set():
     """SVG render should use icon_set from theme."""
     from dataclasses import replace
 
-    from unifi_network_maps.render.svg_theme import DEFAULT_THEME
-
-    theme = replace(DEFAULT_THEME, icon_set="modern")
+    theme = replace(svg_theme_module.DEFAULT_THEME, icon_set="modern")
     output = svg_module.render_svg(
         [Edge("A", "B")],
         node_types={"A": "gateway", "B": "switch"},
@@ -480,9 +468,7 @@ def test_render_svg_isometric_uses_theme_icon_set():
     """Isometric SVG render should use icon_set from theme."""
     from dataclasses import replace
 
-    from unifi_network_maps.render.svg_theme import DEFAULT_THEME
-
-    theme = replace(DEFAULT_THEME, icon_set="modern")
+    theme = replace(svg_theme_module.DEFAULT_THEME, icon_set="modern")
     output = svg_iso_module.render_svg_isometric(
         [Edge("A", "B")],
         node_types={"A": "gateway", "B": "switch"},

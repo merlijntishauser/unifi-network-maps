@@ -2,6 +2,7 @@
 
 from unifi_network_maps.model.inventory import (
     DeviceInfo,
+    _extract_fw_version,
     build_client_inventory,
     build_device_inventory,
 )
@@ -187,9 +188,61 @@ def test_build_client_inventory_model_from_ucore():
             "unifi_device_info_from_ucore": {
                 "computed_model": "G4 Doorbell Pro",
                 "product_line": "protect",
+                "fw_version": "UVC.SAV539g.v5.2.52.67.39be8f1.260203.0900",
             },
         },
     ]
     result = build_client_inventory(clients)
     assert result[0].model_name == "G4 Doorbell Pro"
     assert result[0].device_type == "camera"
+    assert result[0].firmware == "5.2.52.67"
+
+
+def test_build_client_inventory_firmware_from_top_level():
+    clients = [
+        {
+            "name": "Chime",
+            "ip": "192.168.1.70",
+            "mac": "aa:00:00:00:00:02",
+            "is_wired": True,
+            "fw_version": "UP.esp32.v1.7.20.0.402a5ff.240910.0649",
+        },
+    ]
+    result = build_client_inventory(clients)
+    assert result[0].firmware == "1.7.20.0"
+
+
+def test_build_client_inventory_no_firmware():
+    clients = [
+        {
+            "name": "Plain Client",
+            "ip": "192.168.1.80",
+            "mac": "aa:00:00:00:00:03",
+            "is_wired": True,
+        },
+    ]
+    result = build_client_inventory(clients)
+    assert result[0].firmware == ""
+
+
+# --- _extract_fw_version tests ---
+
+
+def test_extract_fw_version_camera():
+    assert _extract_fw_version("UVC.SAV539g.v5.2.52.67.39be8f1.260203.0900") == "5.2.52.67"
+
+
+def test_extract_fw_version_chime():
+    assert _extract_fw_version("UP.esp32.v1.7.20.0.402a5ff.240910.0649") == "1.7.20.0"
+
+
+def test_extract_fw_version_superlink():
+    assert _extract_fw_version("LS.sav530q.v1.7.0.0.0631741.250926.1311") == "1.7.0.0"
+
+
+def test_extract_fw_version_plain():
+    assert _extract_fw_version("1.2.3") == "1.2.3"
+
+
+def test_extract_fw_version_no_match():
+    assert _extract_fw_version("unknown") == "unknown"

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ipaddress
+import re
 from collections.abc import Sequence
 from dataclasses import dataclass
 
@@ -71,6 +72,32 @@ def _client_model(client: object) -> str:
     return ""
 
 
+_FW_VERSION_RE = re.compile(r"v(\d+\.\d+\.\d+(?:\.\d+)?)")
+
+
+def _extract_fw_version(raw: str) -> str:
+    """Extract a clean version number from a UniFi firmware build string.
+
+    Matches 3- or 4-segment version after a 'v' prefix.
+    Example: "UVC.SAV539g.v5.2.52.67.39be8f1.260203.0900" -> "5.2.52.67"
+    """
+    match = _FW_VERSION_RE.search(raw)
+    return match.group(1) if match else raw
+
+
+def _client_firmware(client: object) -> str:
+    """Extract firmware version from client data."""
+    ucore = get_field(client, "unifi_device_info_from_ucore")
+    if isinstance(ucore, dict):
+        fw = first_string_field(ucore, "fw_version")
+        if fw:
+            return _extract_fw_version(fw)
+    fw = first_string_field(client, "fw_version")
+    if fw:
+        return _extract_fw_version(fw)
+    return ""
+
+
 def build_client_inventory(
     clients: Sequence[object],
     hostnames: dict[str, str] | None = None,
@@ -104,7 +131,7 @@ def build_client_inventory(
                 ip=ip_str,
                 hostname=hostname,
                 mac=mac_str,
-                firmware="",
+                firmware=_client_firmware(client),
             )
         )
     inventory.sort(key=lambda d: _ip_sort_key(d.ip))

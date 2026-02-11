@@ -37,19 +37,26 @@ _UNIFI_PRODUCT_CATEGORIES: dict[str, str] = {
 }
 
 
+def _classify_by_device_name(name: str) -> str | None:
+    """Classify device by name when type field is missing."""
+    lower = name.strip().lower()
+    if "gateway" in lower or lower.startswith("gw"):
+        return "gateway"
+    if "switch" in lower:
+        return "switch"
+    if "ap" in lower:
+        return "ap"
+    return None
+
+
 def classify_device_type(device: object) -> str:
     """Classify a network device into gateway, switch, ap, or other."""
     raw_type = get_field(device, "type")
-    raw_name = get_field(device, "name")
     value = raw_type.strip().lower() if isinstance(raw_type, str) else ""
     if not value:
-        name = raw_name.strip().lower() if isinstance(raw_name, str) else ""
-        if "gateway" in name or name.startswith("gw"):
-            return "gateway"
-        if "switch" in name:
-            return "switch"
-        if "ap" in name:
-            return "ap"
+        raw_name = get_field(device, "name")
+        name = raw_name if isinstance(raw_name, str) else ""
+        return _classify_by_device_name(name) or "other"
     if value in {"gateway", "ugw", "usg", "udm", "udr"}:
         return "gateway"
     if value == "ux":

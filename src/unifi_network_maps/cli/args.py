@@ -191,7 +191,7 @@ def add_general_render_args(parser: argparse._ArgumentGroup) -> None:
     parser.add_argument(
         "--format",
         default="mermaid",
-        choices=["mermaid", "svg", "svg-iso", "lldp-md", "mkdocs", "json"],
+        choices=["mermaid", "svg", "svg-iso", "lldp-md", "mkdocs", "json", "inventory"],
         help="Output format",
     )
     parser.add_argument(

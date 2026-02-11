@@ -23,7 +23,7 @@ from ..model.vlans import build_vlan_info, normalize_networks
 from ..render.legend import render_legend_only, resolve_legend_style
 from ..render.theme import resolve_themes
 from .args import build_parser
-from .render import render_lldp_format, render_standard_format
+from .render import render_inventory_format, render_lldp_format, render_standard_format
 
 logger = logging.getLogger(__name__)
 
@@ -122,6 +122,31 @@ def _load_runtime_context(
     return config, site, None, None, None
 
 
+def _handle_device_only_format(
+    args: argparse.Namespace,
+    *,
+    config: Config | None,
+    site: str,
+    mock_devices: list[object] | None,
+    mock_clients: list[object] | None,
+    mock_networks: list[object] | None,
+) -> int | None:
+    if args.format == "inventory":
+        return render_inventory_format(
+            args, config=config, site=site, mock_devices=mock_devices, mock_networks=mock_networks
+        )
+    if args.format == "lldp-md":
+        return render_lldp_format(
+            args,
+            config=config,
+            site=site,
+            mock_devices=mock_devices,
+            mock_clients=mock_clients,
+            mock_networks=mock_networks,
+        )
+    return None
+
+
 def _handle_json_format(
     args: argparse.Namespace,
     *,
@@ -169,9 +194,19 @@ def main(argv: list[str] | None = None) -> int:
     except ValueError as exc:
         logging.error(str(exc))
         return 2
-    payload_result = _handle_json_format(args, config=config, site=site)
-    if payload_result is not None:
-        return payload_result
+    for early_result in (
+        _handle_json_format(args, config=config, site=site),
+        _handle_device_only_format(
+            args,
+            config=config,
+            site=site,
+            mock_devices=mock_devices,
+            mock_clients=mock_clients,
+            mock_networks=mock_networks,
+        ),
+    ):
+        if early_result is not None:
+            return early_result
     try:
         mermaid_theme, svg_theme = resolve_themes(
             theme_name=args.theme,
@@ -201,16 +236,6 @@ def main(argv: list[str] | None = None) -> int:
         output_kwargs = {"format_name": args.format} if args.output else {}
         write_output(content, output_path=args.output, stdout=args.stdout, **output_kwargs)
         return 0
-
-    if args.format == "lldp-md":
-        return render_lldp_format(
-            args,
-            config=config,
-            site=site,
-            mock_devices=mock_devices,
-            mock_clients=mock_clients,
-            mock_networks=mock_networks,
-        )
 
     return render_standard_format(
         args,

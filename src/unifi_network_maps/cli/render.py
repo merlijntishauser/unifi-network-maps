@@ -348,6 +348,34 @@ def render_lldp_format(
     return 0
 
 
+def render_inventory_format(
+    args: argparse.Namespace,
+    *,
+    config: Config | None,
+    site: str,
+    mock_devices: list[object] | None,
+    mock_networks: list[object] | None = None,
+) -> int:
+    try:
+        _raw_devices, devices = load_devices_data(
+            args,
+            config,
+            site,
+            raw_devices_override=mock_devices,
+            raw_networks_override=mock_networks,
+        )
+    except Exception as exc:
+        logging.error("Failed to load devices: %s", exc)
+        return 1
+    content = _build_infrastructure_table(args, devices, config)
+    if not content:
+        logging.warning("No devices found for inventory")
+        content = ""
+    output_kwargs = {"format_name": args.format} if args.output else {}
+    write_output(content, output_path=args.output, stdout=args.stdout, **output_kwargs)
+    return 0
+
+
 def render_standard_format(
     args: argparse.Namespace,
     *,

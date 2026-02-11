@@ -369,6 +369,41 @@ class TestMkdocsStructure:
         assert re.search(r"border:.*#[0-9a-fA-F]+", mkdocs_content)
 
 
+# --- Inventory Validation ---
+
+
+class TestInventoryStructure:
+    """Validate inventory markdown table structure."""
+
+    @pytest.fixture
+    def inventory_content(self) -> str:
+        return (SMOKETEST_DIR / "inventory.md").read_text()
+
+    def test_has_table_header(self, inventory_content: str) -> None:
+        """Inventory has a markdown table header row."""
+        assert "| Name" in inventory_content
+        assert "| Type" in inventory_content
+        assert "| Model" in inventory_content
+        assert "| IP" in inventory_content
+        assert "| MAC" in inventory_content
+        assert "| Firmware" in inventory_content
+
+    def test_has_separator_row(self, inventory_content: str) -> None:
+        """Inventory has a markdown table separator row."""
+        assert re.search(r"\|[-\s]+\|", inventory_content)
+
+    def test_has_device_rows(self, inventory_content: str) -> None:
+        """Inventory contains device data rows."""
+        lines = [line for line in inventory_content.strip().splitlines() if line.startswith("|")]
+        # Header + separator + at least one device
+        assert len(lines) >= 3, f"Expected at least 3 table rows, got {len(lines)}"
+
+    def test_contains_known_devices(self, inventory_content: str) -> None:
+        """Inventory contains expected mock devices."""
+        assert "Cloud Gateway" in inventory_content
+        assert "Core Switch" in inventory_content
+
+
 # --- Cross-format Consistency ---
 
 

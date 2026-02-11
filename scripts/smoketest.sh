@@ -108,4 +108,8 @@ eval $CLI --include-ports --include-clients --format svg --output smoketest/vlan
 eval $CLI --include-ports --include-clients --format svg-iso --output smoketest/vlan/network_vlan_ports_iso.svg
 eval $CLI --include-ports --include-clients --client-scope all --format svg-iso --output smoketest/vlan/network_vlan_ports_all_iso.svg
 
+# Inventory variants
+mkdir -p smoketest/inventory
+eval $CLI --format inventory --only-unifi --output smoketest/inventory/inventory.md
+
 echo "Smoketest complete: $(find smoketest -type f | wc -l | tr -d ' ') files generated"

@@ -70,6 +70,7 @@ smoketest-mock:
 	@$(CLI) --mock-data examples/mock_data.json --format mkdocs --include-clients --mkdocs-dual-theme --mkdocs-sidebar-legend --output smoketest-mock/unifi-network-dual-theme-and-clients.md
 	@$(CLI) --mock-data examples/mock_data.json --format svg --wan-label "Odido" --wan-speed "1 Gbps ↓↑" --output smoketest-mock/network_wan.svg
 	@$(CLI) --mock-data examples/mock_data.json --format svg-iso --wan-label "Odido" --wan-speed "1 Gbps ↓↑" --wan2-label "Backup SFP+" --output smoketest-mock/network_wan_dual_iso.svg
+	@$(CLI) --mock-data examples/mock_data.json --format inventory --only-unifi --output smoketest-mock/inventory.md
 	@# Theme variants
 	@$(CLI) --mock-data examples/mock_data.json --theme unifi --format svg-iso --output smoketest-mock/theme_unifi_iso.svg
 	@$(CLI) --mock-data examples/mock_data.json --theme unifi-dark --format svg-iso --output smoketest-mock/theme_unifi_dark_iso.svg

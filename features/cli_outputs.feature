@@ -57,6 +57,11 @@ Feature: CLI output variants
     When I run the console entrypoint with "--help"
     Then stdout contains "usage:"
 
+  Scenario: Inventory output renders a device table
+    Given the mock data file "examples/mock_data.json"
+    When I run the CLI with args "--format inventory --only-unifi" and output file
+    Then the output file contains "| Name"
+
   Scenario: SVG output with isometric icon set
     Given the mock data file "examples/mock_data.json"
     When I run the CLI with args "--format svg-iso --icon-set isometric" and output file

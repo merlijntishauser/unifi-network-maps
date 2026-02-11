@@ -50,7 +50,12 @@ def classify_device_type(device: object) -> str:
             return "switch"
         if "ap" in name:
             return "ap"
-    if value in {"gateway", "ugw", "usg", "ux", "udm", "udr"}:
+    if value in {"gateway", "ugw", "usg", "udm", "udr"}:
+        return "gateway"
+    if value == "ux":
+        in_gw_mode = get_field(device, "in_gateway_mode")
+        if in_gw_mode is False:
+            return "ap"
         return "gateway"
     if value in {"switch", "usw"}:
         return "switch"

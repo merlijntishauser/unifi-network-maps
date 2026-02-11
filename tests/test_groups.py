@@ -11,6 +11,25 @@ def test_classify_gateway_type():
     assert classify_device_type(device) == "gateway"
 
 
+def test_classify_ux_gateway_mode_true():
+    device = Device(
+        name="UXG Max", model_name="", model="UXG-Max", mac="aa", ip="", type="ux", lldp_info=[]
+    )
+    # in_gateway_mode not set (None) -- assume gateway
+    assert classify_device_type(device) == "gateway"
+
+
+def test_classify_ux_gateway_mode_false():
+    """UX7 in AP mode should be classified as AP, not gateway."""
+    device = {"name": "UX7", "type": "ux", "in_gateway_mode": False}
+    assert classify_device_type(device) == "ap"
+
+
+def test_classify_ux_gateway_mode_explicit_true():
+    device = {"name": "UXG Max", "type": "ux", "in_gateway_mode": True}
+    assert classify_device_type(device) == "gateway"
+
+
 def test_group_devices_by_type_includes_ap():
     devices = [
         Device(name="AP One", model_name="", model="", mac="aa", ip="", type="uap", lldp_info=[])

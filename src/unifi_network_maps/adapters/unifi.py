@@ -143,6 +143,7 @@ def _serialize_device_for_cache(device: object) -> dict[str, object]:
         "mac": get_field(device, "mac"),
         "ip": first_attr(device, "ip", "ip_address"),
         "type": first_attr(device, "type", "device_type"),
+        "in_gateway_mode": get_field(device, "in_gateway_mode"),
         "displayable_version": first_attr(device, "displayable_version", "version"),
         "lldp_info": _serialize_lldp_entries(_device_lldp_value(device)),
         "port_table": _serialize_port_table(get_field(device, "port_table")),

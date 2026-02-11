@@ -110,6 +110,6 @@ eval $CLI --include-ports --include-clients --client-scope all --format svg-iso 
 
 # Inventory variants
 mkdir -p smoketest/inventory
-eval $CLI --format inventory --only-unifi --output smoketest/inventory/inventory.md
+eval $CLI --format inventory --only-unifi --resolve-hostnames --include-clients --client-scope all --output smoketest/inventory/inventory.md
 
 echo "Smoketest complete: $(find smoketest -type f | wc -l | tr -d ' ') files generated"

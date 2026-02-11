@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import ipaddress
+from collections.abc import Sequence
 from dataclasses import dataclass
 
-from .classify import classify_device_type
+from .classify import classify_client_type, classify_device_type, client_display_name
+from .clients import client_matches_filters
+from .helpers import first_string_field, get_field
 from .topology import Device
 
 
@@ -52,6 +55,56 @@ def build_device_inventory(
                 hostname=hostname,
                 mac=device.mac,
                 firmware=device.version,
+            )
+        )
+    inventory.sort(key=lambda d: _ip_sort_key(d.ip))
+    return inventory
+
+
+def _client_model(client: object) -> str:
+    """Extract model name from client UniFi device info."""
+    ucore = get_field(client, "unifi_device_info_from_ucore")
+    if isinstance(ucore, dict):
+        model = first_string_field(ucore, "computed_model", "product_model", "product_shortname")
+        if model:
+            return model
+    return ""
+
+
+def build_client_inventory(
+    clients: Sequence[object],
+    hostnames: dict[str, str] | None = None,
+    *,
+    client_mode: str = "all",
+    only_unifi: bool = False,
+) -> list[DeviceInfo]:
+    """Convert clients to a sorted inventory list.
+
+    Applies client_mode and only_unifi filters.
+    Joins hostname from the hostnames map (keyed by IP).
+    Sorted by IP address.
+    """
+    inventory: list[DeviceInfo] = []
+    for client in clients:
+        if not client_matches_filters(client, client_mode=client_mode, only_unifi=only_unifi):
+            continue
+        name = client_display_name(client) or ""
+        if not name:
+            continue
+        ip = get_field(client, "ip")
+        ip_str = ip if isinstance(ip, str) else ""
+        mac = get_field(client, "mac")
+        mac_str = mac if isinstance(mac, str) else ""
+        hostname = hostnames.get(ip_str) if hostnames and ip_str else None
+        inventory.append(
+            DeviceInfo(
+                name=name,
+                device_type=classify_client_type(client),
+                model_name=_client_model(client),
+                ip=ip_str,
+                hostname=hostname,
+                mac=mac_str,
+                firmware="",
             )
         )
     inventory.sort(key=lambda d: _ip_sort_key(d.ip))

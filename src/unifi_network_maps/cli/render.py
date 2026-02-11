@@ -13,7 +13,7 @@ from ..io.mkdocs_assets import write_mkdocs_sidebar_assets
 from ..model.classify import classify_device_type
 from ..model.clients import build_node_type_map, collapse_client_edges
 from ..model.edges import build_port_map, group_devices_by_type, group_nodes_by_vlan
-from ..model.inventory import build_device_inventory
+from ..model.inventory import build_client_inventory, build_device_inventory
 from ..model.topology import Device, Edge, TopologyResult, WanInfo
 from ..model.vlans import build_vlan_names, build_wan_enabled_map
 from ..model.wan import extract_wan_info
@@ -164,16 +164,33 @@ def _build_infrastructure_table(
     args: argparse.Namespace,
     devices: list[Device],
     config: Config | None,
+    *,
+    clients: list[object] | None = None,
 ) -> str:
-    """Build the infrastructure inventory table for MkDocs output."""
+    """Build the infrastructure inventory table, optionally with clients."""
     do_resolve = _should_resolve_hostnames(args)
     hostnames: dict[str, str] | None = None
     if do_resolve:
         dns_server = _extract_dns_server(config)
         if dns_server:
-            device_ips = [d.ip for d in devices if d.ip]
-            hostnames = resolve_hostnames(device_ips, dns_server)
+            all_ips = [d.ip for d in devices if d.ip]
+            if clients:
+                from ..model.helpers import get_field
+
+                for c in clients:
+                    ip = get_field(c, "ip")
+                    if isinstance(ip, str) and ip:
+                        all_ips.append(ip)
+            hostnames = resolve_hostnames(all_ips, dns_server)
     inventory = build_device_inventory(devices, hostnames)
+    if clients:
+        client_inventory = build_client_inventory(
+            clients,
+            hostnames,
+            client_mode=getattr(args, "client_scope", "all"),
+            only_unifi=getattr(args, "only_unifi", False),
+        )
+        inventory.extend(client_inventory)
     if not inventory:
         return ""
     return render_device_inventory_table(inventory, include_hostname=do_resolve)
@@ -354,6 +371,7 @@ def render_inventory_format(
     config: Config | None,
     site: str,
     mock_devices: list[object] | None,
+    mock_clients: list[object] | None = None,
     mock_networks: list[object] | None = None,
 ) -> int:
     try:
@@ -367,7 +385,19 @@ def render_inventory_format(
     except Exception as exc:
         logging.error("Failed to load devices: %s", exc)
         return 1
-    content = _build_infrastructure_table(args, devices, config)
+    clients: list[object] | None = None
+    if args.include_clients:
+        if mock_clients is not None:
+            clients = mock_clients
+        elif config is not None:
+            try:
+                clients = list(fetch_clients(config, site=site))
+            except Exception as exc:  # noqa: BLE001
+                logging.warning("Failed to fetch clients; rendering without client data: %s", exc)
+                clients = []
+        else:
+            logging.warning("No client data available; rendering without clients")
+    content = _build_infrastructure_table(args, devices, config, clients=clients)
     if not content:
         logging.warning("No devices found for inventory")
         content = ""

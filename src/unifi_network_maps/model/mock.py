@@ -152,6 +152,8 @@ def _build_wired_clients(
                 "sw_mac": core_switch["mac"],
                 "sw_port": port_idx,
                 "vlan": client_vlan,
+                "ip": _unique_ip(state),
+                "mac": _unique_mac(state),
             }
         )
     return clients
@@ -191,6 +193,8 @@ def _build_wireless_clients(
                 "tx_rate": tx_rate,
                 "rx_rate": rx_rate,
                 "satisfaction": satisfaction,
+                "ip": _unique_ip(state),
+                "mac": _unique_mac(state),
             }
         )
     return clients

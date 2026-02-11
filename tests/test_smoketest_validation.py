@@ -404,6 +404,33 @@ class TestInventoryStructure:
         assert "Core Switch" in inventory_content
 
 
+class TestInventoryWithClientsStructure:
+    """Validate inventory with clients markdown table structure."""
+
+    @pytest.fixture
+    def inventory_clients_content(self) -> str:
+        return (SMOKETEST_DIR / "inventory_clients.md").read_text()
+
+    def test_has_table_header(self, inventory_clients_content: str) -> None:
+        """Inventory with clients has a markdown table header row."""
+        assert "| Name" in inventory_clients_content
+
+    def test_has_device_and_client_rows(self, inventory_clients_content: str) -> None:
+        """Inventory with clients contains both device and client rows."""
+        lines = [
+            line for line in inventory_clients_content.strip().splitlines() if line.startswith("|")
+        ]
+        # Header + separator + devices + clients
+        assert len(lines) >= 5, (
+            f"Expected at least 5 table rows (devices + clients), got {len(lines)}"
+        )
+
+    def test_contains_known_devices(self, inventory_clients_content: str) -> None:
+        """Inventory with clients still contains infrastructure devices."""
+        assert "Cloud Gateway" in inventory_clients_content
+        assert "Core Switch" in inventory_clients_content
+
+
 # --- Cross-format Consistency ---
 
 

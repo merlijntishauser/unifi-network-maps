@@ -133,7 +133,12 @@ def _handle_device_only_format(
 ) -> int | None:
     if args.format == "inventory":
         return render_inventory_format(
-            args, config=config, site=site, mock_devices=mock_devices, mock_networks=mock_networks
+            args,
+            config=config,
+            site=site,
+            mock_devices=mock_devices,
+            mock_clients=mock_clients,
+            mock_networks=mock_networks,
         )
     if args.format == "lldp-md":
         return render_lldp_format(

@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.6.1] - 2026-02-11
 ### Added
 - Add client support to `--format inventory` via `--include-clients` with `--client-scope` and `--only-unifi` filtering
 - Extract firmware version from UniFi-managed clients (Protect cameras, chimes, doorbells) in inventory output
@@ -301,15 +303,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Introduced SVG renderer and tree layout fixes.
 - Increased test coverage and added coverage tooling.
 
-[Unreleased]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.6.0...HEAD
-[1.6.0]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.5.2...v1.6.0
+[Unreleased]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.6.1...HEAD
+[1.6.1]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.6.0...v1.6.1
+[1.6.0]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.5.3...v1.6.0
 [1.5.3]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.5.2...v1.5.3
-[1.5.2]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.5.0...v1.5.2
+[1.5.2]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.5.1...v1.5.2
 [1.5.1]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.15...v1.5.0
 [1.4.15]:https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.14...v1.4.15
-[1.4.14]:https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.11...v1.4.14
-[1.4.13]:https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.11...v1.4.13
+[1.4.14]:https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.13...v1.4.14
+[1.4.13]:https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.12...v1.4.13
 [1.4.12]:https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.11...v1.4.12
 [1.4.11]:https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.10...v1.4.11
 [1.4.10]:https://github.com/merlijntishauser/unifi-network-maps/compare/v1.4.9...v1.4.10

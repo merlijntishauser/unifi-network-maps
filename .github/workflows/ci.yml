@@ -228,6 +228,8 @@ jobs:
           python -m unifi_network_maps.cli --mock-data examples/mock_data.json --theme unifi --stdout > smoketest-mock/theme_unifi.mmd
           python -m unifi_network_maps.cli --mock-data examples/mock_data.json --format svg-iso --icon-set isometric --output smoketest-mock/iconset_isometric_iso.svg
           python -m unifi_network_maps.cli --mock-data examples/mock_data.json --format svg-iso --icon-set modern --output smoketest-mock/iconset_modern_iso.svg
+          python -m unifi_network_maps.cli --mock-data examples/mock_data.json --format inventory --only-unifi --output smoketest-mock/inventory.md
+          python -m unifi_network_maps.cli --mock-data examples/mock_data.json --format inventory --include-clients --client-scope all --output smoketest-mock/inventory_clients.md
       - name: Acceptance tests (visual regression, smoketest validation)
         run: pytest -q -m acceptance
 

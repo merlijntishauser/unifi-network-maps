@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.3] - 2026-02-14
+### Fixed
+- Fix UX7 AP classification: add in_gateway_mode to Device dataclass
+
 ## [1.6.2] - 2026-02-11
 ### Fixed
 - Fix UX7 in AP mode misclassified as gateway
@@ -307,8 +311,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Introduced SVG renderer and tree layout fixes.
 - Increased test coverage and added coverage tooling.
 
-[Unreleased]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.6.2...HEAD
-[1.6.1]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.6.1...v1.6.2
+[Unreleased]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.6.3...HEAD
+[1.6.3]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.6.2...v1.6.3
+[1.6.2]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.6.1...v1.6.2
 [1.6.1]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.6.0...v1.6.1
 [1.6.0]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.5.3...v1.6.0
 [1.5.3]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.5.2...v1.5.3

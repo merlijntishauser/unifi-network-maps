@@ -66,6 +66,7 @@ class Device:
     uplink: UplinkInfo | None = None
     last_uplink: UplinkInfo | None = None
     version: str = ""
+    in_gateway_mode: bool | None = None
 
 
 @dataclass(frozen=True)

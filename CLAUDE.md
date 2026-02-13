@@ -6,7 +6,7 @@ Quick reference for AI assistants working on this codebase.
 
 **unifi-network-maps** - A Python CLI tool that generates network diagrams (Mermaid, SVG, MkDocs) from UniFi Network Controller data via LLDP topology.
 
-- **Version**: 1.5.0
+- **Version**: 1.6.2
 - **Python**: 3.12+ (3.13 preferred)
 - **License**: MIT
 - **PyPI**: `pip install unifi-network-maps`
@@ -28,32 +28,54 @@ src/unifi_network_maps/
 │   └── runtime.py       # Runtime context
 ├── adapters/
 │   ├── config.py        # Environment/config loading
+│   ├── dns.py           # Reverse DNS hostname resolution
 │   └── unifi.py         # UniFi API adapter
 ├── model/
 │   ├── topology.py      # Core topology model
-│   ├── clients.py       # Client device handling
+│   ├── topology_coerce.py # Topology data coercion
+│   ├── clients.py       # Client device handling and filtering
+│   ├── classify.py      # Device/client type classification
 │   ├── connection.py    # Wireless connection quality
+│   ├── edges.py         # Edge building, port maps, grouping
+│   ├── helpers.py       # Shared low-level helpers (get_field, normalize_mac)
+│   ├── inventory.py     # Device/client inventory model (DeviceInfo)
 │   ├── lldp.py          # LLDP parsing
 │   ├── labels.py        # Label generation
 │   ├── ports.py         # Port handling
 │   ├── vlans.py         # VLAN inventory
-│   ├── mock.py          # Mock data structures
+│   ├── wan.py           # WAN upstream info extraction
+│   ├── mock.py          # Mock data generation (uses Faker)
 │   ├── snapshot.py      # Topology serialization
 │   └── diff.py          # Topology change detection
 ├── render/
 │   ├── mermaid.py       # Mermaid output
 │   ├── mermaid_theme.py # Mermaid theming
-│   ├── svg.py           # SVG output (orthogonal + isometric)
-│   ├── svg_theme.py     # SVG theming
+│   ├── svg.py           # SVG orthogonal output
+│   ├── svg_isometric.py # SVG isometric output
+│   ├── svg_theme.py     # SVG theming (SvgTheme, SvgOptions)
+│   ├── svg_layout.py    # SVG layout algorithms
+│   ├── svg_edges.py     # SVG edge rendering
+│   ├── svg_labels.py    # SVG label rendering
+│   ├── svg_icons.py     # SVG icon loading
+│   ├── svg_wan.py       # SVG WAN upstream rendering
+│   ├── svg_iso_geometry.py  # Isometric coordinate math
+│   ├── svg_iso_nodes.py     # Isometric node rendering
+│   ├── svg_iso_edges.py     # Isometric edge rendering
 │   ├── theme.py         # Theme loading
 │   ├── legend.py        # Legend rendering
+│   ├── inventory.py     # Inventory table rendering
 │   ├── mkdocs.py        # MkDocs format
 │   ├── lldp_md.py       # LLDP markdown tables
+│   ├── device_summary.py    # Device summary sections
+│   ├── device_ports_md.py   # Device port markdown
+│   ├── device_ports_aggregate.py # Aggregated port tables
+│   ├── markdown_tables.py   # Generic markdown table helpers
 │   └── templating.py    # Jinja2 templates
 ├── io/
 │   ├── export.py        # File export
 │   ├── mock_data.py     # Mock data loading
-│   ├── mock_generate.py # Mock generation (uses Faker)
+│   ├── mock_generate.py # Mock generation entry point
+│   ├── mkdocs_assets.py # MkDocs sidebar asset writing
 │   ├── paths.py         # Path resolution utilities
 │   └── debug.py         # Debug dump utilities
 └── assets/
@@ -122,18 +144,23 @@ unifi-network-maps --stdout                              # Mermaid to stdout
 unifi-network-maps --markdown --output ./network.md     # Markdown file
 
 # Formats
---format mermaid|svg|svg-iso|lldp-md|mkdocs|json
+--format mermaid|svg|svg-iso|lldp-md|mkdocs|json|inventory
 
 # Common options
 --include-ports          # Show port labels
---include-clients        # Add client nodes
+--include-clients        # Add client nodes (works with all formats including inventory)
 --client-scope wired|wireless|all
 --only-unifi            # Filter to UniFi devices only
+--collapse-clients      # Group clients into cluster nodes
 --mock-data FILE        # Use mock JSON instead of API
 --direction LR|TB       # Diagram direction
 --group-by-type         # Group nodes in subgraphs (Mermaid)
---svg-layout-mode physical|grouped  # SVG layout with visual grouping
+--svg-layout-mode physical|grouped|vlan  # SVG layout mode
+--icon-set isometric|modern              # SVG icon set
 --theme-file FILE       # Custom theme YAML
+--resolve-hostnames / --no-resolve-hostnames  # Reverse DNS lookup
+--wan-label LABEL       # WAN upstream ISP label
+--wan-speed SPEED       # WAN upstream speed label
 ```
 
 ## Testing
@@ -152,7 +179,8 @@ From AGENTS.md:
 - Optimize for readability over cleverness
 - Small, safe refactors; commit often
 - Functions > 15 lines are a code smell
-- Typing (mypy-ready)
+- Max cyclomatic complexity per function: 12 (enforced by CI)
+- Typing (pyright strict-compatible)
 - No prints in core modules (use `logging`)
 - Pure functions where possible
 
@@ -162,9 +190,11 @@ From AGENTS.md:
 - `python-dotenv` - Environment loading
 - `PyYAML` - Theme configuration
 - `Jinja2` - Template rendering
+- `dnspython` - Reverse DNS hostname resolution
 - `Faker` (dev) - Mock data generation
 - `cairosvg` (dev) - SVG to PNG rendering for visual regression
 - `Pillow` (dev) - Image comparison for visual regression
+- `radon`/`xenon` (dev) - Cyclomatic complexity checks
 
 ## Related Projects
 

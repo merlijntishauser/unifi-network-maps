@@ -316,6 +316,8 @@ def coerce_device(device: DeviceSource, network_vlan_map: dict[str, int] | None 
     ip = first_attr(device, "ip", "ip_address")
     dev_type = first_attr(device, "type", "device_type")
     version = first_attr(device, "displayable_version", "version")
+    raw_gw_mode = get_field(device, "in_gateway_mode")
+    in_gateway_mode = raw_gw_mode if isinstance(raw_gw_mode, bool) else None
 
     uplink, last_uplink = _uplink_info(device)
     lldp_entries = _resolve_lldp_info(device, name, uplink, last_uplink)
@@ -336,6 +338,7 @@ def coerce_device(device: DeviceSource, network_vlan_map: dict[str, int] | None 
         uplink=uplink,
         last_uplink=last_uplink,
         version=str(version or ""),
+        in_gateway_mode=in_gateway_mode,
     )
 
 

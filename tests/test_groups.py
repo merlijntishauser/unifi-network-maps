@@ -21,12 +21,30 @@ def test_classify_ux_gateway_mode_true():
 
 def test_classify_ux_gateway_mode_false():
     """UX7 in AP mode should be classified as AP, not gateway."""
-    device = {"name": "UX7", "type": "ux", "in_gateway_mode": False}
+    device = Device(
+        name="UX7",
+        model_name="",
+        model="U7-Pro",
+        mac="bb",
+        ip="",
+        type="ux",
+        lldp_info=[],
+        in_gateway_mode=False,
+    )
     assert classify_device_type(device) == "ap"
 
 
 def test_classify_ux_gateway_mode_explicit_true():
-    device = {"name": "UXG Max", "type": "ux", "in_gateway_mode": True}
+    device = Device(
+        name="UXG Max",
+        model_name="",
+        model="UXG-Max",
+        mac="cc",
+        ip="",
+        type="ux",
+        lldp_info=[],
+        in_gateway_mode=True,
+    )
     assert classify_device_type(device) == "gateway"
 
 

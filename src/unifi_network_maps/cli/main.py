@@ -42,18 +42,6 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-class _DowngradeInfoToDebugFilter(logging.Filter):
-    def filter(self, record: logging.LogRecord) -> bool:
-        if record.name.startswith("unifi_controller_api") and record.levelno == logging.INFO:
-            record.levelno = logging.DEBUG
-            record.levelname = logging.getLevelName(logging.DEBUG)
-        return True
-
-
-def _downgrade_unifi_controller_logs() -> logging.Filter:
-    return _DowngradeInfoToDebugFilter()
-
-
 def _validate_paths(args: argparse.Namespace) -> bool:
     try:
         if args.env_file:
@@ -186,8 +174,6 @@ def _handle_json_format(
 
 def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
-    for handler in logging.getLogger().handlers:
-        handler.addFilter(_downgrade_unifi_controller_logs())
     args = _parse_args(argv)
     if not _validate_paths(args):
         return 2

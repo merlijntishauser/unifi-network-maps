@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Replace `unifi-controller-api` external dependency with inline thin HTTP client (~120 lines), removing ~5,700 lines of untested upstream code
 
 ## [1.6.4] - 2026-02-24
 ### Fixed

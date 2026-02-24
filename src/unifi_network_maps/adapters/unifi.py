@@ -14,7 +14,7 @@ from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeoutError
 from contextlib import contextmanager
 from pathlib import Path
-from typing import IO, TYPE_CHECKING
+from typing import IO
 
 from ..io.paths import resolve_cache_dir
 from ..model.helpers import as_list, first_attr, get_field
@@ -22,9 +22,7 @@ from ..model.lldp import coerce_lldp
 from ..model.snapshot import lldp_entry_to_dict
 from ..model.vlans import build_vlan_info, normalize_networks
 from .config import Config
-
-if TYPE_CHECKING:
-    from unifi_controller_api import UnifiController
+from .unifi_api import UnifiAuthError, UnifiClient
 
 logger = logging.getLogger(__name__)
 
@@ -350,11 +348,9 @@ def _call_with_retries[T](operation: str, func: Callable[[], T]) -> T:
     raise RuntimeError(f"Failed {operation}")
 
 
-def _init_controller(config: Config, *, is_udm_pro: bool) -> UnifiController:
-    from unifi_controller_api import UnifiController
-
-    return UnifiController(
-        controller_url=config.url,
+def _create_client(config: Config, *, is_udm_pro: bool) -> UnifiClient:
+    return UnifiClient(
+        url=config.url,
         username=config.user,
         password=config.password,
         is_udm_pro=is_udm_pro,
@@ -369,25 +365,23 @@ def _is_rate_limited(exc: Exception) -> bool:
 def _connect_and_fetch(
     config: Config,
     operation: str,
-    fetch_fn: Callable[[UnifiController], Callable[[], Sequence[object]]],
+    fetch_fn: Callable[[UnifiClient], Callable[[], Sequence[object]]],
 ) -> Sequence[object]:
     """Authenticate and fetch data, with UDM Pro / legacy auth fallback.
 
-    On ``UnifiAuthenticationError`` that isn't rate-limited, retries with
+    On ``UnifiAuthError`` that isn't rate-limited, retries with
     legacy auth.  Any other error (rate limit, network, etc.) propagates
     to the caller's stale-cache handler.
     """
-    from unifi_controller_api import UnifiAuthenticationError
-
     try:
-        controller = _init_controller(config, is_udm_pro=True)
-    except UnifiAuthenticationError as exc:
+        client = _create_client(config, is_udm_pro=True)
+    except UnifiAuthError as exc:
         if _is_rate_limited(exc):
             raise
         logger.debug("UDM Pro authentication failed, retrying legacy auth")
-        controller = _init_controller(config, is_udm_pro=False)
+        client = _create_client(config, is_udm_pro=False)
 
-    return _call_with_retries(operation, fetch_fn(controller))
+    return _call_with_retries(operation, fetch_fn(client))
 
 
 def fetch_devices(
@@ -397,15 +391,7 @@ def fetch_devices(
     detailed: bool = True,
     use_cache: bool = True,
 ) -> Sequence[object]:
-    """Fetch devices from UniFi Controller.
-
-    Uses `unifi-controller-api` to authenticate and return device objects.
-    """
-    try:
-        import unifi_controller_api  # noqa: F401
-    except ImportError as exc:
-        raise RuntimeError("Missing dependency: unifi-controller-api") from exc
-
+    """Fetch devices from UniFi Controller."""
     site_name = site or config.site
     ttl_seconds = _cache_ttl_seconds()
     cache_path = _cache_dir() / f"devices_{_cache_key(config.url, site_name, str(detailed))}.json"
@@ -416,9 +402,9 @@ def fetch_devices(
             logger.debug("Using cached devices (%d)", len(cached))
             return cached
 
-    def _make_fetch(ctrl: UnifiController) -> Callable[[], Sequence[object]]:
+    def _make_fetch(client: UnifiClient) -> Callable[[], Sequence[object]]:
         def _fetch() -> Sequence[object]:
-            return ctrl.get_unifi_site_device(site_name=site_name, detailed=detailed, raw=False)
+            return client.get_devices(site_name, detailed=detailed)
 
         return _fetch
 
@@ -447,11 +433,6 @@ def fetch_clients(
     use_cache: bool = True,
 ) -> Sequence[object]:
     """Fetch active clients from UniFi Controller."""
-    try:
-        import unifi_controller_api  # noqa: F401
-    except ImportError as exc:
-        raise RuntimeError("Missing dependency: unifi-controller-api") from exc
-
     site_name = site or config.site
     ttl_seconds = _cache_ttl_seconds()
     cache_path = _cache_dir() / f"clients_{_cache_key(config.url, site_name)}.json"
@@ -462,9 +443,9 @@ def fetch_clients(
             logger.debug("Using cached clients (%d)", len(cached))
             return cached
 
-    def _make_fetch(ctrl: UnifiController) -> Callable[[], Sequence[object]]:
+    def _make_fetch(client: UnifiClient) -> Callable[[], Sequence[object]]:
         def _fetch() -> Sequence[object]:
-            return ctrl.get_unifi_site_client(site_name=site_name, raw=True)
+            return client.get_clients(site_name)
 
         return _fetch
 
@@ -493,11 +474,6 @@ def fetch_networks(
     use_cache: bool = True,
 ) -> Sequence[object]:
     """Fetch network inventory from UniFi Controller."""
-    try:
-        import unifi_controller_api  # noqa: F401
-    except ImportError as exc:
-        raise RuntimeError("Missing dependency: unifi-controller-api") from exc
-
     site_name = site or config.site
     ttl_seconds = _cache_ttl_seconds()
     cache_path = _cache_dir() / f"networks_{_cache_key(config.url, site_name)}.json"
@@ -508,11 +484,9 @@ def fetch_networks(
             logger.debug("Using cached networks (%d)", len(cached))
             return cached
 
-    def _make_fetch(ctrl: UnifiController) -> Callable[[], Sequence[object]]:
+    def _make_fetch(client: UnifiClient) -> Callable[[], Sequence[object]]:
         def _fetch() -> Sequence[object]:
-            # Always use raw=True to avoid model parsing issues with disabled WAN interfaces
-            # (the UnifiNetworkConf model requires an 'enabled' field that may be absent)
-            return ctrl.get_unifi_site_networkconf(site_name=site_name, raw=True)
+            return client.get_networkconf(site_name)
 
         return _fetch
 

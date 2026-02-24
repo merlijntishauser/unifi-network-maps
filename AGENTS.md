@@ -187,7 +187,7 @@ From AGENTS.md:
 
 ## Key Dependencies
 
-- `unifi-controller-api` - UniFi API wrapper
+- `requests` - HTTP client (inline UniFi API adapter)
 - `python-dotenv` - Environment loading
 - `PyYAML` - Theme configuration
 - `Jinja2` - Template rendering

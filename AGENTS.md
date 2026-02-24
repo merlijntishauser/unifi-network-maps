@@ -1,76 +1,131 @@
-# AGENTS.md
+# CLAUDE.md
 
-## Top priority (XP values)
-- Naming is critical; choose clear, intention-revealing names.
-- Optimize for human readability and understandability over cleverness.
-- Prefer small, safe refactors and commit often.
-- Long functions/methods (>15 lines) are a code smell; split into smaller parts.
+Quick reference for AI assistants working on this codebase.
 
+## Project Overview
 
-## Project
-UniFi Network Maps (core renderer + exporters)
+**unifi-network-maps** - A Python CLI tool that generates network diagrams (Mermaid, SVG, MkDocs) from UniFi Network Controller data via LLDP topology.
 
-This project automatically generates network diagrams (Mermaid) from UniFi Network data (LLDP/topology).
-The output is intended for:
-- Home Assistant (integration lives in a separate repo)
-- Notes / documentation (Markdown, Obsidian, GitHub, etc.)
+- **Version**: 1.6.2
+- **Python**: 3.12+ (3.13 preferred)
+- **License**: MIT
+- **PyPI**: `pip install unifi-network-maps`
 
-Goal: a single source of truth, always up-to-date network maps, without manual drawing.
+## Architecture
 
----
-
-## Architecture overview
-
-Source → Model → Diagram → Export
-
-1. **Source**
-   - UniFi Network Controller (UniFi OS)
-   - API via Python wrapper
-   - LLDP as primary topology source
-
-2. **Model**
-   - Devices (gateway, switches, APs)
-   - Interfaces / ports
-   - LLDP neighbors (device ↔ device)
-   - (Extensible later with clients, VLANs, locations)
-
-3. **Diagram**
-   - Mermaid `graph TB`
-   - Unidirectional or deduplicated edges
-   - Optional port labels
-
-4. **Export**
-   - `.md` file (notes project)
-   - `.mermaid` or `.md` for Home Assistant
-   - STDOUT (for piping / automation)
-
----
-
-## Technology choices
-
-### Python
-- Python ≥ 3.12 (3.13 preferred)
-- Virtualenv required
-
-### UniFi API
-Use **unifi-controller-api** (tnware):
-- Abstracts UniFi OS login
-- Maps responses to typed objects
-- Includes `LLDPEntry` objects (no raw JSON parsing)
-
-Install:
-```bash
-pip install unifi-controller-api
+```
+Source (UniFi API) → Model (devices/topology) → Diagram (Mermaid/SVG) → Export (files/stdout)
 ```
 
-### Icons
-- Isometric SVG icons are sourced from **markmanx/isopacks** (MIT).
+### Source Layout
 
----
+```
+src/unifi_network_maps/
+├── cli/                 # CLI entry point, argument parsing
+│   ├── args.py          # Argument definitions
+│   ├── main.py          # Main entry point
+│   ├── render.py        # Render dispatch
+│   └── runtime.py       # Runtime context
+├── adapters/
+│   ├── config.py        # Environment/config loading
+│   ├── dns.py           # Reverse DNS hostname resolution
+│   └── unifi.py         # UniFi API adapter
+├── model/
+│   ├── topology.py      # Core topology model
+│   ├── topology_coerce.py # Topology data coercion
+│   ├── clients.py       # Client device handling and filtering
+│   ├── classify.py      # Device/client type classification
+│   ├── connection.py    # Wireless connection quality
+│   ├── edges.py         # Edge building, port maps, grouping
+│   ├── helpers.py       # Shared low-level helpers (get_field, normalize_mac)
+│   ├── inventory.py     # Device/client inventory model (DeviceInfo)
+│   ├── lldp.py          # LLDP parsing
+│   ├── labels.py        # Label generation
+│   ├── ports.py         # Port handling
+│   ├── vlans.py         # VLAN inventory
+│   ├── wan.py           # WAN upstream info extraction
+│   ├── mock.py          # Mock data generation (uses Faker)
+│   ├── snapshot.py      # Topology serialization
+│   └── diff.py          # Topology change detection
+├── render/
+│   ├── mermaid.py       # Mermaid output
+│   ├── mermaid_theme.py # Mermaid theming
+│   ├── svg.py           # SVG orthogonal output
+│   ├── svg_isometric.py # SVG isometric output
+│   ├── svg_theme.py     # SVG theming (SvgTheme, SvgOptions)
+│   ├── svg_layout.py    # SVG layout algorithms
+│   ├── svg_edges.py     # SVG edge rendering
+│   ├── svg_labels.py    # SVG label rendering
+│   ├── svg_icons.py     # SVG icon loading
+│   ├── svg_wan.py       # SVG WAN upstream rendering
+│   ├── svg_iso_geometry.py  # Isometric coordinate math
+│   ├── svg_iso_nodes.py     # Isometric node rendering
+│   ├── svg_iso_edges.py     # Isometric edge rendering
+│   ├── theme.py         # Theme loading
+│   ├── legend.py        # Legend rendering
+│   ├── inventory.py     # Inventory table rendering
+│   ├── mkdocs.py        # MkDocs format
+│   ├── lldp_md.py       # LLDP markdown tables
+│   ├── device_summary.py    # Device summary sections
+│   ├── device_ports_md.py   # Device port markdown
+│   ├── device_ports_aggregate.py # Aggregated port tables
+│   ├── markdown_tables.py   # Generic markdown table helpers
+│   └── templating.py    # Jinja2 templates
+├── io/
+│   ├── export.py        # File export
+│   ├── mock_data.py     # Mock data loading
+│   ├── mock_generate.py # Mock generation entry point
+│   ├── mkdocs_assets.py # MkDocs sidebar asset writing
+│   ├── paths.py         # Path resolution utilities
+│   └── debug.py         # Debug dump utilities
+└── assets/
+    ├── icons/           # SVG device icons
+    └── themes/          # Default theme YAML files
+```
 
-## Configuration
+## Development Commands
 
-Use environment variables (no secrets in code):
+```bash
+# Setup
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-build.txt
+pip install -r requirements-dev.txt -c constraints.txt
+pre-commit install
+
+# Editable install
+pip install -e .
+
+# Linting and type checking
+ruff check .
+ruff format .
+pyright
+
+# Testing
+pytest                    # Unit tests
+behave                    # BDD tests in features/
+make ci                   # Run all checks (lint, format, typecheck, test, bdd, pre-commit)
+
+# Coverage
+pytest --cov=unifi_network_maps --cov-report=term-missing
+
+# Smoketests (requires live UniFi or mock data)
+make smoketest            # Live UniFi
+make smoketest-mock       # Mock data
+make smoketest-validate   # Validate smoketest output structure
+
+# Visual regression testing
+make visual-regression    # Compare SVGs against baselines
+make visual-baselines     # Update baseline images after intentional changes
+
+# Mock data generation
+make mock-data
+
+# Help
+make makefile-help        # Show all make targets
+```
+
+## Environment Variables
 
 ```bash
 UNIFI_URL=https://192.168.1.1
@@ -78,199 +133,70 @@ UNIFI_SITE=default
 UNIFI_USER=local_admin
 UNIFI_PASS=********
 UNIFI_VERIFY_SSL=false
+UNIFI_REQUEST_TIMEOUT_SECONDS=10
 ```
 
----
-
-## Minimal data structures
-
-### Device
-- name
-- model_name
-- mac
-- ip
-- type (gateway / switch / ap)
-- lldp_info: list[LLDPEntry]
-
-### LLDPEntry
-- chassis_id (usually MAC)
-- port_id
-- port_desc (optional)
-
----
-
-## Core logic (conceptual)
-
-1. Login to UniFi Controller
-2. Fetch all site devices (`detailed=True`)
-3. Build index:
-   - `mac → device_name`
-4. Loop devices:
-   - For each `LLDPEntry`
-   - Match neighbor `chassis_id` against known MACs
-5. Build edges:
-   - Deduplicate (A—B == B—A)
-   - Optionally add port labels
-6. Render Mermaid
-
----
-
-## Debug findings (device data)
-
-From recent `--debug-dump` samples:
-- `port_table` entries include `port_idx`, `name` (e.g., "Port 2"), `ifname` (e.g., "eth1"), `is_uplink`, and `last_connection.mac`.
-- PoE is detectable per port: `poe_enable`, `poe_power`, `port_poe`, `poe_class`, `poe_good`, `poe_voltage`, `poe_current`.
-- LLDP entries include `local_port_idx`, `local_port_name`, and `port_id` (often remote port label).
-- Devices also expose `uplink` / `last_uplink` with `uplink_device_name` and `uplink_remote_port`.
-
----
-
-## Mermaid output (example)
-
-```mermaid
-graph TB
-  "Cloud Gateway" ---|"Port 9"| "Core Switch"
-  "Core Switch" ---|"Port 3"| "AP Woonkamer"
-  "Core Switch" ---|"Port 7"| "AP Zolder"
-```
-
-Guidelines:
-- Use **names**, not MACs, in diagrams
-- Keep diagrams readable (no clients by default)
-- One edge per physical link
-
----
-
-## File structure (overview)
-
-```text
-unifi-network-map/
-├── agents.md
-├── pyproject.toml
-├── src/
-│   ├── unifi_network_maps/
-│   │   ├── __init__.py
-│   │   ├── adapters/
-│   │   │   ├── config.py
-│   │   │   └── unifi.py
-│   │   ├── model/
-│   │   │   ├── topology.py
-│   │   │   ├── lldp.py
-│   │   │   ├── labels.py
-│   │   │   └── ports.py
-│   │   ├── render/
-│   │   │   ├── mermaid.py
-│   │   │   ├── mermaid_theme.py
-│   │   │   ├── svg.py
-│   │   │   ├── svg_theme.py
-│   │   │   └── theme.py
-│   │   ├── io/
-│   │   │   ├── debug.py
-│   │   │   ├── mock_data.py
-│   │   │   ├── mock_generate.py
-│   │   │   └── export.py
-│   │   └── assets/
-│   │       └── icons/
-│   └── cli.py
-└── README.md
-```
-
----
-
-## CLI behavior
-
-Example:
+## CLI Quick Reference
 
 ```bash
-unifi-network-maps \
-  --site default \
-  --format mermaid \
-  --output ./network.md
+# Basic usage
+unifi-network-maps --stdout                              # Mermaid to stdout
+unifi-network-maps --markdown --output ./network.md     # Markdown file
+
+# Formats
+--format mermaid|svg|svg-iso|lldp-md|mkdocs|json|inventory
+
+# Common options
+--include-ports          # Show port labels
+--include-clients        # Add client nodes (works with all formats including inventory)
+--client-scope wired|wireless|all
+--only-unifi            # Filter to UniFi devices only
+--collapse-clients      # Group clients into cluster nodes
+--mock-data FILE        # Use mock JSON instead of API
+--direction LR|TB       # Diagram direction
+--group-by-type         # Group nodes in subgraphs (Mermaid)
+--svg-layout-mode physical|grouped|vlan  # SVG layout mode
+--icon-set isometric|modern              # SVG icon set
+--theme-file FILE       # Custom theme YAML
+--resolve-hostnames / --no-resolve-hostnames  # Reverse DNS lookup
+--wan-label LABEL       # WAN upstream ISP label
+--wan-speed SPEED       # WAN upstream speed label
 ```
 
-Options:
-Source:
-- `--site`
-- `--env-file`
-- `--mock-data`
+## Testing
 
-Mock:
-- `--generate-mock`
-- `--mock-seed`
-- `--mock-switches`
-- `--mock-aps`
-- `--mock-wired-clients`
-- `--mock-wireless-clients`
+- **Unit tests**: `tests/` - pytest
+- **BDD tests**: `features/` - behave
+- **Contract tests**: `tests/test_contract_unifi.py` - fixture-based
+- **Live contract tests**: Set `UNIFI_CONTRACT_LIVE=1` with UniFi env vars
+- **Smoketest validation**: `tests/test_smoketest_validation.py` - structural validation of output files
+- **Visual regression**: `tests/test_visual_regression.py` - pixel-based SVG comparison
 
-Functional:
-- `--include-ports`
-- `--include-clients`
-- `--client-scope wired|wireless|all`
-- `--only-unifi`
-- `--no-cache`
+## Code Quality Guidelines
 
-Mermaid:
-- `--direction LR|TB`
-- `--group-by-type`
-- `--legend-style`
-- `--legend-scale`
-- `--legend-only`
+From AGENTS.md:
 
-SVG:
-- `--svg-width/--svg-height`
-- `--theme-file`
-
-Output:
-- `--format mermaid|svg|svg-iso|lldp-md|mkdocs`
-- `--markdown`
-- `--stdout`
-- `--mkdocs-sidebar-legend`
-- `--mkdocs-dual-theme`
-- `--mkdocs-timestamp-zone`
-
-Debug:
-- `--debug-dump`
-- `--debug-sample`
-
----
-
-## Home Assistant integration
-
-The live Home Assistant integration is maintained in a separate repo:
-- https://github.com/merlijntishauser/unifi-network-maps-ha
-
----
-
-## Non-goals (intentional, for core renderer)
-
-- No SNMP discovery
-- No realtime updates (handled in HA integration repo)
-- No realtime interactive updates (handled by UI consumers)
-
----
-
-## Future extensions
-
-- Grouping by room / floor
-- VLAN overlays
-- Clients as subgraphs
-- Export to Graphviz / draw.io
-- NetBox sync
-
----
-
-## Code quality
-
-- Typing (mypy-ready)
-- No prints in core modules
+- Clear, intention-revealing names
+- Optimize for readability over cleverness
+- Small, safe refactors; commit often
+- Functions > 15 lines are a code smell
+- Max cyclomatic complexity per function: 12 (enforced by CI)
+- Typing (pyright strict-compatible)
+- No prints in core modules (use `logging`)
 - Pure functions where possible
-- Logging via `logging`
-- Fail fast on missing LLDP
-- BDD tests live in `features/` and run via `behave`.
-- Contract tests live in `tests/test_contract_unifi.py` with optional live tests gated by `UNIFI_CONTRACT_LIVE=1`.
 
----
+## Key Dependencies
 
-## Design rule
+- `unifi-controller-api` - UniFi API wrapper
+- `python-dotenv` - Environment loading
+- `PyYAML` - Theme configuration
+- `Jinja2` - Template rendering
+- `dnspython` - Reverse DNS hostname resolution
+- `Faker` (dev) - Mock data generation
+- `cairosvg` (dev) - SVG to PNG rendering for visual regression
+- `Pillow` (dev) - Image comparison for visual regression
+- `radon`/`xenon` (dev) - Cyclomatic complexity checks
 
-The network map must stay correct automatically, even if nobody thinks about it.
+## Related Projects
+
+- Home Assistant integration: https://github.com/merlijntishauser/unifi-network-maps-ha

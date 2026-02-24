@@ -6,10 +6,45 @@ on:
 
 permissions:
   contents: read
+  actions: read
   id-token: write
 
 jobs:
+  wait-for-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for CI workflow to succeed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          SHA="${{ github.sha }}"
+          REPO="${{ github.repository }}"
+          for i in $(seq 1 30); do
+            RUN=$(gh api "repos/${REPO}/actions/workflows/ci.yml/runs?head_sha=${SHA}&per_page=1" --jq '.workflow_runs[0] // empty')
+            if [ -z "$RUN" ]; then
+              echo "Attempt $i/30: CI run not found yet, waiting 10s..."
+              sleep 10
+              continue
+            fi
+            STATUS=$(echo "$RUN" | jq -r '.status')
+            CONCLUSION=$(echo "$RUN" | jq -r '.conclusion // empty')
+            if [ "$STATUS" = "completed" ]; then
+              if [ "$CONCLUSION" = "success" ]; then
+                echo "CI passed"
+                exit 0
+              else
+                echo "CI failed with conclusion: $CONCLUSION"
+                exit 1
+              fi
+            fi
+            echo "Attempt $i/30: CI status is '$STATUS', waiting 10s..."
+            sleep 10
+          done
+          echo "Timed out waiting for CI to complete (5 minutes)"
+          exit 1
+
   build-and-publish:
+    needs: wait-for-ci
     runs-on: ubuntu-latest
     environment: pypi
     steps:

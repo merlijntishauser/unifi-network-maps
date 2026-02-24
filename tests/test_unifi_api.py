@@ -200,6 +200,38 @@ def test_missing_data_field(monkeypatch):
         client.get_clients("default")
 
 
+def test_get_http_error(monkeypatch):
+    auth_resp = FakeResponse(json_data={"meta": {"rc": "ok"}})
+    error_resp = FakeResponse(status_code=500, json_data={}, ok=False)
+    session = FakeSession([auth_resp, error_resp])
+    client = _make_client(monkeypatch, session)
+
+    with pytest.raises(UnifiApiError, match="failed \\(HTTP 500\\)"):
+        client.get_devices("default")
+
+
+def test_get_non_json_response(monkeypatch):
+    auth_resp = FakeResponse(json_data={"meta": {"rc": "ok"}})
+    html_resp = FakeResponse(status_code=200, json_data=None, ok=True)
+    session = FakeSession([auth_resp, html_resp])
+    client = _make_client(monkeypatch, session)
+
+    with pytest.raises(UnifiApiError, match="Non-JSON response"):
+        client.get_clients("default")
+
+
+def test_reauth_succeeds_but_retry_fails(monkeypatch):
+    auth_resp = FakeResponse(json_data={"meta": {"rc": "ok"}})
+    unauthorized = FakeResponse(status_code=401, json_data={}, ok=False)
+    reauth_resp = FakeResponse(json_data={"meta": {"rc": "ok"}})
+    forbidden = FakeResponse(status_code=403, json_data={}, ok=False)
+    session = FakeSession([auth_resp, unauthorized, reauth_resp, forbidden])
+    client = _make_client(monkeypatch, session)
+
+    with pytest.raises(UnifiApiError, match="failed \\(HTTP 403\\)"):
+        client.get_clients("default")
+
+
 def test_ssl_warning_suppressed(monkeypatch):
     calls = []
     monkeypatch.setattr("urllib3.disable_warnings", lambda *a: calls.append(a))

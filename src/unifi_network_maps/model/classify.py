@@ -57,7 +57,7 @@ def classify_device_type(device: object) -> str:
         raw_name = get_field(device, "name")
         name = raw_name if isinstance(raw_name, str) else ""
         return _classify_by_device_name(name) or "other"
-    if value in {"gateway", "ugw", "usg", "udm", "udr"}:
+    if value in {"gateway", "ugw", "usg", "udm", "udr", "uxg"}:
         return "gateway"
     if value == "ux":
         in_gw_mode = get_field(device, "in_gateway_mode")

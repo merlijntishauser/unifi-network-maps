@@ -48,6 +48,20 @@ def test_classify_ux_gateway_mode_explicit_true():
     assert classify_device_type(device) == "gateway"
 
 
+def test_classify_uxg_type_as_gateway():
+    """UXG-series devices (UXG-Pro, UXG-Max/UXGB) report type 'uxg'."""
+    device = Device(
+        name="UXG Max",
+        model_name="",
+        model="UXGB",
+        mac="dd",
+        ip="",
+        type="uxg",
+        lldp_info=[],
+    )
+    assert classify_device_type(device) == "gateway"
+
+
 def test_group_devices_by_type_includes_ap():
     devices = [
         Device(name="AP One", model_name="", model="", mac="aa", ip="", type="uap", lldp_info=[])

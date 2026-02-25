@@ -5,8 +5,7 @@
 [![Publish](https://github.com/merlijntishauser/unifi-network-maps/actions/workflows/publish.yml/badge.svg)](https://github.com/merlijntishauser/unifi-network-maps/actions/workflows/publish.yml)
 [![PyPI](https://img.shields.io/pypi/v/unifi-network-maps.svg)](https://pypi.org/project/unifi-network-maps/)
 
-Dynamic UniFi network maps generated from LLDP topology. Output can be a range of options including Markdown,
-Mermaid, SVG (including an Isometric view), and MkDocs.
+CLI tool for generating UniFi network maps from LLDP topology. Outputs Mermaid, SVG (including isometric), Markdown, and MkDocs formats. Built on the [unifi-topology](https://pypi.org/project/unifi-topology/) library for topology modeling and SVG rendering.
 
 Python 3.12+ is supported (3.13 preferred).
 
@@ -123,51 +122,17 @@ The live Home Assistant integration (Config Flow + coordinator + custom card) li
 
 ## Programmatic API
 
-Beyond the CLI, you can use the library programmatically for topology comparison and change detection.
-
-### Topology Diff API
-
-Compare two topology snapshots to detect network changes:
+The topology model, diff engine, snapshot serialization, and SVG renderer live in the
+[unifi-topology](https://pypi.org/project/unifi-topology/) library. Use it directly for
+programmatic access:
 
 ```python
-from unifi_network_maps.model.topology import Topology
-
-# Create or load topologies
-old_topology = Topology.from_dict(json.load(open("old_snapshot.json")))
-new_topology = Topology(devices=devices, clients=clients, edges=edges)
-
-# Compare and get structured change events
-diff = old_topology.diff(new_topology)
-
-for event in diff.events:
-    print(f"{event.event_type}: {event.description}")
-    # Example: "node_added: Device 'switch-2' appeared on network"
-    # Example: "node_changed: Client 'laptop' changed VLAN from 10 to 20"
-
-# Serialize for persistence or MQTT
-json_str = diff.to_json()
+from unifi_topology.model.topology import Topology
+from unifi_topology.render import render_svg
 ```
 
-Event types:
-- `node_added` / `node_removed` / `node_changed` - Device or client changes
-- `edge_added` / `edge_removed` / `edge_changed` - Connection changes
-
-Each event includes:
-- `event_type`, `entity_type` (device/client), `identifier` (MAC)
-- `name`, `description` (human-readable)
-- `details` (full snapshot or change dict)
-
-Serialize topology snapshots for storage:
-
-```python
-# Save snapshot
-snapshot = topology.to_dict()
-json.dump(snapshot, open("topology.json", "w"))
-
-# Load snapshot
-data = json.load(open("topology.json"))
-topology = Topology.from_dict(data)
-```
+See the [unifi-topology documentation](https://github.com/merlijntishauser/unifi-topology)
+for the full API.
 
 ## Examples (mock data)
 
@@ -329,4 +294,4 @@ See `examples/theme.yaml` and `examples/theme-dark.yaml` for full examples.
 
 ## AI Disclosure
 
-This project used OpenAI Codex as a coding assistant for portions of the implementation and documentation.
+This project used Claude as a coding assistant for portions of the implementation and documentation.

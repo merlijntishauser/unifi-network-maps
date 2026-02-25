@@ -1,8 +1,9 @@
 import logging
 from types import SimpleNamespace
 
+from unifi_topology.model.topology import Device
+
 from unifi_network_maps.io.debug import debug_dump_devices, device_to_dict
-from unifi_network_maps.model.topology import Device
 
 
 def test_device_to_dict_prefers_to_dict():

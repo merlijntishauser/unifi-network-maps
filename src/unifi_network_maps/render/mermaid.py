@@ -5,7 +5,8 @@ from __future__ import annotations
 import json
 from collections.abc import Iterable
 
-from ..model.topology import Edge, WanInfo, WanInterface
+from unifi_topology.model.topology import Edge, WanInfo, WanInterface
+
 from .mermaid_theme import DEFAULT_THEME, MermaidTheme, class_defs
 from .templating import render_template
 

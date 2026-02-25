@@ -6,8 +6,7 @@ import runpy
 import sys
 
 import pytest
-
-from unifi_network_maps.model.topology import Device, Edge, TopologyResult
+from unifi_topology.model.topology import Device, Edge, TopologyResult
 
 pytestmark = pytest.mark.integration
 

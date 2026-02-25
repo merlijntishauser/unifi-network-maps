@@ -4,18 +4,22 @@ from __future__ import annotations
 
 import argparse
 import logging
-from pathlib import Path
 
 import yaml
+from unifi_topology.adapters.config import Config
+from unifi_topology.adapters.unifi import fetch_clients, fetch_devices, fetch_networks
+from unifi_topology.model.clients import build_client_edges, build_client_port_map
+from unifi_topology.model.edges import (
+    build_topology,
+    enrich_edges_with_active_vlans,
+    group_devices_by_type,
+)
+from unifi_topology.model.topology import ClientPortMap, Device, TopologyResult, build_device_index
+from unifi_topology.model.topology_coerce import normalize_devices
+from unifi_topology.model.vlans import build_network_vlan_map
+from unifi_topology.render.theme import builtin_theme_yaml_path
 
-from ..adapters.config import Config
-from ..adapters.unifi import fetch_clients, fetch_devices, fetch_networks
 from ..io.debug import debug_dump_devices
-from ..model.clients import build_client_edges, build_client_port_map
-from ..model.edges import build_topology, enrich_edges_with_active_vlans, group_devices_by_type
-from ..model.topology import ClientPortMap, Device, TopologyResult, build_device_index
-from ..model.topology_coerce import normalize_devices
-from ..model.vlans import build_network_vlan_map
 from ..render.mermaid_theme import MermaidTheme
 from ..render.theme import load_theme
 
@@ -150,9 +154,8 @@ def load_topology_for_render(
 
 
 def load_dark_mermaid_theme() -> MermaidTheme | None:
-    dark_theme_path = Path(__file__).resolve().parents[1] / "assets" / "themes" / "dark.yaml"
     try:
-        dark_theme, _ = load_theme(dark_theme_path)
+        dark_theme, _ = load_theme(builtin_theme_yaml_path("classic-dark"))
     except (FileNotFoundError, ValueError, yaml.YAMLError) as exc:
         logger.warning("Failed to load dark theme: %s", exc)
         return None

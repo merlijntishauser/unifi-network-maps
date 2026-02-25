@@ -8,9 +8,10 @@ import logging
 from pathlib import Path
 
 import yaml
+from unifi_topology.adapters.config import Config
+from unifi_topology.adapters.unifi import fetch_payload
+from unifi_topology.model.vlans import build_vlan_info, normalize_networks
 
-from ..adapters.config import Config
-from ..adapters.unifi import fetch_payload
 from ..io.export import write_output
 from ..io.mock_data import load_mock_data, load_mock_payload
 from ..io.paths import (
@@ -19,7 +20,6 @@ from ..io.paths import (
     resolve_output_path,
     resolve_theme_path,
 )
-from ..model.vlans import build_vlan_info, normalize_networks
 from ..render.legend import render_legend_only, resolve_legend_style
 from ..render.theme import resolve_themes
 from .args import build_parser
@@ -77,7 +77,7 @@ def _handle_generate_mock(args: argparse.Namespace) -> int | None:
     if not args.generate_mock:
         return None
     try:
-        from ..model.mock import MockOptions, mock_payload_json
+        from unifi_topology.model.mock import MockOptions, mock_payload_json
     except ImportError as exc:
         logging.error("Faker is required for --generate-mock: %s", exc)
         return 2

@@ -1,6 +1,7 @@
-from unifi_network_maps.model.classify import classify_device_type
-from unifi_network_maps.model.edges import build_tree_edges_by_topology, group_devices_by_type
-from unifi_network_maps.model.topology import Device, Edge
+from unifi_topology.model.classify import classify_device_type
+from unifi_topology.model.edges import build_tree_edges_by_topology, group_devices_by_type
+from unifi_topology.model.topology import Device, Edge
+
 from unifi_network_maps.render.mermaid import render_mermaid
 
 

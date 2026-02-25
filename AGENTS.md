@@ -6,7 +6,7 @@ Quick reference for AI assistants working on this codebase.
 
 **unifi-network-maps** - A Python CLI tool that generates network diagrams (Mermaid, SVG, MkDocs) from UniFi Network Controller data via LLDP topology.
 
-- **Version**: 1.6.2
+- **Version**: 1.6.4
 - **Python**: 3.12+ (3.13 preferred)
 - **License**: MIT
 - **PyPI**: `pip install unifi-network-maps`
@@ -14,8 +14,13 @@ Quick reference for AI assistants working on this codebase.
 ## Architecture
 
 ```
-Source (UniFi API) → Model (devices/topology) → Diagram (Mermaid/SVG) → Export (files/stdout)
+unifi-topology (library) → unifi-network-maps (CLI)
+  Model + Adapters + SVG     Mermaid + MkDocs + CLI + IO
 ```
+
+The model layer, adapters, SVG renderer, and assets live in the `unifi-topology` library.
+This CLI depends on `unifi-topology` and adds Mermaid rendering, MkDocs output, CLI argument
+parsing, and file I/O.
 
 ### Source Layout
 
@@ -26,51 +31,20 @@ src/unifi_network_maps/
 │   ├── main.py          # Main entry point
 │   ├── render.py        # Render dispatch
 │   └── runtime.py       # Runtime context
-├── adapters/
-│   ├── config.py        # Environment/config loading
-│   ├── dns.py           # Reverse DNS hostname resolution
-│   └── unifi.py         # UniFi API adapter
-├── model/
-│   ├── topology.py      # Core topology model
-│   ├── topology_coerce.py # Topology data coercion
-│   ├── clients.py       # Client device handling and filtering
-│   ├── classify.py      # Device/client type classification
-│   ├── connection.py    # Wireless connection quality
-│   ├── edges.py         # Edge building, port maps, grouping
-│   ├── helpers.py       # Shared low-level helpers (get_field, normalize_mac)
-│   ├── inventory.py     # Device/client inventory model (DeviceInfo)
-│   ├── lldp.py          # LLDP parsing
-│   ├── labels.py        # Label generation
-│   ├── ports.py         # Port handling
-│   ├── vlans.py         # VLAN inventory
-│   ├── wan.py           # WAN upstream info extraction
-│   ├── mock.py          # Mock data generation (uses Faker)
-│   ├── snapshot.py      # Topology serialization
-│   └── diff.py          # Topology change detection
-├── render/
+├── render/              # CLI-only renderers (Mermaid, MkDocs, markdown)
+│   ├── __init__.py      # Re-exports from unifi_topology.render
 │   ├── mermaid.py       # Mermaid output
 │   ├── mermaid_theme.py # Mermaid theming
-│   ├── svg.py           # SVG orthogonal output
-│   ├── svg_isometric.py # SVG isometric output
-│   ├── svg_theme.py     # SVG theming (SvgTheme, SvgOptions)
-│   ├── svg_layout.py    # SVG layout algorithms
-│   ├── svg_edges.py     # SVG edge rendering
-│   ├── svg_labels.py    # SVG label rendering
-│   ├── svg_icons.py     # SVG icon loading
-│   ├── svg_wan.py       # SVG WAN upstream rendering
-│   ├── svg_iso_geometry.py  # Isometric coordinate math
-│   ├── svg_iso_nodes.py     # Isometric node rendering
-│   ├── svg_iso_edges.py     # Isometric edge rendering
-│   ├── theme.py         # Theme loading
+│   ├── theme.py         # Mermaid theme loading + library SVG delegation
 │   ├── legend.py        # Legend rendering
-│   ├── inventory.py     # Inventory table rendering
 │   ├── mkdocs.py        # MkDocs format
 │   ├── lldp_md.py       # LLDP markdown tables
 │   ├── device_summary.py    # Device summary sections
 │   ├── device_ports_md.py   # Device port markdown
 │   ├── device_ports_aggregate.py # Aggregated port tables
 │   ├── markdown_tables.py   # Generic markdown table helpers
-│   └── templating.py    # Jinja2 templates
+│   ├── templating.py    # Jinja2 templates
+│   └── templates/       # Jinja2 template files
 ├── io/
 │   ├── export.py        # File export
 │   ├── mock_data.py     # Mock data loading
@@ -78,10 +52,14 @@ src/unifi_network_maps/
 │   ├── mkdocs_assets.py # MkDocs sidebar asset writing
 │   ├── paths.py         # Path resolution utilities
 │   └── debug.py         # Debug dump utilities
-└── assets/
-    ├── icons/           # SVG device icons
-    └── themes/          # Default theme YAML files
 ```
+
+### Library dependency
+
+Model, adapters, SVG rendering, and assets are provided by `unifi-topology`:
+- `unifi_topology.model.*` -- topology, devices, edges, clients, VLANs, etc.
+- `unifi_topology.adapters.*` -- UniFi API, config, DNS
+- `unifi_topology.render.*` -- SVG, SVG isometric, inventory table, SVG theming
 
 ## Development Commands
 
@@ -167,10 +145,9 @@ unifi-network-maps --markdown --output ./network.md     # Markdown file
 
 - **Unit tests**: `tests/` - pytest
 - **BDD tests**: `features/` - behave
-- **Contract tests**: `tests/test_contract_unifi.py` - fixture-based
-- **Live contract tests**: Set `UNIFI_CONTRACT_LIVE=1` with UniFi env vars
 - **Smoketest validation**: `tests/test_smoketest_validation.py` - structural validation of output files
 - **Visual regression**: `tests/test_visual_regression.py` - pixel-based SVG comparison
+- **Contract tests**: Moved to `unifi-topology` library
 
 ## Code Quality Guidelines
 
@@ -187,11 +164,9 @@ From AGENTS.md:
 
 ## Key Dependencies
 
-- `requests` - HTTP client (inline UniFi API adapter)
-- `python-dotenv` - Environment loading
-- `PyYAML` - Theme configuration
+- `unifi-topology` - Model, adapters, SVG rendering (brings `requests`, `python-dotenv`, `dnspython`)
+- `PyYAML` - Theme configuration (Mermaid theme parsing)
 - `Jinja2` - Template rendering
-- `dnspython` - Reverse DNS hostname resolution
 - `Faker` (dev) - Mock data generation
 - `cairosvg` (dev) - SVG to PNG rendering for visual regression
 - `Pillow` (dev) - Image comparison for visual regression

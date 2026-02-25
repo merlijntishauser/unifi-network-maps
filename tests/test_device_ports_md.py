@@ -1,4 +1,5 @@
-from unifi_network_maps.model.topology import Device, PortInfo, UplinkInfo
+from unifi_topology.model.topology import Device, PortInfo, UplinkInfo
+
 from unifi_network_maps.render.device_ports_md import render_device_port_overview
 
 

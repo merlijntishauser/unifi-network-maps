@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from collections import defaultdict
 
-from ..model.ports import extract_port_number
-from ..model.topology import PortInfo
+from unifi_topology.model.ports import extract_port_number
+from unifi_topology.model.topology import PortInfo
 
 
 def looks_like_lag(port: PortInfo) -> bool:

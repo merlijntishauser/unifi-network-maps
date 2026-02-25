@@ -4,17 +4,18 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from ..model.classify import client_display_name
-from ..model.clients import (
-    _client_uplink_mac,
-    _client_uplink_port,
+from unifi_topology.model.classify import client_display_name
+from unifi_topology.model.clients import (
     build_client_port_map,
     client_matches_filters,
+    client_uplink_mac,
+    client_uplink_port,
 )
-from ..model.edges import build_device_index, build_port_map
-from ..model.helpers import normalize_mac
-from ..model.lldp import LLDPEntry, local_port_label
-from ..model.topology import Device
+from unifi_topology.model.edges import build_device_index, build_port_map
+from unifi_topology.model.helpers import normalize_mac
+from unifi_topology.model.lldp import LLDPEntry, local_port_label
+from unifi_topology.model.topology import Device
+
 from .device_ports_md import render_device_port_details
 from .device_summary import poe_summary, port_summary, uplink_summary
 from .markdown_tables import escape_markdown, markdown_table_lines
@@ -100,7 +101,7 @@ def _client_rows(
         if not client_matches_filters(client, client_mode=client_mode, only_unifi=only_unifi):
             continue
         name = client_display_name(client)
-        uplink_mac = _client_uplink_mac(client)
+        uplink_mac = client_uplink_mac(client)
         if not name or not uplink_mac:
             continue
         device_name = device_index.get(normalize_mac(uplink_mac))
@@ -108,7 +109,7 @@ def _client_rows(
             continue
         port_label = None
         if include_ports:
-            uplink_port = _client_uplink_port(client)
+            uplink_port = client_uplink_port(client)
             if uplink_port is not None:
                 port_label = f"Port {uplink_port}"
         rows_by_device.setdefault(device_name, []).append((name, port_label))

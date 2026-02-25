@@ -5,26 +5,27 @@ from __future__ import annotations
 import argparse
 import logging
 
-from ..adapters.config import Config
-from ..adapters.dns import resolve_hostnames
-from ..adapters.unifi import fetch_clients, fetch_networks
+from unifi_topology.adapters.config import Config
+from unifi_topology.adapters.dns import resolve_hostnames
+from unifi_topology.adapters.unifi import fetch_clients, fetch_networks
+from unifi_topology.model.classify import classify_device_type
+from unifi_topology.model.clients import build_node_type_map, collapse_client_edges
+from unifi_topology.model.edges import build_port_map, group_devices_by_type, group_nodes_by_vlan
+from unifi_topology.model.inventory import build_client_inventory, build_device_inventory
+from unifi_topology.model.topology import Device, Edge, TopologyResult, WanInfo
+from unifi_topology.model.vlans import build_vlan_names, build_wan_enabled_map
+from unifi_topology.model.wan import extract_wan_info
+from unifi_topology.render.inventory import render_device_inventory_table
+from unifi_topology.render.svg import render_svg
+from unifi_topology.render.svg_theme import SvgOptions, SvgTheme
+
 from ..io.export import write_output
 from ..io.mkdocs_assets import write_mkdocs_sidebar_assets
-from ..model.classify import classify_device_type
-from ..model.clients import build_node_type_map, collapse_client_edges
-from ..model.edges import build_port_map, group_devices_by_type, group_nodes_by_vlan
-from ..model.inventory import build_client_inventory, build_device_inventory
-from ..model.topology import Device, Edge, TopologyResult, WanInfo
-from ..model.vlans import build_vlan_names, build_wan_enabled_map
-from ..model.wan import extract_wan_info
-from ..render.inventory import render_device_inventory_table
 from ..render.legend import resolve_legend_style
 from ..render.lldp_md import render_lldp_md
 from ..render.mermaid import render_mermaid
 from ..render.mermaid_theme import MermaidTheme
 from ..render.mkdocs import MkdocsRenderOptions, render_mkdocs
-from ..render.svg import render_svg
-from ..render.svg_theme import SvgOptions, SvgTheme
 from .runtime import (
     build_edges_with_clients,
     load_dark_mermaid_theme,
@@ -175,7 +176,7 @@ def _build_infrastructure_table(
         if dns_server:
             all_ips = [d.ip for d in devices if d.ip]
             if clients:
-                from ..model.helpers import get_field
+                from unifi_topology.model.helpers import get_field
 
                 for c in clients:
                     ip = get_field(c, "ip")
@@ -243,7 +244,7 @@ def render_svg_output(
     wan_info = _extract_gateway_wan_info(devices, args, networks=networks)
 
     if args.format == "svg-iso":
-        from ..render.svg_isometric import render_svg_isometric
+        from unifi_topology.render.svg_isometric import render_svg_isometric
 
         return render_svg_isometric(
             edges,

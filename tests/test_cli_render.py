@@ -5,10 +5,10 @@ from __future__ import annotations
 import argparse
 
 import pytest
+from unifi_topology.model.topology import Device, Edge, TopologyResult, UplinkInfo
+from unifi_topology.render.svg_theme import DEFAULT_THEME as DEFAULT_SVG_THEME
 
-from unifi_network_maps.model.topology import Device, Edge, TopologyResult, UplinkInfo
 from unifi_network_maps.render.mermaid_theme import DEFAULT_THEME as DEFAULT_MERMAID_THEME
-from unifi_network_maps.render.svg_theme import DEFAULT_THEME as DEFAULT_SVG_THEME
 
 pytestmark = pytest.mark.integration
 

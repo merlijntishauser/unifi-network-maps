@@ -5,37 +5,17 @@ from __future__ import annotations
 from pathlib import Path
 
 import yaml
+from unifi_topology.render.svg_theme import DEFAULT_THEME as DEFAULT_SVG_THEME
+from unifi_topology.render.svg_theme import SvgTheme
+from unifi_topology.render.theme import (
+    BUILTIN_THEMES,
+    builtin_theme_yaml_path,
+    resolve_svg_themes,
+)
 
 from ..io.paths import resolve_theme_path
 from .mermaid_theme import DEFAULT_THEME as DEFAULT_MERMAID_THEME
 from .mermaid_theme import MermaidTheme
-from .svg_theme import DEFAULT_THEME as DEFAULT_SVG_THEME
-from .svg_theme import SvgTheme
-
-# Built-in theme names mapped to YAML files in assets/themes/
-BUILTIN_THEMES = {
-    "unifi": "unifi.yaml",
-    "unifi-dark": "unifi-dark.yaml",
-    "minimal": "minimal.yaml",
-    "minimal-dark": "minimal-dark.yaml",
-    "classic": "default.yaml",
-    "classic-dark": "dark.yaml",
-}
-
-_ASSETS_DIR = Path(__file__).parent.parent / "assets" / "themes"
-
-
-def _coerce_pair(value: object, default: tuple[str, str]) -> tuple[str, str]:
-    if isinstance(value, list | tuple) and len(value) == 2:
-        left, right = value
-        if isinstance(left, str) and isinstance(right, str):
-            return (left, right)
-    if isinstance(value, dict):
-        left = value.get("from") or value.get("start")
-        right = value.get("to") or value.get("end")
-        if isinstance(left, str) and isinstance(right, str):
-            return (left, right)
-    return default
 
 
 def _coerce_color(value: object, default: str) -> str:
@@ -88,91 +68,13 @@ def _mermaid_theme_from_dict(data: dict, base: MermaidTheme) -> MermaidTheme:
     )
 
 
-def _coerce_vlan_colors(value: object) -> dict[int, str]:
-    """Parse vlan_colors from theme YAML."""
-    if not isinstance(value, dict):
-        return {}
-    result: dict[int, str] = {}
-    for key, color in value.items():
-        if isinstance(color, str):
-            if isinstance(key, int):
-                result[key] = color
-            elif isinstance(key, str) and key.isdigit():
-                result[int(key)] = color
-    return result
-
-
-def _coerce_font_family(value: object, default: str | None) -> str | None:
-    """Parse font_family from theme YAML."""
-    if isinstance(value, str) and value:
-        return value
-    return default
-
-
-def _coerce_icon_set(value: object, default: str) -> str:
-    """Parse icon_set from theme YAML."""
-    if isinstance(value, str) and value in ("isometric", "modern"):
-        return value
-    return default
-
-
-def _svg_theme_from_dict(data: dict, base: SvgTheme) -> SvgTheme:
-    nodes = data.get("nodes", {}) if isinstance(data.get("nodes"), dict) else {}
-    links = data.get("links", {}) if isinstance(data.get("links"), dict) else {}
-    text = data.get("text", {}) if isinstance(data.get("text"), dict) else {}
-    status = data.get("status", {}) if isinstance(data.get("status"), dict) else {}
-
-    return SvgTheme(
-        link_standard=_coerce_pair(links.get("standard"), base.link_standard),
-        link_poe=_coerce_pair(links.get("poe"), base.link_poe),
-        node_gateway=_coerce_pair(nodes.get("gateway"), base.node_gateway),
-        node_switch=_coerce_pair(nodes.get("switch"), base.node_switch),
-        node_ap=_coerce_pair(nodes.get("ap"), base.node_ap),
-        node_client=_coerce_pair(nodes.get("client"), base.node_client),
-        node_other=_coerce_pair(nodes.get("other"), base.node_other),
-        node_client_cluster=_coerce_pair(nodes.get("client_cluster"), base.node_client_cluster),
-        node_camera=_coerce_pair(nodes.get("camera"), base.node_camera),
-        node_tv=_coerce_pair(nodes.get("tv"), base.node_tv),
-        node_phone=_coerce_pair(nodes.get("phone"), base.node_phone),
-        node_printer=_coerce_pair(nodes.get("printer"), base.node_printer),
-        node_nas=_coerce_pair(nodes.get("nas"), base.node_nas),
-        node_speaker=_coerce_pair(nodes.get("speaker"), base.node_speaker),
-        node_game_console=_coerce_pair(nodes.get("game_console"), base.node_game_console),
-        node_iot=_coerce_pair(nodes.get("iot"), base.node_iot),
-        vlan_colors=_coerce_vlan_colors(data.get("vlan_colors")),
-        background=_coerce_color(data.get("background"), base.background),
-        text_primary=_coerce_color(text.get("primary"), base.text_primary),
-        text_secondary=_coerce_color(text.get("secondary"), base.text_secondary),
-        status_online=_coerce_color(status.get("online"), base.status_online),
-        status_offline=_coerce_color(status.get("offline"), base.status_offline),
-        wan_globe=_coerce_pair(data.get("wan_globe"), base.wan_globe),
-        wan_background=_coerce_color(data.get("wan_background"), base.wan_background),
-        poe_fill=_coerce_color(data.get("poe_fill"), base.poe_fill),
-        poe_stroke=_coerce_color(data.get("poe_stroke"), base.poe_stroke),
-        icon_set=_coerce_icon_set(data.get("icon_set"), base.icon_set),
-        font_family=_coerce_font_family(data.get("font_family"), base.font_family),
-        icon_decal=_coerce_color(data.get("icon_decal"), base.icon_decal),
-        grid_color=_coerce_color(data.get("grid_color"), base.grid_color),
-        node_side_left=_coerce_color(data.get("node_side_left"), base.node_side_left),
-        node_side_right=_coerce_color(data.get("node_side_right"), base.node_side_right),
-    )
-
-
-def _load_theme_from_path(theme_path: Path) -> tuple[MermaidTheme, SvgTheme]:
-    """Load theme from a path without security validation.
-
-    Internal function for loading built-in themes bundled with the package.
-    """
+def _load_mermaid_theme_from_yaml(theme_path: Path) -> MermaidTheme:
+    """Load Mermaid theme from a YAML file."""
     payload = yaml.safe_load(theme_path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
         raise ValueError("Theme file must contain a YAML mapping")
-
     mermaid_data = payload.get("mermaid", {})
-    svg_data = payload.get("svg", {})
-
-    mermaid_theme = _mermaid_theme_from_dict(mermaid_data, DEFAULT_MERMAID_THEME)
-    svg_theme = _svg_theme_from_dict(svg_data, DEFAULT_SVG_THEME)
-    return mermaid_theme, svg_theme
+    return _mermaid_theme_from_dict(mermaid_data, DEFAULT_MERMAID_THEME)
 
 
 def load_theme(path: str | Path) -> tuple[MermaidTheme, SvgTheme]:
@@ -182,7 +84,9 @@ def load_theme(path: str | Path) -> tuple[MermaidTheme, SvgTheme]:
     For built-in themes, use resolve_themes(theme_name=...) instead.
     """
     theme_path = resolve_theme_path(path, require_exists=False)
-    return _load_theme_from_path(theme_path)
+    mermaid_theme = _load_mermaid_theme_from_yaml(theme_path)
+    svg_theme = resolve_svg_themes(theme_file=theme_path)
+    return mermaid_theme, svg_theme
 
 
 def resolve_themes(
@@ -204,6 +108,8 @@ def resolve_themes(
         if theme_name not in BUILTIN_THEMES:
             valid = ", ".join(sorted(BUILTIN_THEMES.keys()))
             raise ValueError(f"Unknown theme: {theme_name}. Valid themes: {valid}")
-        builtin_path = _ASSETS_DIR / BUILTIN_THEMES[theme_name]
-        return _load_theme_from_path(builtin_path)
+        builtin_path = builtin_theme_yaml_path(theme_name)
+        mermaid_theme = _load_mermaid_theme_from_yaml(builtin_path)
+        svg_theme = resolve_svg_themes(theme_name=theme_name)
+        return mermaid_theme, svg_theme
     return DEFAULT_MERMAID_THEME, DEFAULT_SVG_THEME

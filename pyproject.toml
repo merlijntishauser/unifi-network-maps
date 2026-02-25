@@ -26,11 +26,9 @@ classifiers = [
   "Topic :: System :: Networking",
 ]
 dependencies = [
-  "requests>=2.31,<3",
-  "python-dotenv==1.2.1",
+  "unifi-topology>=0.1.0",
   "PyYAML==6.0.3",
   "Jinja2==3.1.6",
-  "dnspython==2.8.0",
 ]
 
 [project.urls]
@@ -85,7 +83,7 @@ venv = ".venv"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-norecursedirs = ["src/unifi_network_maps/assets"]
+norecursedirs = []
 # Remove --cov from here so it doesn't conflict with PyCharm's runner
 addopts = "-ra"
 markers = [
@@ -113,9 +111,6 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.package-data]
 "unifi_network_maps" = [
-  "assets/icons/*.svg",
-  "assets/icons/isometric/*.svg",
-  "assets/icons/isometric/ISOPACKS_LICENSE",
   "render/templates/*.j2",
 ]
 

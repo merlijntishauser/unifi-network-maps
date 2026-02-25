@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from ..model.classify import classify_device_type
-from ..model.topology import Device, PortInfo
+from unifi_topology.model.classify import classify_device_type
+from unifi_topology.model.topology import Device, PortInfo
 
 
 def port_summary(device: Device) -> str:

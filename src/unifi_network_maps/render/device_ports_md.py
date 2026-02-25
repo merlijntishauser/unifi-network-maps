@@ -5,9 +5,10 @@ from __future__ import annotations
 from collections import defaultdict
 from html import escape as _escape_html
 
-from ..model.classify import classify_device_type
-from ..model.ports import extract_port_number
-from ..model.topology import ClientPortMap, Device, PortInfo, PortMap
+from unifi_topology.model.classify import classify_device_type
+from unifi_topology.model.ports import extract_port_number
+from unifi_topology.model.topology import ClientPortMap, Device, PortInfo, PortMap
+
 from .device_ports_aggregate import (
     aggregate_ports,
     aggregate_sort_key,

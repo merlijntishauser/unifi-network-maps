@@ -6,6 +6,7 @@ import argparse
 from unittest.mock import MagicMock, patch
 
 import pytest
+from unifi_topology.model.topology import Device, Edge, TopologyResult, UplinkInfo
 
 from unifi_network_maps.cli.runtime import (
     build_edges_with_clients,
@@ -15,7 +16,6 @@ from unifi_network_maps.cli.runtime import (
     resolve_mkdocs_client_ports,
     select_edges,
 )
-from unifi_network_maps.model.topology import Device, Edge, TopologyResult, UplinkInfo
 
 pytestmark = pytest.mark.integration
 

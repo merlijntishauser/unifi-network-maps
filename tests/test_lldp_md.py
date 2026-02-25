@@ -1,12 +1,13 @@
-from unifi_network_maps.model.classify import (
+from unifi_topology.model.classify import (
     _client_ucore_display_name,
     _client_unifi_flag,
     client_display_name,
     client_is_unifi,
 )
-from unifi_network_maps.model.clients import _client_uplink_mac, _client_uplink_port
-from unifi_network_maps.model.lldp import LLDPEntry
-from unifi_network_maps.model.topology import Device, PortInfo, UplinkInfo
+from unifi_topology.model.clients import client_uplink_mac, client_uplink_port
+from unifi_topology.model.lldp import LLDPEntry
+from unifi_topology.model.topology import Device, PortInfo, UplinkInfo
+
 from unifi_network_maps.render import lldp_md
 from unifi_network_maps.render.device_summary import uplink_summary
 from unifi_network_maps.render.lldp_md import render_lldp_md
@@ -143,12 +144,12 @@ def test_client_display_name_falls_back_to_mac():
 
 def test_client_uplink_mac_reads_nested():
     client = {"uplink": {"uplink_device_mac": "aa:bb"}}
-    assert _client_uplink_mac(client) == "aa:bb"
+    assert client_uplink_mac(client) == "aa:bb"
 
 
 def test_client_uplink_port_parses_port_label():
     client = {"uplink_remote_port": "Port 9"}
-    assert _client_uplink_port(client) == 9
+    assert client_uplink_port(client) == 9
 
 
 def test_client_unifi_flag_reads_int():

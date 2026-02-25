@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from unifi_network_maps.model.topology import Device
+from unifi_topology.model.topology import Device
+
 from unifi_network_maps.render import mkdocs
 from unifi_network_maps.render.mermaid_theme import DEFAULT_THEME
 

@@ -1,6 +1,6 @@
 # unifi-network-maps
 
-Generate network diagrams (SVG, Mermaid, MkDocs) from UniFi Network Controller data via LLDP topology.
+CLI tool for generating UniFi network maps from LLDP topology. Outputs Mermaid, SVG (including isometric), Markdown, and MkDocs formats.
 
 ## Quick start
 
@@ -21,32 +21,19 @@ unifi-network-maps --format svg-iso --include-clients --include-ports --output n
 
 ## Using as a library
 
+The topology model, adapters, diff engine, and SVG renderer live in the
+[unifi-topology](https://pypi.org/project/unifi-topology/) library. Use it directly for
+programmatic access:
+
 ```python
-from unifi_network_maps.adapters import Config, fetch_devices, fetch_clients, fetch_networks
-from unifi_network_maps.model import (
-    build_topology,
-    build_client_edges,
-    build_node_type_map,
-    normalize_devices,
-)
-from unifi_network_maps.render import render_svg_isometric, SvgOptions
-
-config = Config(url="https://192.168.1.1", site="default", user="admin", password="secret")
-
-raw_devices = fetch_devices(config)
-devices = normalize_devices(raw_devices)
-topology = build_topology(devices)
-
-node_types = build_node_type_map(devices, topology.tree_edges)
-svg = render_svg_isometric(
-    topology.tree_edges,
-    node_types=node_types,
-    options=SvgOptions(layout_mode="grouped"),
-)
+from unifi_topology.model.topology import Topology
+from unifi_topology.adapters import Config, fetch_devices
+from unifi_topology.render import render_svg
 ```
+
+See the [unifi-topology documentation](https://github.com/merlijntishauser/unifi-topology)
+for the full API.
 
 ## API Reference
 
-- [adapters](api/adapters.md) -- Configuration, UniFi API, DNS resolution
-- [model](api/model.md) -- Topology building, device normalization, client edges
-- [render](api/render.md) -- SVG rendering, theming, inventory tables
+- [render](api/render.md) -- Mermaid rendering, MkDocs output, theming (CLI-specific)

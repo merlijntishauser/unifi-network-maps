@@ -1,14 +1,7 @@
 # TODO (Code Review Findings)
 
 ## P0 - Security
-- 
-- **Race Condition in Cache File Operations** (HIGH)
-  - File: `src/unifi_network_maps/adapters/unifi.py:272-275`
-  - Window between `tmp_path.write_text()` and `tmp_path.replace()` allows file modification
-  - Fix: Use `os.O_EXCL`, set restrictive permissions immediately on temp file
-- **Incomplete XSS Protection in SVG Output** (MEDIUM)
-  - File: `src/unifi_network_maps/render/svg.py:106`
-  - Custom `_escape_text()` only escapes `&<>`; should use `html.escape()` for consistency
+-
 - **Potential Exception Leak of Sensitive Information** (MEDIUM)
   - Files: `src/unifi_network_maps/cli/main.py:72,90,95`, `src/unifi_network_maps/cli/runtime.py:126,136`
   - Broad exception handlers log exception details; may leak credentials/tokens
@@ -35,10 +28,6 @@
   - Multiple files reading user-supplied files
   - Very large mock data or theme files cause memory exhaustion
   - Fix: Check file size before reading (e.g., max 10MB)
-- **Unvalidated Environment Variable Integers** (LOW)
-  - File: `src/unifi_network_maps/adapters/unifi.py:219-225,281-287,291-298,302-309`
-  - Env vars (`UNIFI_CACHE_TTL_SECONDS`, `UNIFI_RETRY_ATTEMPTS`, etc.) use `.isdigit()` but no range validation
-  - Fix: Add reasonable bounds checks after conversion
 - **Missing Validation on Timezone String** (LOW)
   - File: `src/unifi_network_maps/cli/args.py:150`
   - `--mkdocs-timestamp-zone` accepts arbitrary strings; invalid timezones cause runtime errors
@@ -66,7 +55,7 @@
   - Cons: extra dependencies, UI/CLI drift risk, packaging story for future embedded `--web`.
   - Scope: choose data source (mock with sliders + generate, or real UniFi controller selection).
   - Option B details: embed server behind `--web` flag, run in-process using shared render functions.
-    - Pros: “one binary/one package”; great UX.
+    - Pros: "one binary/one package"; great UX.
     - Packaging: keep UI assets under `assets/web/`, serve via FastAPI/Starlette `StaticFiles`.
     - UX: same form as Option A, but ships with package and requires no external setup.
     - Safety: explicit local bind (127.0.0.1), optional `--web-host/--web-port`, no creds stored.

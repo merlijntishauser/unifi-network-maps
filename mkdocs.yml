@@ -56,6 +56,4 @@ nav:
   - Home: index.md
   - API Reference:
       - Overview: api/index.md
-      - adapters: api/adapters.md
-      - model: api/model.md
       - render: api/render.md

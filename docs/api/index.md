@@ -1,17 +1,11 @@
 # API Reference
 
-The public API is organized into three packages:
+This CLI package provides Mermaid rendering, MkDocs output, and theming on top of the
+[unifi-topology](https://pypi.org/project/unifi-topology/) library.
 
-| Package | Purpose |
-|---------|---------|
-| [`adapters`](adapters.md) | UniFi controller communication, configuration, DNS resolution |
-| [`model`](model.md) | Topology building, device normalization, client edges, VLAN grouping |
-| [`render`](render.md) | SVG diagram rendering, theming, inventory tables |
-
-All public symbols are available via package-level imports:
-
-```python
-from unifi_network_maps.adapters import Config, fetch_devices
-from unifi_network_maps.model import Device, Edge, build_topology
-from unifi_network_maps.render import render_svg, SvgOptions
-```
+| Package | Location | Purpose |
+|---------|----------|---------|
+| `unifi_topology.model` | [unifi-topology](https://github.com/merlijntishauser/unifi-topology) | Topology building, devices, edges, clients, VLANs |
+| `unifi_topology.adapters` | [unifi-topology](https://github.com/merlijntishauser/unifi-topology) | UniFi API, configuration, DNS resolution |
+| `unifi_topology.render` | [unifi-topology](https://github.com/merlijntishauser/unifi-topology) | SVG rendering, inventory tables, theming |
+| [`unifi_network_maps.render`](render.md) | This package | Mermaid output, MkDocs format, Mermaid theming |

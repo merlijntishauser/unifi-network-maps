@@ -1,4 +1,4 @@
-.PHONY: venv install lint format typecheck complexity test test-unit test-integration test-contract \
+.PHONY: venv install lint format typecheck complexity test test-unit test-integration \
         test-acceptance bdd coverage smoketest smoketest-mock smoketest-validate visual-regression \
         visual-baselines mock-data update-examples ci version version-sync version-bump theme-matrix \
         docs docs-serve help
@@ -45,9 +45,6 @@ test-unit:
 
 test-integration:
 	$(VENV)/pytest -m integration
-
-test-contract:
-	$(VENV)/pytest -m contract
 
 test-acceptance:
 	$(VENV)/pytest -m acceptance

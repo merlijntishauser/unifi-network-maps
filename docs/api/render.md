@@ -1,5 +1,5 @@
 # render
 
-SVG diagram rendering, theming, and inventory tables.
+Mermaid rendering, MkDocs output, and Mermaid theming (CLI-specific).
 
 ::: unifi_network_maps.render

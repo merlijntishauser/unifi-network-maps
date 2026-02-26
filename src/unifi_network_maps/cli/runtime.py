@@ -17,11 +17,10 @@ from unifi_topology.model.edges import (
 from unifi_topology.model.topology import ClientPortMap, Device, TopologyResult, build_device_index
 from unifi_topology.model.topology_coerce import normalize_devices
 from unifi_topology.model.vlans import build_network_vlan_map
-from unifi_topology.render.theme import builtin_theme_yaml_path
 
 from ..io.debug import debug_dump_devices
 from ..render.mermaid_theme import MermaidTheme
-from ..render.theme import load_theme
+from ..render.theme import resolve_themes
 
 logger = logging.getLogger(__name__)
 
@@ -155,7 +154,7 @@ def load_topology_for_render(
 
 def load_dark_mermaid_theme() -> MermaidTheme | None:
     try:
-        dark_theme, _ = load_theme(builtin_theme_yaml_path("classic-dark"))
+        dark_theme, _ = resolve_themes(theme_name="classic-dark")
     except (FileNotFoundError, ValueError, yaml.YAMLError) as exc:
         logger.warning("Failed to load dark theme: %s", exc)
         return None

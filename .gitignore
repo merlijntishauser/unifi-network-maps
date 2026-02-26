@@ -5,6 +5,7 @@ __pycache__/
 *.pyd
 .env
 .env.*
+!.env.example
 .DS_Store
 .idea/
 src/*.egg-info/
@@ -16,9 +17,6 @@ network.md
 .cache/
 .coverage.*
 *.svg
-!src/unifi_network_maps/assets/icons/*.svg
-!src/unifi_network_maps/assets/icons/isometric/*.svg
-!src/unifi_network_maps/assets/icons/modern/*.svg
 !examples/output/*.svg
 !examples/themes/*.svg
 !examples/themes/*.png

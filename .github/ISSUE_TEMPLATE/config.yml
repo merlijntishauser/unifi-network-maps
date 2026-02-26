@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Home Assistant integration
+    url: https://github.com/merlijntishauser/unifi-network-maps-ha/issues
+    about: For issues with the Home Assistant integration, open an issue there instead.
+  - name: Topology library
+    url: https://github.com/merlijntishauser/unifi-topology/issues
+    about: For issues with the topology model, adapters, or SVG rendering, open an issue there instead.

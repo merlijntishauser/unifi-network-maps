@@ -1,3 +1,0 @@
--r requirements.txt
-mkdocs-material==9.7.2
-mkdocstrings[python]==1.0.3

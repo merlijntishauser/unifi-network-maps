@@ -1,7 +1,7 @@
 .PHONY: venv install lint format typecheck complexity test test-unit test-integration \
         test-acceptance bdd coverage smoketest smoketest-mock smoketest-validate visual-regression \
         visual-baselines mock-data update-examples ci version version-sync version-bump theme-matrix \
-        docs docs-serve help
+        help
 
 VERSION_FILE = VERSION
 VENV = .venv/bin
@@ -125,13 +125,6 @@ version-bump:
 
 theme-matrix:
 	@PYTHONPATH=src $(VENV)/python scripts/generate_theme_matrix.py
-
-# Docs
-docs:
-	$(VENV)/mkdocs build
-
-docs-serve:
-	$(VENV)/mkdocs serve
 
 # Help
 help:

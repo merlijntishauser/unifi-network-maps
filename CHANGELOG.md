@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.3] - 2026-03-14
+### Changed
+- Bump `unifi-topology` dependency to >= 1.1.1
+- Bump dev dependencies: ruff 0.15.6, Faker 40.8.0, cairosvg 2.9.0, setuptools 82.0.1
+
+### Removed
+- Remove mkdocs site and GitHub Pages deployment (now in `unifi-topology`)
+
+## [2.0.2] - 2026-03-04
+### Fixed
+- Fix dark theme loading failing in CI due to path check
+
 ## [2.0.0] - 2026-02-25
 ### Changed
 - **Breaking**: Extract model, adapters, SVG rendering, and assets into the [unifi-topology](https://pypi.org/project/unifi-topology/) library
@@ -329,7 +341,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Introduced SVG renderer and tree layout fixes.
 - Increased test coverage and added coverage tooling.
 
-[Unreleased]: https://github.com/merlijntishauser/unifi-network-maps/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/merlijntishauser/unifi-network-maps/compare/v2.0.3...HEAD
+[2.0.3]: https://github.com/merlijntishauser/unifi-network-maps/compare/v2.0.2...v2.0.3
+[2.0.2]: https://github.com/merlijntishauser/unifi-network-maps/compare/v2.0.0...v2.0.2
 [2.0.0]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.6.4...v2.0.0
 [1.6.4]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.6.3...v1.6.4
 [1.6.3]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.6.2...v1.6.3

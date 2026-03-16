@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from .mermaid import render_legend, render_legend_compact
-from .mermaid_theme import MermaidTheme
+from unifi_topology.render.mermaid import render_legend, render_legend_compact
+from unifi_topology.render.mermaid_theme import MermaidTheme
 
 
 def resolve_legend_style(*, format_name: str, legend_style: str) -> str:

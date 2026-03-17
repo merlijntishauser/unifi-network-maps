@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from unifi_topology.render.mermaid_theme import DEFAULT_THEME
-
 from unifi_network_maps.render.legend import render_legend_only, resolve_legend_style
+from unifi_network_maps.render.mermaid_theme import DEFAULT_THEME
 
 # --- resolve_legend_style ---
 

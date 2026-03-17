@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from unifi_topology.model.topology import Device, PortInfo, UplinkInfo
-from unifi_topology.render._device_summary import poe_summary, port_summary, uplink_summary
+
+from unifi_network_maps.render.device_summary import poe_summary, port_summary, uplink_summary
 
 
 def _make_device(

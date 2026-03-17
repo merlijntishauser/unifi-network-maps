@@ -1,5 +1,6 @@
 from unifi_topology.model.topology import Device, PortInfo, UplinkInfo
-from unifi_topology.render.markdown import render_device_port_overview
+
+from unifi_network_maps.render.device_ports_md import render_device_port_overview
 
 
 def _device_with_ports(name, *, dev_type="usw", ports=None, uplink=None, model_name="", model=""):

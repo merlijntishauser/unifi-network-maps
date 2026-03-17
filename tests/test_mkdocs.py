@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from unifi_topology.model.topology import Device
+from unifi_topology.render.mermaid_theme import DEFAULT_THEME
 
 from unifi_network_maps.render import mkdocs
-from unifi_network_maps.render.mermaid_theme import DEFAULT_THEME
 
 
 def _device(name: str = "Switch A") -> Device:

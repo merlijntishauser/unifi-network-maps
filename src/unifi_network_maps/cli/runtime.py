@@ -17,9 +17,9 @@ from unifi_topology.model.edges import (
 from unifi_topology.model.topology import ClientPortMap, Device, TopologyResult, build_device_index
 from unifi_topology.model.topology_coerce import normalize_devices
 from unifi_topology.model.vlans import build_network_vlan_map
+from unifi_topology.render.mermaid_theme import MermaidTheme
 
 from ..io.debug import debug_dump_devices
-from ..render.mermaid_theme import MermaidTheme
 from ..render.theme import resolve_themes
 
 logger = logging.getLogger(__name__)

@@ -5,6 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import yaml
+from unifi_topology.render.mermaid_theme import DEFAULT_THEME as DEFAULT_MERMAID_THEME
+from unifi_topology.render.mermaid_theme import MermaidTheme
 from unifi_topology.render.svg_theme import DEFAULT_THEME as DEFAULT_SVG_THEME
 from unifi_topology.render.svg_theme import SvgTheme
 from unifi_topology.render.theme import (
@@ -14,8 +16,6 @@ from unifi_topology.render.theme import (
 )
 
 from ..io.paths import resolve_theme_path
-from .mermaid_theme import DEFAULT_THEME as DEFAULT_MERMAID_THEME
-from .mermaid_theme import MermaidTheme
 
 
 def _coerce_color(value: object, default: str) -> str:

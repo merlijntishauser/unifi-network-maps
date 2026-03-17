@@ -16,15 +16,15 @@ from unifi_topology.model.topology import Device, Edge, TopologyResult, WanInfo
 from unifi_topology.model.vlans import build_vlan_names, build_wan_enabled_map
 from unifi_topology.model.wan import extract_wan_info
 from unifi_topology.render.inventory import render_device_inventory_table
+from unifi_topology.render.lldp import render_lldp_md
+from unifi_topology.render.mermaid import render_mermaid
+from unifi_topology.render.mermaid_theme import MermaidTheme
 from unifi_topology.render.svg import render_svg
 from unifi_topology.render.svg_theme import SvgOptions, SvgTheme
 
 from ..io.export import write_output
 from ..io.mkdocs_assets import write_mkdocs_sidebar_assets
 from ..render.legend import resolve_legend_style
-from ..render.lldp_md import render_lldp_md
-from ..render.mermaid import render_mermaid
-from ..render.mermaid_theme import MermaidTheme
 from ..render.mkdocs import MkdocsRenderOptions, render_mkdocs
 from .runtime import (
     build_edges_with_clients,

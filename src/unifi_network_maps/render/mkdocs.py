@@ -9,10 +9,10 @@ from zoneinfo import ZoneInfo
 
 from unifi_topology.model.clients import build_node_type_map
 from unifi_topology.model.topology import ClientPortMap, Device, PortMap
+from unifi_topology.render.markdown import render_device_port_overview
+from unifi_topology.render.mermaid import render_legend, render_legend_compact, render_mermaid
+from unifi_topology.render.mermaid_theme import MermaidTheme
 
-from .device_ports_md import render_device_port_overview
-from .mermaid import render_legend, render_legend_compact, render_mermaid
-from .mermaid_theme import MermaidTheme
 from .templating import render_template
 
 logger = logging.getLogger(__name__)

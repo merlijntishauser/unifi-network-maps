@@ -2,10 +2,15 @@
 
 from __future__ import annotations
 
-from jinja2 import Environment, PackageLoader, StrictUndefined, select_autoescape
+from jinja2 import ChoiceLoader, Environment, PackageLoader, StrictUndefined, select_autoescape
 
 _ENV = Environment(
-    loader=PackageLoader("unifi_network_maps.render", "templates"),
+    loader=ChoiceLoader(
+        [
+            PackageLoader("unifi_network_maps.render", "templates"),
+            PackageLoader("unifi_topology.render", "templates"),
+        ]
+    ),
     autoescape=select_autoescape(enabled_extensions=("html", "xml")),
     trim_blocks=True,
     lstrip_blocks=True,

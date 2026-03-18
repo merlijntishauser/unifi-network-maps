@@ -23,20 +23,13 @@ src/unifi_network_maps/
 │   ├── render.py        # Render dispatch logic
 │   └── runtime.py       # Runtime context management
 │
-├── render/              # CLI-only output renderers
+├── render/              # CLI-only output renderers (MkDocs, legend, theming)
 │   ├── __init__.py      # Re-exports from unifi_topology.render
-│   ├── mermaid.py       # Mermaid diagram output
-│   ├── mermaid_theme.py # Mermaid theming
-│   ├── theme.py         # Theme loading + library SVG delegation
-│   ├── legend.py        # Legend rendering
+│   ├── legend.py        # Legend rendering helpers
 │   ├── mkdocs.py        # MkDocs format output
-│   ├── lldp_md.py       # LLDP markdown tables
-│   ├── device_summary.py    # Device summary sections
-│   ├── device_ports_md.py   # Device port markdown
-│   ├── device_ports_aggregate.py # Aggregated port tables
-│   ├── markdown_tables.py   # Generic markdown table helpers
+│   ├── theme.py         # Theme loading + library SVG delegation
 │   ├── templating.py    # Jinja2 template utilities
-│   └── templates/       # Jinja2 template files
+│   └── templates/       # Jinja2 template files (MkDocs)
 │
 └── io/                  # File I/O operations
     ├── export.py        # File export utilities

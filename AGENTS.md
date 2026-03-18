@@ -6,7 +6,7 @@ Quick reference for AI assistants working on this codebase.
 
 **unifi-network-maps** - A Python CLI tool that generates network diagrams (Mermaid, SVG, MkDocs) from UniFi Network Controller data via LLDP topology.
 
-- **Version**: 2.0.0
+- **Version**: 2.1.0
 - **Python**: 3.12+ (3.13 preferred)
 - **License**: MIT
 - **PyPI**: `pip install unifi-network-maps`
@@ -14,13 +14,13 @@ Quick reference for AI assistants working on this codebase.
 ## Architecture
 
 ```
-unifi-topology (library) → unifi-network-maps (CLI)
-  Model + Adapters + SVG     Mermaid + MkDocs + CLI + IO
+unifi-topology (library)                  → unifi-network-maps (CLI)
+  Model + Adapters + SVG + Mermaid + LLDP    MkDocs + Theme + CLI + IO
 ```
 
 The model layer, adapters, SVG renderer, and assets live in the `unifi-topology` library.
-This CLI depends on `unifi-topology` and adds Mermaid rendering, MkDocs output, CLI argument
-parsing, and file I/O.
+This CLI depends on `unifi-topology` and adds MkDocs output, theme loading, CLI argument
+parsing, and file I/O. Mermaid, LLDP, device port, and inventory rendering live in the library.
 
 ### Source Layout
 
@@ -31,20 +31,13 @@ src/unifi_network_maps/
 │   ├── main.py          # Main entry point
 │   ├── render.py        # Render dispatch
 │   └── runtime.py       # Runtime context
-├── render/              # CLI-only renderers (Mermaid, MkDocs, markdown)
+├── render/              # CLI-only renderers (MkDocs, legend, theming)
 │   ├── __init__.py      # Re-exports from unifi_topology.render
-│   ├── mermaid.py       # Mermaid output
-│   ├── mermaid_theme.py # Mermaid theming
-│   ├── theme.py         # Mermaid theme loading + library SVG delegation
-│   ├── legend.py        # Legend rendering
-│   ├── mkdocs.py        # MkDocs format
-│   ├── lldp_md.py       # LLDP markdown tables
-│   ├── device_summary.py    # Device summary sections
-│   ├── device_ports_md.py   # Device port markdown
-│   ├── device_ports_aggregate.py # Aggregated port tables
-│   ├── markdown_tables.py   # Generic markdown table helpers
-│   ├── templating.py    # Jinja2 templates
-│   └── templates/       # Jinja2 template files
+│   ├── legend.py        # Legend rendering helpers
+│   ├── mkdocs.py        # MkDocs format output
+│   ├── theme.py         # Theme loading + library SVG delegation
+│   ├── templating.py    # Jinja2 template rendering
+│   └── templates/       # Jinja2 template files (MkDocs)
 ├── io/
 │   ├── export.py        # File export
 │   ├── mock_data.py     # Mock data loading
@@ -59,7 +52,7 @@ src/unifi_network_maps/
 Model, adapters, SVG rendering, and assets are provided by `unifi-topology`:
 - `unifi_topology.model.*` -- topology, devices, edges, clients, VLANs, etc.
 - `unifi_topology.adapters.*` -- UniFi API, config, DNS
-- `unifi_topology.render.*` -- SVG, SVG isometric, inventory table, SVG theming
+- `unifi_topology.render.*` -- SVG, SVG isometric, Mermaid, LLDP, device ports, inventory, theming
 
 ## Development Commands
 

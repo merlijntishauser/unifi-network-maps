@@ -7,15 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-03-18
+
+### Removed
+- Remove render compatibility shims that caused pyright `reportPrivateImportUsage` errors; imports now go directly to `unifi-topology`
+
+### Fixed
+- Fix pyright type-check failures on `mermaid.py` and `test_lldp_md.py` caused by shim `__getattr__` returning `object`
+- Update AGENTS.md, CONTRIBUTING.md, and render README to reflect actual module layout after extraction
+
 ## [2.1.0] - 2026-03-17
 ### Changed
 - Move shared Mermaid, LLDP markdown, and device port markdown rendering to `unifi-topology` so this package stays focused on CLI orchestration and MkDocs output
 - Load Jinja templates from both `unifi-network-maps` and `unifi-topology` render packages for shared renderer templates
 - Bump the minimum `unifi-topology` dependency to `>=1.3.0`
-
-### Fixed
-- Restore compatibility shims for legacy `unifi_network_maps.render.*` import paths after moving shared renderers upstream
-- Align `requirements.txt` and `constraints.txt` with the `unifi-topology>=1.3.0` dependency floor
 
 ## [2.0.3] - 2026-03-14
 ### Changed

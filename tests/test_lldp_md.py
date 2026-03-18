@@ -7,10 +7,9 @@ from unifi_topology.model.classify import (
 from unifi_topology.model.clients import client_uplink_mac, client_uplink_port
 from unifi_topology.model.lldp import LLDPEntry
 from unifi_topology.model.topology import Device, PortInfo, UplinkInfo
-
-from unifi_network_maps.render import lldp_md
-from unifi_network_maps.render.device_summary import uplink_summary
-from unifi_network_maps.render.lldp_md import render_lldp_md
+from unifi_topology.render import lldp as lldp_md
+from unifi_topology.render._device_summary import uplink_summary
+from unifi_topology.render.lldp import render_lldp_md
 
 
 def test_render_lldp_md_includes_device_header():

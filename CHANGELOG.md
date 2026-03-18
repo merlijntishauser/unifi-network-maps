@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [2.1.0] - 2026-03-17
 ### Changed
 - Move shared Mermaid, LLDP markdown, and device port markdown rendering to `unifi-topology` so this package stays focused on CLI orchestration and MkDocs output
 - Load Jinja templates from both `unifi-network-maps` and `unifi-topology` render packages for shared renderer templates
@@ -349,7 +351,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Introduced SVG renderer and tree layout fixes.
 - Increased test coverage and added coverage tooling.
 
-[Unreleased]: https://github.com/merlijntishauser/unifi-network-maps/compare/v2.0.3...HEAD
+[Unreleased]: https://github.com/merlijntishauser/unifi-network-maps/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/merlijntishauser/unifi-network-maps/compare/v2.0.3...v2.1.0
 [2.0.3]: https://github.com/merlijntishauser/unifi-network-maps/compare/v2.0.2...v2.0.3
 [2.0.2]: https://github.com/merlijntishauser/unifi-network-maps/compare/v2.0.0...v2.0.2
 [2.0.0]: https://github.com/merlijntishauser/unifi-network-maps/compare/v1.6.4...v2.0.0

@@ -128,7 +128,7 @@ def test_main_mermaid_includes_wired_clients(monkeypatch):
             name="Gateway", model_name="", model="", mac="aa:bb", ip="", type="udm", lldp_info=[]
         )
     ]
-    clients = [{"name": "Client", "is_wired": True, "sw_mac": "aa:bb"}]
+    clients = [{"name": "Client", "mac": "cc:dd", "is_wired": True, "sw_mac": "aa:bb"}]
 
     def fake_render_mermaid(edges, *, node_types, **kwargs):
         captured["node_types"] = node_types
@@ -138,15 +138,13 @@ def test_main_mermaid_includes_wired_clients(monkeypatch):
     monkeypatch.setattr(runtime_module, "fetch_devices", lambda *args, **kwargs: devices)
     monkeypatch.setattr(runtime_module, "fetch_networks", lambda *args, **kwargs: [])
     monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw, vlan_map=None: raw)
-    monkeypatch.setattr(
-        runtime_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]}
-    )
+    monkeypatch.setattr(runtime_module, "group_devices_by_type", lambda *_: {"gateway": ["aa:bb"]})
     monkeypatch.setattr(
         runtime_module,
         "build_topology",
         lambda *args, **kwargs: TopologyResult(
-            raw_edges=[Edge("Gateway", "Switch")],
-            tree_edges=[Edge("Gateway", "Switch")],
+            raw_edges=[Edge("aa:bb", "aa:bb:cc:dd:ee:02")],
+            tree_edges=[Edge("aa:bb", "aa:bb:cc:dd:ee:02")],
         ),
     )
     monkeypatch.setattr(runtime_module, "fetch_clients", lambda *args, **kwargs: clients)
@@ -154,7 +152,7 @@ def test_main_mermaid_includes_wired_clients(monkeypatch):
     monkeypatch.setattr(render_module, "write_output", lambda *args, **kwargs: None)
 
     main(["--include-clients", "--stdout"])
-    assert captured["node_types"]["Client"] == "client"
+    assert captured["node_types"]["cc:dd"] == "client"
 
 
 def test_main_payload_from_mock_includes_vlan_info(monkeypatch, tmp_path):
@@ -273,15 +271,13 @@ def test_main_mermaid_wraps_markdown(monkeypatch):
     monkeypatch.setattr(runtime_module, "fetch_devices", lambda *args, **kwargs: devices)
     monkeypatch.setattr(runtime_module, "fetch_networks", lambda *args, **kwargs: [])
     monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw, vlan_map=None: raw)
-    monkeypatch.setattr(
-        runtime_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]}
-    )
+    monkeypatch.setattr(runtime_module, "group_devices_by_type", lambda *_: {"gateway": ["aa:bb"]})
     monkeypatch.setattr(
         runtime_module,
         "build_topology",
         lambda *args, **kwargs: TopologyResult(
-            raw_edges=[Edge("Gateway", "Switch")],
-            tree_edges=[Edge("Gateway", "Switch")],
+            raw_edges=[Edge("aa:bb", "aa:bb:cc:dd:ee:02")],
+            tree_edges=[Edge("aa:bb", "aa:bb:cc:dd:ee:02")],
         ),
     )
     monkeypatch.setattr(render_module, "render_mermaid", lambda *args, **kwargs: "graph TB\n")
@@ -306,15 +302,13 @@ def test_main_mkdocs_includes_legend(monkeypatch):
     monkeypatch.setattr(runtime_module, "fetch_devices", lambda *args, **kwargs: devices)
     monkeypatch.setattr(runtime_module, "fetch_networks", lambda *args, **kwargs: [])
     monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw, vlan_map=None: raw)
-    monkeypatch.setattr(
-        runtime_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]}
-    )
+    monkeypatch.setattr(runtime_module, "group_devices_by_type", lambda *_: {"gateway": ["aa:bb"]})
     monkeypatch.setattr(
         runtime_module,
         "build_topology",
         lambda *args, **kwargs: TopologyResult(
-            raw_edges=[Edge("Gateway", "Switch")],
-            tree_edges=[Edge("Gateway", "Switch")],
+            raw_edges=[Edge("aa:bb", "aa:bb:cc:dd:ee:02")],
+            tree_edges=[Edge("aa:bb", "aa:bb:cc:dd:ee:02")],
         ),
     )
     monkeypatch.setattr(mkdocs_module, "render_mermaid", lambda *args, **kwargs: "graph TB\n")
@@ -358,15 +352,13 @@ def test_main_mkdocs_sidebar_writes_assets(monkeypatch, tmp_path):
     monkeypatch.setattr(runtime_module, "fetch_devices", lambda *args, **kwargs: devices)
     monkeypatch.setattr(runtime_module, "fetch_networks", lambda *args, **kwargs: [])
     monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw, vlan_map=None: raw)
-    monkeypatch.setattr(
-        runtime_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]}
-    )
+    monkeypatch.setattr(runtime_module, "group_devices_by_type", lambda *_: {"gateway": ["aa:bb"]})
     monkeypatch.setattr(
         runtime_module,
         "build_topology",
         lambda *args, **kwargs: TopologyResult(
-            raw_edges=[Edge("Gateway", "Switch")],
-            tree_edges=[Edge("Gateway", "Switch")],
+            raw_edges=[Edge("aa:bb", "aa:bb:cc:dd:ee:02")],
+            tree_edges=[Edge("aa:bb", "aa:bb:cc:dd:ee:02")],
         ),
     )
     monkeypatch.setattr(mkdocs_module, "render_mermaid", lambda *args, **kwargs: "graph TB\n")
@@ -396,15 +388,13 @@ def test_main_mkdocs_sidebar_disabled_does_not_write_assets(monkeypatch, tmp_pat
     monkeypatch.setattr(runtime_module, "fetch_devices", lambda *args, **kwargs: devices)
     monkeypatch.setattr(runtime_module, "fetch_networks", lambda *args, **kwargs: [])
     monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw, vlan_map=None: raw)
-    monkeypatch.setattr(
-        runtime_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]}
-    )
+    monkeypatch.setattr(runtime_module, "group_devices_by_type", lambda *_: {"gateway": ["aa:bb"]})
     monkeypatch.setattr(
         runtime_module,
         "build_topology",
         lambda *args, **kwargs: TopologyResult(
-            raw_edges=[Edge("Gateway", "Switch")],
-            tree_edges=[Edge("Gateway", "Switch")],
+            raw_edges=[Edge("aa:bb", "aa:bb:cc:dd:ee:02")],
+            tree_edges=[Edge("aa:bb", "aa:bb:cc:dd:ee:02")],
         ),
     )
     monkeypatch.setattr(mkdocs_module, "render_mermaid", lambda *args, **kwargs: "graph TB\n")
@@ -436,15 +426,13 @@ def test_main_debug_dump_uses_non_negative_sample(monkeypatch):
     monkeypatch.setattr(runtime_module, "fetch_networks", lambda *args, **kwargs: [])
     monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw, vlan_map=None: raw)
     monkeypatch.setattr(runtime_module, "debug_dump_devices", debug_dump)
-    monkeypatch.setattr(
-        runtime_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]}
-    )
+    monkeypatch.setattr(runtime_module, "group_devices_by_type", lambda *_: {"gateway": ["aa:bb"]})
     monkeypatch.setattr(
         runtime_module,
         "build_topology",
         lambda *args, **kwargs: TopologyResult(
-            raw_edges=[Edge("Gateway", "Switch")],
-            tree_edges=[Edge("Gateway", "Switch")],
+            raw_edges=[Edge("aa:bb", "aa:bb:cc:dd:ee:02")],
+            tree_edges=[Edge("aa:bb", "aa:bb:cc:dd:ee:02")],
         ),
     )
     monkeypatch.setattr(render_module, "render_mermaid", lambda *args, **kwargs: "graph TB\n")
@@ -466,6 +454,7 @@ def test_main_svg_uses_size_overrides(monkeypatch):
         edges,
         *,
         node_types,
+        node_names=None,
         options,
         theme=None,
         groups=None,
@@ -481,15 +470,13 @@ def test_main_svg_uses_size_overrides(monkeypatch):
     monkeypatch.setattr(runtime_module, "fetch_devices", lambda *args, **kwargs: devices)
     monkeypatch.setattr(runtime_module, "fetch_networks", lambda *args, **kwargs: [])
     monkeypatch.setattr(runtime_module, "normalize_devices", lambda raw, vlan_map=None: raw)
-    monkeypatch.setattr(
-        runtime_module, "group_devices_by_type", lambda *_: {"gateway": ["Gateway"]}
-    )
+    monkeypatch.setattr(runtime_module, "group_devices_by_type", lambda *_: {"gateway": ["aa:bb"]})
     monkeypatch.setattr(
         runtime_module,
         "build_topology",
         lambda *args, **kwargs: TopologyResult(
-            raw_edges=[Edge("Gateway", "Switch")],
-            tree_edges=[Edge("Gateway", "Switch")],
+            raw_edges=[Edge("aa:bb", "aa:bb:cc:dd:ee:02")],
+            tree_edges=[Edge("aa:bb", "aa:bb:cc:dd:ee:02")],
         ),
     )
     monkeypatch.setattr(render_module, "render_svg", fake_render_svg)

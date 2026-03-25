@@ -67,7 +67,7 @@ def test_group_devices_by_type_includes_ap():
         Device(name="AP One", model_name="", model="", mac="aa", ip="", type="uap", lldp_info=[])
     ]
     groups = group_devices_by_type(devices)
-    assert groups["ap"] == ["AP One"]
+    assert groups["ap"] == ["aa"]
 
 
 def test_render_mermaid_with_groups_uses_subgraph():

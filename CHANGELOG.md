@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Breaking**: Migrate to MAC-based node identification from `unifi-topology` 2.1.0 ([#62])
+  - All internal node identifiers (edges, groups, node type maps) now use normalized MAC addresses instead of device names
+  - `node_names` mapping threaded through to all renderers (`render_mermaid`, `render_svg`, `render_svg_isometric`) for display labels
+  - `collapse_client_edges` and `build_client_edges` receive `node_names` for label generation
+  - Debug dump uses MAC-based device lookup
+  - Client grouping in SVG grouped layout derived from `node_types` map instead of raw client dicts
+- Bump minimum `unifi-topology` dependency to `>=2.1.0`
+
+[#62]: https://github.com/merlijntishauser/unifi-network-maps/issues/62
+
 ## [2.1.1] - 2026-03-18
 
 ### Removed

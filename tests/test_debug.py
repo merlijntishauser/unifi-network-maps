@@ -34,8 +34,8 @@ def test_device_to_dict_falls_back_to_repr():
 
 def test_debug_dump_devices_logs_gateway_and_sample(caplog):
     raw = [
-        SimpleNamespace(name="Gateway", data="gw"),
-        SimpleNamespace(name="Switch", data="sw"),
+        SimpleNamespace(name="Gateway", mac="aa", data="gw"),
+        SimpleNamespace(name="Switch", mac="bb", data="sw"),
     ]
     normalized = [
         Device(name="Gateway", model_name="", model="", mac="aa", ip="", type="udm", lldp_info=[]),

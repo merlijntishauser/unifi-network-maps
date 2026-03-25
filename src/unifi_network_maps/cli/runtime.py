@@ -94,6 +94,7 @@ def build_edges_with_clients(
     site: str,
     *,
     clients_override: list[object] | None = None,
+    node_names: dict[str, str] | None = None,
 ) -> tuple[list, list | None]:
     clients = None
     client_edges: list = []
@@ -115,6 +116,7 @@ def build_edges_with_clients(
             include_ports=args.include_ports,
             client_mode=args.client_scope,
             only_unifi=args.only_unifi,
+            node_names=node_names,
         )
     # Enrich infrastructure edges with active VLANs from client traffic
     enriched_edges = enrich_edges_with_active_vlans(edges, client_edges)

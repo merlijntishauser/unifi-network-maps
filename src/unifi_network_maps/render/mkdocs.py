@@ -38,6 +38,7 @@ def render_mkdocs(
     client_ports: ClientPortMap | None,
     options: MkdocsRenderOptions,
     dark_mermaid_theme: MermaidTheme | None = None,
+    node_names: dict[str, str] | None = None,
 ) -> str:
     clients = None
     node_types = build_node_type_map(devices, clients, client_mode=options.client_scope)
@@ -45,6 +46,7 @@ def render_mkdocs(
         edges,
         direction=options.direction,
         node_types=node_types,
+        node_names=node_names,
         theme=mermaid_theme,
     )
     dual_theme = options.dual_theme and dark_mermaid_theme is not None
@@ -54,6 +56,7 @@ def render_mkdocs(
             edges,
             direction=options.direction,
             node_types=node_types,
+            node_names=node_names,
             theme=dark_mermaid_theme,
         )
         map_block = _mkdocs_dual_mermaid_block(content, dark_content, base_class="unifi-mermaid")

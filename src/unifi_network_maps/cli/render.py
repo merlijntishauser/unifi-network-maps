@@ -8,6 +8,7 @@ import logging
 from unifi_topology.adapters.config import Config
 from unifi_topology.adapters.dns import resolve_hostnames
 from unifi_topology.adapters.unifi import fetch_clients, fetch_networks
+from unifi_topology.model import build_node_names
 from unifi_topology.model.classify import classify_device_type
 from unifi_topology.model.clients import build_node_type_map, collapse_client_edges
 from unifi_topology.model.edges import build_port_map, group_devices_by_type, group_nodes_by_vlan
@@ -55,6 +56,10 @@ def render_mermaid_output(
         config,
         site,
         clients_override=clients_override,
+        node_names=topology.node_names,
+    )
+    node_names = build_node_names(
+        devices, clients, client_mode=args.client_scope, only_unifi=args.only_unifi
     )
     groups = None
     group_order = None
@@ -74,6 +79,7 @@ def render_mermaid_output(
             client_mode=args.client_scope,
             only_unifi=args.only_unifi,
         ),
+        node_names=node_names,
         theme=mermaid_theme,
         wan_info=wan_info,
     )
@@ -113,9 +119,11 @@ def _apply_client_clustering(
     layout_mode: str,
     groups: dict[str, list[str]] | None,
     group_order: list[str] | None,
+    *,
+    node_names: dict[str, str] | None = None,
 ) -> tuple[list[Edge], dict[str, list[str]] | None, list[str] | None]:
     """Apply client clustering and update groups if needed."""
-    edges, _counts = collapse_client_edges(edges, node_types)
+    edges, _counts = collapse_client_edges(edges, node_types, node_names=node_names)
     if layout_mode in ("grouped", "vlan") and group_order and "client_cluster" not in group_order:
         group_order = [*group_order, "client_cluster"]
         if groups is not None:
@@ -210,11 +218,24 @@ def render_svg_output(
 ) -> str:
     edges, _has_tree = select_edges(topology)
     edges, clients = build_edges_with_clients(
-        args, edges, devices, config, site, clients_override=clients_override
+        args,
+        edges,
+        devices,
+        config,
+        site,
+        clients_override=clients_override,
+        node_names=topology.node_names,
     )
     layout_mode = getattr(args, "svg_layout_mode", "physical")
     effective_layout = "grouped" if layout_mode == "vlan" else layout_mode
     options = SvgOptions(width=args.svg_width, height=args.svg_height, layout_mode=effective_layout)
+
+    node_types = build_node_type_map(
+        devices, clients, client_mode=args.client_scope, only_unifi=args.only_unifi
+    )
+    node_names = build_node_names(
+        devices, clients, client_mode=args.client_scope, only_unifi=args.only_unifi
+    )
 
     groups = None
     group_order = None
@@ -225,20 +246,15 @@ def render_svg_output(
         groups = group_devices_by_type(devices)
         group_order = ["gateway", "switch", "ap", "other"]
         if clients:
-            client_names = [c.get("name") or c.get("hostname", "") for c in clients]
-            groups["client"] = [n for n in client_names if n]
+            groups["client"] = [mac for mac, ntype in node_types.items() if ntype == "client"]
             group_order.append("client")
     elif layout_mode == "vlan":
         vlan_names = build_vlan_names(networks) if networks else {}
         groups, group_order, group_vlan_ids = group_nodes_by_vlan(edges, vlan_names)
 
-    node_types = build_node_type_map(
-        devices, clients, client_mode=args.client_scope, only_unifi=args.only_unifi
-    )
-
     if getattr(args, "collapse_clients", False):
         edges, groups, group_order = _apply_client_clustering(
-            edges, node_types, layout_mode, groups, group_order
+            edges, node_types, layout_mode, groups, group_order, node_names=node_names
         )
 
     wan_info = _extract_gateway_wan_info(devices, args, networks=networks)
@@ -249,6 +265,7 @@ def render_svg_output(
         return render_svg_isometric(
             edges,
             node_types=node_types,
+            node_names=node_names,
             options=options,
             theme=svg_theme,
             groups=groups,
@@ -259,6 +276,7 @@ def render_svg_output(
     return render_svg(
         edges,
         node_types=node_types,
+        node_names=node_names,
         options=options,
         theme=svg_theme,
         groups=groups,
@@ -319,6 +337,7 @@ def render_mkdocs_format(
         client_ports=client_ports,
         options=options,
         dark_mermaid_theme=dark_mermaid_theme,
+        node_names=topology.node_names,
     )
 
 

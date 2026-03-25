@@ -26,36 +26,49 @@ def device_to_dict(device: object) -> dict[str, object]:
     return {"repr": repr(device)}
 
 
+def _sample_non_gateway_macs(
+    groups: dict[str, list[str]],
+    gateways: list[str],
+    sample_count: int,
+) -> list[str]:
+    """Pick up to *sample_count* device MACs from non-gateway groups."""
+    samples: list[str] = []
+    for group in ("switch", "ap", "other"):
+        for mac in groups.get(group, []):
+            if mac not in gateways:
+                samples.append(mac)
+            if len(samples) >= sample_count:
+                return samples
+    return samples
+
+
 def debug_dump_devices(
     raw_devices: Sequence[object],
     normalized: Iterable[Device],
     *,
     sample_count: int,
 ) -> None:
-    name_to_device: dict[str, object] = {}
+    mac_to_device: dict[str, object] = {}
+    mac_to_name: dict[str, str] = {}
     for device in raw_devices:
+        mac = getattr(device, "mac", None)
         name = getattr(device, "name", None)
-        if name:
-            name_to_device[name] = device
+        if mac:
+            mac_to_device[mac] = device
+            if name:
+                mac_to_name[mac] = name
 
     groups = group_devices_by_type(normalized)
     gateways = groups.get("gateway", [])
-    samples: list[str] = []
-    for group in ("switch", "ap", "other"):
-        for name in groups.get(group, []):
-            if name not in gateways:
-                samples.append(name)
-            if len(samples) >= sample_count:
-                break
-        if len(samples) >= sample_count:
-            break
+    samples = _sample_non_gateway_macs(groups, gateways, sample_count)
 
-    selected_names = gateways[:1] + samples
+    selected = gateways[:1] + samples
     payload = []
-    for name in selected_names:
-        device = name_to_device.get(name)
+    for mac in selected:
+        device = mac_to_device.get(mac)
         if device is None:
             continue
+        name = mac_to_name.get(mac, mac)
         payload.append({"name": name, "data": device_to_dict(device)})
 
     logger.info("Debug dump devices: %s", json.dumps(payload, indent=2, sort_keys=True))

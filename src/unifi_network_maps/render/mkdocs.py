@@ -85,7 +85,7 @@ def render_mkdocs(
         legend_block=legend_block,
         infrastructure_table=options.infrastructure_table,
         device_overview=render_device_port_overview(
-            devices, port_map, client_ports=client_ports
+            devices, port_map, client_ports=client_ports, node_names=node_names
         ).rstrip()
         + "\n",
     )

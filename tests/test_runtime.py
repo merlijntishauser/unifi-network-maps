@@ -269,7 +269,7 @@ class TestResolveMkdocsClientPorts:
         args = _make_args(include_clients=False)
         devices = []
 
-        client_ports, error = resolve_mkdocs_client_ports(
+        client_ports, client_node_names, error = resolve_mkdocs_client_ports(
             args,
             devices,
             config=None,
@@ -277,6 +277,7 @@ class TestResolveMkdocsClientPorts:
             mock_clients=None,
         )
         assert client_ports is None
+        assert client_node_names is None
         assert error is None
 
     def test_with_mock_clients(self):
@@ -287,7 +288,7 @@ class TestResolveMkdocsClientPorts:
             {"mac": "client:01", "name": "Laptop", "sw_mac": "aa:bb:cc:dd:ee:ff", "sw_port": 1}
         ]
 
-        _, error = resolve_mkdocs_client_ports(
+        _, client_node_names, error = resolve_mkdocs_client_ports(
             args,
             devices,
             config=None,
@@ -295,13 +296,16 @@ class TestResolveMkdocsClientPorts:
             mock_clients=mock_clients,  # type: ignore[arg-type]
         )
         assert error is None
+        # Client name must be resolvable so port tables show names, not MACs
+        assert client_node_names is not None
+        assert client_node_names.get("client:01") == "Laptop"
 
     def test_config_required_error(self):
         """Test that error code 2 is returned when config missing."""
         args = _make_args(include_clients=True)
         devices = []
 
-        client_ports, error = resolve_mkdocs_client_ports(
+        client_ports, client_node_names, error = resolve_mkdocs_client_ports(
             args,
             devices,
             config=None,
@@ -309,4 +313,5 @@ class TestResolveMkdocsClientPorts:
             mock_clients=None,
         )
         assert client_ports is None
+        assert client_node_names is None
         assert error == 2

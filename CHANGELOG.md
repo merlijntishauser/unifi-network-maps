@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- MkDocs port tables now show connected device and client names again ([unifi-topology#67])
+  - Bump `unifi-topology` to `>=3.0.2`, which restores connected **device** names in
+    `render_device_port_overview` (they were empty under 3.0.0/3.0.1)
+  - Thread a client-inclusive `node_names` map into `render_device_port_overview` so connected
+    **client** cells resolve to names instead of MACs
+  - Add a smoketest-validation guard asserting the Connected column resolves device and client names
+
+[unifi-topology#67]: https://github.com/merlijntishauser/unifi-topology/issues/67
+
 ## [2.3.0] - 2026-07-24
 
 ### Changed

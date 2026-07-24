@@ -350,7 +350,7 @@ def render_mkdocs_format(
     if args.mkdocs_sidebar_legend:
         write_mkdocs_sidebar_assets(args.output)
     port_map = build_port_map(devices, only_unifi=args.only_unifi)
-    client_ports, error_code = resolve_mkdocs_client_ports(
+    client_ports, client_node_names, error_code = resolve_mkdocs_client_ports(
         args,
         devices,
         config,
@@ -360,6 +360,9 @@ def render_mkdocs_format(
     if error_code is not None:
         logging.error("Mock data required for client rendering")
         return None
+    # Merge client names so connected-client cells in the port tables resolve to
+    # names instead of MACs (device peers already resolve via the device list).
+    node_names = {**topology.node_names, **(client_node_names or {})}
     dark_mermaid_theme = load_dark_mermaid_theme() if args.mkdocs_dual_theme else None
     edges, _has_tree = select_edges(topology)
 
@@ -385,7 +388,7 @@ def render_mkdocs_format(
         client_ports=client_ports,
         options=options,
         dark_mermaid_theme=dark_mermaid_theme,
-        node_names=topology.node_names,
+        node_names=node_names,
     )
 
 

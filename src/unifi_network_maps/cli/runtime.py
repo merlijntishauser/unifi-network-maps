@@ -8,6 +8,7 @@ import logging
 import yaml
 from unifi_topology.adapters.config import Config
 from unifi_topology.adapters.unifi import fetch_clients, fetch_devices, fetch_networks
+from unifi_topology.model import build_node_names
 from unifi_topology.model.clients import build_client_edges, build_client_port_map
 from unifi_topology.model.edges import (
     build_topology,
@@ -169,17 +170,17 @@ def resolve_mkdocs_client_ports(
     config: Config | None,
     site: str,
     mock_clients: list[object] | None,
-) -> tuple[ClientPortMap | None, int | None]:
+) -> tuple[ClientPortMap | None, dict[str, str] | None, int | None]:
     if not args.include_clients:
-        return None, None
+        return None, None, None
     if mock_clients is None:
         if config is None:
-            return None, 2
+            return None, None, 2
         try:
             clients = list(fetch_clients(config, site=site))
         except Exception as exc:  # noqa: BLE001
             logger.warning("Failed to fetch clients for MkDocs: %s", exc)
-            return None, None
+            return None, None, None
     else:
         clients = mock_clients
     client_ports = build_client_port_map(
@@ -188,4 +189,10 @@ def resolve_mkdocs_client_ports(
         client_mode=args.client_scope,
         only_unifi=args.only_unifi,
     )
-    return client_ports, None
+    client_node_names = build_node_names(
+        devices,
+        clients,
+        client_mode=args.client_scope,
+        only_unifi=args.only_unifi,
+    )
+    return client_ports, client_node_names, None

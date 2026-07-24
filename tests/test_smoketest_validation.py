@@ -350,6 +350,35 @@ class TestMkdocsStructure:
         assert "<style>" in mkdocs_content
         assert "</style>" in mkdocs_content
 
+    def test_port_tables_resolve_connected_names(self, mkdocs_content: str) -> None:
+        """Port-table Connected column resolves device AND client names.
+
+        Guards against unifi-topology#67 (empty Connected column) and the
+        node_names wiring that resolves connected client names instead of MACs.
+        """
+        connected: list[str] = []
+        in_table = False
+        for line in mkdocs_content.splitlines():
+            if line.startswith("| Port | Connected"):
+                in_table = True
+                continue
+            if in_table and line.startswith("| ---"):
+                continue
+            if in_table and line.startswith("| "):
+                cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+                if len(cells) == 5:
+                    connected.append(cells[1])
+            elif in_table:
+                in_table = False
+        assert connected, "no port-table rows found in mkdocs output"
+        populated = [value for value in connected if value and value != "-"]
+        assert populated, "Connected column entirely empty (unifi-topology#67)"
+        client_cells = [value for value in populated if "(client)" in value]
+        assert client_cells, "expected at least one connected client"
+        mac_client = re.compile(r"^([0-9a-f]{2}:){5}[0-9a-f]{2} \(client\)")
+        unresolved = [value for value in client_cells if mac_client.match(value)]
+        assert not unresolved, f"client connections show MACs instead of names: {unresolved}"
+
     def test_mermaid_graph_valid(self, mkdocs_content: str) -> None:
         """Embedded mermaid graphs have valid structure."""
         # Extract mermaid blocks

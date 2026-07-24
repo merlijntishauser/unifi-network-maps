@@ -14,10 +14,10 @@ New file: `model/inventory.py`
 @dataclass(frozen=True)
 class DeviceInfo:
     name: str
-    device_type: str       # "gateway", "switch", "ap", "other"
+    device_type: str  # "gateway", "switch", "ap", "other"
     model_name: str
     ip: str
-    hostname: str | None   # reverse DNS result, None if lookup fails
+    hostname: str | None  # reverse DNS result, None if lookup fails
     mac: str
     firmware: str
 ```

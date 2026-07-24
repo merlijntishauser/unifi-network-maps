@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from unittest.mock import patch
 
 import pytest
 from unifi_topology.model.topology import Device, Edge, TopologyResult, UplinkInfo
@@ -334,16 +335,20 @@ class TestRenderStandardFormat:
 
         import logging
 
-        with caplog.at_level(logging.ERROR):
-            result = render_standard_format(
-                args,
-                config=None,
-                site="default",
-                mock_devices=mock_devices,  # type: ignore[arg-type]
-                mock_clients=None,
-                mermaid_theme=DEFAULT_MERMAID_THEME,
-                svg_theme=DEFAULT_SVG_THEME,
-            )
+        with patch(
+            "unifi_network_maps.cli.render.load_topology_for_render",
+            return_value=None,
+        ):
+            with caplog.at_level(logging.ERROR):
+                result = render_standard_format(
+                    args,
+                    config=None,
+                    site="default",
+                    mock_devices=mock_devices,  # type: ignore[arg-type]
+                    mock_clients=None,
+                    mermaid_theme=DEFAULT_MERMAID_THEME,
+                    svg_theme=DEFAULT_SVG_THEME,
+                )
 
         assert result == 1
 
@@ -378,14 +383,18 @@ class TestRenderLldpFormat:
 
         import logging
 
-        with caplog.at_level(logging.ERROR):
-            result = render_lldp_format(
-                args,
-                config=None,
-                site="default",
-                mock_devices=mock_devices,  # type: ignore[arg-type]
-                mock_clients=[],
-            )
+        with patch(
+            "unifi_network_maps.cli.render.load_devices_data",
+            side_effect=Exception("Device load error"),
+        ):
+            with caplog.at_level(logging.ERROR):
+                result = render_lldp_format(
+                    args,
+                    config=None,
+                    site="default",
+                    mock_devices=mock_devices,  # type: ignore[arg-type]
+                    mock_clients=[],
+                )
 
         assert result == 1
 

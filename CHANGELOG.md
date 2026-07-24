@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Breaking**: Migrate to `unifi-topology` 3.0.x ([#76])
+  - `_apply_client_clustering` reads the fresh `node_types`/`node_names` returned by
+    `collapse_client_edges` (now a `CollapsedClientEdges` named tuple) instead of relying on
+    in-place mutation, and threads them back through to the SVG renderers
+  - Update Mermaid escaping snapshots to native forms (`#quot;`, `<br/>`)
+  - Bump minimum `unifi-topology` dependency to `>=3.0.0,<4`
+
+[#76]: https://github.com/merlijntishauser/unifi-network-maps/issues/76
+
 ## [2.2.0] - 2026-03-25
 
 ### Changed

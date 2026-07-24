@@ -121,9 +121,19 @@ def _apply_client_clustering(
     group_order: list[str] | None,
     *,
     node_names: dict[str, str] | None = None,
-) -> tuple[list[Edge], dict[str, list[str]] | None, list[str] | None]:
-    """Apply client clustering and update groups if needed."""
-    edges, _counts = collapse_client_edges(edges, node_types, node_names=node_names)
+) -> tuple[
+    list[Edge], dict[str, str], dict[str, str] | None, dict[str, list[str]] | None, list[str] | None
+]:
+    """Apply client clustering and update groups if needed.
+
+    ``collapse_client_edges`` no longer mutates the maps in place, so it returns
+    fresh ``node_types``/``node_names`` (with client nodes collapsed into cluster
+    nodes) that the caller must use for downstream rendering.
+    """
+    collapsed = collapse_client_edges(edges, node_types, node_names=node_names)
+    edges = collapsed.edges
+    node_types = collapsed.node_types
+    node_names = collapsed.node_names
     if layout_mode in ("grouped", "vlan") and group_order and "client_cluster" not in group_order:
         group_order = [*group_order, "client_cluster"]
         if groups is not None:
@@ -131,7 +141,7 @@ def _apply_client_clustering(
                 **groups,
                 "client_cluster": [n for n, t in node_types.items() if t == "client_cluster"],
             }
-    return edges, groups, group_order
+    return edges, node_types, node_names, groups, group_order
 
 
 def _fetch_networks_for_wan(
@@ -253,7 +263,7 @@ def render_svg_output(
         groups, group_order, group_vlan_ids = group_nodes_by_vlan(edges, vlan_names)
 
     if getattr(args, "collapse_clients", False):
-        edges, groups, group_order = _apply_client_clustering(
+        edges, node_types, node_names, groups, group_order = _apply_client_clustering(
             edges, node_types, layout_mode, groups, group_order, node_names=node_names
         )
 

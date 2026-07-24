@@ -1,6 +1,4 @@
 from unifi_topology.model.classify import (
-    _client_ucore_display_name,
-    _client_unifi_flag,
     client_display_name,
     client_is_unifi,
 )
@@ -151,9 +149,9 @@ def test_client_uplink_port_parses_port_label():
     assert client_uplink_port(client) == 9
 
 
-def test_client_unifi_flag_reads_int():
+def test_client_is_unifi_reads_int_flag():
     client = {"is_unifi": 1}
-    assert _client_unifi_flag(client) is True
+    assert client_is_unifi(client) is True
 
 
 def test_client_is_unifi_uses_vendor():
@@ -161,9 +159,9 @@ def test_client_is_unifi_uses_vendor():
     assert client_is_unifi(client) is True
 
 
-def test_client_ucore_display_name_uses_product_shortname():
+def test_client_display_name_uses_product_shortname():
     client = {"unifi_device_info_from_ucore": {"product_shortname": "UP Chime PoE"}}
-    assert _client_ucore_display_name(client) == "UP Chime PoE"
+    assert client_display_name(client) == "UP Chime PoE"
 
 
 def test_uplink_summary_formats_port():

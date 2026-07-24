@@ -217,20 +217,24 @@ class TestLoadTopologyForRender:
     def test_failure_returns_none(self, caplog):
         """Test that errors return None and log error."""
         args = _make_args()
-        # Invalid devices will cause build_topology to fail
         mock_devices = [{"invalid": "data"}]
 
         import logging
 
-        with caplog.at_level(logging.ERROR):
-            result = load_topology_for_render(
-                args,
-                config=None,
-                site="default",
-                mock_devices=mock_devices,  # type: ignore[arg-type]
-            )
+        with patch(
+            "unifi_network_maps.cli.runtime.build_topology_data",
+            side_effect=Exception("Topology error"),
+        ):
+            with caplog.at_level(logging.ERROR):
+                result = load_topology_for_render(
+                    args,
+                    config=None,
+                    site="default",
+                    mock_devices=mock_devices,  # type: ignore[arg-type]
+                )
 
         assert result is None
+        assert "Failed to build topology" in caplog.text
 
 
 # --- load_dark_mermaid_theme ---

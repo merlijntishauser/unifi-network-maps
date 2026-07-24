@@ -12,7 +12,10 @@ New file (~120 lines). Provides `UnifiAuthError`, `UnifiApiError`, and `UnifiCli
 
 ```python
 class UnifiAuthError(Exception): ...
+
+
 class UnifiApiError(Exception): ...
+
 
 class UnifiClient:
     def __init__(self, url, username, password, *, is_udm_pro=False, verify_ssl=True): ...

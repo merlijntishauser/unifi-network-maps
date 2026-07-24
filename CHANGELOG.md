@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     `collapse_client_edges` (now a `CollapsedClientEdges` named tuple) instead of relying on
     in-place mutation, and threads them back through to the SVG renderers
   - Update Mermaid escaping snapshots to native forms (`#quot;`, `<br/>`)
+  - Supply display labels for device-type SVG groups (`Gateway`/`Switch`/`AP`/`Other`) now
+    that 3.0 renders group labels verbatim instead of title-casing them; VLAN group names
+    keep their real case (e.g. `IoT`)
   - Bump minimum `unifi-topology` dependency to `>=3.0.0,<4`
 
 [#76]: https://github.com/merlijntishauser/unifi-network-maps/issues/76

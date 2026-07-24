@@ -144,6 +144,40 @@ def _apply_client_clustering(
     return edges, node_types, node_names, groups, group_order
 
 
+_GROUP_DISPLAY_LABELS = {
+    "gateway": "Gateway",
+    "switch": "Switch",
+    "ap": "AP",
+    "other": "Other",
+    "client": "Clients",
+    "client_cluster": "Client Clusters",
+}
+
+
+def _relabel_device_type_groups(
+    groups: dict[str, list[str]] | None,
+    group_order: list[str] | None,
+    group_vlan_ids: dict[str, int] | None,
+) -> tuple[dict[str, list[str]] | None, list[str] | None, dict[str, int] | None]:
+    """Map internal device-type group keys to display labels for SVG headers.
+
+    ``unifi-topology`` 3.0 renders group labels verbatim (preserving VLAN names
+    like ``IoT``) instead of title-casing them, so the CLI now supplies the
+    display labels for its device-type groups. VLAN group names are left as-is.
+    """
+
+    def label(key: str) -> str:
+        return _GROUP_DISPLAY_LABELS.get(key, key)
+
+    if groups is not None:
+        groups = {label(key): members for key, members in groups.items()}
+    if group_order is not None:
+        group_order = [label(key) for key in group_order]
+    if group_vlan_ids is not None:
+        group_vlan_ids = {label(key): vlan_id for key, vlan_id in group_vlan_ids.items()}
+    return groups, group_order, group_vlan_ids
+
+
 def _fetch_networks_for_wan(
     config: Config | None,
     site: str,
@@ -268,6 +302,10 @@ def render_svg_output(
         )
 
     wan_info = _extract_gateway_wan_info(devices, args, networks=networks)
+
+    groups, group_order, group_vlan_ids = _relabel_device_type_groups(
+        groups, group_order, group_vlan_ids
+    )
 
     if args.format == "svg-iso":
         from unifi_topology.render.svg_isometric import render_svg_isometric

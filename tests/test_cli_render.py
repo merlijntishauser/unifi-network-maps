@@ -67,6 +67,40 @@ def _make_args(**kwargs) -> argparse.Namespace:
     return argparse.Namespace(**defaults)
 
 
+class TestRelabelDeviceTypeGroups:
+    def test_device_type_keys_map_to_display_labels(self):
+        from unifi_network_maps.cli.render import _relabel_device_type_groups
+
+        groups = {"gateway": ["a"], "switch": ["b"], "ap": ["c"], "other": ["d"]}
+        group_order = ["gateway", "switch", "ap", "other"]
+
+        relabeled, group_order, _ = _relabel_device_type_groups(groups, group_order, None)
+
+        assert group_order == ["Gateway", "Switch", "AP", "Other"]
+        assert relabeled is not None
+        assert set(relabeled) == {"Gateway", "Switch", "AP", "Other"}
+        assert relabeled["AP"] == ["c"]
+
+    def test_vlan_group_names_are_preserved(self):
+        from unifi_network_maps.cli.render import _relabel_device_type_groups
+
+        groups = {"IoT": ["a"], "Guest": ["b"]}
+        group_order = ["IoT", "Guest"]
+        group_vlan_ids = {"IoT": 20, "Guest": 30}
+
+        groups, group_order, group_vlan_ids = _relabel_device_type_groups(
+            groups, group_order, group_vlan_ids
+        )
+
+        assert group_order == ["IoT", "Guest"]
+        assert group_vlan_ids == {"IoT": 20, "Guest": 30}
+
+    def test_handles_none_inputs(self):
+        from unifi_network_maps.cli.render import _relabel_device_type_groups
+
+        assert _relabel_device_type_groups(None, None, None) == (None, None, None)
+
+
 # --- render_mermaid_output ---
 
 

@@ -64,9 +64,9 @@ class TestSvgStructure:
         """SVG contains network group elements."""
         assert 'class="network-group"' in grouped_iso_svg
         # Check for expected groups
-        assert 'data-group-name="gateway"' in grouped_iso_svg
-        assert 'data-group-name="switch"' in grouped_iso_svg
-        assert 'data-group-name="ap"' in grouped_iso_svg
+        assert 'data-group-name="Gateway"' in grouped_iso_svg
+        assert 'data-group-name="Switch"' in grouped_iso_svg
+        assert 'data-group-name="AP"' in grouped_iso_svg
 
     def test_grouped_iso_has_group_boundaries(self, grouped_iso_svg: str) -> None:
         """SVG contains group boundary polygons."""

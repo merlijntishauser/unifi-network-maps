@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- `--icon-set unifi`: the new UniFi icon set from `unifi-topology` 3.1.1, with original artwork
+  for all 14 node types (ceiling-disc access points, a drive enclosure for NAS, a device group
+  for client clusters). The theme matrix in `examples/themes/` now renders all three icon sets
+- `--iso-compact-layout`: for `svg-iso`, pack each hub and its clients into a compact district
+  instead of spreading siblings along a single diagonal
+- `--iso-route-around-nodes`: for `svg-iso`, route edges around intervening nodes instead of
+  always turning on the same axis
+- Smoketests (`make smoketest` and `make smoketest-mock`) cover the new icon set and both
+  isometric layout options, including the two combined
+
+### Changed
+- Bump `unifi-topology` to `>=3.1.1`. The isometric icon set replaces its generated placeholder
+  icons (speaker, camera, games console, sensor) with real artwork and normalizes icon viewBoxes,
+  which changes isometric output; the visual regression baseline is updated accordingly
+
 ## [2.3.1] - 2026-07-24
 
 ### Fixed

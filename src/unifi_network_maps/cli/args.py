@@ -175,9 +175,19 @@ def add_svg_args(parser: argparse._ArgumentGroup) -> None:
     )
     parser.add_argument(
         "--icon-set",
-        choices=["isometric", "modern"],
+        choices=["isometric", "modern", "unifi"],
         default=None,
         help="Icon set to use (default: determined by theme, or 'isometric' if no theme)",
+    )
+    parser.add_argument(
+        "--iso-compact-layout",
+        action="store_true",
+        help="For svg-iso, pack each hub and its clients into a compact district",
+    )
+    parser.add_argument(
+        "--iso-route-around-nodes",
+        action="store_true",
+        help="For svg-iso, route edges around intervening nodes instead of over them",
     )
     parser.add_argument(
         "--wan2-disabled",

@@ -272,7 +272,13 @@ def render_svg_output(
     )
     layout_mode = getattr(args, "svg_layout_mode", "physical")
     effective_layout = "grouped" if layout_mode == "vlan" else layout_mode
-    options = SvgOptions(width=args.svg_width, height=args.svg_height, layout_mode=effective_layout)
+    options = SvgOptions(
+        width=args.svg_width,
+        height=args.svg_height,
+        layout_mode=effective_layout,
+        iso_compact_layout=getattr(args, "iso_compact_layout", False),
+        iso_route_around_nodes=getattr(args, "iso_route_around_nodes", False),
+    )
 
     node_types = build_node_type_map(
         devices, clients, client_mode=args.client_scope, only_unifi=args.only_unifi

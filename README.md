@@ -225,8 +225,10 @@ SVG:
 - `--svg-width/--svg-height`: override SVG output dimensions.
 - `--theme`: built-in theme (`unifi`, `unifi-dark`, `minimal`, `classic`, `classic-dark`).
 - `--theme-file`: custom theme YAML (takes priority over `--theme`; see `examples/theme.yaml`).
-- `--icon-set isometric|modern`: icon set to use (default: determined by theme, or `isometric`).
+- `--icon-set isometric|modern|unifi`: icon set to use (default: determined by theme, or `isometric`).
 - `--svg-layout-mode physical|grouped|vlan`: layout mode for SVG output (default physical).
+- `--iso-compact-layout`: for `svg-iso`, pack each hub and its clients into a compact district instead of spreading siblings along a single diagonal.
+- `--iso-route-around-nodes`: for `svg-iso`, route edges around intervening nodes instead of always turning on the same axis.
 - `--wan-label/--wan-speed`: WAN1 ISP name and provisioned speed.
 - `--wan2-label/--wan2-speed`: WAN2 ISP name and provisioned speed.
 - `--max-vlan-colors`: limit VLAN colors shown on edges (default: no limit).

@@ -163,6 +163,23 @@ class TestRenderMermaidOutput:
 # --- render_svg_output ---
 
 
+def _capture_isometric_options(args: argparse.Namespace):
+    """Render an isometric SVG and return the SvgOptions handed to the library."""
+    from unifi_network_maps.cli.render import render_svg_output
+
+    devices = [
+        _make_minimal_device("Gateway", "aa:bb:cc:dd:ee:01", "gateway"),
+        _make_minimal_device("Switch", "aa:bb:cc:dd:ee:02", "switch"),
+    ]
+    topology = TopologyResult(tree_edges=[Edge("Gateway", "Switch")], raw_edges=[])
+
+    with patch("unifi_topology.render.svg_isometric.render_svg_isometric") as render:
+        render.return_value = "<svg/>"
+        render_svg_output(args, devices, topology, None, "default", DEFAULT_SVG_THEME)
+
+    return render.call_args.kwargs["options"]
+
+
 class TestRenderSvgOutput:
     def test_basic_render(self):
         from unifi_network_maps.cli.render import render_svg_output
@@ -227,6 +244,24 @@ class TestRenderSvgOutput:
             clients_override=mock_clients,  # type: ignore[arg-type]
         )
         assert "<svg" in result
+
+    def test_isometric_options_default_to_off(self):
+        options = _capture_isometric_options(_make_args(format="svg-iso"))
+
+        assert options.iso_compact_layout is False
+        assert options.iso_route_around_nodes is False
+
+    def test_isometric_options_follow_cli_flags(self):
+        options = _capture_isometric_options(
+            _make_args(
+                format="svg-iso",
+                iso_compact_layout=True,
+                iso_route_around_nodes=True,
+            )
+        )
+
+        assert options.iso_compact_layout is True
+        assert options.iso_route_around_nodes is True
 
     def test_collapse_clients(self):
         from unifi_network_maps.cli.render import render_svg_output

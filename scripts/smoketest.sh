@@ -53,6 +53,18 @@ eval $CLI --format svg-iso --svg-layout-mode grouped --output smoketest/svg-iso/
 eval $CLI --include-clients --format svg --svg-layout-mode grouped --output smoketest/svg/network_clients_grouped.svg
 eval $CLI --include-clients --format svg-iso --svg-layout-mode grouped --output smoketest/svg-iso/network_clients_grouped_iso.svg
 
+# Icon set variants
+eval $CLI --format svg --icon-set unifi --output smoketest/svg/network_iconset_unifi.svg
+eval $CLI --format svg-iso --icon-set unifi --output smoketest/svg-iso/network_iconset_unifi_iso.svg
+eval $CLI --format svg-iso --icon-set isometric --output smoketest/svg-iso/network_iconset_isometric_iso.svg
+eval $CLI --format svg-iso --icon-set modern --output smoketest/svg-iso/network_iconset_modern_iso.svg
+
+# Isometric layout options
+eval $CLI --include-clients --format svg-iso --iso-compact-layout --output smoketest/svg-iso/network_clients_compact_iso.svg
+eval $CLI --include-clients --format svg-iso --iso-route-around-nodes --output smoketest/svg-iso/network_clients_routed_iso.svg
+eval $CLI --include-ports --include-clients --format svg-iso --iso-compact-layout --iso-route-around-nodes --output smoketest/svg-iso/network_ports_clients_compact_routed_iso.svg
+eval $CLI --include-ports --include-clients --client-scope all --format svg-iso --iso-compact-layout --iso-route-around-nodes --icon-set unifi --output smoketest/svg-iso/network_ports_clients_all_compact_routed_unifi_iso.svg
+
 # JSON
 eval $CLI --format json --output smoketest/json/payload.json
 eval $CLI --format json --include-clients --output smoketest/json/payload_clients.json

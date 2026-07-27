@@ -77,6 +77,21 @@ Feature: CLI output variants
     When I run the CLI with args "--format svg-iso --icon-set modern" and output file
     Then the output file contains "<image"
 
+  Scenario: SVG output with unifi icon set
+    Given the mock data file "examples/mock_data.json"
+    When I run the CLI with args "--format svg-iso --icon-set unifi" and output file
+    Then the output file contains "<image"
+
+  Scenario: Isometric SVG output with compact layout
+    Given the mock data file "examples/mock_data.json"
+    When I run the CLI with args "--format svg-iso --iso-compact-layout" and output file
+    Then the output file contains "<svg"
+
+  Scenario: Isometric SVG output routing edges around nodes
+    Given the mock data file "examples/mock_data.json"
+    When I run the CLI with args "--format svg-iso --iso-route-around-nodes" and output file
+    Then the output file contains "<svg"
+
   Scenario: SVG output uses theme default icon set
     Given the mock data file "examples/mock_data.json"
     When I run the CLI with args "--format svg-iso --theme unifi" and output file

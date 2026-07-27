@@ -1,28 +1,36 @@
 {
   "clients": [
     {
+      "ip": "172.27.172.180",
       "is_wired": true,
+      "mac": "b2:53:bd:b5:6b:88",
       "name": "Living Room TV",
       "sw_mac": "3a:d8:10:0f:2f:6f",
       "sw_port": 6,
       "vlan": 1
     },
     {
+      "ip": "192.168.87.159",
       "is_wired": true,
+      "mac": "fc:7d:53:ec:c2:8a",
       "name": "Sonos One",
       "sw_mac": "3a:d8:10:0f:2f:6f",
       "sw_port": 7,
       "vlan": 1
     },
     {
+      "ip": "192.168.112.113",
       "is_wired": true,
+      "mac": "66:a6:1c:75:10:a1",
       "name": "Ring Doorbell",
       "sw_mac": "3a:d8:10:0f:2f:6f",
       "sw_port": 8,
       "vlan": 1
     },
     {
+      "ip": "172.26.17.215",
       "is_wired": true,
+      "mac": "42:6c:ff:ca:ea:49",
       "name": "HP LaserJet",
       "sw_mac": "3a:d8:10:0f:2f:6f",
       "sw_port": 9,
@@ -32,7 +40,9 @@
       "ap_mac": "14:87:16:eb:3f:c1",
       "ap_port": 1,
       "channel": 1,
+      "ip": "10.134.134.17",
       "is_wired": false,
+      "mac": "82:db:cc:b9:70:46",
       "name": "Synology NAS",
       "noise": -93,
       "rx_rate": 288,
@@ -45,7 +55,9 @@
       "ap_mac": "fc:62:23:17:74:94",
       "ap_port": 1,
       "channel": 6,
+      "ip": "172.17.129.250",
       "is_wired": false,
+      "mac": "62:38:4e:51:d8:20",
       "name": "PlayStation 5",
       "noise": -98,
       "rx_rate": 433,
@@ -58,7 +70,9 @@
       "ap_mac": "14:87:16:eb:3f:c1",
       "ap_port": 1,
       "channel": 11,
+      "ip": "172.30.250.67",
       "is_wired": false,
+      "mac": "1c:80:05:3a:88:ae",
       "name": "iPhone",
       "noise": -98,
       "rx_rate": 288,
@@ -403,6 +417,7 @@
   ],
   "networks": [
     {
+      "enabled": null,
       "name": "LAN",
       "network_id": null,
       "purpose": "corporate",
@@ -410,6 +425,7 @@
       "vlan_id": 1
     },
     {
+      "enabled": null,
       "name": "Guest",
       "network_id": null,
       "purpose": "guest",

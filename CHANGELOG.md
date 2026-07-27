@@ -18,10 +18,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Smoketests (`make smoketest` and `make smoketest-mock`) cover the new icon set and both
   isometric layout options, including the two combined
 
+### Fixed
+- Combining `--iso-compact-layout` with `--iso-route-around-nodes` no longer clips an edge at the
+  left border ([unifi-topology#69]). The isometric canvas is now expanded to contain routed edge
+  corners that fall outside the node bounding box
+
 ### Changed
-- Bump `unifi-topology` to `>=3.1.1`. The isometric icon set replaces its generated placeholder
+- Bump `unifi-topology` to `>=3.1.2`. The isometric icon set replaces its generated placeholder
   icons (speaker, camera, games console, sensor) with real artwork and normalizes icon viewBoxes,
   which changes isometric output; the visual regression baseline is updated accordingly
+
+[unifi-topology#69]: https://github.com/merlijntishauser/unifi-topology/issues/69
 
 ## [2.3.1] - 2026-07-24
 
